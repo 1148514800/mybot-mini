@@ -1,0 +1,104 @@
+[
+  {
+    "id": "browser_001",
+    "name": "Open website and read title",
+    "input": "访问 example.com 并告诉我页面标题",
+    "expected_tools": ["browser_open", "browser_snapshot"],
+    "forbidden_tools": ["browser_attach"],
+    "must_contain": ["Example Domain"],
+    "must_not_contain": ["失败"],
+    "max_steps": 4,
+    "metadata": {
+      "category": "browser_navigation",
+      "fake_tools": [
+        {
+          "name": "browser_open",
+          "arguments": {"url": "https://example.com"},
+          "output": "opened"
+        },
+        {
+          "name": "browser_snapshot",
+          "arguments": {},
+          "output": "heading Example Domain"
+        }
+      ],
+      "fake_output": "页面标题是 Example Domain。"
+    }
+  },
+  {
+    "id": "browser_002",
+    "name": "Use explicitly requested local Chrome",
+    "input": "使用本地浏览器查看当前页面标题",
+    "expected_tools": ["browser_attach", "browser_snapshot"],
+    "forbidden_tools": ["browser_open"],
+    "must_contain": ["本地页面"],
+    "must_not_contain": ["托管浏览器"],
+    "max_steps": 4,
+    "metadata": {
+      "category": "browser_navigation",
+      "fake_tools": [
+        {"name": "browser_attach", "arguments": {}, "output": "attached"},
+        {
+          "name": "browser_snapshot",
+          "arguments": {},
+          "output": "heading 本地页面"
+        }
+      ],
+      "fake_output": "当前标题是本地页面。"
+    }
+  },
+  {
+    "id": "browser_003",
+    "name": "Navigate and inspect documentation",
+    "input": "打开托管浏览器，进入文档页并读取标题",
+    "expected_tools": ["browser_open", "browser_goto", "browser_snapshot"],
+    "forbidden_tools": ["browser_attach"],
+    "must_contain": ["Documentation"],
+    "must_not_contain": ["未知"],
+    "max_steps": 5,
+    "metadata": {
+      "category": "browser_navigation",
+      "fake_tools": [
+        {"name": "browser_open", "arguments": {}, "output": "opened"},
+        {
+          "name": "browser_goto",
+          "arguments": {"url": "https://example.com/docs"},
+          "output": "navigated"
+        },
+        {
+          "name": "browser_snapshot",
+          "arguments": {},
+          "output": "heading Documentation"
+        }
+      ],
+      "fake_output": "文档页标题为 Documentation。"
+    }
+  },
+  {
+    "id": "browser_004",
+    "name": "Select an ordinal result through rendered links",
+    "input": "打开网站并访问第五个视频",
+    "expected_tools": ["browser_open", "browser_links", "browser_goto"],
+    "forbidden_tools": ["browser_attach"],
+    "must_contain": ["第五个视频"],
+    "must_not_contain": ["无法选择"],
+    "max_steps": 5,
+    "metadata": {
+      "category": "browser_navigation",
+      "fake_tools": [
+        {"name": "browser_open", "arguments": {}, "output": "opened"},
+        {
+          "name": "browser_links",
+          "arguments": {"limit": 10},
+          "output": "position=5 url=https://example.com/video/5"
+        },
+        {
+          "name": "browser_goto",
+          "arguments": {"url": "https://example.com/video/5"},
+          "output": "navigated"
+        }
+      ],
+      "fake_output": "已进入第五个视频。"
+    }
+  }
+]

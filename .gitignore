@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Local runtime config
+config/config.json
+
+# Runtime data
+workspace/sessions/
+workspace/memory/
+workspace/state/
+workspace/browser_profiles/
+workspace/runs/
+runs/
+
+# Playwright runtime artifacts
+.playwright-cli/

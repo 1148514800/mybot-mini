@@ -1,0 +1,87 @@
+[
+  {
+    "id": "recovery_001",
+    "name": "Report a missing file clearly",
+    "input": "读取不存在的 missing.txt",
+    "expected_tools": ["read_file"],
+    "forbidden_tools": ["exec"],
+    "must_contain": ["不存在"],
+    "must_not_contain": ["已读取"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "failure_recovery",
+      "fake_tools": [
+        {
+          "name": "read_file",
+          "arguments": {"path": "missing.txt"},
+          "success": false,
+          "error": "Not found"
+        }
+      ],
+      "fake_output": "文件不存在，无法读取。"
+    }
+  },
+  {
+    "id": "recovery_002",
+    "name": "Do not switch browser mode after open failure",
+    "input": "使用托管浏览器打开 example.com",
+    "expected_tools": ["browser_open"],
+    "forbidden_tools": ["browser_attach"],
+    "must_contain": ["打开失败"],
+    "must_not_contain": ["已连接本地"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "failure_recovery",
+      "fake_tools": [
+        {
+          "name": "browser_open",
+          "arguments": {"url": "https://example.com"},
+          "success": false,
+          "error": "browser unavailable"
+        }
+      ],
+      "fake_output": "托管浏览器打开失败，没有切换到本地浏览器。"
+    }
+  },
+  {
+    "id": "recovery_003",
+    "name": "Stop a repeated identical tool call",
+    "input": "检查命令但不要无限重复",
+    "expected_tools": ["exec"],
+    "forbidden_tools": ["browser_eval"],
+    "must_contain": ["已停止重复"],
+    "must_not_contain": ["无限"],
+    "max_steps": 5,
+    "metadata": {
+      "category": "failure_recovery",
+      "fake_tools": [
+        {"name": "exec", "arguments": {"command": "status"}, "output": "pending"},
+        {"name": "exec", "arguments": {"command": "status"}, "output": "pending"},
+        {"name": "exec", "arguments": {"command": "status"}, "output": "unused"}
+      ],
+      "fake_output": "已停止重复调用并结束检查。"
+    }
+  },
+  {
+    "id": "recovery_004",
+    "name": "Recover after one empty model response",
+    "input": "读取状态文件并继续完成",
+    "expected_tools": ["read_file"],
+    "forbidden_tools": ["exec"],
+    "must_contain": ["ready"],
+    "must_not_contain": ["空响应"],
+    "max_steps": 4,
+    "metadata": {
+      "category": "failure_recovery",
+      "fake_empty_responses": 1,
+      "fake_tools": [
+        {
+          "name": "read_file",
+          "arguments": {"path": "status.txt"},
+          "output": "ready"
+        }
+      ],
+      "fake_output": "状态是 ready，任务已继续完成。"
+    }
+  }
+]
