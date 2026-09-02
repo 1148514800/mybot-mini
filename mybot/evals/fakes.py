@@ -100,6 +100,12 @@ class FakeToolRegistry:
             for name in names
         ]
 
+    def get_runtime_metadata(self, name: str) -> dict[str, Any]:
+        for tool in self._script:
+            if str(tool["name"]) == name:
+                return dict(tool.get("runtime_metadata", {}))
+        return {}
+
     async def execute(self, name: str, params: dict) -> ToolResult:
         if self._execute_index >= len(self._script):
             return ToolResult(success=False, error="fake tool script exhausted")

@@ -21,6 +21,7 @@ class EvalCase:
     expected_risk_levels: list[str] = field(default_factory=list)
     expected_approval_statuses: list[str] = field(default_factory=list)
     expected_tool_executions: int | None = None
+    expected_trace_metadata: dict[str, list[str]] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -47,6 +48,12 @@ class EvalCase:
                 data.get("expected_approval_statuses", [])
             ),
             expected_tool_executions=data.get("expected_tool_executions"),
+            expected_trace_metadata={
+                str(key): [str(item) for item in values]
+                for key, values in dict(
+                    data.get("expected_trace_metadata", {})
+                ).items()
+            },
             metadata=dict(data.get("metadata", {})),
         )
 

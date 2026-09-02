@@ -31,6 +31,13 @@ class ToolRegistry:
     def register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
 
+    def has_tool(self, name: str) -> bool:
+        return name in self._tools
+
+    def get_runtime_metadata(self, name: str) -> dict:
+        tool = self._tools.get(name)
+        return dict(tool.runtime_metadata) if tool else {}
+
     def get_definitions(self) -> list[dict]:
         return [tool.to_schema() for tool in self._tools.values()]
 

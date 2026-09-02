@@ -28,6 +28,41 @@
   "tracing": {
     "trace_dir": null
   },
+  "mcp": {
+    "enabled": false,
+    "servers": {
+      "local_demo": {
+        "enabled": false,
+        "transport": "stdio",
+        "command": "python",
+        "args": ["-m", "demo_mcp_server"],
+        "env": {
+          "DEMO_API_KEY": "${DEMO_API_KEY}"
+        },
+        "required": false,
+        "trust_annotations": false,
+        "tool_timeout_seconds": 30,
+        "max_output_chars": 12000,
+        "tool_policy": {
+          "search": "allow",
+          "create_item": "confirm",
+          "delete_all": "block"
+        }
+      },
+      "remote_demo": {
+        "enabled": false,
+        "transport": "streamable_http",
+        "url": "http://127.0.0.1:8000/mcp",
+        "headers": {
+          "Authorization": "Bearer ${DEMO_MCP_TOKEN}"
+        },
+        "required": false,
+        "trust_annotations": false,
+        "tool_timeout_seconds": 30,
+        "max_output_chars": 12000
+      }
+    }
+  },
   "debug": {
     "show_internal_process": true
   }

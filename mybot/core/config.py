@@ -6,6 +6,8 @@ from pathlib import Path
 
 from openai import OpenAI
 
+from ..mcp.config import MCPConfig
+
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = PACKAGE_DIR.parent
@@ -56,6 +58,7 @@ _FEISHU_CONFIG = _section(_JSON_CONFIG, "feishu")
 _WORKSPACE_CONFIG = _section(_JSON_CONFIG, "workspace")
 _DEBUG_CONFIG = _section(_JSON_CONFIG, "debug")
 _TRACING_CONFIG = _section(_JSON_CONFIG, "tracing")
+_MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
 
 
 def _active_llm_provider() -> str:
@@ -217,6 +220,10 @@ class GatewayConfig:
 
     feishu: FeishuConfig = field(
         default_factory=FeishuConfig
+    )
+
+    mcp: MCPConfig = field(
+        default_factory=lambda: MCPConfig.from_dict(_MCP_CONFIG)
     )
 
 

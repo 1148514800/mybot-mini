@@ -12,6 +12,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 持久化会话和长期记忆
 - 确定性的 Tool Policy、风险分级和 Human-in-the-loop 审批
 - 跨 CLI / 飞书消息的 Pause / Resume
+- 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
 
@@ -254,6 +255,9 @@ config/
 | `feishu.enabled` | 是否启用飞书通道 |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
+| `mcp.enabled` | 是否在 Gateway 启动时连接并发现 MCP Tools；默认 `false` |
+| `mcp.servers.*.required` | MCP Server 失败时是否阻止 Gateway 启动 |
+| `mcp.servers.*.trust_annotations` | 是否允许可信的 `readOnlyHint` 自动放行；默认 `false` |
 | `debug.show_internal_process` | 是否输出 Agent 的内部 trace |
 
 修改 JSON 后需要重启程序才会生效。
@@ -268,6 +272,7 @@ mybot/
   main.py                 # 程序入口
   agent/                  # Agent 循环和上下文构建
   guardrails/             # Tool Policy、风险模型和内存审批状态
+  mcp/                    # MCP 配置、官方 Client 生命周期、命名和 Tool Adapter
   tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
   evals/                  # 确定性 Eval、FakeLLM runner 和文本报告
   core/                   # 配置和应用组装
@@ -309,8 +314,8 @@ uv run python -m mybot.evals.runner
 ```
 
 Eval 数据位于根目录 `evals/`，当前覆盖 Tool Selection、Browser Navigation、
-Failure Recovery 和 Policy Guardrails。Replay 只读取已有 Trace 并输出 timeline，
-不会再次调用模型或真实 Tool。
+Failure Recovery、Policy Guardrails 和 MCP Tools。Replay 只读取已有 Trace 并输出
+timeline，不会再次调用模型或真实 Tool。
 
 ## Guardrails 与 Human-in-the-loop
 
@@ -345,6 +350,72 @@ Policy 的 `risk_level`、`policy_decision`、`policy_rule`、`policy_reason`、
 和 `approval_status` 会写入现有 Tool Call Trace，并继续使用相同的敏感字段脱敏。
 Guardrails 是 Runtime Safety Layer 的第一版，不是完整 sandbox 或操作系统级安全边界；
 它只做少量高置信度、确定性、可测试的判断。
+
+## MCP External Tool Runtime
+
+MCP 默认关闭。启用后，Gateway 会在 AgentLoop 启动前使用官方 `mcp>=2,<3` Client
+连接所有已启用 Server、完成协议协商和 `tools/list`，再把每个外部工具包装为现有
+`Tool` 并注册到同一个 ToolRegistry。MyBot 不自行实现 JSON-RPC、initialize 或协议
+版本分支，也不会读取 MCP Resources、Prompts 或 Server Instructions。
+
+实际配置格式如下；密钥使用环境变量引用，不要写入仓库：
+
+```json
+{
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "local_demo": {
+        "enabled": true,
+        "transport": "stdio",
+        "command": "python",
+        "args": ["-m", "demo_mcp_server"],
+        "env": {"DEMO_API_KEY": "${DEMO_API_KEY}"},
+        "required": false,
+        "trust_annotations": false,
+        "tool_timeout_seconds": 30,
+        "max_output_chars": 12000,
+        "tool_policy": {
+          "search": "allow",
+          "create_item": "confirm",
+          "delete_all": "block"
+        }
+      },
+      "remote_demo": {
+        "enabled": true,
+        "transport": "streamable_http",
+        "url": "http://127.0.0.1:8000/mcp",
+        "headers": {
+          "Authorization": "Bearer ${DEMO_MCP_TOKEN}"
+        },
+        "required": false,
+        "trust_annotations": false,
+        "tool_timeout_seconds": 30
+      }
+    }
+  }
+}
+```
+
+stdio Server 由官方 Client 启动为子进程，并在 Gateway 退出时通过 Client 生命周期关闭。
+Streamable HTTP 使用官方 `streamable_http_client`；不支持 legacy SSE。`required=false`
+的 Server 连接失败时会被跳过，其他 Server 和 Runtime 继续启动；`required=true` 失败
+会终止启动。
+
+发现的工具使用 `mcp__<server>__<tool>` namespace。非法字符和超长名称会确定性清理
+并附加稳定 hash，collision 不会覆盖现有 Tool。输入 JSON Schema 尽量原样保留；无法
+作为 Function Tool object schema 使用的工具会跳过并记入 Server Status。
+
+外部 MCP Tool 默认视为敏感操作并要求确认。只有 `trust_annotations=true` 且 Tool
+声明 `readOnlyHint=true` 时才会自动允许；`destructiveHint=true` 始终要求确认。
+每个 Server 的 `tool_policy` 可按外部 Tool 原名显式设置 `allow`、`confirm` 或 `block`，
+其优先级高于 annotation。需要确认的 MCP Tool 直接复用现有 PendingApproval、Session
+隔离、exact-action 和 single-use 流程。
+
+MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和 Resource 只返回
+可读 placeholder，不把 base64 塞入模型上下文。输出默认限制为 12000 字符，每次调用
+有独立 timeout，不做自动 retry。外部内容始终被视为不可信数据，不能修改 Policy 或
+自行获得额外 Tool 权限。
 
 ## 浏览器工具
 

@@ -22,17 +22,21 @@ Instructions Skills Memory           │
                                      ↓
                                 Tool Calling
                                      │
+                                ToolPolicy
+                                     │
+                           ALLOW / CONFIRM / BLOCK
+                                     │
                                ToolRegistry
                                      │
-              ┌──────────────┬───────┼────────────┐
-              ↓              ↓       ↓            ↓
-            File           Exec    Memory       Browser
-                                                │
-                                          playwright-cli
-                                                │
-                                               CDP
-                                                │
-                                             Chrome
+                  ┌──────────────────┴──────────────────┐
+                  ↓                                     ↓
+             Native Tools                          MCP Tools
+                  │                                     │
+          File / Exec / Memory / Browser         MCPToolAdapter
+                                                        │
+                                               MCPClientManager
+                                                        │
+                                             stdio / Streamable HTTP
 
                      AgentLoop
                          │

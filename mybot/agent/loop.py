@@ -255,6 +255,13 @@ class AgentLoop:
             if definition.get("function", {}).get("name") != blocked_tool
         ]
 
+    def _tool_runtime_metadata(self, name: str) -> dict:
+        getter = getattr(self.tools, "get_runtime_metadata", None)
+        if not callable(getter):
+            return {}
+        metadata = getter(name)
+        return dict(metadata) if isinstance(metadata, dict) else {}
+
     async def _execute_tool_call(
         self,
         tool_call,
@@ -268,7 +275,11 @@ class AgentLoop:
         if decode_error:
             return decode_error
         assert arguments is not None
-        policy = self.tool_policy.evaluate(name, arguments)
+        policy = self.tool_policy.evaluate(
+            name,
+            arguments,
+            tool_metadata=self._tool_runtime_metadata(name),
+        )
         metadata = self._policy_metadata(policy)
         if policy.decision == PolicyDecision.BLOCK:
             return ToolResult(
@@ -527,6 +538,7 @@ class AgentLoop:
             arguments=pending.arguments,
             metadata={
                 "model_tool_call_id": pending.model_tool_call_id,
+                **self._tool_runtime_metadata(pending.tool_name),
                 **self._policy_metadata(
                     policy,
                     approval_id=pending.approval_id,
@@ -575,7 +587,10 @@ class AgentLoop:
                 step_id=step_trace.step_id,
                 tool_name=name,
                 arguments=traced_arguments,
-                metadata={"model_tool_call_id": tool_call.id},
+                metadata={
+                    "model_tool_call_id": tool_call.id,
+                    **self._tool_runtime_metadata(name),
+                },
             )
             if decode_error:
                 next_result = decode_error
@@ -586,6 +601,7 @@ class AgentLoop:
                     arguments,
                     user_input=user_input,
                     context={"browser_snapshot": browser_snapshot},
+                    tool_metadata=self._tool_runtime_metadata(name),
                 )
                 next_trace.metadata.update(
                     redact_mapping(self._policy_metadata(next_policy))
@@ -825,11 +841,15 @@ class AgentLoop:
                         arguments,
                         user_input=user_input,
                         context={"browser_snapshot": browser_snapshot},
+                        tool_metadata=self._tool_runtime_metadata(name),
                     )
                     if arguments is not None and decode_error is None
                     else None
                 )
-                trace_metadata = {"model_tool_call_id": tool_call.id}
+                trace_metadata = {
+                    "model_tool_call_id": tool_call.id,
+                    **self._tool_runtime_metadata(name),
+                }
                 if policy:
                     trace_metadata.update(self._policy_metadata(policy))
                 tool_trace = (

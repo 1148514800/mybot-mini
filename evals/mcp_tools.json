@@ -1,0 +1,264 @@
+[
+  {
+    "id": "mcp_001",
+    "name": "Allow trusted read-only MCP tool",
+    "input": "使用外部搜索查询文档",
+    "expected_tools": ["mcp__demo__search"],
+    "expected_policy_decisions": ["allow"],
+    "expected_risk_levels": ["read"],
+    "expected_tool_executions": 1,
+    "expected_trace_metadata": {
+      "tool_source": ["mcp"],
+      "mcp_server": ["demo"],
+      "mcp_tool_name": ["search"]
+    },
+    "must_contain": ["搜索完成"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__search",
+          "arguments": {"query": "docs"},
+          "output": "result",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "search",
+            "local_tool_name": "mcp__demo__search",
+            "transport": "stdio",
+            "protocol_version": "sdk-negotiated",
+            "trust_annotations": true,
+            "read_only_hint": true
+          }
+        }
+      ],
+      "fake_output": "外部搜索完成。"
+    }
+  },
+  {
+    "id": "mcp_002",
+    "name": "Confirm untrusted MCP tool despite read-only hint",
+    "input": "调用不可信外部搜索",
+    "expected_tools": ["mcp__demo__search"],
+    "expected_status": "awaiting_confirmation",
+    "expected_policy_decisions": ["require_confirmation"],
+    "expected_risk_levels": ["sensitive"],
+    "expected_approval_statuses": ["pending"],
+    "expected_tool_executions": 0,
+    "must_contain": ["回复“确认”"],
+    "max_steps": 2,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__search",
+          "arguments": {"query": "docs"},
+          "output": "must not run",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "search",
+            "local_tool_name": "mcp__demo__search",
+            "transport": "stdio",
+            "trust_annotations": false,
+            "read_only_hint": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "mcp_003",
+    "name": "Confirm destructive MCP tool",
+    "input": "调用外部删除工具",
+    "expected_tools": ["mcp__demo__delete_item"],
+    "expected_status": "awaiting_confirmation",
+    "expected_policy_decisions": ["require_confirmation"],
+    "expected_risk_levels": ["destructive"],
+    "expected_tool_executions": 0,
+    "max_steps": 2,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__delete_item",
+          "arguments": {"id": "1"},
+          "output": "must not run",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "delete_item",
+            "local_tool_name": "mcp__demo__delete_item",
+            "transport": "streamable_http",
+            "trust_annotations": false,
+            "destructive_hint": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "mcp_004",
+    "name": "Block MCP tool by explicit override",
+    "input": "调用被本地策略禁止的外部工具",
+    "expected_tools": ["mcp__demo__delete_all"],
+    "expected_policy_decisions": ["block"],
+    "expected_tool_executions": 0,
+    "must_contain": ["Policy"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__delete_all",
+          "arguments": {},
+          "output": "must not run",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "delete_all",
+            "local_tool_name": "mcp__demo__delete_all",
+            "transport": "stdio",
+            "trust_annotations": true,
+            "read_only_hint": true,
+            "mcp_policy_override": "block"
+          }
+        }
+      ],
+      "fake_output": "外部工具已被本地 Policy 阻止。"
+    }
+  },
+  {
+    "id": "mcp_005",
+    "name": "Approve exact MCP write once",
+    "input": "创建一个外部条目",
+    "follow_up_inputs": ["确认"],
+    "expected_tools": ["mcp__demo__create_item"],
+    "expected_policy_decisions": ["require_confirmation"],
+    "expected_approval_statuses": ["pending", "approved"],
+    "expected_tool_executions": 1,
+    "expected_trace_metadata": {
+      "tool_source": ["mcp"],
+      "mcp_tool_name": ["create_item"]
+    },
+    "must_contain": ["创建完成"],
+    "max_steps": 4,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__create_item",
+          "arguments": {"title": "exact"},
+          "output": "created",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "create_item",
+            "local_tool_name": "mcp__demo__create_item",
+            "transport": "stdio",
+            "protocol_version": "sdk-negotiated",
+            "trust_annotations": false
+          }
+        }
+      ],
+      "fake_output": "外部条目创建完成。"
+    }
+  },
+  {
+    "id": "mcp_006",
+    "name": "Reject MCP write without execution",
+    "input": "创建一个外部条目",
+    "follow_up_inputs": ["取消"],
+    "expected_tools": ["mcp__demo__create_item"],
+    "expected_status": "cancelled",
+    "expected_policy_decisions": ["require_confirmation"],
+    "expected_approval_statuses": ["pending"],
+    "expected_tool_executions": 0,
+    "must_contain": ["没有执行"],
+    "max_steps": 2,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__create_item",
+          "arguments": {"title": "reject"},
+          "output": "must not run",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "create_item",
+            "local_tool_name": "mcp__demo__create_item",
+            "transport": "stdio",
+            "trust_annotations": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "mcp_007",
+    "name": "Call namespaced MCP tool",
+    "input": "调用 demo 的 search 工具",
+    "expected_tools": ["mcp__demo__search"],
+    "expected_policy_decisions": ["allow"],
+    "expected_tool_executions": 1,
+    "expected_trace_metadata": {
+      "mcp_tool_name": ["search"],
+      "local_tool_name": ["mcp__demo__search"]
+    },
+    "must_contain": ["命名空间映射成功"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__search",
+          "arguments": {"query": "x"},
+          "output": "mapped",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "search",
+            "local_tool_name": "mcp__demo__search",
+            "transport": "stdio",
+            "trust_annotations": false,
+            "mcp_policy_override": "allow"
+          }
+        }
+      ],
+      "fake_output": "MCP 命名空间映射成功。"
+    }
+  },
+  {
+    "id": "mcp_008",
+    "name": "MCP tool failure does not crash AgentLoop",
+    "input": "读取外部服务状态",
+    "expected_tools": ["mcp__demo__status"],
+    "expected_policy_decisions": ["allow"],
+    "expected_tool_executions": 1,
+    "must_contain": ["失败已处理"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "mcp_tools",
+      "fake_tools": [
+        {
+          "name": "mcp__demo__status",
+          "arguments": {},
+          "success": false,
+          "error": "external service unavailable",
+          "runtime_metadata": {
+            "tool_source": "mcp",
+            "mcp_server": "demo",
+            "mcp_tool_name": "status",
+            "local_tool_name": "mcp__demo__status",
+            "transport": "streamable_http",
+            "trust_annotations": true,
+            "read_only_hint": true
+          }
+        }
+      ],
+      "fake_output": "外部服务失败已处理，AgentLoop 仍正常结束。"
+    }
+  }
+]

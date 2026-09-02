@@ -73,9 +73,14 @@ class ToolPolicy:
         *,
         user_input: str = "",
         context: Any = None,
+        tool_metadata: dict[str, Any] | None = None,
     ) -> PolicyResult:
         del user_input  # Explicitly not trusted as a model-provided safety flag.
         name = tool_name.strip().lower()
+        metadata = tool_metadata or {}
+
+        if metadata.get("tool_source") == "mcp":
+            return self._evaluate_mcp(metadata)
 
         if name in {"read_file", "browser_snapshot", "browser_links"}:
             return self._allow(RiskLevel.READ, "read_only_tool", "Read-only tool")
@@ -175,6 +180,56 @@ class ToolPolicy:
             RiskLevel.SENSITIVE,
             "unknown_tool",
             "This tool has no explicit runtime policy rule",
+        )
+
+    def _evaluate_mcp(self, metadata: dict[str, Any]) -> PolicyResult:
+        destructive = metadata.get("destructive_hint") is True
+        read_only = metadata.get("read_only_hint") is True
+        risk = (
+            RiskLevel.DESTRUCTIVE
+            if destructive
+            else RiskLevel.READ
+            if read_only
+            else RiskLevel.SENSITIVE
+        )
+        override = str(metadata.get("mcp_policy_override", "")).lower()
+        if override == "allow":
+            return PolicyResult(
+                PolicyDecision.ALLOW,
+                risk,
+                "MCP tool is allowed by an explicit local policy override",
+                "mcp_explicit_override",
+            )
+        if override == "confirm":
+            return self._confirm(
+                risk,
+                "mcp_explicit_override",
+                "MCP tool requires confirmation by explicit local policy override",
+            )
+        if override == "block":
+            return PolicyResult(
+                PolicyDecision.BLOCK,
+                risk,
+                "MCP tool is blocked by an explicit local policy override",
+                "mcp_explicit_override",
+            )
+
+        if destructive:
+            return self._confirm(
+                RiskLevel.DESTRUCTIVE,
+                "mcp_destructive_hint",
+                "External MCP tool declares a destructive action",
+            )
+        if metadata.get("trust_annotations") is True and read_only:
+            return self._allow(
+                RiskLevel.READ,
+                "mcp_trusted_read_only",
+                "Trusted MCP annotations declare this tool read-only",
+            )
+        return self._confirm(
+            RiskLevel.SENSITIVE,
+            "mcp_external_default",
+            "External MCP tools require confirmation unless locally allowed",
         )
 
     def _evaluate_exec(self, command: str) -> PolicyResult:

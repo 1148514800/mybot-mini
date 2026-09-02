@@ -157,6 +157,14 @@ class EvalRunner:
                 or getattr(self.agent.tools, "execution_count", None)
                 == case.expected_tool_executions
             ),
+            "trace_metadata": all(
+                assert_trace_metadata_values(
+                    combined_trace,
+                    key,
+                    expected,
+                )
+                for key, expected in case.expected_trace_metadata.items()
+            ),
         }
         check_errors = self._check_errors(
             case,
@@ -225,6 +233,11 @@ class EvalRunner:
             errors["tool_executions"] = (
                 f"tool executed {getattr(self.agent.tools, 'execution_count', None)} "
                 f"time(s); expected {case.expected_tool_executions}"
+            )
+        if not checks["trace_metadata"]:
+            errors["trace_metadata"] = (
+                "missing expected ToolCallTrace metadata: "
+                f"{case.expected_trace_metadata}"
             )
         return errors
 

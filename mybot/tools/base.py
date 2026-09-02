@@ -22,6 +22,11 @@ class Tool(ABC):
     @abstractmethod
     async def execute(self, **kwargs) -> ToolResult | str: ...
 
+    @property
+    def runtime_metadata(self) -> dict[str, Any]:
+        """Safe runtime provenance used by policy and tracing."""
+        return {}
+
     def to_schema(self) -> dict:
         return {
             "type": "function",
