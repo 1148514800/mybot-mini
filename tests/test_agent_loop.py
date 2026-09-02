@@ -33,8 +33,14 @@ class FakeCompletions:
     def __init__(self, responses: list[SimpleNamespace]):
         self._responses = iter(responses)
 
-    def create(self, **kwargs) -> SimpleNamespace:
+    async def create(self, **kwargs) -> SimpleNamespace:
         return next(self._responses)
+
+
+class SlowCompletions:
+    async def create(self, **kwargs) -> SimpleNamespace:
+        await asyncio.sleep(60)
+        raise AssertionError("unreachable")
 
 
 class AgentLoopTests(unittest.TestCase):
@@ -47,6 +53,7 @@ class AgentLoopTests(unittest.TestCase):
             max_completion_tokens=100,
             max_react_steps=200000,
             rate_limit_retries=20000,
+            request_timeout_seconds=60,
             show_internal_process=False,
         )
         tools = SimpleNamespace(
@@ -129,6 +136,24 @@ class AgentLoopTests(unittest.TestCase):
 
         self.assertEqual(loop._effective_react_steps(), 30)
         self.assertEqual(loop._effective_rate_limit_retries(), 10)
+
+    def test_llm_timeout_returns_stable_error_and_finishes_trace(self) -> None:
+        loop = self.build_loop([])
+        loop.client.chat.completions = SlowCompletions()
+        loop.config.request_timeout_seconds = 0.01
+
+        output, trace = asyncio.run(
+            loop.run_traced(
+                "hello",
+                [{"role": "user", "content": "hello"}],
+            )
+        )
+
+        self.assertEqual(output, "LLM request timeout after 0.01s")
+        self.assertEqual(trace.status, "failed")
+        self.assertEqual(trace.error, output)
+        self.assertEqual(trace.steps[0].status, "failed")
+        self.assertEqual(trace.llm_calls[0].error, output)
 
     def test_third_consecutive_identical_tool_call_is_blocked(self) -> None:
         final_message = SimpleNamespace(content="done", tool_calls=None)

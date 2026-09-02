@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from types import SimpleNamespace
 
-from openai import OpenAI
+from openai import APITimeoutError, AsyncOpenAI
 
 from ..core.config import GatewayConfig
 from ..guardrails import (
@@ -35,6 +35,7 @@ MAX_REACT_STEPS_HARD_LIMIT = 30
 MAX_RATE_LIMIT_RETRIES_HARD_LIMIT = 10
 MAX_CONSECUTIVE_IDENTICAL_TOOL_CALLS = 2
 MAX_EMPTY_MODEL_RESPONSES = 2
+DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS = 60.0
 
 _BROWSER_SESSION_BY_MODE = {
     BROWSER_MODE_LOCAL: LOCAL_BROWSER_SESSION,
@@ -45,7 +46,7 @@ _BROWSER_SESSION_BY_MODE = {
 class AgentLoop:
     def __init__(
         self,
-        client: OpenAI,
+        client: AsyncOpenAI,
         config: GatewayConfig,
         bus: MessageBus,
         tools: ToolRegistry,
@@ -91,6 +92,22 @@ class AgentLoop:
                 MAX_RATE_LIMIT_RETRIES_HARD_LIMIT,
             ),
         )
+
+    def _effective_request_timeout_seconds(self) -> float:
+        raw_timeout = getattr(
+            self.config,
+            "request_timeout_seconds",
+            DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS,
+        )
+        try:
+            timeout = float(raw_timeout)
+        except (TypeError, ValueError):
+            timeout = DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS
+        return timeout if timeout > 0 else DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS
+
+    @staticmethod
+    def _timeout_error(timeout_seconds: float) -> str:
+        return f"LLM request timeout after {timeout_seconds:g}s"
 
     def _tool_call_signature(self, tool_call) -> str:
         name = tool_call.function.name
@@ -704,6 +721,7 @@ class AgentLoop:
         last_tool_signature = ""
         identical_tool_call_count = 0
         tool_definitions = self._tool_definitions_for_browser_mode(browser_mode)
+        request_timeout = self._effective_request_timeout_seconds()
         for step in range(react_step_limit):
             step_index = step + 1 + step_index_offset
             self._trace(f"model step={step_index}")
@@ -724,13 +742,23 @@ class AgentLoop:
                 else None
             )
             try:
-                response = self.client.chat.completions.create(
-                    model=self.config.model,
-                    messages=messages,
-                    tools=tool_definitions or None,
-                    temperature=0.1,
-                    max_tokens=self.config.max_completion_tokens,
+                response = await asyncio.wait_for(
+                    self.client.chat.completions.create(
+                        model=self.config.model,
+                        messages=messages,
+                        tools=tool_definitions or None,
+                        temperature=0.1,
+                        max_tokens=self.config.max_completion_tokens,
+                    ),
+                    timeout=request_timeout,
                 )
+            except (TimeoutError, APITimeoutError):
+                error = self._timeout_error(request_timeout)
+                if llm_trace:
+                    self.tracer.finish_llm_call(llm_trace, error=error)
+                if step_trace:
+                    self.tracer.finish_step(status="failed", error=error)
+                return error, "failed", error
             except Exception as exc:
                 error = f"{type(exc).__name__}: {exc}"
                 if llm_trace:

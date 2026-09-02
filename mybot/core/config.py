@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from ..mcp.config import MCPConfig
 
@@ -210,6 +210,16 @@ class GatewayConfig:
         )
     )
 
+    request_timeout_seconds: float = field(
+        default_factory=lambda: float(
+            _config_value(
+                _LLM_CONFIG or _ACTIVE_LLM_CONFIG,
+                "request_timeout_seconds",
+                60,
+            )
+        )
+    )
+
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
             _DEBUG_CONFIG,
@@ -226,19 +236,32 @@ class GatewayConfig:
         default_factory=lambda: MCPConfig.from_dict(_MCP_CONFIG)
     )
 
+    def __post_init__(self) -> None:
+        try:
+            self.request_timeout_seconds = float(self.request_timeout_seconds)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "llm.request_timeout_seconds must be a positive number"
+            ) from exc
+        if self.request_timeout_seconds <= 0:
+            raise ValueError(
+                "llm.request_timeout_seconds must be greater than 0"
+            )
 
-def build_client(config: GatewayConfig) -> OpenAI:
+
+def build_client(config: GatewayConfig) -> AsyncOpenAI:
     if not config.api_key:
         raise RuntimeError(
             f"Missing api_key for llm.provider='{config.provider}'. "
             f"Add it to {CONFIG_FILE}."
         )
 
-    client_kwargs: dict[str, str] = {
-        "api_key": config.api_key
+    client_kwargs: dict[str, object] = {
+        "api_key": config.api_key,
+        "timeout": config.request_timeout_seconds,
     }
 
     if config.base_url:
         client_kwargs["base_url"] = config.base_url
 
-    return OpenAI(**client_kwargs)
+    return AsyncOpenAI(**client_kwargs)

@@ -25,7 +25,7 @@ class FakeCompletions:
         )
         self._index = 0
 
-    def create(self, **kwargs) -> SimpleNamespace:
+    async def create(self, **kwargs) -> SimpleNamespace:
         usage = SimpleNamespace(
             prompt_tokens=10,
             completion_tokens=5,
@@ -154,6 +154,7 @@ def build_fake_agent(case: EvalCase) -> AgentLoop:
         max_completion_tokens=100,
         max_react_steps=configured_steps,
         rate_limit_retries=0,
+        request_timeout_seconds=60,
         show_internal_process=False,
     )
     client = SimpleNamespace(

@@ -15,6 +15,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
+- 使用 `AsyncOpenAI` 发起非阻塞模型请求，并提供默认 60 秒总超时
 
 ## 快速开始（Windows）
 
@@ -250,6 +251,7 @@ config/
 | `llm.providers.*.base_url` | OpenAI 兼容接口地址 |
 | `llm.providers.*.model` | 模型名称 |
 | `llm.max_completion_tokens` | 单次回复的最大 token 数 |
+| `llm.request_timeout_seconds` | 单次模型请求的总超时秒数，默认 `60`；超时不会阻塞其他异步通道 |
 | `llm.max_react_steps` | 一次请求最多执行多少轮 Agent/工具循环；程序硬上限为 30 |
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
 | `feishu.enabled` | 是否启用飞书通道 |
@@ -481,7 +483,7 @@ playwright-cli --version
 
 ### `429`、`TPM limit reached` 或请求超时
 
-这是模型服务的限流或额度问题，不是本项目安装失败。检查 API 额度、模型名称和服务商限制；也可以适当降低请求频率或调整 `llm.rate_limit_retries`。
+这是模型服务的限流、额度或响应速度问题，不是项目安装失败。模型请求默认在 60 秒后以 `LLM request timeout after 60s` 结束，不会无限等待。检查 API 额度、模型名称和服务商限制；也可以按需调整 `llm.request_timeout_seconds` 或 `llm.rate_limit_retries`。
 
 ## 重新安装环境
 

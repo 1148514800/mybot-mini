@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+from openai import AsyncOpenAI
+
 from ..agent import AgentLoop, ContextBuilder
 from ..messaging import CLIChannel, FeishuChannel, BaseChannel, MessageBus, route_outbound
 from ..mcp import MCPClientManager
@@ -33,6 +35,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
 
     channels: dict[str, BaseChannel] = {}
     tasks: list[asyncio.Task] = []
+    llm_client: AsyncOpenAI | None = None
 
     try:
         context = ContextBuilder(
@@ -41,8 +44,9 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
         )
         sessions = SessionManager(config.workspace)
         tracer = AgentTracer(trace_dir=config.trace_dir)
+        llm_client = build_client(config)
         agent = AgentLoop(
-            client=build_client(config),
+            client=llm_client,
             config=config,
             bus=bus,
             tools=tools,
@@ -99,5 +103,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
                     task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
         finally:
+            if llm_client is not None:
+                await llm_client.close()
             await mcp_manager.close()
             print("Gateway stopped.")

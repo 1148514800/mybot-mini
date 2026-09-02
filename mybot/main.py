@@ -57,13 +57,27 @@ Instructions Skills Memory           │
 from __future__ import annotations
 
 import asyncio
-# from pathlib import Path
-# import sys
+from pathlib import Path
+import sys
 
-# if __package__ in {None, ""}:
-#     repo_root = Path(__file__).resolve().parent.parent
-#     if str(repo_root) not in sys.path:
-#         sys.path.insert(0, str(repo_root))
+if __package__ in {None, ""}:
+    # Running ``python mybot/main.py`` puts ``mybot/`` at sys.path[0].  That
+    # makes the internal ``mybot/mcp`` package shadow the third-party ``mcp``
+    # SDK.  Remove the package directory as a top-level import root and import
+    # the application through the repository root instead.
+    package_dir = Path(__file__).resolve().parent
+    repo_root = package_dir.parent
+    cleaned_path: list[str] = []
+    for entry in sys.path:
+        try:
+            resolved = Path(entry or ".").resolve()
+        except (OSError, RuntimeError):
+            cleaned_path.append(entry)
+            continue
+        if resolved in {package_dir, repo_root}:
+            continue
+        cleaned_path.append(entry)
+    sys.path[:] = [str(repo_root), *cleaned_path]
 
 from mybot import run_gateway
 
