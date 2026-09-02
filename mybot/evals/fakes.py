@@ -13,6 +13,12 @@ from .models import EvalCase
 class FakeCompletions:
     def __init__(self, case: EvalCase):
         self._tools = list(case.metadata.get("fake_tools", []))
+        configured_batches = case.metadata.get("fake_tool_batches")
+        self._tool_batches = (
+            [list(batch) for batch in configured_batches]
+            if configured_batches is not None
+            else [[tool] for tool in self._tools]
+        )
         self._final_output = str(case.metadata.get("fake_output", "done"))
         self._empty_responses = int(
             case.metadata.get("fake_empty_responses", 0)
@@ -37,19 +43,22 @@ class FakeCompletions:
 
         tool_index = self._index - self._empty_responses
         self._index += 1
-        if tool_index < len(self._tools):
-            tool = self._tools[tool_index]
-            tool_call = SimpleNamespace(
-                id=f"fake_call_{tool_index + 1:03d}",
-                function=SimpleNamespace(
-                    name=str(tool["name"]),
-                    arguments=json.dumps(
-                        tool.get("arguments", {}),
-                        ensure_ascii=False,
+        if tool_index < len(self._tool_batches):
+            batch = self._tool_batches[tool_index]
+            tool_calls = [
+                SimpleNamespace(
+                    id=f"fake_call_{tool_index + 1:03d}_{index + 1:02d}",
+                    function=SimpleNamespace(
+                        name=str(tool["name"]),
+                        arguments=json.dumps(
+                            tool.get("arguments", {}),
+                            ensure_ascii=False,
+                        ),
                     ),
-                ),
-            )
-            message = SimpleNamespace(content=None, tool_calls=[tool_call])
+                )
+                for index, tool in enumerate(batch)
+            ]
+            message = SimpleNamespace(content=None, tool_calls=tool_calls)
             return SimpleNamespace(
                 choices=[
                     SimpleNamespace(
@@ -71,6 +80,11 @@ class FakeToolRegistry:
     def __init__(self, tool_script: list[dict[str, Any]]):
         self._script = tool_script
         self._execute_index = 0
+        self.executed_calls: list[tuple[str, dict[str, Any]]] = []
+
+    @property
+    def execution_count(self) -> int:
+        return self._execute_index
 
     def get_definitions(self) -> list[dict]:
         names = list(dict.fromkeys(str(tool["name"]) for tool in self._script))
@@ -91,6 +105,7 @@ class FakeToolRegistry:
             return ToolResult(success=False, error="fake tool script exhausted")
         scripted = self._script[self._execute_index]
         self._execute_index += 1
+        self.executed_calls.append((name, dict(params)))
         if str(scripted["name"]) != name:
             return ToolResult(
                 success=False,

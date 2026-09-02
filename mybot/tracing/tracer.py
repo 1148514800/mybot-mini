@@ -46,7 +46,9 @@ def _redact_value(value: Any) -> Any:
         return redact_mapping(value)
     if isinstance(value, (list, tuple)):
         return [_redact_value(item) for item in value]
-    if value is None or isinstance(value, (bool, int, float, str)):
+    if isinstance(value, str):
+        return redact_text(value)
+    if value is None or isinstance(value, (bool, int, float)):
         return value
     return str(value)
 

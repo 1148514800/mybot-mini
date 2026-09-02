@@ -1,0 +1,107 @@
+from __future__ import annotations
+
+import copy
+import uuid
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
+
+from .models import PendingApproval, PolicyResult
+
+
+class ApprovalIntent(str, Enum):
+    APPROVE = "approve"
+    REJECT = "reject"
+    UNKNOWN = "unknown"
+
+
+APPROVAL_INPUTS = frozenset(
+    {"确认", "继续", "同意", "执行", "yes", "y", "approve"}
+)
+REJECTION_INPUTS = frozenset(
+    {"取消", "拒绝", "不要执行", "停止", "no", "n", "deny"}
+)
+
+
+def classify_approval_intent(value: str) -> ApprovalIntent:
+    normalized = value.strip().lower().rstrip("。.!！")
+    if normalized in APPROVAL_INPUTS:
+        return ApprovalIntent.APPROVE
+    if normalized in REJECTION_INPUTS:
+        return ApprovalIntent.REJECT
+    return ApprovalIntent.UNKNOWN
+
+
+class ApprovalManager:
+    """In-memory, session-scoped, single-use pending approval storage."""
+
+    def __init__(self) -> None:
+        self._pending: dict[str, PendingApproval] = {}
+
+    def create(
+        self,
+        *,
+        session_key: str,
+        tool_name: str,
+        arguments: dict[str, Any],
+        policy: PolicyResult,
+        origin_run_id: str | None = None,
+        browser_mode: str | None = None,
+        model_tool_call_id: str | None = None,
+        messages: list[dict[str, Any]] | None = None,
+        remaining_tool_calls: list[dict[str, Any]] | None = None,
+        browser_snapshot: str = "",
+    ) -> PendingApproval:
+        pending = PendingApproval(
+            approval_id=uuid.uuid4().hex,
+            session_key=session_key,
+            tool_name=tool_name,
+            arguments=copy.deepcopy(arguments),
+            risk_level=policy.risk_level,
+            reason=policy.reason,
+            created_at=datetime.now(UTC).isoformat(),
+            origin_run_id=origin_run_id,
+            browser_mode=browser_mode,
+            model_tool_call_id=model_tool_call_id,
+            policy_rule=policy.rule,
+            messages=copy.deepcopy(messages or []),
+            remaining_tool_calls=copy.deepcopy(remaining_tool_calls or []),
+            browser_snapshot=browser_snapshot,
+        )
+        self._pending[session_key] = pending
+        return pending
+
+    def get(self, session_key: str) -> PendingApproval | None:
+        return self._pending.get(session_key)
+
+    def approve(
+        self,
+        session_key: str,
+        approval_id: str | None = None,
+    ) -> PendingApproval | None:
+        return self._consume(session_key, approval_id, "approved")
+
+    def reject(
+        self,
+        session_key: str,
+        approval_id: str | None = None,
+    ) -> PendingApproval | None:
+        return self._consume(session_key, approval_id, "rejected")
+
+    def clear(self, session_key: str) -> PendingApproval | None:
+        return self._pending.pop(session_key, None)
+
+    def _consume(
+        self,
+        session_key: str,
+        approval_id: str | None,
+        status: str,
+    ) -> PendingApproval | None:
+        pending = self._pending.get(session_key)
+        if pending is None:
+            return None
+        if approval_id is not None and pending.approval_id != approval_id:
+            return None
+        self._pending.pop(session_key, None)
+        pending.status = status
+        return pending

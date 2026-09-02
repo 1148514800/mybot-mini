@@ -53,12 +53,12 @@ class EvalRunnerTests(unittest.TestCase):
         self.assertIn("Failed:       1", report)
         self.assertIn("fake-1", report)
 
-    def test_project_eval_suite_contains_twelve_offline_cases(self) -> None:
+    def test_project_eval_suite_contains_phase_three_offline_cases(self) -> None:
         eval_dir = Path(__file__).resolve().parents[1] / "evals"
         cases = load_eval_suite(eval_dir)
 
-        self.assertEqual(len(cases), 12)
-        self.assertTrue(all("fake_output" in case.metadata for case in cases))
+        self.assertEqual(len(cases), 22)
+        self.assertTrue(all("fake_tools" in case.metadata for case in cases))
 
 
 if __name__ == "__main__":

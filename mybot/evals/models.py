@@ -14,6 +14,13 @@ class EvalCase:
     must_contain: list[str] = field(default_factory=list)
     must_not_contain: list[str] = field(default_factory=list)
     max_steps: int | None = None
+    follow_up_inputs: list[str] = field(default_factory=list)
+    follow_up_session_keys: list[str] = field(default_factory=list)
+    expected_status: str = "success"
+    expected_policy_decisions: list[str] = field(default_factory=list)
+    expected_risk_levels: list[str] = field(default_factory=list)
+    expected_approval_statuses: list[str] = field(default_factory=list)
+    expected_tool_executions: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -27,6 +34,19 @@ class EvalCase:
             must_contain=list(data.get("must_contain", [])),
             must_not_contain=list(data.get("must_not_contain", [])),
             max_steps=data.get("max_steps"),
+            follow_up_inputs=list(data.get("follow_up_inputs", [])),
+            follow_up_session_keys=list(
+                data.get("follow_up_session_keys", [])
+            ),
+            expected_status=str(data.get("expected_status", "success")),
+            expected_policy_decisions=list(
+                data.get("expected_policy_decisions", [])
+            ),
+            expected_risk_levels=list(data.get("expected_risk_levels", [])),
+            expected_approval_statuses=list(
+                data.get("expected_approval_statuses", [])
+            ),
+            expected_tool_executions=data.get("expected_tool_executions"),
             metadata=dict(data.get("metadata", {})),
         )
 

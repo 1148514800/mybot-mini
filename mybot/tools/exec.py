@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from .base import Tool
+from .result import ToolResult
 
 
 class ExecTool(Tool):
@@ -24,20 +25,19 @@ class ExecTool(Tool):
             "required": ["command"],
         }
 
-    async def execute(self, command: str, **kwargs) -> str:
+    async def execute(self, command: str, **kwargs) -> ToolResult:
         normalized_command = command.lower()
         if (
             "playwright-cli" in normalized_command
             or "@playwright/cli" in normalized_command
         ):
-            return (
-                "Error: Browser CLI commands are blocked in exec. Use the "
-                "browser_* tools, which enforce approved browser profiles."
+            return ToolResult(
+                success=False,
+                error=(
+                    "Browser CLI commands are blocked in exec. Use the "
+                    "browser_* tools, which enforce approved browser profiles."
+                ),
             )
-
-        for bad in ["rm -rf", "mkfs", "dd if=", "shutdown"]:
-            if bad in normalized_command:
-                return f"Error: Blocked ({bad})"
 
         proc = None
         try:
@@ -52,12 +52,28 @@ class ExecTool(Tool):
                 result += f"\nSTDERR:\n{err.decode(errors='replace')}"
             result = result or "(no output)"
             if proc.returncode:
-                return f"Error: command exited with code {proc.returncode}\n{result}"[:10000]
-            return result[:10000]
+                return ToolResult(
+                    success=False,
+                    error=(
+                        f"command exited with code {proc.returncode}\n{result}"
+                    )[:10000],
+                    metadata={"returncode": proc.returncode},
+                )
+            return ToolResult(
+                success=True,
+                output=result[:10000],
+                metadata={"returncode": proc.returncode},
+            )
         except asyncio.TimeoutError:
             if proc is not None and proc.returncode is None:
                 proc.kill()
                 await proc.communicate()
-            return "Error: command timed out after 30 seconds."
+            return ToolResult(
+                success=False,
+                error="command timed out after 30 seconds.",
+            )
         except Exception as exc:
-            return f"Error: {exc}"
+            return ToolResult(
+                success=False,
+                error=f"{type(exc).__name__}: {exc}",
+            )

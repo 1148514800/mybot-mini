@@ -39,6 +39,19 @@ def replay_trace(trace: AgentRunTrace) -> str:
             )
             if call.error:
                 lines.append(f"error={call.error}")
+            policy_fields = [
+                f"{key}={call.metadata[key]}"
+                for key in (
+                    "risk_level",
+                    "policy_decision",
+                    "policy_rule",
+                    "approval_id",
+                    "approval_status",
+                )
+                if key in call.metadata
+            ]
+            if policy_fields:
+                lines.append("policy " + " ".join(policy_fields))
     return "\n".join(lines)
 
 

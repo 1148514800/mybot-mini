@@ -33,3 +33,16 @@ def assert_must_not_contain(output: str, forbidden: list[str]) -> bool:
 
 def assert_max_steps(trace: AgentRunTrace, max_steps: int | None) -> bool:
     return max_steps is None or len(trace.steps) <= max_steps
+
+
+def assert_trace_metadata_values(
+    trace: AgentRunTrace,
+    key: str,
+    expected: list[str],
+) -> bool:
+    observed = {
+        str(call.metadata[key])
+        for call in trace.tool_calls
+        if key in call.metadata
+    }
+    return all(value in observed for value in expected)

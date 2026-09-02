@@ -10,6 +10,8 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 可选的飞书机器人通道
 - 基于 `playwright-cli` 的浏览器操作
 - 持久化会话和长期记忆
+- 确定性的 Tool Policy、风险分级和 Human-in-the-loop 审批
+- 跨 CLI / 飞书消息的 Pause / Resume
 - 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
 
@@ -265,6 +267,7 @@ config/
 mybot/
   main.py                 # 程序入口
   agent/                  # Agent 循环和上下文构建
+  guardrails/             # Tool Policy、风险模型和内存审批状态
   tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
   evals/                  # 确定性 Eval、FakeLLM runner 和文本报告
   core/                   # 配置和应用组装
@@ -305,9 +308,43 @@ secret 等字段会自动脱敏，Tool 输出预览最多保留 2000 字符。Tr
 uv run python -m mybot.evals.runner
 ```
 
-Eval 数据位于根目录 `evals/`，当前覆盖 Tool Selection、Browser Navigation 和
-Failure Recovery。Replay 只读取已有 Trace 并输出 timeline，不会再次调用模型或
-真实 Tool。
+Eval 数据位于根目录 `evals/`，当前覆盖 Tool Selection、Browser Navigation、
+Failure Recovery 和 Policy Guardrails。Replay 只读取已有 Trace 并输出 timeline，
+不会再次调用模型或真实 Tool。
+
+## Guardrails 与 Human-in-the-loop
+
+每个模型提出的 Tool Call 都会先完成参数解析和浏览器 session 归一化，再进入
+`ToolPolicy`。Policy 在 `ToolRegistry.execute()` 前给出独立的风险等级和执行决策：
+
+```text
+Proposed Tool Call
+        ↓
+    ToolPolicy
+        ↓
+ALLOW / REQUIRE_CONFIRMATION / BLOCK
+        ↓
+   ToolRegistry（仅 ALLOW 或已批准的 exact action）
+```
+
+- 自动执行：文件读取、页面读取与导航、普通点击、普通工作区文件写入、记忆写入，
+  以及 `python --version`、`git status` 等高置信度只读 Shell 查询。
+- 要求确认：`browser_eval`、长期记忆删除、敏感配置或 instruction 文件写入、删除/
+  移动/安装/提交等会改变状态的 Shell 命令，以及快照中明确标记为删除、付款、发布、
+  发送等高影响动作的浏览器点击。
+- 直接阻止：高置信度识别到的系统级破坏命令，例如删除文件系统根目录、格式化磁盘、
+  关机或重启。被阻止的调用不会进入 Tool Registry。
+
+需要确认时，本轮 Run 以 `awaiting_confirmation` 结束，CLI 或飞书会显示 Tool、风险、
+原因和 Approval ID。回复 `确认`、`继续`、`同意`、`执行`、`yes`、`y` 或 `approve`
+会批准当前会话中那个确切的 Tool 和参数，并且只执行一次；回复 `取消`、`拒绝`、
+`不要执行`、`停止`、`no`、`n` 或 `deny` 会取消它。其他回复会取消旧审批并作为新的
+正常任务处理。审批仅保存在内存中、按 `channel:chat_id` 隔离，程序重启后不会恢复。
+
+Policy 的 `risk_level`、`policy_decision`、`policy_rule`、`policy_reason`、`approval_id`
+和 `approval_status` 会写入现有 Tool Call Trace，并继续使用相同的敏感字段脱敏。
+Guardrails 是 Runtime Safety Layer 的第一版，不是完整 sandbox 或操作系统级安全边界；
+它只做少量高置信度、确定性、可测试的判断。
 
 ## 浏览器工具
 

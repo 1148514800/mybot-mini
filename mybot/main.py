@@ -1,4 +1,54 @@
-"""Compatibility entrypoint for the mini agent gateway."""
+"""
+                       User
+                         │
+               ┌─────────┴─────────┐
+               │                   │
+              CLI                Feishu
+               │                   │
+               └─────────┬─────────┘
+                         │
+                    MessageBus
+                         │
+                         ↓
+                    AgentLoop
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+        ContextBuilder              LLM
+             │                       │
+      ┌──────┼──────┐                │
+      │      │      │                │
+Instructions Skills Memory           │
+                                     ↓
+                                Tool Calling
+                                     │
+                               ToolRegistry
+                                     │
+              ┌──────────────┬───────┼────────────┐
+              ↓              ↓       ↓            ↓
+            File           Exec    Memory       Browser
+                                                │
+                                          playwright-cli
+                                                │
+                                               CDP
+                                                │
+                                             Chrome
+
+                     AgentLoop
+                         │
+                         ↓
+                      Tracer
+                         │
+          ┌──────────────┼───────────────┐
+          ↓              ↓               ↓
+        Run            Step         LLM / Tool Call
+          │
+          ↓
+     JSON / Replay
+          │
+          ↓
+        Evals
+"""
 
 from __future__ import annotations
 

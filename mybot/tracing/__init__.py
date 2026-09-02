@@ -12,7 +12,7 @@ from .serializer import (
     trace_to_dict,
     trace_to_json,
 )
-from .tracer import AgentTracer, redact_mapping, redact_text
+from .tracer import REDACTED, AgentTracer, redact_mapping, redact_text
 
 __all__ = [
     "AgentRunTrace",
@@ -20,6 +20,7 @@ __all__ = [
     "LLMCallTrace",
     "ToolCallTrace",
     "AgentTracer",
+    "REDACTED",
     "redact_mapping",
     "redact_text",
     "trace_to_dict",

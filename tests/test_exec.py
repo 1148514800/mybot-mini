@@ -10,12 +10,14 @@ class ExecToolTests(unittest.TestCase):
             ExecTool().execute("playwright-cli -s=test open https://example.com")
         )
 
-        self.assertIn("Browser CLI commands are blocked", result)
+        self.assertFalse(result.success)
+        self.assertIn("Browser CLI commands are blocked", result.error)
 
     def test_npm_playwright_cli_package_is_also_blocked(self) -> None:
         result = asyncio.run(ExecTool().execute("npx @playwright/cli open"))
 
-        self.assertIn("Browser CLI commands are blocked", result)
+        self.assertFalse(result.success)
+        self.assertIn("Browser CLI commands are blocked", result.error)
 
 
 if __name__ == "__main__":

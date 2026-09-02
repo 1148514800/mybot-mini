@@ -4,7 +4,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-RUN_STATUSES = frozenset({"running", "success", "failed", "max_steps"})
+RUN_STATUSES = frozenset(
+    {
+        "running",
+        "success",
+        "failed",
+        "max_steps",
+        "awaiting_confirmation",
+        "cancelled",
+    }
+)
 
 
 @dataclass(slots=True)

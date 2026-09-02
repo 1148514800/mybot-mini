@@ -4,6 +4,7 @@ import asyncio
 import json
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 from ..agent.context import ContextBuilder
 from ..agent.loop import AgentLoop
@@ -13,7 +14,9 @@ from .assertions import (
     assert_max_steps,
     assert_must_contain,
     assert_must_not_contain,
+    assert_trace_metadata_values,
 )
+from ..guardrails import ApprovalIntent, classify_approval_intent
 from .fakes import build_fake_agent
 from .models import EvalCase, EvalResult
 from .reporter import format_eval_report
@@ -47,12 +50,62 @@ class EvalRunner:
         started = time.perf_counter()
         messages = [{"role": "user", "content": case.input}]
         browser_mode = ContextBuilder.resolve_browser_mode(case.input)
+        session_key = f"eval:{case.id}"
+        traces = []
         try:
             output, trace = await self.agent.run_traced(
                 case.input,
                 messages,
                 browser_mode,
+                session_key=session_key,
             )
+            traces.append(trace)
+            for index, follow_up in enumerate(case.follow_up_inputs):
+                follow_session = (
+                    case.follow_up_session_keys[index]
+                    if index < len(case.follow_up_session_keys)
+                    else session_key
+                )
+                pending = self.agent.approvals.get(follow_session)
+                intent = classify_approval_intent(follow_up)
+                if pending and intent in {
+                    ApprovalIntent.APPROVE,
+                    ApprovalIntent.REJECT,
+                }:
+                    output, trace = await self.agent.resume_pending(
+                        follow_session,
+                        follow_up,
+                    )
+                elif pending:
+                    self.agent.approvals.reject(
+                        follow_session,
+                        pending.approval_id,
+                    )
+                    output, trace = await self.agent.run_traced(
+                        follow_up,
+                        [{"role": "user", "content": follow_up}],
+                        ContextBuilder.resolve_browser_mode(follow_up),
+                        session_key=follow_session,
+                        metadata={
+                            "cancelled_approval_id": pending.approval_id
+                        },
+                    )
+                elif intent in {
+                    ApprovalIntent.APPROVE,
+                    ApprovalIntent.REJECT,
+                }:
+                    output, trace = await self.agent.resume_pending(
+                        follow_session,
+                        follow_up,
+                    )
+                else:
+                    output, trace = await self.agent.run_traced(
+                        follow_up,
+                        [{"role": "user", "content": follow_up}],
+                        ContextBuilder.resolve_browser_mode(follow_up),
+                        session_key=follow_session,
+                    )
+                traces.append(trace)
         except Exception as exc:
             trace = self.agent.tracer.get_current_run()
             return EvalResult(
@@ -64,14 +117,18 @@ class EvalRunner:
                 error=f"{type(exc).__name__}: {exc}",
             )
 
+        combined_trace = SimpleNamespace(
+            tool_calls=[call for item in traces for call in item.tool_calls],
+            steps=[step for item in traces for step in item.steps],
+        )
         checks = {
-            "run_status": trace.status == "success",
+            "run_status": trace.status == case.expected_status,
             "expected_tools": assert_expected_tools(
-                trace,
+                combined_trace,
                 case.expected_tools,
             ),
             "forbidden_tools": assert_forbidden_tools(
-                trace,
+                combined_trace,
                 case.forbidden_tools,
             ),
             "must_contain": assert_must_contain(output, case.must_contain),
@@ -79,9 +136,35 @@ class EvalRunner:
                 output,
                 case.must_not_contain,
             ),
-            "max_steps": assert_max_steps(trace, case.max_steps),
+            "max_steps": assert_max_steps(combined_trace, case.max_steps),
+            "policy_decisions": assert_trace_metadata_values(
+                combined_trace,
+                "policy_decision",
+                case.expected_policy_decisions,
+            ),
+            "risk_levels": assert_trace_metadata_values(
+                combined_trace,
+                "risk_level",
+                case.expected_risk_levels,
+            ),
+            "approval_statuses": assert_trace_metadata_values(
+                combined_trace,
+                "approval_status",
+                case.expected_approval_statuses,
+            ),
+            "tool_executions": (
+                case.expected_tool_executions is None
+                or getattr(self.agent.tools, "execution_count", None)
+                == case.expected_tool_executions
+            ),
         }
-        check_errors = self._check_errors(case, trace, output, checks)
+        check_errors = self._check_errors(
+            case,
+            combined_trace,
+            trace,
+            output,
+            checks,
+        )
         return EvalResult(
             case_id=case.id,
             passed=all(checks.values()),
@@ -95,14 +178,18 @@ class EvalRunner:
     def _check_errors(
         self,
         case: EvalCase,
-        trace,
+        combined_trace,
+        final_trace,
         output: str,
         checks: dict[str, bool],
     ) -> dict[str, str]:
-        called = {call.tool_name for call in trace.tool_calls}
+        called = {call.tool_name for call in combined_trace.tool_calls}
         errors: dict[str, str] = {}
         if not checks["run_status"]:
-            errors["run_status"] = f"run ended with status {trace.status}"
+            errors["run_status"] = (
+                f"run ended with status {final_trace.status}; "
+                f"expected {case.expected_status}"
+            )
         if not checks["expected_tools"]:
             missing = [tool for tool in case.expected_tools if tool not in called]
             errors["expected_tools"] = (
@@ -125,7 +212,19 @@ class EvalRunner:
             )
         if not checks["max_steps"]:
             errors["max_steps"] = (
-                f"used {len(trace.steps)} steps, maximum is {case.max_steps}"
+                f"used {len(combined_trace.steps)} steps, maximum is {case.max_steps}"
+            )
+        for check, expected in (
+            ("policy_decisions", case.expected_policy_decisions),
+            ("risk_levels", case.expected_risk_levels),
+            ("approval_statuses", case.expected_approval_statuses),
+        ):
+            if not checks[check]:
+                errors[check] = f"missing expected trace values: {expected}"
+        if not checks["tool_executions"]:
+            errors["tool_executions"] = (
+                f"tool executed {getattr(self.agent.tools, 'execution_count', None)} "
+                f"time(s); expected {case.expected_tool_executions}"
             )
         return errors
 
