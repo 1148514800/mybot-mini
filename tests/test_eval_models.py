@@ -13,12 +13,16 @@ class EvalModelTests(unittest.TestCase):
                 "expected_tools": ["read_file"],
                 "must_contain": ["done"],
                 "max_steps": 3,
+                "expected_tool_call_counts": {"read_file": 1},
+                "expected_shared_task_id": True,
             }
         )
 
         self.assertEqual(case.expected_tools, ["read_file"])
         self.assertEqual(case.forbidden_tools, [])
         self.assertEqual(case.max_steps, 3)
+        self.assertEqual(case.expected_tool_call_counts, {"read_file": 1})
+        self.assertTrue(case.expected_shared_task_id)
 
     def test_eval_result_stores_checks_and_run_identity(self) -> None:
         result = EvalResult(

@@ -36,7 +36,7 @@ browser/
   session.py        # 显式管理活动 session，由全部浏览器工具共享
   connection.py     # 连接本地 Chrome
   navigation.py     # 持久化浏览器、页面跳转、标签页和 session 关闭
-  interaction.py    # 快照、点击、输入、按键、链接提取和 JS
+  interaction.py    # 快照、结构化 DOM 查询、点击、输入、链接提取和 JS
 ```
 
 工具由 `mybot/tools/registry.py` 注册，并通过 OpenAI function calling schema
@@ -51,6 +51,7 @@ browser/
 | `browser_goto` | 在当前标签页跳转 | `url` |
 | `browser_tab` | 列出、新建、选择或关闭标签页 | `action`、`index`、`url` |
 | `browser_snapshot` | 获取带元素 ref 的可访问性快照 | `target`、`depth` |
+| `browser_inspect` | 通过固定实现查询 DOM，不接受调用者 JavaScript | `selector`、`text`、`role`、`placeholder`、`limit` |
 | `browser_links` | 按视觉顺序列出并去重可见链接 | `target`、`url_contains`、`limit` |
 | `browser_click` | 单击或双击元素 | `target`、`double` |
 | `browser_type` | 输入或填充文本 | `text`、`target`、`submit` |
@@ -132,6 +133,25 @@ browser/
 结果中的 `position` 从 1 开始。取得第 N 项的 URL 后，直接调用
 `browser_goto`，不要先点击同一结果再跳转一次。
 
+### 结构化 DOM 查询
+
+查找普通文本、输入框、按钮和属性时使用 `browser_inspect`，不要直接构造
+`browser_eval` JavaScript：
+
+```json
+{
+  "name": "browser_inspect",
+  "arguments": {
+    "role": "textbox",
+    "placeholder": "发送消息",
+    "limit": 10
+  }
+}
+```
+
+Tool 内部运行固定的只读查询并返回匹配元素的 role、文本、placeholder、href 和
+可复用 target。调用者只能提供结构化过滤值，不能提供脚本。
+
 ## 快照和输出限制
 
 - `browser_snapshot.depth` 默认是 `8`，范围为 `1..20`。
@@ -147,12 +167,15 @@ browser/
 ## 操作原则
 
 1. 导航后获取新快照，不复用已经失效的 ref。
-2. 优先使用快照 ref，其次使用唯一、稳定的选择器。
-3. 选择第 N 个结果时优先使用 `browser_links`。
+2. 优先使用快照 ref；Snapshot 的 `[ref=e102]` 在 target 中应写 `e102`，不能写 `ref=e102`。
+3. 普通 DOM 查询优先使用 `browser_inspect`，选择第 N 个结果优先使用 `browser_links`。
 4. 已经获得目标 URL 时直接 `browser_goto`。
 5. 最终状态最多验证一次，确认完成后停止调用工具。
-6. `browser_eval` 作为结构化工具无法完成操作时的后备方案。
+6. `browser_eval` 仅作为 snapshot / inspect / links 无法完成读取时的需确认后备方案。
 7. 任何标记为 `[browser error ...]` 的结果都视为失败，不应继续假设操作成功。
+
+CLI 退出码为 0 但输出含独立 `### Error` block 时，Runtime 仍返回失败；网页
+Console Error 不属于该 block，不会被误判为 Tool Failure。
 
 ## 常见问题
 

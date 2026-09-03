@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import subprocess
 
 from ..base import Tool
@@ -12,6 +13,9 @@ from .session import DEFAULT_SESSION, BrowserSessionManager
 COMMAND_TIMEOUT_SECONDS = 60
 MAX_OUTPUT_CHARS = 12000
 SNAPSHOT_MAX_OUTPUT_CHARS = 30000
+_CLI_ERROR_BLOCK = re.compile(
+    r"(?ms)^### Error[ \t]*\r?\n(.*?)(?=^### [^\r\n]+[ \t]*\r?$|\Z)"
+)
 
 
 class PlaywrightCliTool(Tool):
@@ -68,6 +72,15 @@ class PlaywrightCliTool(Tool):
             return marker[:max_output_chars]
         return result[: max_output_chars - len(marker)] + marker
 
+    @staticmethod
+    def _explicit_cli_error(output: str) -> str | None:
+        """Return a playwright-cli Error block, excluding page console errors."""
+        match = _CLI_ERROR_BLOCK.search(output)
+        if not match:
+            return None
+        detail = match.group(1).strip()
+        return detail[:2_000] or "playwright-cli reported an unspecified error"
+
     async def _run_parts(
         self,
         parts: list[str],
@@ -90,6 +103,7 @@ class PlaywrightCliTool(Tool):
             if err:
                 output += f"\nSTDERR:\n{err.decode(errors='replace')}"
             output = output or "(no output)"
+            explicit_error = self._explicit_cli_error(output)
             output_truncated = len(output) > max_output_chars
             output = self._truncate_output(output, max_output_chars)
             metadata = {
@@ -102,6 +116,16 @@ class PlaywrightCliTool(Tool):
                     action=action,
                     session=session,
                     error=f"playwright-cli exited with code {proc.returncode}",
+                    output=output,
+                    metadata=metadata,
+                )
+            if explicit_error:
+                metadata["cli_error_block"] = True
+                return BrowserResult(
+                    success=False,
+                    action=action,
+                    session=session,
+                    error=f"playwright-cli reported an error: {explicit_error}",
                     output=output,
                     metadata=metadata,
                 )

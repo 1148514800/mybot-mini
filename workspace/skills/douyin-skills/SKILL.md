@@ -1,7 +1,7 @@
 ---
 name: douyin-skills
 description: 使用本项目的浏览器工具执行抖音网页端操作。用户要求打开、搜索或操作抖音，尤其是给指定好友发送私信、查找会话或核实消息是否发出时使用。
-version: 0.2.0
+version: 0.3.0
 ---
 
 # 抖音自动化 Skills
@@ -16,7 +16,7 @@ version: 0.2.0
 
 ## 技能依赖
 
-执行网页操作前先阅读并遵守：
+执行网页操作前先阅读并遵守以下文件；同一个 task 每个文件只读一次。Approval 或普通澄清恢复后，直接复用已经保存在 messages 中的内容，不要再次调用 `read_file`：
 
 - `../playwright-cli/SKILL.md`
 - `references/send-direct-message.md`
@@ -36,7 +36,15 @@ version: 0.2.0
 - `friend_name`：好友昵称或可唯一识别好友的信息
 - `message`：要发送的完整消息内容
 
-若任一参数缺失，应先向用户询问，不得猜测。
+若任一参数缺失，调用 `request_user_input` 询问并暂停，不得猜测，也不要用普通最终回复代替澄清工具。
+
+## Task 连续性与工具优先级
+
+1. 一个用户目标在 Approval / Clarification 前后仍是同一个 task；继续使用已有 messages、browser mode、session 和最新 snapshot。
+2. `browser_open` 或 `browser_attach` 在当前 task 成功一次后不得重复调用。恢复后从当前页面继续，必要时先 `browser_snapshot`。
+3. 查找昵称、文本、输入框和按钮时依次优先使用：`browser_snapshot` → `browser_inspect` → `browser_links`（链接列表场景）。
+4. `browser_eval` 仅在上述结构化读取工具无法取得必要信息时作为 fallback；它仍需要用户确认，不得为了省步骤主动使用任意 JavaScript。
+5. Snapshot 的 `[ref=e102]` 表示 target 是 `e102`；调用 `browser_click` / `browser_type` 时禁止传 `ref=e102`。
 
 ## 执行与证据规则
 
@@ -50,9 +58,9 @@ version: 0.2.0
 
 ## 全局约束
 
-1. 用户未明确要求使用本地、当前或已打开的浏览器时，使用 `browser_open` 启动 managed browser；全程复用同一 session。
-2. 进入抖音后确认登录状态。若未登录，停在登录页面并请用户完成登录；用户确认后必须重新检查登录状态，不得直接假设已登录。
-3. 发送前必须核对聊天对象；存在多个同名结果且无法唯一判断时，应询问用户。
+1. 用户未明确要求使用本地、当前或已打开的浏览器时，使用 `browser_open` 启动 managed browser；当前 task 只启动一次并全程复用同一 session。
+2. 进入抖音后确认登录状态。若未登录，停在登录页面并调用 `request_user_input` 请用户完成登录；用户回答后在原 session 重新检查，不得重新 `browser_open` 或直接假设已登录。
+3. 发送前必须核对聊天对象；存在多个同名结果且无法唯一判断时，调用 `request_user_input`，回答后继续原任务。
 4. 发送消息属于对外操作。只有用户已明确提供收件人与消息正文时才能执行；不得擅自改写消息。
 5. 发送完成后最多验证一次；消息已出现在目标会话最新位置即停止。
 6. 若点击发送、按 Enter 或工具调用发生超时/中断，不得直接重试。应先重新查看目标会话最新记录：

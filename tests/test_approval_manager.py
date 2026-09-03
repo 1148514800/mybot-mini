@@ -72,6 +72,24 @@ class ApprovalManagerTests(unittest.TestCase):
             {"command": "rm test.txt", "options": ["force"]},
         )
 
+    def test_task_continuity_state_is_preserved(self):
+        pending = self.manager.create(
+            session_key="cli:a",
+            tool_name="browser_eval",
+            arguments={"script": "document.title"},
+            policy=confirmation_policy(),
+            task_id="task-1",
+            loaded_skills=["skills/browser/skill.md"],
+            browser_initialized=True,
+        )
+
+        self.assertEqual(pending.task_id, "task-1")
+        self.assertEqual(
+            pending.loaded_skills,
+            ["skills/browser/skill.md"],
+        )
+        self.assertTrue(pending.browser_initialized)
+
     def test_intent_matching_is_explicit(self):
         for value in ("确认", "继续", "yes", "Y", "approve"):
             self.assertEqual(

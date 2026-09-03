@@ -51,6 +51,9 @@ class ApprovalManager:
         messages: list[dict[str, Any]] | None = None,
         remaining_tool_calls: list[dict[str, Any]] | None = None,
         browser_snapshot: str = "",
+        task_id: str | None = None,
+        loaded_skills: list[str] | None = None,
+        browser_initialized: bool = False,
     ) -> PendingApproval:
         pending = PendingApproval(
             approval_id=uuid.uuid4().hex,
@@ -67,6 +70,9 @@ class ApprovalManager:
             messages=copy.deepcopy(messages or []),
             remaining_tool_calls=copy.deepcopy(remaining_tool_calls or []),
             browser_snapshot=browser_snapshot,
+            task_id=task_id,
+            loaded_skills=list(loaded_skills or []),
+            browser_initialized=browser_initialized,
         )
         self._pending[session_key] = pending
         return pending

@@ -67,8 +67,16 @@ class EvalRunner:
                     else session_key
                 )
                 pending = self.agent.approvals.get(follow_session)
+                pending_clarification = self.agent.clarifications.get(
+                    follow_session
+                )
                 intent = classify_approval_intent(follow_up)
-                if pending and intent in {
+                if pending_clarification is not None:
+                    output, trace = await self.agent.resume_clarification(
+                        follow_session,
+                        follow_up,
+                    )
+                elif pending and intent in {
                     ApprovalIntent.APPROVE,
                     ApprovalIntent.REJECT,
                 }:
@@ -121,6 +129,29 @@ class EvalRunner:
             tool_calls=[call for item in traces for call in item.tool_calls],
             steps=[step for item in traces for step in item.steps],
         )
+        call_counts = {
+            name: sum(
+                call.tool_name == name
+                for call in combined_trace.tool_calls
+            )
+            for name in case.expected_tool_call_counts
+        }
+        execution_counts = {
+            name: sum(
+                executed_name == name
+                for executed_name, _ in getattr(
+                    self.agent.tools,
+                    "executed_calls",
+                    [],
+                )
+            )
+            for name in case.expected_tool_execution_counts
+        }
+        task_ids = [
+            item.metadata.get("task_id")
+            for item in traces
+            if item.metadata.get("task_id")
+        ]
         checks = {
             "run_status": trace.status == case.expected_status,
             "expected_tools": assert_expected_tools(
@@ -157,6 +188,23 @@ class EvalRunner:
                 or getattr(self.agent.tools, "execution_count", None)
                 == case.expected_tool_executions
             ),
+            "tool_call_counts": all(
+                call_counts[name] == expected
+                for name, expected in case.expected_tool_call_counts.items()
+            ),
+            "tool_execution_counts": all(
+                execution_counts[name] == expected
+                for name, expected in (
+                    case.expected_tool_execution_counts.items()
+                )
+            ),
+            "shared_task_id": (
+                not case.expected_shared_task_id
+                or (
+                    len(task_ids) == len(traces)
+                    and len(set(task_ids)) == 1
+                )
+            ),
             "trace_metadata": all(
                 assert_trace_metadata_values(
                     combined_trace,
@@ -172,6 +220,9 @@ class EvalRunner:
             trace,
             output,
             checks,
+            call_counts,
+            execution_counts,
+            task_ids,
         )
         return EvalResult(
             case_id=case.id,
@@ -190,6 +241,9 @@ class EvalRunner:
         final_trace,
         output: str,
         checks: dict[str, bool],
+        call_counts: dict[str, int],
+        execution_counts: dict[str, int],
+        task_ids: list[str],
     ) -> dict[str, str]:
         called = {call.tool_name for call in combined_trace.tool_calls}
         errors: dict[str, str] = {}
@@ -233,6 +287,20 @@ class EvalRunner:
             errors["tool_executions"] = (
                 f"tool executed {getattr(self.agent.tools, 'execution_count', None)} "
                 f"time(s); expected {case.expected_tool_executions}"
+            )
+        if not checks["tool_call_counts"]:
+            errors["tool_call_counts"] = (
+                f"tool call counts were {call_counts}; expected "
+                f"{case.expected_tool_call_counts}"
+            )
+        if not checks["tool_execution_counts"]:
+            errors["tool_execution_counts"] = (
+                f"tool execution counts were {execution_counts}; expected "
+                f"{case.expected_tool_execution_counts}"
+            )
+        if not checks["shared_task_id"]:
+            errors["shared_task_id"] = (
+                f"runs did not share one task_id: {task_ids}"
             )
         if not checks["trace_metadata"]:
             errors["trace_metadata"] = (

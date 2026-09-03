@@ -24,8 +24,9 @@ through `exec` when an equivalent browser tool exists.
    open. If a form or click opens a new tab, call it with `action: "list"`
    and then `action: "select"`; do not navigate the old tab to the same URL.
 5. Read the page state returned by navigation and interaction commands. Call
-   `browser_snapshot` when a fresh element map is needed. On large result pages,
-   lower `depth` or pass a result-container `target` if the output is truncated.
+   `browser_snapshot` when a fresh element map is needed. Use `browser_inspect`
+   for structured selector, text, role, or placeholder queries. On large result
+   pages, lower snapshot `depth` or narrow the query.
 6. When the user asks for the Nth search result, call `browser_links` on the
    result container with a suitable URL filter. Select its 1-based `position`;
    do not infer order from ref numbers or count duplicate thumbnail/title links.
@@ -44,11 +45,12 @@ through `exec` when an equivalent browser tool exists.
 - `browser_goto`: navigate the current tab to a URL
 - `browser_tab`: list, create, select, or close tabs
 - `browser_snapshot`: inspect the page or one element
+- `browser_inspect`: read DOM elements by selector/text/role/placeholder without caller JavaScript
 - `browser_links`: list rendered, deduplicated links in visual order
 - `browser_click`: click or double-click an element
 - `browser_type`: type into the focused element or fill a target element
 - `browser_press`: press a keyboard key
-- `browser_eval`: evaluate JavaScript when structured interaction is insufficient
+- `browser_eval`: evaluate JavaScript only when snapshot/inspect/links are insufficient; confirmation is required
 - `browser_close`: close a session
 
 ## Sessions
@@ -59,13 +61,17 @@ Do not silently switch between the user's Chrome and MyBot's managed profile.
 
 ## Interaction Rules
 
-- Prefer snapshot refs over brittle CSS selectors.
+- Prefer snapshot refs over brittle CSS selectors. Pass `e102`, never `ref=e102`,
+  when the snapshot displays `[ref=e102]`.
+- Prefer `browser_inspect` over `browser_eval` for text, input, button, role,
+  placeholder, and attribute lookup.
 - Prefer `browser_links` for ordinal results such as "the fifth video".
 - Take a new snapshot after navigation or when refs become stale.
 - Use `browser_eval` only for inspection or interactions not supported by the
   structured tools.
-- Treat any result beginning with `Error:` as a failed action and adjust before
-  continuing.
+- Respect the structured browser result status. A `[browser error ...]` result is
+  a failed action even when playwright-cli itself exited with code 0; page
+  console error messages inside an otherwise successful result are only data.
 - Do not claim that a page changed unless the returned state verifies it.
 - Do not repeat navigation, click, playback, or verification after the requested
   final state has already been confirmed.

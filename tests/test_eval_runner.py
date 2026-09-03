@@ -53,11 +53,23 @@ class EvalRunnerTests(unittest.TestCase):
         self.assertIn("Failed:       1", report)
         self.assertIn("fake-1", report)
 
-    def test_project_eval_suite_contains_phase_three_offline_cases(self) -> None:
+    def test_failed_efficiency_count_has_diagnostic(self) -> None:
+        case = self.passing_case()
+        case.expected_tool_execution_counts = {"read_file": 2}
+
+        result = asyncio.run(EvalRunner(build_fake_agent(case)).run_case(case))
+
+        self.assertFalse(result.passed)
+        self.assertIn(
+            "read_file",
+            result.check_errors["tool_execution_counts"],
+        )
+
+    def test_project_eval_suite_contains_all_offline_cases(self) -> None:
         eval_dir = Path(__file__).resolve().parents[1] / "evals"
         cases = load_eval_suite(eval_dir)
 
-        self.assertEqual(len(cases), 30)
+        self.assertEqual(len(cases), 34)
         self.assertTrue(all("fake_tools" in case.metadata for case in cases))
 
 

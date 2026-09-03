@@ -9,6 +9,7 @@ from .browser import (
     BrowserClickTool,
     BrowserCloseTool,
     BrowserEvalTool,
+    BrowserInspectTool,
     BrowserGotoTool,
     BrowserLinksTool,
     BrowserOpenTool,
@@ -22,6 +23,7 @@ from .exec import ExecTool
 from .file_tools import ReadFileTool, WriteFileTool
 from .memory import MemoryDeleteTool, MemoryWriteTool
 from .result import ToolResult
+from .runtime import RequestUserInputTool
 
 
 class ToolRegistry:
@@ -69,6 +71,7 @@ def build_default_tool_registry(
     registry = ToolRegistry()
     browser_sessions = BrowserSessionManager()
     registry.register(ExecTool())
+    registry.register(RequestUserInputTool())
     registry.register(BrowserAttachTool(browser_sessions))
     registry.register(BrowserOpenTool(workspace, browser_sessions))
     registry.register(BrowserSnapshotTool(browser_sessions))
@@ -78,6 +81,7 @@ def build_default_tool_registry(
     registry.register(BrowserTypeTool(browser_sessions))
     registry.register(BrowserPressTool(browser_sessions))
     registry.register(BrowserLinksTool(browser_sessions))
+    registry.register(BrowserInspectTool(browser_sessions))
     registry.register(BrowserEvalTool(browser_sessions))
     registry.register(BrowserCloseTool(browser_sessions))
     if memory_manager:

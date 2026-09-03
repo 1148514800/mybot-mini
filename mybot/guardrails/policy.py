@@ -82,7 +82,13 @@ class ToolPolicy:
         if metadata.get("tool_source") == "mcp":
             return self._evaluate_mcp(metadata)
 
-        if name in {"read_file", "browser_snapshot", "browser_links"}:
+        if name in {
+            "read_file",
+            "browser_snapshot",
+            "browser_links",
+            "browser_inspect",
+            "request_user_input",
+        }:
             return self._allow(RiskLevel.READ, "read_only_tool", "Read-only tool")
 
         if name in {"browser_open", "browser_attach", "browser_goto"}:

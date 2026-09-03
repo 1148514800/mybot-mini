@@ -62,6 +62,10 @@ class AgentConfirmationTests(unittest.IsolatedAsyncioTestCase):
             resumed_trace.metadata["resumed_from_run_id"],
             first_trace.run_id,
         )
+        self.assertEqual(
+            resumed_trace.metadata["task_id"],
+            first_trace.metadata["task_id"],
+        )
         self.assertIsNone(agent.approvals.get("cli:a"))
         self.assertIsNone(agent.approvals.approve("cli:a", pending.approval_id))
 

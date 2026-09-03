@@ -9,6 +9,101 @@ from .base import SNAPSHOT_MAX_OUTPUT_CHARS, PlaywrightCliTool
 DEFAULT_SNAPSHOT_DEPTH = 8
 MIN_SNAPSHOT_DEPTH = 1
 MAX_SNAPSHOT_DEPTH = 20
+DEFAULT_INSPECT_LIMIT = 20
+MAX_INSPECT_LIMIT = 50
+MAX_INSPECT_QUERY_CHARS = 1_000
+
+
+_INSPECT_SCRIPT = """() => {
+const query=__QUERY__;
+const normalize=(value)=>String(value||'').replace(/\\s+/g,' ').trim();
+const lowered=(value)=>normalize(value).toLocaleLowerCase();
+const implicitRole=(node)=>{
+  const explicit=normalize(node.getAttribute('role'));
+  if(explicit)return explicit;
+  const tag=node.tagName.toLocaleLowerCase();
+  if(tag==='a'&&node.hasAttribute('href'))return 'link';
+  if(tag==='button')return 'button';
+  if(tag==='textarea')return 'textbox';
+  if(tag==='select')return 'combobox';
+  if(tag==='img')return 'img';
+  if(tag==='input'){
+    const type=lowered(node.getAttribute('type')||'text');
+    if(type==='checkbox'||type==='radio')return type;
+    if(['button','submit','reset'].includes(type))return 'button';
+    return 'textbox';
+  }
+  return '';
+};
+const visible=(node)=>{
+  const rect=node.getBoundingClientRect();
+  const style=getComputedStyle(node);
+  return rect.width>0&&rect.height>0&&style.display!=='none'&&
+    style.visibility!=='hidden';
+};
+const targetFor=(node)=>{
+  if(node.id)return '#'+CSS.escape(node.id);
+  const tag=node.tagName.toLocaleLowerCase();
+  for(const attr of ['data-testid','name','aria-label','placeholder']){
+    const value=node.getAttribute(attr);
+    if(!value)continue;
+    const candidate=tag+'['+attr+'='+JSON.stringify(value)+']';
+    try{if(document.querySelectorAll(candidate).length===1)return candidate;}
+    catch(error){}
+  }
+  const parts=[];
+  let current=node;
+  while(current&&current.nodeType===1&&parts.length<6){
+    const currentTag=current.tagName.toLocaleLowerCase();
+    const siblings=Array.from(current.parentElement?.children||[])
+      .filter((item)=>item.tagName===current.tagName);
+    const suffix=siblings.length>1
+      ? ':nth-of-type('+(siblings.indexOf(current)+1)+')':'';
+    parts.unshift(currentTag+suffix);
+    const candidate=parts.join(' > ');
+    try{if(document.querySelectorAll(candidate).length===1)return candidate;}
+    catch(error){}
+    current=current.parentElement;
+  }
+  return parts.join(' > ');
+};
+let candidates;
+try{
+  candidates=Array.from(document.querySelectorAll(query.selector||'*'));
+}catch(error){
+  return {query,error:'Invalid selector: '+error.message,count:0,matches:[]};
+}
+const matches=[];
+for(const node of candidates.slice(0,5000)){
+  if(query.visible_only&&!visible(node))continue;
+  const text=normalize(node.innerText||node.textContent);
+  const accessibleName=normalize(
+    node.getAttribute('aria-label')||node.getAttribute('title')||text||
+    node.getAttribute('placeholder')||node.getAttribute('value')
+  );
+  const role=implicitRole(node);
+  const placeholder=normalize(node.getAttribute('placeholder'));
+  const compare=(actual,expected)=>query.exact
+    ? lowered(actual)===lowered(expected)
+    : lowered(actual).includes(lowered(expected));
+  if(query.text&&!compare(accessibleName,query.text)&&!compare(text,query.text))continue;
+  if(query.role&&lowered(role)!==lowered(query.role))continue;
+  if(query.placeholder&&!compare(placeholder,query.placeholder))continue;
+  matches.push({
+    position:matches.length+1,
+    tag:node.tagName.toLocaleLowerCase(),
+    role,
+    text:text.slice(0,500),
+    accessible_name:accessibleName.slice(0,500),
+    placeholder,
+    type:normalize(node.getAttribute('type')),
+    href:node.href||'',
+    target:targetFor(node)
+  });
+  if(matches.length>=query.limit)break;
+}
+return {query,count:matches.length,truncated:matches.length>=query.limit,matches};
+}"""
 
 
 class BrowserSnapshotTool(PlaywrightCliTool):
@@ -303,6 +398,140 @@ class BrowserLinksTool(PlaywrightCliTool):
         if resolved_target:
             parts.append(resolved_target)
         return await self._run_parts(parts)
+
+
+class BrowserInspectTool(PlaywrightCliTool):
+    """Read DOM state through fixed, structured queries instead of model JS."""
+
+    @property
+    def name(self) -> str:
+        return "browser_inspect"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Read visible DOM elements using structured selector, text, role, or "
+            "placeholder filters. Prefer this over browser_eval for finding "
+            "text, inputs, buttons, and element attributes. No JavaScript is "
+            "accepted from the caller."
+        )
+
+    @property
+    def parameters(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "selector": {
+                    "type": "string",
+                    "description": "Optional CSS selector",
+                    "default": "",
+                },
+                "text": {
+                    "type": "string",
+                    "description": "Optional visible or accessible text",
+                    "default": "",
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Optional explicit or common implicit ARIA role",
+                    "default": "",
+                },
+                "placeholder": {
+                    "type": "string",
+                    "description": "Optional input placeholder text",
+                    "default": "",
+                },
+                "exact": {
+                    "type": "boolean",
+                    "description": "Use exact text and placeholder matching",
+                    "default": False,
+                },
+                "visible_only": {
+                    "type": "boolean",
+                    "description": "Only return rendered elements",
+                    "default": True,
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": MAX_INSPECT_LIMIT,
+                    "default": DEFAULT_INSPECT_LIMIT,
+                },
+                "session": {
+                    "type": "string",
+                    "description": "Browser session name",
+                    "default": "",
+                },
+            },
+            "anyOf": [
+                {"required": ["selector"]},
+                {"required": ["text"]},
+                {"required": ["role"]},
+                {"required": ["placeholder"]},
+            ],
+        }
+
+    @staticmethod
+    def _validated_query_value(name: str, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) > MAX_INSPECT_QUERY_CHARS:
+            raise ValueError(
+                f"{name} must not exceed {MAX_INSPECT_QUERY_CHARS} characters"
+            )
+        return normalized
+
+    def _build_script(self, query: dict) -> str:
+        serialized = json.dumps(
+            query,
+            ensure_ascii=True,
+            separators=(",", ":"),
+        )
+        return _INSPECT_SCRIPT.replace("__QUERY__", serialized)
+
+    async def execute(
+        self,
+        selector: str = "",
+        text: str = "",
+        role: str = "",
+        placeholder: str = "",
+        exact: bool = False,
+        visible_only: bool = True,
+        limit: int = DEFAULT_INSPECT_LIMIT,
+        session: str = "",
+        **kwargs,
+    ) -> BrowserResult:
+        query = {
+            "selector": self._validated_query_value("selector", selector),
+            "text": self._validated_query_value("text", text),
+            "role": self._validated_query_value("role", role),
+            "placeholder": self._validated_query_value(
+                "placeholder",
+                placeholder,
+            ),
+            "exact": exact,
+            "visible_only": visible_only,
+            "limit": limit,
+        }
+        if not any(
+            query[name]
+            for name in ("selector", "text", "role", "placeholder")
+        ):
+            raise ValueError(
+                "browser_inspect requires selector, text, role, or placeholder"
+            )
+        if not isinstance(exact, bool) or not isinstance(visible_only, bool):
+            raise ValueError("exact and visible_only must be booleans")
+        if (
+            isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not 1 <= limit <= MAX_INSPECT_LIMIT
+        ):
+            raise ValueError(
+                f"limit must be an integer from 1 to {MAX_INSPECT_LIMIT}"
+            )
+        return await self._run_parts(
+            self._session_prefix(session) + ["eval", self._build_script(query)]
+        )
 
 
 class BrowserEvalTool(PlaywrightCliTool):

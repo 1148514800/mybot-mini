@@ -11,6 +11,7 @@ RUN_STATUSES = frozenset(
         "failed",
         "max_steps",
         "awaiting_confirmation",
+        "awaiting_clarification",
         "cancelled",
     }
 )

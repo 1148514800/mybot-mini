@@ -24,8 +24,10 @@ class FakeCompletions:
             case.metadata.get("fake_empty_responses", 0)
         )
         self._index = 0
+        self.requests: list[dict[str, Any]] = []
 
     async def create(self, **kwargs) -> SimpleNamespace:
+        self.requests.append(dict(kwargs))
         usage = SimpleNamespace(
             prompt_tokens=10,
             completion_tokens=5,

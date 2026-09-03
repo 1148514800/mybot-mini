@@ -11,7 +11,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 基于 `playwright-cli` 的浏览器操作
 - 持久化会话和长期记忆
 - 确定性的 Tool Policy、风险分级和 Human-in-the-loop 审批
-- 跨 CLI / 飞书消息的 Pause / Resume
+- 跨 CLI / 飞书消息的 Approval 与普通 Clarification Pause / Resume
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
@@ -273,7 +273,7 @@ config/
 mybot/
   main.py                 # 程序入口
   agent/                  # Agent 循环和上下文构建
-  guardrails/             # Tool Policy、风险模型和内存审批状态
+  guardrails/             # Tool Policy、审批和普通澄清的内存状态
   mcp/                    # MCP 配置、官方 Client 生命周期、命名和 Tool Adapter
   tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
   evals/                  # 确定性 Eval、FakeLLM runner 和文本报告
@@ -298,6 +298,10 @@ Tool 调用。Tool 参数及 metadata 中常见的 password、token、api_key、
 secret 等字段会自动脱敏，Tool 输出预览最多保留 2000 字符。Trace summary 不会
 进入 LLM 上下文。
 
+每个新用户目标会生成一个 `task_id`。如果任务因 Approval 或 Clarification 分成多个
+Run，每个 Run 仍各自保存一个 JSON，但 `metadata.task_id` 保持相同，并通过
+`resumed_from_run_id` 指向前一个 Run。
+
 默认 `tracing.trace_dir` 为 `null`，不会写入磁盘。需要在 Run 完成后保存 JSON 时，
 可在本机 `config/config.json` 中设置：
 
@@ -316,7 +320,7 @@ uv run python -m mybot.evals.runner
 ```
 
 Eval 数据位于根目录 `evals/`，当前覆盖 Tool Selection、Browser Navigation、
-Failure Recovery、Policy Guardrails 和 MCP Tools。Replay 只读取已有 Trace 并输出
+Failure Recovery、Policy Guardrails、MCP Tools 和 Runtime Efficiency。Replay 只读取已有 Trace 并输出
 timeline，不会再次调用模型或真实 Tool。
 
 ## Guardrails 与 Human-in-the-loop
@@ -352,6 +356,18 @@ Policy 的 `risk_level`、`policy_decision`、`policy_rule`、`policy_reason`、
 和 `approval_status` 会写入现有 Tool Call Trace，并继续使用相同的敏感字段脱敏。
 Guardrails 是 Runtime Safety Layer 的第一版，不是完整 sandbox 或操作系统级安全边界；
 它只做少量高置信度、确定性、可测试的判断。
+
+## 普通 Clarification 与任务连续性
+
+缺少参数、等待登录或遇到同名好友等普通歧义时，Agent 调用
+`request_user_input`。当前 Run 以 `awaiting_clarification` 结束，并把 messages、
+browser mode/session、最近 snapshot、已加载 Skill 和浏览器初始化状态保存在按
+session 隔离的 `PendingClarification` 中。用户下一条回复会消费该状态并继续原任务，
+不会重新构建 System Prompt、重复读取同一个 Skill 或再次启动已经打开的浏览器。
+
+Clarification 与高风险 Approval 是两套独立状态：普通回答不会批准危险 Tool，审批仍然
+要求确定性的确认词并绑定 exact action。两种恢复流程会继承同一个 `task_id`。这些
+Pending 状态当前都只保存在内存中，程序重启后不会恢复。
 
 ## MCP External Tool Runtime
 
@@ -428,15 +444,23 @@ MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和
 - `browser_goto`：在已有 session 中跳转
 - `browser_tab`：列出、新建、选择或关闭标签页
 - `browser_snapshot`：读取当前页面
+- `browser_inspect`：通过 selector、text、role 或 placeholder 做只读 DOM 查询；调用者不能传 JavaScript
 - `browser_links`：按页面视觉顺序列出并去重链接，适合选择第 N 个结果
 - `browser_click`、`browser_type`、`browser_press`：操作页面
-- `browser_eval`：执行页面 JavaScript
+- `browser_eval`：结构化工具无法满足时的任意 JavaScript fallback，始终要求确认
 - `browser_close`：关闭 session
 
 未明确指定时，Agent 默认调用 `browser_open` 并使用 `managed_browser`。只有消息
 明确包含“本地浏览器”“当前 Chrome”“已打开的浏览器”等意图时，才调用
 `browser_attach` 并使用 `local_browser`。每轮请求会锁定一种模式，不会因上一轮
 的活动 session 而串用浏览器，也不会在一种模式失败后自动切换到另一种模式。
+同一 task 内浏览器成功初始化一次后，后续 Run 会复用原 session。查找文本、输入框和
+按钮应优先使用 snapshot、links 和 inspect。Snapshot 中的 `[ref=e102]` 在点击参数中
+应写为 `e102`，不能写成 `ref=e102`。
+
+即使 `playwright-cli` 进程退出码为 0，输出中的明确 `### Error` block 也会转换为
+`BrowserResult(success=False)`。网页自身的 Console Error 只作为页面数据保留，不会
+被误判成 Tool 执行失败。
 
 首次使用浏览器时可能会下载或初始化浏览器运行组件，请预留网络和磁盘空间。持久化 session 会保存到 Playwright 的运行目录中。
 

@@ -95,6 +95,45 @@ class BrowserCliResultTests(unittest.TestCase):
         self.assertEqual(result.metadata["exit_code"], 2)
         self.assertEqual(self.sessions.resolve(), "local_browser")
 
+    def test_explicit_cli_error_block_fails_even_with_zero_exit(self) -> None:
+        process = FakeProcess(
+            0,
+            stdout=(
+                b'### Error\nError: Unknown engine "ref" while parsing '
+                b'selector ref=e102\n'
+            ),
+        )
+        tool = BrowserClickTool(self.sessions)
+
+        with patch(
+            "mybot.tools.browser.base.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            result = asyncio.run(tool.execute("ref=e102"))
+
+        self.assertFalse(result.success)
+        self.assertIn('Unknown engine "ref"', result.error)
+        self.assertTrue(result.metadata["cli_error_block"])
+
+    def test_page_console_error_is_not_a_cli_tool_failure(self) -> None:
+        process = FakeProcess(
+            0,
+            stdout=(
+                b"### Page state\n- heading Example\n"
+                b"### Console messages\n- [ERROR] Failed to load analytics\n"
+            ),
+        )
+        tool = BrowserClickTool(self.sessions)
+
+        with patch(
+            "mybot.tools.browser.base.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            result = asyncio.run(tool.execute("e102"))
+
+        self.assertTrue(result.success)
+        self.assertNotIn("cli_error_block", result.metadata)
+
     def test_missing_cli_returns_structured_failure(self) -> None:
         tool = BrowserClickTool(self.sessions)
 

@@ -46,4 +46,7 @@ class PendingApproval:
         repr=False,
     )
     browser_snapshot: str = field(default="", repr=False)
+    task_id: str | None = None
+    loaded_skills: list[str] = field(default_factory=list, repr=False)
+    browser_initialized: bool = False
     status: str = "pending"

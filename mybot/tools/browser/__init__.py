@@ -2,6 +2,7 @@ from .connection import BrowserAttachTool
 from .interaction import (
     BrowserClickTool,
     BrowserEvalTool,
+    BrowserInspectTool,
     BrowserLinksTool,
     BrowserPressTool,
     BrowserSnapshotTool,
@@ -31,6 +32,7 @@ __all__ = [
     "BrowserTypeTool",
     "BrowserPressTool",
     "BrowserEvalTool",
+    "BrowserInspectTool",
     "BrowserLinksTool",
     "BrowserSessionManager",
     "DEFAULT_SESSION",

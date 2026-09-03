@@ -7,7 +7,11 @@ from unittest.mock import AsyncMock
 from mybot.tools import build_default_tool_registry
 from mybot.tools.browser.base import DEFAULT_SESSION, SNAPSHOT_MAX_OUTPUT_CHARS
 from mybot.tools.browser.connection import BrowserAttachTool
-from mybot.tools.browser.interaction import BrowserLinksTool, BrowserSnapshotTool
+from mybot.tools.browser.interaction import (
+    BrowserInspectTool,
+    BrowserLinksTool,
+    BrowserSnapshotTool,
+)
 from mybot.tools.browser.navigation import (
     MANAGED_BROWSER_SESSION,
     BrowserCloseTool,
@@ -136,6 +140,8 @@ class BrowserSessionTests(unittest.TestCase):
         }
         self.assertIn("browser_tab", tool_names)
         self.assertIn("browser_links", tool_names)
+        self.assertIn("browser_inspect", tool_names)
+        self.assertIn("request_user_input", tool_names)
         self.assertIn("browser_attach", tool_names)
         self.assertIn("browser_open", tool_names)
         self.assertNotIn("browser_new_tab", tool_names)
@@ -200,6 +206,31 @@ class BrowserSessionTests(unittest.TestCase):
     def test_links_rejects_invalid_limit(self) -> None:
         with self.assertRaises(ValueError):
             asyncio.run(BrowserLinksTool(self.sessions).execute(limit=0))
+
+    def test_inspect_builds_fixed_script_from_structured_query(self) -> None:
+        tool = BrowserInspectTool(self.sessions)
+        tool._run_parts = AsyncMock(return_value=self.success("inspect"))
+
+        asyncio.run(
+            tool.execute(
+                role="button",
+                text="发送",
+                exact=True,
+                limit=5,
+                session="research",
+            )
+        )
+
+        parts = tool._run_parts.await_args.args[0]
+        self.assertEqual(parts[:3], ["playwright-cli", "-s=research", "eval"])
+        self.assertIn('"role":"button"', parts[3])
+        self.assertIn('"text":"\\u53d1\\u9001"', parts[3])
+        self.assertIn("document.querySelectorAll", parts[3])
+        self.assertNotIn("script", tool.parameters["properties"])
+
+    def test_inspect_requires_a_structured_filter(self) -> None:
+        with self.assertRaisesRegex(ValueError, "requires selector"):
+            asyncio.run(BrowserInspectTool(self.sessions).execute())
 
     def test_truncated_output_has_an_explicit_marker(self) -> None:
         tool = BrowserSnapshotTool(self.sessions)

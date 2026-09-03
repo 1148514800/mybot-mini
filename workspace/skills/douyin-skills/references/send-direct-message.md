@@ -9,33 +9,36 @@
 - `friend_name`：目标好友昵称或唯一识别信息
 - `message`：消息正文，必须原样发送
 
-任一输入缺失时先询问用户。
+任一输入缺失时调用 `request_user_input` 询问用户并暂停当前 task。
 
 ## 操作记录要求
 
-这是执行类流程。每一步操作前先向用户说明意图，再调用浏览器工具；每一步之后仅依据最新工具结果继续。不得用历史 assistant 回复或历史工具输出替代本轮检查。
+这是执行类流程。每一步操作前先向用户说明意图，再调用浏览器工具；每一步之后仅依据当前 task 的工具结果继续。Approval / Clarification 前保存的 messages、snapshot 和 Skill 内容属于同一 task 的连续状态，应直接复用；不得用无关的旧会话或过去已结束 task 的结果替代当前检查。
+
+同一个 task 中，本文件、上层 `SKILL.md` 与 Playwright Skill 各读取一次。恢复 Run 时禁止重复读取。
 
 ## 标准流程
 
 ### 1. 启动浏览器
 
-1. 用户未明确要求使用本地浏览器时，调用 `browser_open`。
+1. 用户未明确要求使用本地浏览器、且当前 task 尚未初始化 managed browser 时，调用一次 `browser_open`。
 2. 保存返回的 session，并在后续所有 `browser_*` 调用中复用。
 3. 打开抖音官网；如果浏览器已在其他页面，使用 `browser_goto` 导航至抖音。
 4. 必须根据导航或快照的实际返回状态确认页面已打开；失败时停止并报告，不得声称已打开。
+5. Approval 或 Clarification 恢复后复用原 session 和当前页面，禁止再次 `browser_open`。
 
 ### 2. 确认登录状态
 
 1. 使用页面返回状态或 `browser_snapshot` 检查是否能看到消息、私信、头像等登录后入口。
 2. 若出现登录二维码、手机号登录或其他未登录提示：
-   - 告知用户需要在当前 managed browser 中完成登录；
-   - 等待用户确认后再继续；
+   - 调用 `request_user_input` 告知用户需要在当前 managed browser 中完成登录；
+   - 用户回答后从保存的 session 继续；
    - 不得切换到其他浏览器模式。
 3. 用户确认“已经登录”后，必须重新调用快照或其他浏览器检查确认登录态已生效；不得仅凭用户口头确认直接报告任务完成或发送消息。
 
 ### 3. 进入消息页面
 
-1. 点击“消息”或“私信”入口。
+1. 用 `browser_snapshot` 或 `browser_inspect` 定位“消息”或“私信”入口，再点击。
 2. 页面跳转后获取新快照；如果操作打开了新标签页，先调用 `browser_tab(action="list")`，再选择新标签页。
 3. 不要同时保留本次任务产生的重复抖音标签页。
 4. 只有在最新页面状态确认消息页已加载后，才能进入查找好友步骤。
@@ -44,20 +47,22 @@
 
 按页面实际能力使用以下方式之一：
 
-- 在私信会话搜索框中搜索 `friend_name`；
-- 在已有会话列表中查找 `friend_name`；
+- 用 `browser_inspect(placeholder=...)` 或 `browser_inspect(role="textbox")` 定位私信搜索框，再搜索 `friend_name`；
+- 用 `browser_inspect(text=friend_name)` 在已有会话列表中查找；
 - 若消息页没有会话搜索，可使用抖音站内搜索找到用户主页，再进入私信。
 
 选择目标前必须核对：
 
 - 昵称与 `friend_name` 一致；
 - 如页面显示抖音号、头像、备注或其他身份信息，也应结合核对；
-- 若出现多个同名用户且无法唯一判断，停止并询问用户，不得任选一个。
+- 若出现多个同名用户且无法唯一判断，调用 `request_user_input` 并暂停，不得任选一个。
+
+若 Snapshot 显示 `[ref=e102]`，后续 target 必须写 `e102`，不能写 `ref=e102`。普通 DOM 查询不得使用 `browser_eval`；只有 snapshot / inspect / links 都无法取得必要信息时才允许把 `browser_eval` 作为需要确认的 fallback。
 
 ### 5. 发送前检查
 
 1. 打开目标聊天窗口并重新确认窗口顶部昵称。
-2. 定位消息输入框。
+2. 优先用 `browser_inspect(role="textbox")` 或 placeholder 查询定位消息输入框。
 3. 将 `message` 原样填入，不增加引号、前缀、后缀、表情或换行。
 4. 明确区分“已输入”与“已发送”：输入框中出现文字不代表发送成功。
 5. 若页面已有一条内容完全相同、时间很近的本人消息，且本轮此前发生过发送超时或中断，则不要再次发送。
@@ -103,7 +108,7 @@
 
 ### 页面结构变化
 
-- 调用 `browser_snapshot` 获取最新可访问结构；
+- 调用 `browser_snapshot` 获取最新可访问结构，并用 `browser_inspect` 做结构化文本、role 或 placeholder 查询；
 - 使用可见文本、角色和最新 ref 操作，避免猜测旧 ref；
 - 若关键入口不可识别，报告阻塞点，不通过脚本绕过页面限制。
 

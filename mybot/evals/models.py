@@ -21,6 +21,9 @@ class EvalCase:
     expected_risk_levels: list[str] = field(default_factory=list)
     expected_approval_statuses: list[str] = field(default_factory=list)
     expected_tool_executions: int | None = None
+    expected_tool_call_counts: dict[str, int] = field(default_factory=dict)
+    expected_tool_execution_counts: dict[str, int] = field(default_factory=dict)
+    expected_shared_task_id: bool = False
     expected_trace_metadata: dict[str, list[str]] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -48,6 +51,21 @@ class EvalCase:
                 data.get("expected_approval_statuses", [])
             ),
             expected_tool_executions=data.get("expected_tool_executions"),
+            expected_tool_call_counts={
+                str(key): int(value)
+                for key, value in dict(
+                    data.get("expected_tool_call_counts", {})
+                ).items()
+            },
+            expected_tool_execution_counts={
+                str(key): int(value)
+                for key, value in dict(
+                    data.get("expected_tool_execution_counts", {})
+                ).items()
+            },
+            expected_shared_task_id=bool(
+                data.get("expected_shared_task_id", False)
+            ),
             expected_trace_metadata={
                 str(key): [str(item) for item in values]
                 for key, values in dict(

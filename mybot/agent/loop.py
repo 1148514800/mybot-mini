@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import copy
 import json
+import uuid
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -12,7 +13,9 @@ from ..core.config import GatewayConfig
 from ..guardrails import (
     ApprovalIntent,
     ApprovalManager,
+    ClarificationManager,
     PendingApproval,
+    PendingClarification,
     PolicyDecision,
     PolicyResult,
     ToolPolicy,
@@ -55,6 +58,7 @@ class AgentLoop:
         tracer: AgentTracer | None = None,
         tool_policy: ToolPolicy | None = None,
         approvals: ApprovalManager | None = None,
+        clarifications: ClarificationManager | None = None,
     ):
         self.client = client
         self.config = config
@@ -65,6 +69,7 @@ class AgentLoop:
         self.tracer = tracer or AgentTracer()
         self.tool_policy = tool_policy or ToolPolicy()
         self.approvals = approvals or ApprovalManager()
+        self.clarifications = clarifications or ClarificationManager()
 
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
@@ -260,16 +265,24 @@ class AgentLoop:
     def _tool_definitions_for_browser_mode(
         self,
         browser_mode: str,
+        browser_initialized: bool = False,
     ) -> list[dict]:
         blocked_tool = (
             "browser_open"
             if browser_mode == BROWSER_MODE_LOCAL
             else "browser_attach"
         )
+        blocked_tools = {blocked_tool}
+        if browser_initialized:
+            blocked_tools.add(
+                "browser_attach"
+                if browser_mode == BROWSER_MODE_LOCAL
+                else "browser_open"
+            )
         return [
             definition
             for definition in self.tools.get_definitions()
-            if definition.get("function", {}).get("name") != blocked_tool
+            if definition.get("function", {}).get("name") not in blocked_tools
         ]
 
     def _tool_runtime_metadata(self, name: str) -> dict:
@@ -278,6 +291,98 @@ class AgentLoop:
             return {}
         metadata = getter(name)
         return dict(metadata) if isinstance(metadata, dict) else {}
+
+    @staticmethod
+    def _skill_path(name: str, arguments: dict) -> str | None:
+        if name != "read_file":
+            return None
+        path = str(arguments.get("path", "")).strip().replace("\\", "/")
+        if not path or path.rsplit("/", 1)[-1].lower() != "skill.md":
+            return None
+        return path.lower()
+
+    @staticmethod
+    def _browser_entry_tool(browser_mode: str) -> str:
+        return (
+            "browser_attach"
+            if browser_mode == BROWSER_MODE_LOCAL
+            else "browser_open"
+        )
+
+    @classmethod
+    def _record_task_result(
+        cls,
+        name: str,
+        arguments: dict,
+        result: ToolResult,
+        browser_mode: str,
+        loaded_skills: set[str],
+        browser_initialized: bool,
+    ) -> bool:
+        skill_path = cls._skill_path(name, arguments)
+        if result.success and skill_path:
+            loaded_skills.add(skill_path)
+            result.metadata.setdefault("skill_path", skill_path)
+            result.metadata.setdefault("skill_loaded", True)
+        if result.success and name == cls._browser_entry_tool(browser_mode):
+            return True
+        if result.success and name == "browser_close":
+            return False
+        return browser_initialized
+
+    async def _execute_task_tool(
+        self,
+        name: str,
+        arguments: dict,
+        *,
+        browser_mode: str,
+        loaded_skills: set[str],
+        browser_initialized: bool,
+    ) -> tuple[ToolResult, bool]:
+        if (
+            browser_initialized
+            and name == self._browser_entry_tool(browser_mode)
+        ):
+            return (
+                ToolResult(
+                    success=True,
+                    output=(
+                        "Browser session is already initialized for this task; "
+                        "reuse the existing session."
+                    ),
+                    metadata={"execution_skipped": "browser_already_initialized"},
+                ),
+                True,
+            )
+
+        skill_path = self._skill_path(name, arguments)
+        if skill_path and skill_path in loaded_skills:
+            return (
+                ToolResult(
+                    success=True,
+                    output=(
+                        "This Skill was already loaded in this task. Reuse the "
+                        "earlier SKILL.md instructions."
+                    ),
+                    metadata={
+                        "execution_skipped": "skill_already_loaded",
+                        "skill_cache_hit": True,
+                        "skill_path": skill_path,
+                    },
+                ),
+                browser_initialized,
+            )
+
+        result = await self._execute_normalized_tool(name, arguments)
+        browser_initialized = self._record_task_result(
+            name,
+            arguments,
+            result,
+            browser_mode,
+            loaded_skills,
+            browser_initialized,
+        )
+        return result, browser_initialized
 
     async def _execute_tool_call(
         self,
@@ -331,6 +436,7 @@ class AgentLoop:
     ) -> tuple[str, AgentRunTrace]:
         """Handle one bus message, including pending approval intent."""
         pending = self.approvals.get(message.session_key)
+        pending_clarification = self.clarifications.get(message.session_key)
         intent = classify_approval_intent(message.content)
         cancelled_approval_id: str | None = None
 
@@ -351,6 +457,16 @@ class AgentLoop:
             )
             assert rejected is not None
             reply, trace = self._cancelled_trace(rejected, message.content)
+        elif pending_clarification is not None:
+            resolved = self.clarifications.resolve(
+                message.session_key,
+                pending_clarification.clarification_id,
+            )
+            assert resolved is not None
+            reply, trace = await self._resume_clarification(
+                resolved,
+                message.content,
+            )
         else:
             if pending:
                 rejected = self.approvals.reject(
@@ -402,14 +518,26 @@ class AgentLoop:
         *,
         session_key: str = "",
         metadata: dict | None = None,
+        task_id: str | None = None,
+        browser_snapshot: str = "",
+        loaded_skills: set[str] | None = None,
+        browser_initialized: bool = False,
     ) -> tuple[str, AgentRunTrace]:
         """Run the existing ReAct loop and return its completed in-memory trace."""
+        supplied_metadata = dict(metadata or {})
+        effective_task_id = (
+            task_id
+            or str(supplied_metadata.get("task_id", "")).strip()
+            or uuid.uuid4().hex
+        )
         run_metadata = {
             "browser_mode": browser_mode,
             "model": self.config.model,
             "provider": getattr(self.config, "provider", ""),
+            "task_id": effective_task_id,
         }
-        run_metadata.update(metadata or {})
+        run_metadata.update(supplied_metadata)
+        run_metadata["task_id"] = effective_task_id
         self.tracer.start_run(
             user_input,
             metadata=run_metadata,
@@ -420,6 +548,10 @@ class AgentLoop:
                 browser_mode,
                 user_input=user_input,
                 session_key=session_key,
+                browser_snapshot=browser_snapshot,
+                task_id=effective_task_id,
+                loaded_skills=loaded_skills,
+                browser_initialized=browser_initialized,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -444,6 +576,7 @@ class AgentLoop:
                 "approval_id": pending.approval_id,
                 "approval_status": "rejected",
                 "resumed_from_run_id": pending.origin_run_id,
+                "task_id": pending.task_id or uuid.uuid4().hex,
             },
         )
         output = (
@@ -480,6 +613,102 @@ class AgentLoop:
         assert rejected is not None
         return self._cancelled_trace(rejected, user_input)
 
+    async def resume_clarification(
+        self,
+        session_key: str,
+        user_input: str,
+    ) -> tuple[str, AgentRunTrace]:
+        """Resume one ordinary question without rebuilding task context."""
+        pending = self.clarifications.get(session_key)
+        if pending is None:
+            self.tracer.start_run(
+                user_input,
+                metadata={
+                    "session_key": session_key,
+                    "task_id": uuid.uuid4().hex,
+                },
+            )
+            output = "当前会话没有等待回答的澄清问题。"
+            return output, self.tracer.finish_run(
+                final_output=output,
+                status="cancelled",
+            )
+        resolved = self.clarifications.resolve(
+            session_key,
+            pending.clarification_id,
+        )
+        assert resolved is not None
+        return await self._resume_clarification(resolved, user_input)
+
+    async def _resume_clarification(
+        self,
+        pending: PendingClarification,
+        user_input: str,
+    ) -> tuple[str, AgentRunTrace]:
+        browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
+        task_id = pending.task_id or uuid.uuid4().hex
+        self.tracer.start_run(
+            user_input,
+            metadata={
+                "browser_mode": browser_mode,
+                "browser_session": pending.browser_session,
+                "model": self.config.model,
+                "provider": getattr(self.config, "provider", ""),
+                "resumed_from_run_id": pending.origin_run_id,
+                "clarification_id": pending.clarification_id,
+                "clarification_status": "answered",
+                "task_id": task_id,
+            },
+        )
+        messages = copy.deepcopy(pending.messages)
+        messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": pending.model_tool_call_id,
+                "content": (
+                    "User answered the clarification question.\n"
+                    f"Question: {pending.question}\n"
+                    f"Answer: {user_input}\n"
+                    "Continue the original task using the preserved browser "
+                    "session and prior Skill instructions."
+                ),
+            }
+        )
+        for serialized_call in pending.remaining_tool_calls:
+            stale_call = self._deserialize_tool_call(serialized_call)
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": stale_call.id,
+                    "content": (
+                        "Skipped: this tool call was proposed before the user "
+                        "answered the clarification. Re-evaluate it now."
+                    ),
+                }
+            )
+
+        try:
+            output, status, error = await self._react_loop_outcome(
+                messages,
+                browser_mode,
+                user_input=user_input,
+                session_key=pending.session_key,
+                browser_snapshot=pending.browser_snapshot,
+                task_id=task_id,
+                loaded_skills=set(pending.loaded_skills),
+                browser_initialized=pending.browser_initialized,
+            )
+        except BaseException as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            self.tracer.finish_run(status="failed", error=error)
+            raise
+        trace = self.tracer.finish_run(
+            final_output=output,
+            status=status,
+            error=error,
+        )
+        return output, trace
+
     @staticmethod
     def _approval_prompt(pending: PendingApproval) -> str:
         return (
@@ -503,6 +732,9 @@ class AgentLoop:
         messages: list[dict],
         remaining_tool_calls: list,
         browser_snapshot: str,
+        task_id: str,
+        loaded_skills: set[str],
+        browser_initialized: bool,
     ) -> PendingApproval:
         current_run = self.tracer.get_current_run()
         effective_session_key = session_key or (
@@ -521,6 +753,44 @@ class AgentLoop:
                 self._serialize_tool_call(item) for item in remaining_tool_calls
             ],
             browser_snapshot=browser_snapshot,
+            task_id=task_id,
+            loaded_skills=sorted(loaded_skills),
+            browser_initialized=browser_initialized,
+        )
+
+    def _create_clarification(
+        self,
+        *,
+        session_key: str,
+        question: str,
+        tool_call,
+        browser_mode: str,
+        messages: list[dict],
+        remaining_tool_calls: list,
+        browser_snapshot: str,
+        task_id: str,
+        loaded_skills: set[str],
+        browser_initialized: bool,
+    ) -> PendingClarification:
+        current_run = self.tracer.get_current_run()
+        effective_session_key = session_key or (
+            f"run:{current_run.run_id}" if current_run else "run:untraced"
+        )
+        return self.clarifications.create(
+            session_key=effective_session_key,
+            question=question,
+            origin_run_id=current_run.run_id if current_run else None,
+            task_id=task_id,
+            browser_mode=browser_mode,
+            browser_session=_BROWSER_SESSION_BY_MODE[browser_mode],
+            model_tool_call_id=tool_call.id,
+            messages=messages,
+            remaining_tool_calls=[
+                self._serialize_tool_call(item) for item in remaining_tool_calls
+            ],
+            browser_snapshot=browser_snapshot,
+            loaded_skills=sorted(loaded_skills),
+            browser_initialized=browser_initialized,
         )
 
     async def _resume_approved(
@@ -529,6 +799,9 @@ class AgentLoop:
         user_input: str,
     ) -> tuple[str, AgentRunTrace]:
         browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
+        task_id = pending.task_id or uuid.uuid4().hex
+        loaded_skills = set(pending.loaded_skills)
+        browser_initialized = pending.browser_initialized
         self.tracer.start_run(
             user_input,
             metadata={
@@ -538,6 +811,7 @@ class AgentLoop:
                 "resumed_from_run_id": pending.origin_run_id,
                 "approval_id": pending.approval_id,
                 "approval_status": "approved",
+                "task_id": task_id,
             },
         )
         messages = copy.deepcopy(pending.messages)
@@ -577,6 +851,14 @@ class AgentLoop:
             self.tracer.finish_run(status="failed", error=str(exc))
             raise
         self.tracer.finish_tool_call(tool_trace, result=result)
+        browser_initialized = self._record_task_result(
+            pending.tool_name,
+            pending.arguments,
+            result,
+            browser_mode,
+            loaded_skills,
+            browser_initialized,
+        )
         messages.append(
             {
                 "role": "tool",
@@ -623,7 +905,53 @@ class AgentLoop:
                 next_trace.metadata.update(
                     redact_mapping(self._policy_metadata(next_policy))
                 )
-                if next_policy.decision == PolicyDecision.REQUIRE_CONFIRMATION:
+                if name == "request_user_input":
+                    next_result, browser_initialized = (
+                        await self._execute_task_tool(
+                            name,
+                            arguments,
+                            browser_mode=browser_mode,
+                            loaded_skills=loaded_skills,
+                            browser_initialized=browser_initialized,
+                        )
+                    )
+                    if next_result.success:
+                        next_clarification = self._create_clarification(
+                            session_key=pending.session_key,
+                            question=next_result.output,
+                            tool_call=tool_call,
+                            browser_mode=browser_mode,
+                            messages=messages,
+                            remaining_tool_calls=remaining[index + 1 :],
+                            browser_snapshot=browser_snapshot,
+                            task_id=task_id,
+                            loaded_skills=loaded_skills,
+                            browser_initialized=browser_initialized,
+                        )
+                        next_result.metadata.update(
+                            {
+                                "clarification_id": (
+                                    next_clarification.clarification_id
+                                ),
+                                "clarification_status": "pending",
+                            }
+                        )
+                        self.tracer.finish_tool_call(
+                            next_trace,
+                            result=next_result,
+                        )
+                        self.tracer.finish_step(
+                            status="awaiting_clarification"
+                        )
+                        trace = self.tracer.finish_run(
+                            final_output=next_result.output,
+                            status="awaiting_clarification",
+                        )
+                        return next_result.output, trace
+                elif (
+                    next_policy.decision
+                    == PolicyDecision.REQUIRE_CONFIRMATION
+                ):
                     next_pending = self._create_pending(
                         session_key=pending.session_key,
                         name=name,
@@ -634,6 +962,9 @@ class AgentLoop:
                         messages=messages,
                         remaining_tool_calls=remaining[index + 1 :],
                         browser_snapshot=browser_snapshot,
+                        task_id=task_id,
+                        loaded_skills=loaded_skills,
+                        browser_initialized=browser_initialized,
                     )
                     waiting = ToolResult(
                         success=False,
@@ -652,16 +983,21 @@ class AgentLoop:
                         status="awaiting_confirmation",
                     )
                     return output, trace
-                if next_policy.decision == PolicyDecision.BLOCK:
+                elif next_policy.decision == PolicyDecision.BLOCK:
                     next_result = ToolResult(
                         success=False,
                         error=f"Blocked by tool policy: {next_policy.reason}",
                         metadata=self._policy_metadata(next_policy),
                     )
                 else:
-                    next_result = await self._execute_normalized_tool(
-                        name,
-                        arguments,
+                    next_result, browser_initialized = (
+                        await self._execute_task_tool(
+                            name,
+                            arguments,
+                            browser_mode=browser_mode,
+                            loaded_skills=loaded_skills,
+                            browser_initialized=browser_initialized,
+                        )
                     )
             self.tracer.finish_tool_call(next_trace, result=next_result)
             messages.append(
@@ -683,6 +1019,9 @@ class AgentLoop:
                 session_key=pending.session_key,
                 browser_snapshot=browser_snapshot,
                 step_index_offset=1,
+                task_id=task_id,
+                loaded_skills=loaded_skills,
+                browser_initialized=browser_initialized,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -712,7 +1051,23 @@ class AgentLoop:
         session_key: str = "",
         browser_snapshot: str = "",
         step_index_offset: int = 0,
+        task_id: str = "",
+        loaded_skills: set[str] | None = None,
+        browser_initialized: bool = False,
     ) -> tuple[str, str, str | None]:
+        current_run = self.tracer.get_current_run()
+        effective_task_id = (
+            task_id
+            or str(
+                current_run.metadata.get("task_id", "")
+                if current_run
+                else ""
+            ).strip()
+            or uuid.uuid4().hex
+        )
+        task_loaded_skills = (
+            loaded_skills if loaded_skills is not None else set()
+        )
         final_parts: list[str] = []
         rate_limit_retries = 0
         rate_limit_retry_limit = self._effective_rate_limit_retries()
@@ -720,11 +1075,14 @@ class AgentLoop:
         empty_response_count = 0
         last_tool_signature = ""
         identical_tool_call_count = 0
-        tool_definitions = self._tool_definitions_for_browser_mode(browser_mode)
         request_timeout = self._effective_request_timeout_seconds()
         for step in range(react_step_limit):
             step_index = step + 1 + step_index_offset
             self._trace(f"model step={step_index}")
+            tool_definitions = self._tool_definitions_for_browser_mode(
+                browser_mode,
+                browser_initialized,
+            )
             step_trace = (
                 self.tracer.start_step(step_index)
                 if self._tracing_active()
@@ -920,6 +1278,52 @@ class AgentLoop:
                     self._trace(
                         f"blocked repeated tool call signature={signature[:200]}"
                     )
+                elif name == "request_user_input":
+                    assert arguments is not None
+                    result, browser_initialized = await self._execute_task_tool(
+                        name,
+                        arguments,
+                        browser_mode=browser_mode,
+                        loaded_skills=task_loaded_skills,
+                        browser_initialized=browser_initialized,
+                    )
+                    if result.success:
+                        pending_clarification = self._create_clarification(
+                            session_key=session_key,
+                            question=result.output,
+                            tool_call=tool_call,
+                            browser_mode=browser_mode,
+                            messages=messages,
+                            remaining_tool_calls=message.tool_calls[
+                                tool_index + 1 :
+                            ],
+                            browser_snapshot=browser_snapshot,
+                            task_id=effective_task_id,
+                            loaded_skills=task_loaded_skills,
+                            browser_initialized=browser_initialized,
+                        )
+                        result.metadata.update(
+                            {
+                                "clarification_id": (
+                                    pending_clarification.clarification_id
+                                ),
+                                "clarification_status": "pending",
+                            }
+                        )
+                        if tool_trace:
+                            self.tracer.finish_tool_call(
+                                tool_trace,
+                                result=result,
+                            )
+                        if step_trace:
+                            self.tracer.finish_step(
+                                status="awaiting_clarification"
+                            )
+                        return (
+                            result.output,
+                            "awaiting_clarification",
+                            None,
+                        )
                 elif policy and policy.decision == PolicyDecision.BLOCK:
                     result = ToolResult(
                         success=False,
@@ -944,6 +1348,9 @@ class AgentLoop:
                             tool_index + 1 :
                         ],
                         browser_snapshot=browser_snapshot,
+                        task_id=effective_task_id,
+                        loaded_skills=task_loaded_skills,
+                        browser_initialized=browser_initialized,
                     )
                     waiting = ToolResult(
                         success=False,
@@ -971,9 +1378,14 @@ class AgentLoop:
                 else:
                     assert arguments is not None
                     try:
-                        result = await self._execute_normalized_tool(
-                            name,
-                            arguments,
+                        result, browser_initialized = (
+                            await self._execute_task_tool(
+                                name,
+                                arguments,
+                                browser_mode=browser_mode,
+                                loaded_skills=task_loaded_skills,
+                                browser_initialized=browser_initialized,
+                            )
                         )
                     except Exception as exc:
                         if tool_trace:
