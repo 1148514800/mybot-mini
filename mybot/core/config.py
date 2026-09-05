@@ -303,6 +303,11 @@ class GatewayConfig:
         )
     )
 
+    max_context_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_context_chars", 60000)))
+    max_recent_messages: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_recent_messages", 12)))
+    max_tool_result_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_tool_result_chars", 8000)))
+    max_memory_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_memory_chars", 8000)))
+
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
             _DEBUG_CONFIG,
@@ -360,6 +365,14 @@ class GatewayConfig:
             raise ValueError(
                 "checkpoint.recent_task_ttl_seconds must be a positive integer"
             )
+        for name, value in {
+            "llm.max_context_chars": self.max_context_chars,
+            "llm.max_recent_messages": self.max_recent_messages,
+            "llm.max_tool_result_chars": self.max_tool_result_chars,
+            "llm.max_memory_chars": self.max_memory_chars,
+        }.items():
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"{name} must be a positive integer")
 
 
 def build_client(config: GatewayConfig) -> AsyncOpenAI:

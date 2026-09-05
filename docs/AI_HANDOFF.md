@@ -2,11 +2,11 @@
 
 ## 当前目标
 
-Phase 7.1：Checkpoint Consistency Hardening。
+Phase 8：Context / Token Budget。
 
 ## 当前状态
 
-已完成，等待下一阶段的 Context/Token Budget 设计。
+已完成，等待后续上下文摘要或 artifact reference 评估。
 
 ## 已完成内容
 
@@ -19,6 +19,7 @@ Phase 7.1：Checkpoint Consistency Hardening。
 - corrupt row、identity mismatch、过期记录与 unsupported schema 均 fail closed；completed/failed/max_steps/cancelled 清除 active checkpoint。
 - `checkpoints/` 纳入 Runtime-managed path，普通 `write_file` 无法修改。
 - Durable Approval/continuation consume 在副作用或恢复前必须成功删除 active row；删除失败 fail closed。Clarification 继续校验 requester sender，RecentTaskManager 内存 lookup 同样执行 timezone-aware TTL 并清理过期 checkpoint row。
+- ContextBuilder 集中管理模型输入字符预算：系统/指令和当前用户输入优先保留，历史、Memory 与 Tool Result 确定性裁剪；Tool Result 使用前后片段与 truncation marker。原始 ToolResult、Trace 与浏览器 live precondition 不受压缩影响。
 
 ## 修改文件
 
@@ -53,6 +54,9 @@ Phase 7.1：Checkpoint Consistency Hardening。
 
 ## 测试结果
 
+- Phase 8 focused context/tracing/config tests：15/15 passed；离线 Evals：43/43 passed。
+- 全量单元测试：230 tests，2 failures，1 error，1 skipped；失败为既有 Windows 沙箱 Playwright daemon/Exec 权限及 SQLite 临时文件锁环境问题。
+
 - Phase 7.1 focused checkpoint/clarification tests：21 tests，业务断言通过；Windows 临时目录清理仍有 1 个 SQLite 文件锁环境错误。
 - 全量单元测试：225 tests，224 passed，0 failed，1 skipped。
 - 离线 Evals：43/43 passed，100%。
@@ -65,14 +69,14 @@ Phase 7.1：Checkpoint Consistency Hardening。
 - at-most-once 安全语义可能在消费 checkpoint 后崩溃时丢失一次已确认动作，需要用户重新发起；durable delete 失败现在会明确拒绝执行。
 - Browser live snapshot 与副作用动作之间仍非原子 Transaction，页面可在两者之间变化。
 - Unsupported schema 当前 fail closed，不提供自动迁移。
-- Cross-session concurrency、Browser session ownership、Context/token budget、Tool output compression/artifact reference 尚未实现。
+- Cross-session concurrency、Browser session ownership、Tool output artifact reference 尚未实现。
 - 真实模型、真实站点和用户交互的 E2E Eval 仍缺失。
 - 完整单元测试在当前 Windows 沙箱中另有既有环境失败：Playwright daemon 写入权限、Exec 工作目录权限；不影响本阶段相关测试。
 - ToolPolicy 是应用层 Runtime Safety Layer，不是 OS sandbox。
 
 ## 下一步
 
-- Phase 8：设计 Context/Token Budget 与 Tool output compression，保持 checkpoint schema 和统一 ToolExecutionPipeline 边界不变。
+- 后续可单独评估 Context 摘要或 artifact reference；不要引入 Vector DB/RAG 或重构 AgentLoop。
 - 再后续单独处理 cross-session concurrency、Browser session ownership 与多 Agent/session orchestration；不要在 Phase 8 顺带重构。
 
 ## 不要重复进行的工作

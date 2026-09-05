@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from dataclasses import dataclass
 
 from ..skills import SkillsLoader
 from ..storage.memory import MemoryManager
@@ -73,11 +74,62 @@ class ContextBuilder:
         builtin_skills: Path | None = None,
         instructions_dir: Path | None = None,
         memory_manager: MemoryManager | None = None,
+        max_context_chars: int = 60_000,
+        max_recent_messages: int = 12,
+        max_tool_result_chars: int = 8_000,
+        max_memory_chars: int = 8_000,
     ):
         self.workspace = workspace
         self.instructions_dir = instructions_dir or workspace / "instructions"
         self.skills = SkillsLoader(workspace, builtin_skills)
         self.memory_manager = memory_manager
+        self.max_context_chars = max_context_chars
+        self.max_recent_messages = max_recent_messages
+        self.max_tool_result_chars = max_tool_result_chars
+        self.max_memory_chars = max_memory_chars
+
+    @staticmethod
+    def truncate_text(value: str, limit: int) -> str:
+        if len(value) <= limit:
+            return value
+        if limit <= 20:
+            return value[:limit]
+        marker = f"[tool output truncated: original_chars={len(value)}, kept_chars={limit}]"
+        head = max(1, (limit - len(marker)) // 2)
+        tail = max(0, limit - len(marker) - head)
+        return value[:head] + "\n" + marker + "\n" + (value[-tail:] if tail else "")
+
+    def prepare_messages(self, messages: list[dict]) -> tuple[list[dict], dict[str, int | bool]]:
+        before = sum(len(str(m.get("content", ""))) for m in messages)
+        prepared = []
+        for message in messages:
+            item = dict(message)
+            if item.get("role") == "tool":
+                item["content"] = self.truncate_text(str(item.get("content", "")), self.max_tool_result_chars)
+            prepared.append(item)
+        system = [m for m in prepared if m.get("role") == "system"]
+        users = [m for m in prepared if m.get("role") == "user"]
+        required = system + ([users[-1]] if users else [])
+        remaining = [m for m in prepared if m not in required]
+        budget = max(0, self.max_context_chars - sum(len(str(m.get("content", ""))) for m in required))
+        kept = []
+        used = 0
+        for message in reversed(remaining):
+            size = len(str(message.get("content", "")))
+            if used + size > budget:
+                continue
+            kept.append(message)
+            used += size
+        result = required[:1] + list(reversed(kept)) + required[1:]
+        after = sum(len(str(m.get("content", ""))) for m in result)
+        return result, {
+            "context_chars_before": before,
+            "context_chars_after": after,
+            "history_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") in {"user", "assistant"}),
+            "memory_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") == "system"),
+            "tool_result_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") == "tool"),
+            "context_truncated": after < before,
+        }
 
     def build_system_prompt(self) -> str:
         parts = [
@@ -179,7 +231,7 @@ class ContextBuilder:
         browser_mode = self.resolve_browser_mode(user_message)
         system_parts.append(self.browser_mode_instruction(browser_mode))
 
-        memory_summary = self.build_memory_summary()
+        memory_summary = self.truncate_text(self.build_memory_summary(), self.max_memory_chars)
         if memory_summary:
             system_parts.append(memory_summary)
 
@@ -188,4 +240,4 @@ class ContextBuilder:
             *history,
         ]
         messages.append({"role": "user", "content": f"{user_message}"})
-        return messages
+        return self.prepare_messages(messages)[0]

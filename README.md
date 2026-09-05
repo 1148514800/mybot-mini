@@ -256,6 +256,10 @@ config/
 | `llm.max_completion_tokens` | 单次回复的最大 token 数 |
 | `llm.request_timeout_seconds` | 单次模型请求的总超时秒数，默认 `60`；超时不会阻塞其他异步通道 |
 | `llm.max_react_steps` | 一次请求最多执行多少轮 Agent/工具循环；程序硬上限为 30 |
+| `llm.max_context_chars` | 发送给模型的 Context 字符预算，默认 `60000` |
+| `llm.max_recent_messages` | 历史消息数量上限，默认 `12` |
+| `llm.max_tool_result_chars` | 单条 Tool Result 在模型 Context 中的字符上限，默认 `8000` |
+| `llm.max_memory_chars` | Memory 摘要在模型 Context 中的字符上限，默认 `8000` |
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
 | `browser_runtime.max_open_attempts` | 每个 task 的 `browser_open/browser_attach` 尝试上限，默认 `1` |
 | `browser_runtime.max_consecutive_tool_failures` | 同一浏览器 Tool 连续失败上限，默认 `2` |

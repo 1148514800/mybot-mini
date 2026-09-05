@@ -46,6 +46,7 @@ class LLMCallTrace:
     total_tokens: int | None = None
     finish_reason: str | None = None
     error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)

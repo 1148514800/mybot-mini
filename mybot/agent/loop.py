@@ -127,6 +127,11 @@ class AgentLoop:
         )
         self.task_states: dict[str, AgentTaskState] = {}
         self.checkpoint_store = checkpoint_store
+        if hasattr(self.context, "max_context_chars"):
+            self.context.max_context_chars = getattr(config, "max_context_chars", self.context.max_context_chars)
+            self.context.max_recent_messages = getattr(config, "max_recent_messages", self.context.max_recent_messages)
+            self.context.max_tool_result_chars = getattr(config, "max_tool_result_chars", self.context.max_tool_result_chars)
+            self.context.max_memory_chars = getattr(config, "max_memory_chars", self.context.max_memory_chars)
         self._restore_checkpoints()
 
     def _restore_checkpoints(self) -> None:
@@ -739,7 +744,9 @@ class AgentLoop:
                             reason="replaced_by_new_task",
                         )
             session = self.sessions.get_or_create(message.session_key)
-            history = session.build_prompt_history(max_recent_messages=12)
+            history = session.build_prompt_history(
+                max_recent_messages=getattr(self.config, "max_recent_messages", 12)
+            )
             messages = self.context.build_messages(history, message.content)
             browser_mode = self.context.resolve_browser_mode(message.content)
             reply, trace = await self.run_traced(
@@ -1685,11 +1692,17 @@ class AgentLoop:
                 if step_trace
                 else None
             )
+            model_messages = messages
+            context_metadata = {}
+            if hasattr(self.context, "prepare_messages"):
+                model_messages, context_metadata = self.context.prepare_messages(messages)
+                if llm_trace:
+                    llm_trace.metadata.update(context_metadata)
             try:
                 response = await asyncio.wait_for(
                     self.client.chat.completions.create(
                         model=self.config.model,
-                        messages=messages,
+                        messages=model_messages,
                         tools=tool_definitions or None,
                         temperature=0.1,
                         max_tokens=self.config.max_completion_tokens,
