@@ -107,21 +107,34 @@ class ContextBuilder:
             if item.get("role") == "tool":
                 item["content"] = self.truncate_text(str(item.get("content", "")), self.max_tool_result_chars)
             prepared.append(item)
+        for message in prepared:
+            if message.get("role") == "system":
+                message["content"] = self._truncate_memory_section(
+                    str(message.get("content", ""))
+                )
         system = [m for m in prepared if m.get("role") == "system"]
         users = [m for m in prepared if m.get("role") == "user"]
         required = system + ([users[-1]] if users else [])
-        remaining = [m for m in prepared if m not in required]
-        budget = max(0, self.max_context_chars - sum(len(str(m.get("content", ""))) for m in required))
-        kept = []
+        required_ids = {id(message) for message in required}
+        units = self._context_units(
+            [message for message in prepared if id(message) not in required_ids]
+        )
+        required_chars = sum(len(str(m.get("content", ""))) for m in required)
+        budget = self.max_context_chars - required_chars
+        kept_units = []
         used = 0
-        for message in reversed(remaining):
-            size = len(str(message.get("content", "")))
+        for unit in reversed(units):
+            size = sum(len(str(m.get("content", ""))) for m in unit)
             if used + size > budget:
                 continue
-            kept.append(message)
+            kept_units.append(unit)
             used += size
-        result = required[:1] + list(reversed(kept)) + required[1:]
+        result = required[:1]
+        for unit in reversed(kept_units):
+            result.extend(unit)
+        result.extend(required[1:])
         after = sum(len(str(m.get("content", ""))) for m in result)
+        overflow = required_chars > self.max_context_chars
         return result, {
             "context_chars_before": before,
             "context_chars_after": after,
@@ -129,7 +142,52 @@ class ContextBuilder:
             "memory_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") == "system"),
             "tool_result_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") == "tool"),
             "context_truncated": after < before,
+            "context_budget_overflow": overflow,
         }
+
+    def _truncate_memory_section(self, content: str) -> str:
+        marker = "# Memory"
+        index = content.find(marker)
+        if index < 0:
+            return content
+        prefix = content[:index]
+        memory = content[index:]
+        return prefix + self.truncate_text(memory, self.max_memory_chars)
+
+    @staticmethod
+    def _context_units(messages: list[dict]) -> list[list[dict]]:
+        units: list[list[dict]] = []
+        index = 0
+        while index < len(messages):
+            message = messages[index]
+            if message.get("role") == "tool":
+                index += 1
+                continue
+            tool_calls = message.get("tool_calls") or []
+            if message.get("role") == "assistant" and tool_calls:
+                ids = {
+                    str(call.get("id", ""))
+                    for call in tool_calls
+                    if isinstance(call, dict) and call.get("id")
+                }
+                unit = [message]
+                cursor = index + 1
+                responses: list[dict] = []
+                while cursor < len(messages) and messages[cursor].get("role") == "tool":
+                    response = messages[cursor]
+                    if str(response.get("tool_call_id", "")) not in ids:
+                        break
+                    responses.append(response)
+                    cursor += 1
+                if len(responses) == len(ids):
+                    units.append(unit + responses)
+                    index = cursor
+                    continue
+                index = cursor
+                continue
+            units.append([message])
+            index += 1
+        return units
 
     def build_system_prompt(self) -> str:
         parts = [
@@ -231,7 +289,7 @@ class ContextBuilder:
         browser_mode = self.resolve_browser_mode(user_message)
         system_parts.append(self.browser_mode_instruction(browser_mode))
 
-        memory_summary = self.truncate_text(self.build_memory_summary(), self.max_memory_chars)
+        memory_summary = self.build_memory_summary()
         if memory_summary:
             system_parts.append(memory_summary)
 
@@ -240,4 +298,4 @@ class ContextBuilder:
             *history,
         ]
         messages.append({"role": "user", "content": f"{user_message}"})
-        return self.prepare_messages(messages)[0]
+        return messages

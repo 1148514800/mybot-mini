@@ -2,7 +2,7 @@
 
 ## 当前目标
 
-Phase 8：Context / Token Budget。
+Phase 8.1：Context compaction integrity。
 
 ## 当前状态
 
@@ -20,6 +20,7 @@ Phase 8：Context / Token Budget。
 - `checkpoints/` 纳入 Runtime-managed path，普通 `write_file` 无法修改。
 - Durable Approval/continuation consume 在副作用或恢复前必须成功删除 active row；删除失败 fail closed。Clarification 继续校验 requester sender，RecentTaskManager 内存 lookup 同样执行 timezone-aware TTL 并清理过期 checkpoint row。
 - ContextBuilder 集中管理模型输入字符预算：系统/指令和当前用户输入优先保留，历史、Memory 与 Tool Result 确定性裁剪；Tool Result 使用前后片段与 truncation marker。原始 ToolResult、Trace 与浏览器 live precondition 不受压缩影响。
+- Tool call 与对应 tool response 作为完整原子 unit 一起保留或删除；孤立 tool response 不进入模型输入。`build_messages()` 保留完整 runtime chain，仅在 LLM request boundary 生成压缩副本。`max_context_chars` 是 soft target，required context 超出时记录 `context_budget_overflow`。
 
 ## 修改文件
 
@@ -54,7 +55,7 @@ Phase 8：Context / Token Budget。
 
 ## 测试结果
 
-- Phase 8 focused context/tracing/config tests：15/15 passed；离线 Evals：43/43 passed。
+- Phase 8.1 focused context/tracing/config tests：26/26 passed；离线 Evals：43/43 passed。
 - 全量单元测试：230 tests，2 failures，1 error，1 skipped；失败为既有 Windows 沙箱 Playwright daemon/Exec 权限及 SQLite 临时文件锁环境问题。
 
 - Phase 7.1 focused checkpoint/clarification tests：21 tests，业务断言通过；Windows 临时目录清理仍有 1 个 SQLite 文件锁环境错误。
