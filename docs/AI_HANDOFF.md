@@ -2,7 +2,7 @@
 
 ## 当前目标
 
-Phase 6：统一 Tool Execution Pipeline，并以显式 AgentTaskState 区分 Runtime Run 与用户任务完成状态。
+Phase 6.1：在已批准的高风险 Browser Action 执行前验证 fresh browser state。
 
 ## 当前状态
 
@@ -10,34 +10,17 @@ Phase 6：统一 Tool Execution Pipeline，并以显式 AgentTaskState 区分 Ru
 
 ## 已完成内容
 
-- 新增 ToolExecutionPipeline，统一 normal ReAct、Approval Resume 和同批剩余 Tool Call 的 lookup、参数归一化/schema 校验、Policy、Approval、执行、ToolResult、Trace 与 browser state 更新。
-- Approval Resume 只执行 PendingApproval 冻结的 Tool 和 Arguments；仍重新检查 tool、参数、TTL、sender、task、BLOCK/invariant 以及可验证的 browser snapshot/URL precondition。
-- 未知 Tool、非法 JSON、缺少字段和参数类型错误统一返回结构化 ToolResult，不再因执行入口不同而抛出不同错误。
-- Browser task preflight、Skill/browser 初始化去重、结果状态更新与有限 snapshot recovery 已移入统一执行边界；内部 recovery helper 不冒充 Agent-visible Tool。
-- 新增可序列化 AgentTaskState，明确 new、running、waiting_approval、waiting_clarification、waiting_verification、completed、failed、max_steps、cancelled。
-- AgentRunTrace 新增向后兼容的 task_id/task_status；status 继续表示 Runtime Run 状态，旧 Trace 缺少新字段仍能加载和 Replay。
-- TaskState 不保存 Tool Arguments、浏览器输入或 secrets；所有状态仍只在进程内，未实现持久化或 Restart Recovery。
-- AgentLoop 从 2037 行降至 1749 行，移除了重复的 Policy、Tool 执行、Trace 和 browser recovery 实现，保留 orchestration、LLM、pause/resume、completion gate、session/context 与最终响应职责。
+- ToolExecutionPipeline 在 browser_click、browser_type(submit=true)、browser_press 提交键和 browser_eval 的 Approval Resume 中主动读取同 session 的 fresh browser_snapshot。
+- Live precondition 只比较当前 URL、目标 ref 与 action-relevant 角色/语义，不要求整份 snapshot 相等；目标消失/变化、URL/session 变化、刷新失败或无法可靠验证时 fail closed。
+- browser_type.text 继续在 Trace/debug/error 中脱敏；Runtime 内部 snapshot 不进入 Approval，Trace 标记 runtime_internal/runtime_precondition_check 与结果原因。
+- 当前没有可靠 active/focused element 状态，因此 browser_press Enter/Return/Space 在 fresh snapshot 后保守拒绝。
+- 非 Browser Approval 不触发 browser snapshot；Phase 6 的统一 Pipeline、冻结动作、显式 AgentTaskState、恢复与 completion gate 行为保持不变。
 
 ## 修改文件
 
-- mybot/agent/loop.py
-- mybot/agent/task_state.py（新增）
-- mybot/agent/tool_execution.py（新增）
-- mybot/agent/__init__.py
-- mybot/guardrails/approvals.py
-- mybot/tools/registry.py
-- mybot/tracing/models.py
-- mybot/tracing/tracer.py
-- mybot/tracing/replay.py
-- tests/test_task_state.py（新增）
-- tests/test_tool_execution.py（新增）
-- tests/test_agent_loop.py
+- mybot/agent/tool_execution.py
+- tests/test_tool_execution.py
 - tests/test_agent_confirmation.py
-- tests/test_agent_clarification.py
-- tests/test_agent_browser_reliability.py
-- tests/test_trace_serializer.py
-- tests/test_tracing_models.py
 - README.md
 - docs/AI_HANDOFF.md
 
@@ -45,6 +28,8 @@ Phase 6：统一 Tool Execution Pipeline，并以显式 AgentTaskState 区分 Ru
 
 - AgentLoop 只编排 Tool batch 与 pause/finish；ToolExecutionPipeline 是唯一 Agent-visible 执行边界。
 - Approval authorization 允许跳过再次询问，但不跳过 lookup、validation、Policy BLOCK、TTL、runtime invariant 或轻量 browser precondition。
+- Browser live precondition refresh 是 Runtime Internal Read，不经过 Approval；验证失败不执行冻结副作用 Tool。
+- Snapshot 验证是 action-scoped precondition，不是整页字符串锁或完整 browser transaction。
 - AgentTaskState 是小型显式 Runtime 状态，不包含 messages、Tool 实例、browser 对象或敏感 Arguments。
 - Trace status 保持旧 Runtime status contract，新增 task_status 表达跨 Run 的任务状态，避免“程序无异常”等同“任务已完成”。
 - Browser completion_state=verification_required 对应 waiting_verification；browser_verify 后回到 running，最终回复后才进入 completed。
@@ -53,7 +38,7 @@ Phase 6：统一 Tool Execution Pipeline，并以显式 AgentTaskState 区分 Ru
 ## 测试结果
 
 - Baseline：189 tests，188 passed，1 skipped；Evals 43/43。
-- Phase 6：203 tests，202 passed，0 failed，1 skipped。
+- Phase 6.1：212 tests，211 passed，0 failed，1 skipped。
 - Evals：43/43 passed，100%。
 - git diff --check 与修改模块 py_compile 均通过。
 - 跳过项为需要 MYBOT_RUN_BROWSER_INTEGRATION=1 的本地 Chrome 集成测试。
@@ -70,6 +55,7 @@ Phase 6：统一 Tool Execution Pipeline，并以显式 AgentTaskState 区分 Ru
 - Cross-session concurrency 和 Browser session ownership 尚未解决。
 - 真实模型、真实站点和用户交互的 E2E Eval 仍缺失。
 - ToolPolicy 仍是应用层 Runtime Safety Layer，不是 OS sandbox。
+- Browser live precondition 仍不是完整 Browser Transaction System；snapshot 读取与动作执行之间不具备原子性。
 
 ## 下一步
 

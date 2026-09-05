@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable
@@ -13,7 +14,7 @@ from ..guardrails import (
     PolicyResult,
     ToolPolicy,
 )
-from ..tools import ToolRegistry, ToolResult
+from ..tools import BrowserResult, ToolRegistry, ToolResult
 from ..tools.browser.connection import LOCAL_BROWSER_SESSION
 from ..tools.browser.errors import BrowserErrorType
 from ..tools.browser.navigation import MANAGED_BROWSER_SESSION
@@ -35,6 +36,20 @@ _BROWSER_SESSION_BY_MODE = {
     BROWSER_MODE_LOCAL: LOCAL_BROWSER_SESSION,
     BROWSER_MODE_MANAGED: MANAGED_BROWSER_SESSION,
 }
+
+_PAGE_URL_PATTERN = re.compile(r"(?m)^- Page URL:\s*(.+?)\s*$")
+_SUBMIT_KEYS = frozenset(
+    {"enter", "return", "numpadenter", "space", "spacebar"}
+)
+_INPUT_ROLES = frozenset(
+    {"combobox", "input", "searchbox", "spinbutton", "textbox", "textarea"}
+)
+_BROWSER_APPROVAL_ERROR = (
+    "浏览器页面在确认期间发生了变化，原操作已失效，请重新发起操作。"
+)
+_BROWSER_APPROVAL_UNVERIFIABLE = (
+    "无法验证当前浏览器状态，已取消执行已批准操作，请重新发起。"
+)
 
 
 class ToolExecutionStatus(str, Enum):
@@ -174,6 +189,7 @@ class ToolExecutionPipeline:
         if tool_trace is not None:
             tool_trace.metadata.update(redact_mapping(policy_metadata))
 
+        live_precondition_metadata: dict[str, Any] = {}
         if approved is not None:
             authorization_error = self._validate_approved_action(
                 request,
@@ -200,6 +216,88 @@ class ToolExecutionPipeline:
                     policy=policy,
                     tool_trace=tool_trace,
                 )
+
+            if self._requires_live_browser_precondition(name, arguments):
+                precondition_error, precondition_reason = (
+                    await self._validate_live_browser_precondition(
+                        name,
+                        arguments,
+                        context,
+                        approved,
+                    )
+                )
+                live_precondition_metadata = {
+                    "runtime_precondition_check": True,
+                    "approval_id": approved.approval_id,
+                    "precondition_type": "browser_live_state",
+                    "precondition_result": (
+                        "failed" if precondition_error else "passed"
+                    ),
+                    **(
+                        {"precondition_reason": precondition_reason}
+                        if precondition_reason
+                        else {}
+                    ),
+                }
+                if tool_trace is not None:
+                    tool_trace.metadata.update(
+                        redact_mapping(live_precondition_metadata)
+                    )
+                if precondition_error:
+                    result = ToolResult(
+                        success=False,
+                        error=precondition_error,
+                        metadata={
+                            **policy_metadata,
+                            **live_precondition_metadata,
+                            "approval_status": "precondition_failed",
+                        },
+                    )
+                    return self._finish(
+                        ToolExecutionStatus.FAILED,
+                        name,
+                        arguments,
+                        result,
+                        policy=policy,
+                        tool_trace=tool_trace,
+                    )
+
+                policy = self.policy.evaluate(
+                    name,
+                    arguments,
+                    user_input=request.user_input,
+                    context={"browser_snapshot": context.browser_snapshot},
+                    tool_metadata=self._runtime_metadata(name),
+                )
+                policy_metadata = self.policy_metadata(policy)
+                if tool_trace is not None:
+                    tool_trace.metadata.update(redact_mapping(policy_metadata))
+                policy_error = self._validate_approved_policy(policy, approved)
+                if policy_error:
+                    failed_metadata = {
+                        **live_precondition_metadata,
+                        "precondition_result": "failed",
+                        "precondition_reason": "target_changed",
+                    }
+                    if tool_trace is not None:
+                        tool_trace.metadata.update(redact_mapping(failed_metadata))
+                    result = ToolResult(
+                        success=False,
+                        error=policy_error,
+                        metadata={
+                            **policy_metadata,
+                            **failed_metadata,
+                            "approval_status": "precondition_failed",
+                        },
+                    )
+                    return self._finish(
+                        ToolExecutionStatus.FAILED,
+                        name,
+                        arguments,
+                        result,
+                        policy=policy,
+                        tool_trace=tool_trace,
+                    )
 
         if policy.decision == PolicyDecision.BLOCK:
             result = ToolResult(
@@ -279,6 +377,8 @@ class ToolExecutionPipeline:
                 error=f"{type(exc).__name__}: {exc}",
                 metadata={"execution_error": "pipeline_exception"},
             )
+        if live_precondition_metadata:
+            result.metadata.update(live_precondition_metadata)
         return self._finish(
             ToolExecutionStatus.EXECUTED,
             name,
@@ -377,6 +477,13 @@ class ToolExecutionPipeline:
             and context.browser_state.current_url != approved_url
         ):
             return "Browser URL changed after approval was requested."
+        return self._validate_approved_policy(policy, pending)
+
+    @staticmethod
+    def _validate_approved_policy(
+        policy: PolicyResult,
+        pending: PendingApproval,
+    ) -> str | None:
         if (
             policy.decision == PolicyDecision.REQUIRE_CONFIRMATION
             and (
@@ -385,6 +492,219 @@ class ToolExecutionPipeline:
             )
         ):
             return "Tool policy changed after approval was requested."
+        return None
+
+    @staticmethod
+    def _requires_live_browser_precondition(
+        name: str,
+        arguments: dict[str, Any],
+    ) -> bool:
+        if name in {"browser_click", "browser_eval"}:
+            return True
+        if name == "browser_type":
+            return arguments.get("submit") is not False
+        if name != "browser_press":
+            return False
+        key_parts = {
+            part
+            for part in re.split(
+                r"[+\s]+",
+                str(arguments.get("key", "")).strip().lower(),
+            )
+            if part
+        }
+        return bool(key_parts & _SUBMIT_KEYS)
+
+    async def _validate_live_browser_precondition(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        context: ToolExecutionContext,
+        pending: PendingApproval,
+    ) -> tuple[str | None, str | None]:
+        refresh, refresh_trace = await self._refresh_approval_browser_state(
+            context,
+            pending,
+        )
+        if not refresh.success:
+            reason = "snapshot_refresh_failed"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_UNVERIFIABLE, reason
+
+        expected_session = _BROWSER_SESSION_BY_MODE[context.browser_mode]
+        if (
+            isinstance(refresh, BrowserResult)
+            and refresh.session
+            and refresh.session != expected_session
+        ):
+            reason = "browser_not_initialized"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_UNVERIFIABLE, reason
+
+        approved_url = self._approval_url(pending)
+        fresh_url = (
+            refresh.url
+            if isinstance(refresh, BrowserResult) and refresh.url
+            else self._snapshot_url(refresh.output)
+        )
+        if not approved_url or not fresh_url:
+            reason = "unsupported_precondition"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_UNVERIFIABLE, reason
+        if fresh_url != approved_url:
+            reason = "url_changed"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_ERROR, reason
+
+        if name == "browser_eval":
+            self._finish_precondition_trace(refresh_trace, "passed")
+            return None, None
+
+        if name == "browser_press":
+            reason = "unsupported_precondition"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_UNVERIFIABLE, reason
+
+        target = str(arguments.get("target", "")).strip()
+        approved_target = self._snapshot_target_semantics(
+            pending.browser_snapshot,
+            target,
+        )
+        fresh_target = self._snapshot_target_semantics(refresh.output, target)
+        if fresh_target is None:
+            reason = "target_missing"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_ERROR, reason
+        if approved_target is None:
+            reason = "unsupported_precondition"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_UNVERIFIABLE, reason
+
+        approved_role, approved_semantics = approved_target
+        fresh_role, fresh_semantics = fresh_target
+        if name == "browser_type" and (
+            approved_role not in _INPUT_ROLES or fresh_role not in _INPUT_ROLES
+        ):
+            reason = "target_changed"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_ERROR, reason
+        if (
+            fresh_role != approved_role
+            or fresh_semantics != approved_semantics
+        ):
+            reason = "target_changed"
+            self._finish_precondition_trace(refresh_trace, "failed", reason)
+            return _BROWSER_APPROVAL_ERROR, reason
+
+        self._finish_precondition_trace(refresh_trace, "passed")
+        return None, None
+
+    async def _refresh_approval_browser_state(
+        self,
+        context: ToolExecutionContext,
+        pending: PendingApproval,
+    ) -> tuple[ToolResult, Any]:
+        refresh_arguments = {
+            "session": _BROWSER_SESSION_BY_MODE[context.browser_mode]
+        }
+        current_step = self.tracer.get_current_step()
+        refresh_trace = (
+            self.tracer.start_tool_call(
+                step_id=current_step.step_id,
+                tool_name="browser_snapshot",
+                arguments=refresh_arguments,
+                metadata={
+                    "runtime_internal": True,
+                    "runtime_precondition_check": True,
+                    "approval_id": pending.approval_id,
+                    "precondition_type": "browser_live_state",
+                },
+            )
+            if current_step is not None and self._tracing_active()
+            else None
+        )
+        try:
+            refresh = await self._execute_registry(
+                "browser_snapshot",
+                refresh_arguments,
+            )
+        except Exception as exc:
+            refresh = ToolResult(
+                success=False,
+                error=f"{type(exc).__name__}: {exc}",
+                metadata={"execution_error": "snapshot_refresh_exception"},
+            )
+        if refresh_trace is not None:
+            self.tracer.finish_tool_call(refresh_trace, result=refresh)
+        context.browser_state.note_result(
+            "browser_snapshot",
+            refresh_arguments,
+            refresh,
+        )
+        self._record_task_result(
+            "browser_snapshot",
+            refresh_arguments,
+            refresh,
+            context,
+        )
+        fresh_url = (
+            refresh.url
+            if isinstance(refresh, BrowserResult) and refresh.url
+            else self._snapshot_url(refresh.output)
+        )
+        if refresh.success and fresh_url:
+            context.browser_state.current_url = fresh_url
+        return refresh, refresh_trace
+
+    @staticmethod
+    def _finish_precondition_trace(
+        trace: Any,
+        result: str,
+        reason: str | None = None,
+    ) -> None:
+        if trace is None:
+            return
+        trace.metadata["precondition_result"] = result
+        if reason:
+            trace.metadata["precondition_reason"] = reason
+
+    @classmethod
+    def _approval_url(cls, pending: PendingApproval) -> str:
+        return (
+            str(pending.policy_metadata.get("current_url", "")).strip()
+            or str(pending.browser_state.get("current_url", "")).strip()
+            or cls._snapshot_url(pending.browser_snapshot)
+        )
+
+    @staticmethod
+    def _snapshot_url(snapshot: str) -> str:
+        match = _PAGE_URL_PATTERN.search(snapshot or "")
+        return match.group(1).strip() if match else ""
+
+    @staticmethod
+    def _snapshot_target_semantics(
+        snapshot: str,
+        target: str,
+    ) -> tuple[str, str] | None:
+        if not snapshot or not re.fullmatch(r"e\d+", target, re.I):
+            return None
+        ref_pattern = re.compile(
+            rf"\[ref\s*=\s*['\"]?{re.escape(target)}['\"]?\]",
+            re.I,
+        )
+        for line in snapshot.splitlines():
+            match = ref_pattern.search(line)
+            if not match:
+                continue
+            semantic_text = re.sub(
+                r"\s+",
+                " ",
+                line[: match.start()].lstrip(" -*\t").strip(),
+            ).casefold()
+            if not semantic_text:
+                return None
+            role = semantic_text.split(" ", 1)[0]
+            return role, semantic_text
         return None
 
     async def _execute_task_tool(

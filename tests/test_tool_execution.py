@@ -11,8 +11,8 @@ from mybot.agent.tool_execution import (
     ToolExecutionStatus,
 )
 from mybot.guardrails import ApprovalManager, ToolPolicy
-from mybot.tools import Tool, ToolRegistry, ToolResult
-from mybot.tracing import AgentTracer
+from mybot.tools import BrowserResult, Tool, ToolRegistry, ToolResult
+from mybot.tracing import AgentTracer, REDACTED
 
 
 class CountingTool(Tool):
@@ -21,6 +21,7 @@ class CountingTool(Tool):
         name: str,
         *,
         parameters: dict | None = None,
+        result: ToolResult | None = None,
     ) -> None:
         self._name = name
         self._parameters = parameters or {
@@ -29,6 +30,7 @@ class CountingTool(Tool):
         }
         self.execution_count = 0
         self.executed_arguments: list[dict] = []
+        self.result = result or ToolResult(success=True, output="ok")
 
     @property
     def name(self) -> str:
@@ -45,7 +47,7 @@ class CountingTool(Tool):
     async def execute(self, **kwargs) -> ToolResult:
         self.execution_count += 1
         self.executed_arguments.append(dict(kwargs))
-        return ToolResult(success=True, output="ok")
+        return self.result
 
 
 class ToolExecutionPipelineTests(unittest.IsolatedAsyncioTestCase):
@@ -54,9 +56,13 @@ class ToolExecutionPipelineTests(unittest.IsolatedAsyncioTestCase):
         tool: CountingTool,
         *,
         approvals: ApprovalManager | None = None,
+        extra_tools: tuple[CountingTool, ...] = (),
+        debug_trace=None,
     ) -> tuple[ToolExecutionPipeline, AgentTracer]:
         registry = ToolRegistry()
         registry.register(tool)
+        for extra_tool in extra_tools:
+            registry.register(extra_tool)
         tracer = AgentTracer()
         return (
             ToolExecutionPipeline(
@@ -64,6 +70,7 @@ class ToolExecutionPipelineTests(unittest.IsolatedAsyncioTestCase):
                 ToolPolicy(),
                 approvals or ApprovalManager(),
                 tracer,
+                debug_trace=debug_trace,
             ),
             tracer,
         )
@@ -352,6 +359,482 @@ class ToolExecutionPipelineTests(unittest.IsolatedAsyncioTestCase):
             outcome.tool_result.metadata["approval_status"],
             "precondition_failed",
         )
+
+    async def test_live_browser_click_precondition_passes_without_full_snapshot_match(
+        self,
+    ) -> None:
+        click = CountingTool("browser_click")
+        approved_snapshot = (
+            "- Page URL: https://example.com/editor\n"
+            "- paragraph 'dynamic count: 1'\n"
+            "- button '发布' [ref=e20]"
+        )
+        fresh_snapshot = CountingTool(
+            "browser_snapshot",
+            result=BrowserResult(
+                success=True,
+                output=(
+                    "- Page URL: https://example.com/editor\n"
+                    "- paragraph 'dynamic count: 2'\n"
+                    "- button '发布' [ref=e20]"
+                ),
+                action="snapshot",
+                session="managed_browser",
+                url="https://example.com/editor",
+            ),
+        )
+        pipeline, tracer = self.build_pipeline(
+            click,
+            extra_tools=(fresh_snapshot,),
+        )
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer,
+                    "browser_click",
+                    {"target": "e20"},
+                ),
+                self.context(approved_snapshot),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="browser_click",
+                arguments={"target": "e20"},
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(approved_snapshot),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.EXECUTED)
+        self.assertEqual(fresh_snapshot.execution_count, 1)
+        self.assertEqual(click.execution_count, 1)
+        self.assertEqual(
+            outcome.tool_result.metadata["precondition_result"], "passed"
+        )
+        refresh_trace = next(
+            call
+            for call in tracer.get_current_run().tool_calls
+            if call.metadata.get("runtime_precondition_check")
+            and call.tool_name == "browser_snapshot"
+        )
+        self.assertTrue(refresh_trace.metadata["runtime_internal"])
+        self.assertEqual(refresh_trace.metadata["precondition_result"], "passed")
+
+    async def test_live_browser_click_fails_for_missing_or_changed_target(
+        self,
+    ) -> None:
+        approved_snapshot = (
+            "- Page URL: https://example.com/editor\n"
+            "- button '发布' [ref=e20]"
+        )
+        for fresh_output, expected_reason in (
+            ("- Page URL: https://example.com/editor", "target_missing"),
+            (
+                "- Page URL: https://example.com/editor\n"
+                "- button '删除账号' [ref=e20]",
+                "target_changed",
+            ),
+        ):
+            with self.subTest(reason=expected_reason):
+                click = CountingTool("browser_click")
+                snapshot = CountingTool(
+                    "browser_snapshot",
+                    result=BrowserResult(
+                        success=True,
+                        output=fresh_output,
+                        action="snapshot",
+                        session="managed_browser",
+                        url="https://example.com/editor",
+                    ),
+                )
+                pipeline, tracer = self.build_pipeline(
+                    click,
+                    extra_tools=(snapshot,),
+                )
+                pending = (
+                    await pipeline.execute(
+                        self.traced_request(
+                            tracer,
+                            "browser_click",
+                            {"target": "e20"},
+                        ),
+                        self.context(approved_snapshot),
+                    )
+                ).pending_approval
+                tracer.finish_step()
+                tracer.finish_run()
+                approved = pipeline.approvals.approve(
+                    "cli:test", pending.approval_id, "user-a"
+                )
+                tracer.start_run("confirm", metadata={"task_id": "task-1"})
+                step = tracer.start_step(1)
+
+                outcome = await pipeline.execute_approved(
+                    approved,
+                    ToolExecutionRequest(
+                        tool_name="browser_click",
+                        arguments=pending.arguments,
+                        session_key="cli:test",
+                        sender_id="user-a",
+                        task_id="task-1",
+                        step_id=step.step_id,
+                    ),
+                    self.context(approved_snapshot),
+                )
+
+                self.assertEqual(outcome.status, ToolExecutionStatus.FAILED)
+                self.assertEqual(click.execution_count, 0)
+                self.assertEqual(
+                    outcome.tool_result.metadata["approval_status"],
+                    "precondition_failed",
+                )
+                self.assertEqual(
+                    outcome.tool_result.metadata["precondition_reason"],
+                    expected_reason,
+                )
+
+    async def test_live_browser_click_fails_when_url_changes(self) -> None:
+        click = CountingTool("browser_click")
+        approved_snapshot = (
+            "- Page URL: https://example.com/editor\n"
+            "- button '发布' [ref=e20]"
+        )
+        snapshot = CountingTool(
+            "browser_snapshot",
+            result=BrowserResult(
+                success=True,
+                output=(
+                    "- Page URL: https://example.com/account/delete\n"
+                    "- button '发布' [ref=e20]"
+                ),
+                action="snapshot",
+                session="managed_browser",
+                url="https://example.com/account/delete",
+            ),
+        )
+        pipeline, tracer = self.build_pipeline(click, extra_tools=(snapshot,))
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer, "browser_click", {"target": "e20"}
+                ),
+                self.context(approved_snapshot),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="browser_click",
+                arguments=pending.arguments,
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(approved_snapshot),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.FAILED)
+        self.assertEqual(click.execution_count, 0)
+        self.assertEqual(
+            outcome.tool_result.metadata["precondition_reason"], "url_changed"
+        )
+
+    async def test_live_browser_click_fails_when_snapshot_refresh_fails(
+        self,
+    ) -> None:
+        click = CountingTool("browser_click")
+        approved_snapshot = (
+            "- Page URL: https://example.com/editor\n"
+            "- button '发布' [ref=e20]"
+        )
+        snapshot = CountingTool(
+            "browser_snapshot",
+            result=BrowserResult(
+                success=False,
+                error="browser closed",
+                action="snapshot",
+                session="managed_browser",
+            ),
+        )
+        pipeline, tracer = self.build_pipeline(click, extra_tools=(snapshot,))
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer, "browser_click", {"target": "e20"}
+                ),
+                self.context(approved_snapshot),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="browser_click",
+                arguments=pending.arguments,
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(approved_snapshot),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.FAILED)
+        self.assertEqual(click.execution_count, 0)
+        self.assertEqual(
+            outcome.tool_result.metadata["precondition_reason"],
+            "snapshot_refresh_failed",
+        )
+
+    async def test_live_browser_type_changed_target_fails_without_text_leak(
+        self,
+    ) -> None:
+        secret_text = "plain-looking-password-value"
+        debug_messages: list[str] = []
+        browser_type = CountingTool("browser_type")
+        approved_snapshot = (
+            "- Page URL: https://example.com/login\n"
+            "- textbox 'Password' [ref=e7]"
+        )
+        snapshot = CountingTool(
+            "browser_snapshot",
+            result=BrowserResult(
+                success=True,
+                output=(
+                    "- Page URL: https://example.com/login\n"
+                    "- button 'Delete account' [ref=e7]"
+                ),
+                action="snapshot",
+                session="managed_browser",
+                url="https://example.com/login",
+            ),
+        )
+        pipeline, tracer = self.build_pipeline(
+            browser_type,
+            extra_tools=(snapshot,),
+            debug_trace=debug_messages.append,
+        )
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer,
+                    "browser_type",
+                    {"target": "e7", "text": secret_text, "submit": True},
+                ),
+                self.context(approved_snapshot),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="browser_type",
+                arguments=pending.arguments,
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(approved_snapshot),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.FAILED)
+        self.assertEqual(browser_type.execution_count, 0)
+        self.assertEqual(
+            outcome.tool_result.metadata["precondition_reason"],
+            "target_changed",
+        )
+        rendered_trace = str(tracer.get_current_run().tool_calls)
+        self.assertNotIn(secret_text, rendered_trace)
+        self.assertIn(REDACTED, rendered_trace)
+        self.assertNotIn(secret_text, "\n".join(debug_messages))
+        self.assertNotIn(secret_text, outcome.tool_result.to_text())
+
+    async def test_live_browser_press_fails_closed_without_focus_context(
+        self,
+    ) -> None:
+        press = CountingTool("browser_press")
+        snapshot_text = "- Page URL: https://example.com/editor"
+        snapshot = CountingTool(
+            "browser_snapshot",
+            result=BrowserResult(
+                success=True,
+                output=snapshot_text,
+                action="snapshot",
+                session="managed_browser",
+                url="https://example.com/editor",
+            ),
+        )
+        pipeline, tracer = self.build_pipeline(press, extra_tools=(snapshot,))
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer, "browser_press", {"key": "Enter"}
+                ),
+                self.context(snapshot_text),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="browser_press",
+                arguments=pending.arguments,
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(snapshot_text),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.FAILED)
+        self.assertEqual(snapshot.execution_count, 1)
+        self.assertEqual(press.execution_count, 0)
+        self.assertEqual(
+            outcome.tool_result.metadata["precondition_reason"],
+            "unsupported_precondition",
+        )
+
+    async def test_live_browser_eval_requires_same_session_and_url(self) -> None:
+        browser_eval = CountingTool("browser_eval")
+        snapshot_text = "- Page URL: https://example.com/editor"
+        snapshot = CountingTool(
+            "browser_snapshot",
+            result=BrowserResult(
+                success=True,
+                output=snapshot_text,
+                action="snapshot",
+                session="managed_browser",
+                url="https://example.com/editor",
+            ),
+        )
+        pipeline, tracer = self.build_pipeline(
+            browser_eval,
+            extra_tools=(snapshot,),
+        )
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer,
+                    "browser_eval",
+                    {"script": "() => location.href"},
+                ),
+                self.context(snapshot_text),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="browser_eval",
+                arguments=pending.arguments,
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(snapshot_text),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.EXECUTED)
+        self.assertEqual(snapshot.execution_count, 1)
+        self.assertEqual(browser_eval.execution_count, 1)
+        self.assertEqual(
+            outcome.tool_result.metadata["precondition_result"], "passed"
+        )
+
+    async def test_non_browser_approval_does_not_refresh_browser_snapshot(
+        self,
+    ) -> None:
+        exec_tool = CountingTool("exec")
+        snapshot = CountingTool("browser_snapshot")
+        pipeline, tracer = self.build_pipeline(
+            exec_tool,
+            extra_tools=(snapshot,),
+        )
+        pending = (
+            await pipeline.execute(
+                self.traced_request(
+                    tracer, "exec", {"command": "git commit -m exact"}
+                ),
+                self.context(),
+            )
+        ).pending_approval
+        tracer.finish_step()
+        tracer.finish_run()
+        approved = pipeline.approvals.approve(
+            "cli:test", pending.approval_id, "user-a"
+        )
+        tracer.start_run("confirm", metadata={"task_id": "task-1"})
+        step = tracer.start_step(1)
+
+        outcome = await pipeline.execute_approved(
+            approved,
+            ToolExecutionRequest(
+                tool_name="exec",
+                arguments={"command": "ignored"},
+                session_key="cli:test",
+                sender_id="user-a",
+                task_id="task-1",
+                step_id=step.step_id,
+            ),
+            self.context(),
+        )
+
+        self.assertEqual(outcome.status, ToolExecutionStatus.EXECUTED)
+        self.assertEqual(exec_tool.execution_count, 1)
+        self.assertEqual(snapshot.execution_count, 0)
 
 
 if __name__ == "__main__":

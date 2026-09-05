@@ -324,8 +324,11 @@ ToolExecutionPipeline
 正常调用在 Policy ALLOW 后执行；REQUIRE_CONFIRMATION 只冻结动作并暂停，不会提前
 执行。用户确认后，Pipeline 执行 PendingApproval 中原样保存的 Tool 和 Arguments，
 不会重新请求模型生成调用；Tool lookup、参数校验、BLOCK 规则、Runtime-managed path
-保护、Approval TTL、sender/task 绑定和当前能够验证的 browser snapshot/URL
-precondition 仍会重新检查。未知 Tool、非法 JSON、缺少必填参数或参数类型错误统一转换为
+保护、Approval TTL、sender/task 绑定和 browser precondition 仍会重新检查。对于受支持的
+高风险 Browser Approval，Runtime 会在冻结动作执行前主动调用同一 session 的只读
+`browser_snapshot`，再验证当前 URL、目标 ref 及其 action-relevant 角色/语义；无法读取或
+无法可靠验证时 fail closed。验证不要求整份 snapshot 字符串完全一致，因此页面中的无关
+动态文本不会单独使审批失效。未知 Tool、非法 JSON、缺少必填参数或参数类型错误统一转换为
 失败的 ToolResult，不会使 AgentLoop 崩溃。
 
 AgentTaskState 显式表示 new、running、waiting_approval、
@@ -422,7 +425,10 @@ Agent workspace 作为 `cwd`，但这只确定相对路径的起点，不限制�
 程序重启后不会恢复。
 
 Policy 的 `risk_level`、`policy_decision`、`policy_rule`、`policy_reason`、`approval_id`
-和 `approval_status` 会写入现有 Tool Call Trace，并继续使用相同的敏感字段脱敏。
+和 `approval_status` 会写入现有 Tool Call Trace。Browser live precondition 的内部只读
+snapshot 另以 `runtime_internal`、`runtime_precondition_check`、`precondition_type`、
+`precondition_result` 和可选 `precondition_reason` 标记，不伪装成模型提出的 Tool Call，
+也不会再次触发 Approval。所有 Trace 继续使用相同的敏感字段脱敏。
 `ToolPolicy` 是 Runtime Safety Layer，不是操作系统级 sandbox。它提供确定性、可测试的
 应用层执行边界，但不能替代容器、账户权限、文件系统 ACL 或其他 OS 隔离机制。
 
@@ -530,6 +536,14 @@ MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和
 ref 不在最新 snapshot 中时需要确认，而能够明确识别为普通导航的目标仍可自动执行。
 带 `submit=true` 的输入和 Enter/Space 按键可能触发表单提交，因此也进入确认流程；
 普通 `submit=false` 文本输入保持低风险自动执行。`browser_eval` 始终要求确认。
+
+确认高风险 Browser Action 后，Runtime 会先读取 fresh snapshot：`browser_click` 验证
+URL、ref 与目标角色/文本，`browser_type(submit=true)` 还要求目标保持为兼容输入控件，
+`browser_eval` 验证 session 与 URL。当前 snapshot 不记录可靠的 active/focused element，
+所以 Enter/Return/Space 审批在恢复时会保守拒绝，要求用户基于当前页面重新发起。目标消失、
+目标语义变化、URL 变化、session 不匹配或 snapshot 刷新失败都不会执行原副作用动作。
+这是一层有限的 live precondition validation，不是完整的网页 Transaction System 或
+optimistic locking；Task Persistence 与 Restart Recovery 仍未实现。
 
 即使 `playwright-cli` 进程退出码为 0，输出中的明确 `### Error` block 也会转换为
 `BrowserResult(success=False)`。网页自身的 Console Error 只作为页面数据保留，不会

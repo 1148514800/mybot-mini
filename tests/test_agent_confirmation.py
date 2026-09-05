@@ -361,6 +361,75 @@ class AgentConfirmationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Current URL: https://example.com/editor", prompt)
         self.assertEqual(agent.tools.execution_count, 0)
 
+    async def test_resume_approved_click_reads_live_snapshot_and_stops_stale_action(
+        self,
+    ):
+        approved_snapshot = (
+            "- Page URL: https://example.com/editor\n"
+            "- button '发布' [ref=e20]"
+        )
+        case = EvalCase(
+            id="browser-live-approval-precondition",
+            name="browser live approval precondition",
+            input="publish",
+            metadata={
+                "fake_tools": [
+                    {
+                        "name": "browser_snapshot",
+                        "arguments": {},
+                        "output": (
+                            "- Page URL: https://example.com/editor\n"
+                            "- button '删除账号' [ref=e20]"
+                        ),
+                    },
+                    {
+                        "name": "browser_click",
+                        "arguments": {"target": "e20"},
+                        "output": "must not execute",
+                    },
+                ],
+                "fake_response_sequence": [
+                    {
+                        "tools": [
+                            {
+                                "name": "browser_click",
+                                "arguments": {"target": "e20"},
+                            }
+                        ]
+                    },
+                    {"output": "published"},
+                ],
+            },
+        )
+        agent = build_fake_agent(case)
+        prompt, first_trace = await agent.run_traced(
+            case.input,
+            [{"role": "user", "content": case.input}],
+            session_key="cli:a",
+            browser_snapshot=approved_snapshot,
+        )
+        self.assertEqual(first_trace.status, "awaiting_confirmation")
+        self.assertIn("回复“确认”", prompt)
+
+        output, resumed_trace = await agent.resume_pending("cli:a", "确认")
+
+        self.assertIn("页面在确认期间发生了变化", output)
+        self.assertEqual(resumed_trace.status, "failed")
+        self.assertEqual(
+            [name for name, _ in agent.tools.executed_calls],
+            ["browser_snapshot"],
+        )
+        refresh_trace = next(
+            call
+            for call in resumed_trace.tool_calls
+            if call.tool_name == "browser_snapshot"
+        )
+        self.assertTrue(refresh_trace.metadata["runtime_internal"])
+        self.assertEqual(refresh_trace.metadata["precondition_result"], "failed")
+        self.assertEqual(
+            refresh_trace.metadata["precondition_reason"], "target_changed"
+        )
+
     async def test_internal_debug_trace_redacts_tool_arguments_and_result(self):
         secret_text = "plain-debug-secret"
         case = EvalCase(
