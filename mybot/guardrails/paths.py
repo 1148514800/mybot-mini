@@ -5,7 +5,7 @@ from pathlib import Path, PurePath
 
 
 RUNTIME_MANAGED_DIRECTORIES = frozenset(
-    {"memory", "sessions", "browser_profiles", "runs"}
+    {"memory", "sessions", "browser_profiles", "runs", "checkpoints"}
 )
 SENSITIVE_INSTRUCTION_NAMES = frozenset(
     {"agents.md", "soul.md", "user.md", "tools.md"}

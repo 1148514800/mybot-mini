@@ -25,7 +25,9 @@ class WriteFileToolTests(unittest.TestCase):
             "sessions/session.jsonl",
             "browser_profiles/managed/state.json",
             "runs/trace.json",
+            "checkpoints/active_tasks.sqlite3",
             "workspace/memory/memory.json",
+            "workspace/checkpoints/active_tasks.sqlite3",
         ):
             with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
                 workspace = Path(directory)

@@ -28,6 +28,7 @@ class PendingClarification:
     loaded_skills: list[str] = field(default_factory=list, repr=False)
     browser_initialized: bool = False
     browser_state: dict[str, Any] = field(default_factory=dict, repr=False)
+    recovered_from_checkpoint: bool = False
     status: str = "pending"
 
 
@@ -78,6 +79,12 @@ class ClarificationManager:
 
     def get(self, session_key: str) -> PendingClarification | None:
         return self._pending.get(session_key)
+
+    def restore(self, pending: PendingClarification) -> bool:
+        if pending.status != "pending" or not pending.session_key:
+            return False
+        self._pending[pending.session_key] = copy.deepcopy(pending)
+        return True
 
     def resolve(
         self,

@@ -315,6 +315,8 @@ class RecentBrowserTask:
     loaded_skills: list[str]
     browser_initialized: bool
     browser_state: dict[str, Any]
+    expires_at: str | None = None
+    recovered_from_checkpoint: bool = False
 
 
 class RecentTaskManager:

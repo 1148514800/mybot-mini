@@ -227,7 +227,9 @@ class ToolPolicyTests(unittest.TestCase):
             "sessions/cli_direct.jsonl",
             "browser_profiles/managed_browser/state.json",
             "runs/trace.json",
+            "checkpoints/active_tasks.sqlite3",
             "workspace/memory/memory.json",
+            "workspace/checkpoints/active_tasks.sqlite3",
         ):
             with self.subTest(path=path):
                 result = self.policy.evaluate(

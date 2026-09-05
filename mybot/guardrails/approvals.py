@@ -102,6 +102,16 @@ class ApprovalManager:
     def get(self, session_key: str) -> PendingApproval | None:
         return self._pending.get(session_key)
 
+    def restore(self, pending: PendingApproval) -> bool:
+        if (
+            pending.status != "pending"
+            or not pending.session_key
+            or self.is_expired(pending)
+        ):
+            return False
+        self._pending[pending.session_key] = copy.deepcopy(pending)
+        return True
+
     def expire(self, session_key: str) -> PendingApproval | None:
         pending = self._pending.get(session_key)
         if pending is None:

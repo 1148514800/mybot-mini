@@ -36,6 +36,10 @@
   "guardrails": {
     "approval_ttl_seconds": 600
   },
+  "checkpoint": {
+    "enabled": true,
+    "recent_task_ttl_seconds": 86400
+  },
   "tracing": {
     "trace_dir": null
   },

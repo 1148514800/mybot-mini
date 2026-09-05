@@ -53,4 +53,7 @@ class PendingApproval:
     browser_initialized: bool = False
     browser_state: dict[str, Any] = field(default_factory=dict, repr=False)
     policy_metadata: dict[str, Any] = field(default_factory=dict, repr=False)
+    resumable: bool = True
+    non_resumable_reason: str | None = None
+    recovered_from_checkpoint: bool = False
     status: str = "pending"

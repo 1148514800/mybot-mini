@@ -12,6 +12,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 持久化会话和长期记忆
 - 确定性的 Tool Policy、风险分级和 Human-in-the-loop 审批
 - 跨 CLI / 飞书消息的 Approval 与普通 Clarification Pause / Resume
+- 版本化 SQLite Active Task Checkpoint 与保守的进程重启恢复
 - 浏览器错误分类、有限恢复、任务预算、完成证据与最近任务续接
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills
@@ -261,6 +262,8 @@ config/
 | `browser_runtime.max_eval_fallbacks` | 每个 task 的 `browser_eval` fallback 上限，默认 `1`；Policy 确认仍生效 |
 | `browser_runtime.max_recovery_steps` | 每个 task 的自动恢复步骤上限，默认 `2` |
 | `guardrails.approval_ttl_seconds` | 待确认操作的有效期，默认 `600` 秒；过期后必须重新发起 |
+| `checkpoint.enabled` | 是否持久化 Active Task Checkpoint，默认 `true`；设为 `false` 时保持纯内存模式 |
+| `checkpoint.recent_task_ttl_seconds` | 最近 Browser Task checkpoint 的有效期，默认 `86400` 秒 |
 | `feishu.enabled` | 是否启用飞书通道 |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
@@ -286,7 +289,7 @@ mybot/
   evals/                  # 确定性 Eval、FakeLLM runner 和文本报告
   core/                   # 配置和应用组装
   messaging/              # CLI、飞书和消息总线
-  storage/                # 会话和记忆
+  storage/                # 会话、记忆和版本化 SQLite checkpoint
   tools/                  # Agent 可调用的工具
 workspace/
   instructions/           # AGENTS.md、SOUL.md、USER.md、TOOLS.md
@@ -294,11 +297,12 @@ workspace/
   memory/                 # 长期记忆
   sessions/               # 对话历史（JSONL）
   browser_profiles/       # Runtime 管理的浏览器 profile
+  checkpoints/            # Runtime 管理的 Active Task SQLite checkpoint
   runs/                   # 可选的持久化 Trace
 evals/                    # 离线 EvalCase JSON 数据
 ```
 
-`memory/`、`sessions/`、`browser_profiles/` 和 `runs/` 是 Runtime 管理目录，普通
+`memory/`、`sessions/`、`browser_profiles/`、`checkpoints/` 和 `runs/` 是 Runtime 管理目录，普通
 `write_file` 会直接阻止对这些目录的修改；记忆变更必须使用 `memory_write` 或
 `memory_delete`。`instructions/` 以及 `AGENTS.md`、`SOUL.md`、`USER.md`、`TOOLS.md`
 等指令文件仍需要明确确认。目录删除会丢失对应状态，请先备份。
@@ -338,9 +342,25 @@ task_status 是跨 pause/resume 的用户任务状态；因此允许 Runtime 正
 waiting_verification。Task State 只保存小型状态和关联 ID，不保存 Tool Arguments、
 浏览器输入或 secret。
 
-这些 Task State、Approval、Clarification 和 Recent Browser Task 目前仍然只是进程内
-状态。它们具备明确的数据模型，但不是持久化或 restart-safe 存储；Restart Recovery
-仍未实现。
+等待 Approval、Clarification、Verification 的 Active Task State 与 Recent Browser Task
+会保存到 `workspace/checkpoints/active_tasks.sqlite3`。存储层使用 SQLite transaction、
+明确的 JSON-compatible payload 和 `schema_version=1`，不使用 pickle；每个 session 的
+active checkpoint 原子覆盖。任务进入 completed、failed、max_steps 或 cancelled 后会清除
+active checkpoint，Recent Browser Task 则按独立 TTL 保留，供用户纠正或继续。
+
+重启只重建等待管理器和小型任务状态，不调用模型，也不执行 Tool。确认恢复的 Approval 时，
+Runtime 仍重新检查 TTL、sender、task、Tool schema、当前 Policy 和适用的 fresh browser
+precondition。消费 Approval 时会在任何副作用前先删除 active checkpoint；如果之后进程崩溃，
+该动作不会自动重放，用户需要重新发起。重启前同一模型批次中尚未独立批准的其余 Tool Call
+也会跳过并交给模型重新评估。
+
+Checkpoint 写入前会递归清理 password、token、cookie、authorization、secret、API key
+以及 `browser_type.text`；需要丢弃原始参数才能安全落盘的 Approval 会标记为
+non-resumable，重启后即使确认也不会执行。持久化 browser snapshot/session 状态只视为历史
+上下文：恢复后的 Clarification、Verification 和 Recent Task 必须重新连接并读取 live state；
+Browser Approval 仅保留执行 fresh-state 比较所需的最小 URL/目标语义。无法解析、row identity
+不一致或 schema 不受支持的 checkpoint 会 fail closed。将 `checkpoint.enabled` 设为 `false`
+可完全关闭 SQLite 文件并保留原有纯内存行为。
 
 ## Tracing 与离线 Evals
 
@@ -421,8 +441,9 @@ Agent workspace 作为 `cwd`，但这只确定相对路径的起点，不限制�
 回复 `取消`、`拒绝`、`不要执行`、`停止`、`no`、`n` 或 `deny` 会取消它。其他回复会
 取消旧审批并作为新的正常任务处理。审批按 `channel:chat_id` 关联 Conversation Session，
 同时单独绑定原始 `sender_id`；群聊中的其他用户不能批准或拒绝该操作，也不会消费它。
-审批默认 10 分钟过期，过期 Trace 记录 `approval_status=expired`。审批仅保存在内存中，
-程序重启后不会恢复。
+审批默认 10 分钟过期，过期 Trace 记录 `approval_status=expired`。启用 checkpoint 时，等待
+审批可跨进程重启恢复，但不会因重启自动执行；过期项在恢复时直接丢弃。关闭 checkpoint 时，
+审批仍仅保存在内存中。
 
 Policy 的 `risk_level`、`policy_decision`、`policy_rule`、`policy_reason`、`approval_id`
 和 `approval_status` 会写入现有 Tool Call Trace。Browser live precondition 的内部只读
@@ -436,13 +457,14 @@ snapshot 另以 `runtime_internal`、`runtime_precondition_check`、`preconditio
 
 缺少参数、等待登录或遇到同名好友等普通歧义时，Agent 调用
 `request_user_input`。当前 Run 以 `awaiting_clarification` 结束，并把 messages、
-browser mode/session、最近 snapshot、已加载 Skill 和浏览器初始化状态保存在按
+browser mode、已加载 Skill 和必要的浏览器历史状态保存在按
 session 隔离的 `PendingClarification` 中。用户下一条回复会消费该状态并继续原任务，
-不会重新构建 System Prompt、重复读取同一个 Skill 或再次启动已经打开的浏览器。
+不会重新构建 System Prompt 或重复读取同一个 Skill。进程内恢复可以复用已有 Browser
+Session；跨重启恢复不会把持久化 session/snapshot 当作 live state，必须重新连接并读取页面。
 
 Clarification 与高风险 Approval 是两套独立状态：普通回答不会批准危险 Tool，审批仍然
-要求确定性的确认词并绑定 exact action。两种恢复流程会继承同一个 `task_id`。这些
-Pending 状态当前都只保存在内存中，程序重启后不会恢复。
+要求确定性的确认词并绑定 exact action。两种恢复流程会继承同一个 `task_id`；启用
+checkpoint 时都可以跨重启继续，关闭时维持纯内存行为。
 
 ## MCP External Tool Runtime
 
@@ -543,7 +565,7 @@ URL、ref 与目标角色/文本，`browser_type(submit=true)` 还要求目标�
 所以 Enter/Return/Space 审批在恢复时会保守拒绝，要求用户基于当前页面重新发起。目标消失、
 目标语义变化、URL 变化、session 不匹配或 snapshot 刷新失败都不会执行原副作用动作。
 这是一层有限的 live precondition validation，不是完整的网页 Transaction System 或
-optimistic locking；Task Persistence 与 Restart Recovery 仍未实现。
+optimistic locking；Restart Recovery 不会把 checkpoint 中的 Browser 数据当作 live state。
 
 即使 `playwright-cli` 进程退出码为 0，输出中的明确 `### Error` block 也会转换为
 `BrowserResult(success=False)`。网页自身的 Console Error 只作为页面数据保留，不会
@@ -569,6 +591,10 @@ optimistic locking；Task Persistence 与 Restart Recovery 仍未实现。
 最近任务时，Runtime 会复用原 `task_id`、browser mode/session、当前 URL、最新
 snapshot、已加载 Skills、最近 Tool Results、完成状态和剩余预算。该机制只恢复上下文，
 不等于 Approval；任何新的 `browser_eval` 或高风险点击仍照常经过 ToolPolicy。
+
+启用 checkpoint 后 Recent Browser Task 可在配置 TTL 内跨重启恢复。此时只复用 task_id、
+经过脱敏的消息和历史完成状态；browser session、URL 和 snapshot 会被明确标记为 stale，
+后续动作必须读取 fresh state。过期 Recent Task 会从 SQLite 删除。
 
 这些机制是有限的 Runtime Reliability Layer，不是浏览器 sandbox，也不做无限重试。
 

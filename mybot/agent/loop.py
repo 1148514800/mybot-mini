@@ -22,6 +22,7 @@ from ..guardrails import (
 )
 from ..messaging import InboundMessage, MessageBus, OutboundMessage
 from ..storage.session import SessionManager
+from ..storage.checkpoint import ActiveTaskCheckpointStore
 from ..tools import ToolRegistry, ToolResult
 from ..tools.browser.connection import LOCAL_BROWSER_SESSION
 from ..tools.browser.navigation import MANAGED_BROWSER_SESSION
@@ -41,6 +42,11 @@ from .browser_reliability import (
     contains_incomplete_report,
     contains_success_claim,
     is_recent_task_continuation,
+)
+from .checkpoint_recovery import (
+    approval_from_checkpoint,
+    clarification_from_checkpoint,
+    recent_task_from_checkpoint,
 )
 from .task_state import AgentTaskState, AgentTaskStatus
 from .tool_execution import (
@@ -83,6 +89,7 @@ class AgentLoop:
         clarifications: ClarificationManager | None = None,
         recent_tasks: RecentTaskManager | None = None,
         browser_recovery_policy: BrowserRecoveryPolicy | None = None,
+        checkpoint_store: ActiveTaskCheckpointStore | None = None,
     ):
         self.client = client
         self.config = config
@@ -115,6 +122,51 @@ class AgentLoop:
             debug_trace=self._trace,
         )
         self.task_states: dict[str, AgentTaskState] = {}
+        self.checkpoint_store = checkpoint_store
+        self._restore_checkpoints()
+
+    def _restore_checkpoints(self) -> None:
+        if self.checkpoint_store is None:
+            return
+        recent_identities: set[tuple[str, str]] = set()
+        for payload in self.checkpoint_store.load_recent():
+            try:
+                recent = recent_task_from_checkpoint(payload)
+                self.recent_tasks.save(recent)
+                recent_identities.add((recent.session_key, recent.task_id))
+            except (KeyError, TypeError, ValueError):
+                session_key = str(payload.get("session_key", ""))
+                if session_key:
+                    self.checkpoint_store.clear_recent(session_key)
+        for recovered in self.checkpoint_store.load_active():
+            try:
+                state = AgentTaskState.from_dict(recovered.task_state)
+                if (
+                    recovered.kind == "verification"
+                    and (state.session_key, state.task_id)
+                    not in recent_identities
+                ):
+                    self.checkpoint_store.clear_active(state.session_key)
+                    continue
+                restored = True
+                if recovered.kind == "approval":
+                    restored = self.approvals.restore(
+                        approval_from_checkpoint(recovered.payload)
+                    )
+                elif recovered.kind == "clarification":
+                    restored = self.clarifications.restore(
+                        clarification_from_checkpoint(recovered.payload)
+                    )
+                if not restored:
+                    self.checkpoint_store.clear_active(state.session_key)
+                    continue
+                self.task_states[state.task_id] = state
+            except (KeyError, TypeError, ValueError):
+                session_key = str(
+                    recovered.task_state.get("session_key", "")
+                )
+                if session_key:
+                    self.checkpoint_store.clear_active(session_key)
 
     def _pipeline(self) -> ToolExecutionPipeline:
         """Keep injected test/runtime dependencies aligned with the pipeline."""
@@ -159,12 +211,40 @@ class AgentLoop:
         runtime_status: str = "success",
         error: str | None = None,
     ) -> AgentRunTrace:
-        return self.tracer.finish_run(
+        trace = self.tracer.finish_run(
             final_output=final_output,
             status=runtime_status,
             error=error,
             task_status=task_state.status.value,
         )
+        self._sync_task_checkpoint(task_state)
+        return trace
+
+    def _sync_task_checkpoint(self, state: AgentTaskState) -> None:
+        store = self.checkpoint_store
+        if store is None or not state.session_key:
+            return
+        if state.status == AgentTaskStatus.WAITING_APPROVAL:
+            pending = self.approvals.get(state.session_key)
+            if pending and pending.approval_id == state.active_approval_id:
+                store.save_approval(state, pending)
+                return
+        elif state.status == AgentTaskStatus.WAITING_CLARIFICATION:
+            pending = self.clarifications.get(state.session_key)
+            if (
+                pending
+                and pending.clarification_id == state.active_clarification_id
+            ):
+                store.save_clarification(state, pending)
+                return
+        elif state.status == AgentTaskStatus.WAITING_VERIFICATION:
+            store.save_verification(state)
+            return
+        store.clear_active(state.session_key)
+
+    def _clear_active_checkpoint(self, session_key: str) -> None:
+        if self.checkpoint_store is not None:
+            self.checkpoint_store.clear_active(session_key)
 
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
@@ -558,6 +638,7 @@ class AgentLoop:
                 message.sender_id,
             )
             assert approved is not None
+            self._clear_active_checkpoint(message.session_key)
             reply, trace = await self._resume_approved(
                 approved,
                 message.content,
@@ -570,6 +651,7 @@ class AgentLoop:
                 message.sender_id,
             )
             assert rejected is not None
+            self._clear_active_checkpoint(message.session_key)
             reply, trace = self._cancelled_trace(rejected, message.content)
         elif pending_clarification is not None:
             resolved = self.clarifications.resolve(
@@ -577,6 +659,7 @@ class AgentLoop:
                 pending_clarification.clarification_id,
             )
             assert resolved is not None
+            self._clear_active_checkpoint(message.session_key)
             reply, trace = await self._resume_clarification(
                 resolved,
                 message.content,
@@ -605,6 +688,8 @@ class AgentLoop:
                 cancelled_approval_id = (
                     rejected.approval_id if rejected else None
                 )
+                if rejected is not None:
+                    self._clear_active_checkpoint(message.session_key)
                 if rejected and rejected.task_id:
                     cancelled_state = self.task_states.get(rejected.task_id)
                     if (
@@ -769,24 +854,25 @@ class AgentLoop:
     ) -> None:
         if not session_key or not browser_state.browser_used:
             return
-        self.recent_tasks.save(
-            RecentBrowserTask(
-                session_key=session_key,
-                task_id=task_id,
-                origin_run_id=trace.run_id,
-                browser_mode=browser_mode,
-                messages=[
-                    *copy.deepcopy(messages),
-                    {"role": "assistant", "content": output},
-                ],
-                browser_snapshot=(
-                    browser_state.latest_snapshot or browser_snapshot
-                ),
-                loaded_skills=sorted(loaded_skills),
-                browser_initialized=browser_state.browser_initialized,
-                browser_state=browser_state.to_dict(),
-            )
+        recent = RecentBrowserTask(
+            session_key=session_key,
+            task_id=task_id,
+            origin_run_id=trace.run_id,
+            browser_mode=browser_mode,
+            messages=[
+                *copy.deepcopy(messages),
+                {"role": "assistant", "content": output},
+            ],
+            browser_snapshot=(
+                browser_state.latest_snapshot or browser_snapshot
+            ),
+            loaded_skills=sorted(loaded_skills),
+            browser_initialized=browser_state.browser_initialized,
+            browser_state=browser_state.to_dict(),
         )
+        self.recent_tasks.save(recent)
+        if self.checkpoint_store is not None:
+            self.checkpoint_store.save_recent(recent)
 
     async def _resume_recent_task(
         self,
@@ -801,9 +887,16 @@ class AgentLoop:
                 "content": (
                     f"{user_input}\n\n"
                     "Runtime continuation: this corrects or continues the recent "
-                    "browser task. Reuse its task_id, browser session, current page, "
-                    "latest snapshot, loaded Skills, recent tool results, completion "
-                    "state, and budgets. This is not approval for any risky action; "
+                    "browser task. Reuse its task_id, loaded Skills, recent tool "
+                    "results, completion state, and budgets. "
+                    + (
+                        "This task was recovered after restart: persisted browser "
+                        "state is historical only. Reinitialize/reconnect as needed "
+                        "and read fresh browser state before acting. "
+                        if recent.recovered_from_checkpoint
+                        else "Reuse its browser session, current page, and latest snapshot. "
+                    )
+                    + "This is not approval for any risky action; "
                     "all new tool calls still require normal policy evaluation."
                 ),
             }
@@ -991,6 +1084,7 @@ class AgentLoop:
                     pending,
                     user_input,
                 )
+            self._clear_active_checkpoint(session_key)
             return await self._resume_approved(
                 approved,
                 user_input,
@@ -1006,6 +1100,7 @@ class AgentLoop:
                 pending,
                 user_input,
             )
+        self._clear_active_checkpoint(session_key)
         return self._cancelled_trace(rejected, user_input)
 
     async def resume_clarification(
@@ -1033,6 +1128,7 @@ class AgentLoop:
             pending.clarification_id,
         )
         assert resolved is not None
+        self._clear_active_checkpoint(session_key)
         return await self._resume_clarification(resolved, user_input)
 
     async def _resume_clarification(
@@ -1040,6 +1136,7 @@ class AgentLoop:
         pending: PendingClarification,
         user_input: str,
     ) -> tuple[str, AgentRunTrace]:
+        self._clear_active_checkpoint(pending.session_key)
         browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
         task_id = pending.task_id or uuid.uuid4().hex
         task_state = self._task_state(
@@ -1078,8 +1175,14 @@ class AgentLoop:
                     "User answered the clarification question.\n"
                     f"Question: {pending.question}\n"
                     f"Answer: {user_input}\n"
-                    "Continue the original task using the preserved browser "
-                    "session and prior Skill instructions."
+                    "Continue the original task using the prior Skill instructions."
+                    + (
+                        " This clarification was recovered after restart; persisted "
+                        "browser state is historical only. Reinitialize/reconnect "
+                        "as needed and read fresh browser state before acting."
+                        if pending.recovered_from_checkpoint
+                        else " Reuse the preserved browser session."
+                    )
                 ),
             }
         )
@@ -1240,6 +1343,7 @@ class AgentLoop:
         user_input: str,
         sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
+        self._clear_active_checkpoint(pending.session_key)
         browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
         task_id = pending.task_id or uuid.uuid4().hex
         task_state = self._task_state(
@@ -1323,10 +1427,25 @@ class AgentLoop:
                     error=error,
                 )
                 return output, trace
-            remaining = [
-                self._deserialize_tool_call(value)
-                for value in pending.remaining_tool_calls
-            ]
+            if pending.recovered_from_checkpoint:
+                for serialized_call in pending.remaining_tool_calls:
+                    stale_call = self._deserialize_tool_call(serialized_call)
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": stale_call.id,
+                            "content": (
+                                "Skipped after restart: this unapproved batched "
+                                "tool call was not replayed. Re-evaluate it now."
+                            ),
+                        }
+                    )
+                remaining = []
+            else:
+                remaining = [
+                    self._deserialize_tool_call(value)
+                    for value in pending.remaining_tool_calls
+                ]
             pause_output, pause_status = await self._execute_tool_batch(
                 remaining,
                 messages=messages,

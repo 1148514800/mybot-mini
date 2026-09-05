@@ -194,7 +194,12 @@ class FakeToolRegistry:
         )
 
 
-def build_fake_agent(case: EvalCase) -> AgentLoop:
+def build_fake_agent(
+    case: EvalCase,
+    *,
+    checkpoint_store=None,
+    approvals=None,
+) -> AgentLoop:
     tool_script = list(case.metadata.get("fake_tools", []))
     minimum_steps = len(tool_script) + int(
         case.metadata.get("fake_empty_responses", 0)
@@ -222,4 +227,6 @@ def build_fake_agent(case: EvalCase) -> AgentLoop:
         context=None,
         sessions=None,
         tracer=AgentTracer(),
+        checkpoint_store=checkpoint_store,
+        approvals=approvals,
     )

@@ -325,6 +325,29 @@ class ToolExecutionPipeline:
                 tool_trace=tool_trace,
             )
 
+        if approved is not None and not approved.resumable:
+            result = ToolResult(
+                success=False,
+                error=(
+                    "This approved action cannot be safely resumed after restart; "
+                    "please submit it again."
+                ),
+                metadata={
+                    **policy_metadata,
+                    **live_precondition_metadata,
+                    "approval_id": approved.approval_id,
+                    "approval_status": "non_resumable",
+                },
+            )
+            return self._finish(
+                ToolExecutionStatus.FAILED,
+                name,
+                arguments,
+                result,
+                policy=policy,
+                tool_trace=tool_trace,
+            )
+
         if (
             policy.decision == PolicyDecision.REQUIRE_CONFIRMATION
             and approved is None

@@ -8,6 +8,7 @@ from openai import AsyncOpenAI
 
 from ..guardrails import DEFAULT_APPROVAL_TTL_SECONDS
 from ..mcp.config import MCPConfig
+from ..storage.checkpoint import DEFAULT_RECENT_TASK_TTL_SECONDS
 
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
@@ -62,6 +63,7 @@ _TRACING_CONFIG = _section(_JSON_CONFIG, "tracing")
 _MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
 _BROWSER_RUNTIME_CONFIG = _section(_JSON_CONFIG, "browser_runtime")
 _GUARDRAILS_CONFIG = _section(_JSON_CONFIG, "guardrails")
+_CHECKPOINT_CONFIG = _section(_JSON_CONFIG, "checkpoint")
 
 
 def _active_llm_provider() -> str:
@@ -283,6 +285,24 @@ class GatewayConfig:
         )
     )
 
+    checkpoint_enabled: bool = field(
+        default_factory=lambda: _config_bool(
+            _CHECKPOINT_CONFIG,
+            "enabled",
+            True,
+        )
+    )
+
+    checkpoint_recent_task_ttl_seconds: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _CHECKPOINT_CONFIG,
+                "recent_task_ttl_seconds",
+                DEFAULT_RECENT_TASK_TTL_SECONDS,
+            )
+        )
+    )
+
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
             _DEBUG_CONFIG,
@@ -331,6 +351,14 @@ class GatewayConfig:
         ):
             raise ValueError(
                 "guardrails.approval_ttl_seconds must be a positive integer"
+            )
+        if (
+            isinstance(self.checkpoint_recent_task_ttl_seconds, bool)
+            or not isinstance(self.checkpoint_recent_task_ttl_seconds, int)
+            or self.checkpoint_recent_task_ttl_seconds <= 0
+        ):
+            raise ValueError(
+                "checkpoint.recent_task_ttl_seconds must be a positive integer"
             )
 
 

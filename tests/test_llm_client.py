@@ -33,6 +33,10 @@ class LLMClientTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "approval_ttl_seconds"):
             GatewayConfig(approval_ttl_seconds=0)
 
+    def test_gateway_config_rejects_non_positive_checkpoint_ttl(self) -> None:
+        with self.assertRaisesRegex(ValueError, "recent_task_ttl_seconds"):
+            GatewayConfig(checkpoint_recent_task_ttl_seconds=0)
+
 
 if __name__ == "__main__":
     unittest.main()

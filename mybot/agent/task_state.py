@@ -69,7 +69,7 @@ def _now() -> str:
 
 @dataclass(slots=True)
 class AgentTaskState:
-    """Small, serializable runtime state; it is not persistent storage."""
+    """Small serializable state; persistence belongs to the storage layer."""
 
     task_id: str
     session_key: str
