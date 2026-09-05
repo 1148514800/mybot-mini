@@ -73,6 +73,25 @@ class BrowserCliResultTests(unittest.TestCase):
         self.assertFalse(result.metadata["output_truncated"])
         self.assertEqual(self.sessions.resolve(), "local_browser")
 
+    def test_page_context_is_extracted_for_task_continuation(self) -> None:
+        process = FakeProcess(
+            0,
+            stdout=(
+                b"### Page\n- Page URL: https://example.com/results\n"
+                b"- Page Title: Results\n"
+            ),
+        )
+        tool = BrowserClickTool(self.sessions)
+
+        with patch(
+            "mybot.tools.browser.base.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            result = asyncio.run(tool.execute("e12"))
+
+        self.assertEqual(result.url, "https://example.com/results")
+        self.assertEqual(result.title, "Results")
+
     def test_nonzero_exit_preserves_stdout_stderr_and_active_session(self) -> None:
         self.sessions.set_active("local_browser")
         process = FakeProcess(2, stdout=b"partial", stderr=b"failure detail")
@@ -93,6 +112,8 @@ class BrowserCliResultTests(unittest.TestCase):
         self.assertIn("partial", result.output)
         self.assertIn("STDERR", result.output)
         self.assertEqual(result.metadata["exit_code"], 2)
+        self.assertIn("error_type", result.metadata)
+        self.assertIn("recoverable", result.metadata)
         self.assertEqual(self.sessions.resolve(), "local_browser")
 
     def test_explicit_cli_error_block_fails_even_with_zero_exit(self) -> None:
@@ -114,6 +135,8 @@ class BrowserCliResultTests(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn('Unknown engine "ref"', result.error)
         self.assertTrue(result.metadata["cli_error_block"])
+        self.assertEqual(result.metadata["error_type"], "tool_syntax_error")
+        self.assertFalse(result.metadata["recoverable"])
 
     def test_page_console_error_is_not_a_cli_tool_failure(self) -> None:
         process = FakeProcess(
@@ -176,6 +199,8 @@ class BrowserCliResultTests(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("timed out", result.error)
         self.assertTrue(result.metadata["timed_out"])
+        self.assertEqual(result.metadata["error_type"], "page_timeout")
+        self.assertTrue(result.metadata["recoverable"])
         self.assertEqual(process.returncode, -9)
 
 

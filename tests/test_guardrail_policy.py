@@ -64,6 +64,14 @@ class ToolPolicyTests(unittest.TestCase):
             RiskLevel.READ,
         )
 
+    def test_browser_verify_is_allowed_as_read_only(self):
+        self.assert_decision(
+            "browser_verify",
+            {"text": "Saved"},
+            PolicyDecision.ALLOW,
+            RiskLevel.READ,
+        )
+
     def test_normal_browser_click_is_allowed(self):
         self.assert_decision(
             "browser_click",

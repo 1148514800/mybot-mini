@@ -17,6 +17,7 @@ from .assertions import (
     assert_trace_metadata_values,
 )
 from ..guardrails import ApprovalIntent, classify_approval_intent
+from ..agent.browser_reliability import is_recent_task_continuation
 from .fakes import build_fake_agent
 from .models import EvalCase, EvalResult
 from .reporter import format_eval_report
@@ -97,6 +98,14 @@ class EvalRunner:
                         metadata={
                             "cancelled_approval_id": pending.approval_id
                         },
+                    )
+                elif (
+                    is_recent_task_continuation(follow_up)
+                    and self.agent.recent_tasks.get(follow_session) is not None
+                ):
+                    output, trace = await self.agent.resume_recent_task(
+                        follow_session,
+                        follow_up,
                     )
                 elif intent in {
                     ApprovalIntent.APPROVE,

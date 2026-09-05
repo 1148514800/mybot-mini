@@ -26,6 +26,7 @@ class PendingClarification:
     browser_snapshot: str = field(default="", repr=False)
     loaded_skills: list[str] = field(default_factory=list, repr=False)
     browser_initialized: bool = False
+    browser_state: dict[str, Any] = field(default_factory=dict, repr=False)
     status: str = "pending"
 
 
@@ -50,6 +51,7 @@ class ClarificationManager:
         browser_snapshot: str = "",
         loaded_skills: list[str] | None = None,
         browser_initialized: bool = False,
+        browser_state: dict[str, Any] | None = None,
     ) -> PendingClarification:
         pending = PendingClarification(
             clarification_id=uuid.uuid4().hex,
@@ -66,6 +68,7 @@ class ClarificationManager:
             browser_snapshot=browser_snapshot,
             loaded_skills=list(loaded_skills or []),
             browser_initialized=browser_initialized,
+            browser_state=copy.deepcopy(browser_state or {}),
         )
         self._pending[session_key] = pending
         return pending

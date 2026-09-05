@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 
 from ..result import BrowserResult
@@ -15,7 +16,7 @@ MAX_INSPECT_QUERY_CHARS = 1_000
 
 
 _INSPECT_SCRIPT = """() => {
-const query=__QUERY__;
+const query=JSON.parse(atob('__QUERY_BASE64__'));
 const normalize=(value)=>String(value||'').replace(/\\s+/g,' ').trim();
 const lowered=(value)=>normalize(value).toLocaleLowerCase();
 const implicitRole=(node)=>{
@@ -67,11 +68,12 @@ const targetFor=(node)=>{
   }
   return parts.join(' > ');
 };
-let candidates;
+const hasDomQuery=Boolean(query.selector||query.text||query.role||query.placeholder);
+let candidates=[];
 try{
-  candidates=Array.from(document.querySelectorAll(query.selector||'*'));
+  if(hasDomQuery)candidates=Array.from(document.querySelectorAll(query.selector||'*'));
 }catch(error){
-  return {query,error:'Invalid selector: '+error.message,count:0,matches:[]};
+  throw new Error('Invalid selector: '+error.message);
 }
 const matches=[];
 for(const node of candidates.slice(0,5000)){
@@ -102,7 +104,20 @@ for(const node of candidates.slice(0,5000)){
   });
   if(matches.length>=query.limit)break;
 }
-return {query,count:matches.length,truncated:matches.length>=query.limit,matches};
+const urlMatches=!query.url_contains||location.href.includes(query.url_contains);
+const enoughMatches=!hasDomQuery||matches.length>=query.min_count;
+const postconditionMet=urlMatches&&enoughMatches;
+if(query.verify&&!postconditionMet){
+  throw new Error('POSTCONDITION_NOT_MET: structured browser evidence was not found');
+}
+return {
+  query,
+  url:location.href,
+  count:matches.length,
+  truncated:matches.length>=query.limit,
+  postcondition_met:query.verify?postconditionMet:undefined,
+  matches
+};
 }"""
 
 
@@ -486,7 +501,13 @@ class BrowserInspectTool(PlaywrightCliTool):
             ensure_ascii=True,
             separators=(",", ":"),
         )
-        return _INSPECT_SCRIPT.replace("__QUERY__", serialized)
+        encoded = base64.b64encode(serialized.encode("ascii")).decode("ascii")
+        return _INSPECT_SCRIPT.replace("__QUERY_BASE64__", encoded)
+
+    @staticmethod
+    def _strip_internal_script(output: str) -> str:
+        marker = "\n### Ran Playwright code"
+        return output.split(marker, 1)[0].rstrip()
 
     async def execute(
         self,
@@ -511,6 +532,9 @@ class BrowserInspectTool(PlaywrightCliTool):
             "exact": exact,
             "visible_only": visible_only,
             "limit": limit,
+            "min_count": 1,
+            "url_contains": "",
+            "verify": False,
         }
         if not any(
             query[name]
@@ -529,9 +553,129 @@ class BrowserInspectTool(PlaywrightCliTool):
             raise ValueError(
                 f"limit must be an integer from 1 to {MAX_INSPECT_LIMIT}"
             )
-        return await self._run_parts(
+        result = await self._run_parts(
             self._session_prefix(session) + ["eval", self._build_script(query)]
         )
+        result.output = self._strip_internal_script(result.output)
+        return result
+
+
+class BrowserVerifyTool(BrowserInspectTool):
+    """Verify one structured browser postcondition without caller JavaScript."""
+
+    @property
+    def name(self) -> str:
+        return "browser_verify"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Verify a browser task postcondition using structured DOM or URL "
+            "evidence. Call this after a final click, fill, submit, send, or "
+            "publish action before claiming task success. No JavaScript is "
+            "accepted from the caller."
+        )
+
+    @property
+    def parameters(self) -> dict:
+        parameters = super().parameters
+        properties = dict(parameters["properties"])
+        properties.update(
+            {
+                "url_contains": {
+                    "type": "string",
+                    "description": "Optional substring required in the current URL",
+                    "default": "",
+                },
+                "min_count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": MAX_INSPECT_LIMIT,
+                    "default": 1,
+                },
+            }
+        )
+        return {
+            "type": "object",
+            "properties": properties,
+            "anyOf": [
+                {"required": ["selector"]},
+                {"required": ["text"]},
+                {"required": ["role"]},
+                {"required": ["placeholder"]},
+                {"required": ["url_contains"]},
+            ],
+        }
+
+    async def execute(
+        self,
+        selector: str = "",
+        text: str = "",
+        role: str = "",
+        placeholder: str = "",
+        url_contains: str = "",
+        exact: bool = False,
+        visible_only: bool = True,
+        min_count: int = 1,
+        limit: int = DEFAULT_INSPECT_LIMIT,
+        session: str = "",
+        **kwargs,
+    ) -> BrowserResult:
+        query = {
+            "selector": self._validated_query_value("selector", selector),
+            "text": self._validated_query_value("text", text),
+            "role": self._validated_query_value("role", role),
+            "placeholder": self._validated_query_value(
+                "placeholder",
+                placeholder,
+            ),
+            "url_contains": self._validated_query_value(
+                "url_contains",
+                url_contains,
+            ),
+            "exact": exact,
+            "visible_only": visible_only,
+            "min_count": min_count,
+            "limit": limit,
+            "verify": True,
+        }
+        if not any(
+            query[name]
+            for name in (
+                "selector",
+                "text",
+                "role",
+                "placeholder",
+                "url_contains",
+            )
+        ):
+            raise ValueError(
+                "browser_verify requires selector, text, role, placeholder, "
+                "or url_contains"
+            )
+        if not isinstance(exact, bool) or not isinstance(visible_only, bool):
+            raise ValueError("exact and visible_only must be booleans")
+        for name, value in (("min_count", min_count), ("limit", limit)):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or not 1 <= value <= MAX_INSPECT_LIMIT
+            ):
+                raise ValueError(
+                    f"{name} must be an integer from 1 to {MAX_INSPECT_LIMIT}"
+                )
+        result = await self._run_parts(
+            self._session_prefix(session) + ["eval", self._build_script(query)]
+        )
+        result.output = self._strip_internal_script(result.output)
+        result.metadata["postcondition_met"] = result.success
+        if result.success:
+            result.metadata["completion_evidence"] = {
+                key: value
+                for key, value in query.items()
+                if value not in {"", False} and key != "verify"
+            }
+        return result
 
 
 class BrowserEvalTool(PlaywrightCliTool):

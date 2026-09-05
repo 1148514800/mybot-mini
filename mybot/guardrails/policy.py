@@ -87,6 +87,7 @@ class ToolPolicy:
             "browser_snapshot",
             "browser_links",
             "browser_inspect",
+            "browser_verify",
             "request_user_input",
         }:
             return self._allow(RiskLevel.READ, "read_only_tool", "Read-only tool")

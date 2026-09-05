@@ -26,6 +26,13 @@
   "workspace": {
     "path": "./workspace"
   },
+  "browser_runtime": {
+    "max_open_attempts": 1,
+    "max_consecutive_tool_failures": 2,
+    "max_failed_action_retries": 1,
+    "max_eval_fallbacks": 1,
+    "max_recovery_steps": 2
+  },
   "tracing": {
     "trace_dir": null
   },

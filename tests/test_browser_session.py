@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +13,7 @@ from mybot.tools.browser.interaction import (
     BrowserInspectTool,
     BrowserLinksTool,
     BrowserSnapshotTool,
+    BrowserVerifyTool,
 )
 from mybot.tools.browser.navigation import (
     MANAGED_BROWSER_SESSION,
@@ -141,6 +144,7 @@ class BrowserSessionTests(unittest.TestCase):
         self.assertIn("browser_tab", tool_names)
         self.assertIn("browser_links", tool_names)
         self.assertIn("browser_inspect", tool_names)
+        self.assertIn("browser_verify", tool_names)
         self.assertIn("request_user_input", tool_names)
         self.assertIn("browser_attach", tool_names)
         self.assertIn("browser_open", tool_names)
@@ -223,9 +227,33 @@ class BrowserSessionTests(unittest.TestCase):
 
         parts = tool._run_parts.await_args.args[0]
         self.assertEqual(parts[:3], ["playwright-cli", "-s=research", "eval"])
-        self.assertIn('"role":"button"', parts[3])
-        self.assertIn('"text":"\\u53d1\\u9001"', parts[3])
+        encoded = parts[3].split("atob('", 1)[1].split("')", 1)[0]
+        query = json.loads(base64.b64decode(encoded).decode("ascii"))
+        self.assertEqual(query["role"], "button")
+        self.assertEqual(query["text"], "发送")
+        self.assertFalse(query["verify"])
         self.assertIn("document.querySelectorAll", parts[3])
+        self.assertNotIn("script", tool.parameters["properties"])
+
+    def test_verify_uses_fixed_structured_postcondition(self) -> None:
+        tool = BrowserVerifyTool(self.sessions)
+        tool._run_parts = AsyncMock(return_value=self.success("verify"))
+
+        result = asyncio.run(
+            tool.execute(
+                text="Saved",
+                url_contains="/done",
+                session="research",
+            )
+        )
+
+        parts = tool._run_parts.await_args.args[0]
+        encoded = parts[3].split("atob('", 1)[1].split("')", 1)[0]
+        query = json.loads(base64.b64decode(encoded).decode("ascii"))
+        self.assertTrue(query["verify"])
+        self.assertEqual(query["text"], "Saved")
+        self.assertEqual(query["url_contains"], "/done")
+        self.assertTrue(result.metadata["postcondition_met"])
         self.assertNotIn("script", tool.parameters["properties"])
 
     def test_inspect_requires_a_structured_filter(self) -> None:

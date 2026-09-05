@@ -59,6 +59,7 @@ _WORKSPACE_CONFIG = _section(_JSON_CONFIG, "workspace")
 _DEBUG_CONFIG = _section(_JSON_CONFIG, "debug")
 _TRACING_CONFIG = _section(_JSON_CONFIG, "tracing")
 _MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
+_BROWSER_RUNTIME_CONFIG = _section(_JSON_CONFIG, "browser_runtime")
 
 
 def _active_llm_provider() -> str:
@@ -220,6 +221,56 @@ class GatewayConfig:
         )
     )
 
+    browser_max_consecutive_tool_failures: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _BROWSER_RUNTIME_CONFIG,
+                "max_consecutive_tool_failures",
+                2,
+            )
+        )
+    )
+
+    browser_max_open_attempts: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _BROWSER_RUNTIME_CONFIG,
+                "max_open_attempts",
+                1,
+            )
+        )
+    )
+
+    browser_max_failed_action_retries: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _BROWSER_RUNTIME_CONFIG,
+                "max_failed_action_retries",
+                1,
+            )
+        )
+    )
+
+    browser_max_eval_fallbacks: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _BROWSER_RUNTIME_CONFIG,
+                "max_eval_fallbacks",
+                1,
+            )
+        )
+    )
+
+    browser_max_recovery_steps: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _BROWSER_RUNTIME_CONFIG,
+                "max_recovery_steps",
+                2,
+            )
+        )
+    )
+
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
             _DEBUG_CONFIG,
@@ -247,6 +298,20 @@ class GatewayConfig:
             raise ValueError(
                 "llm.request_timeout_seconds must be greater than 0"
             )
+        limits = {
+            "browser_runtime.max_open_attempts": self.browser_max_open_attempts,
+            "browser_runtime.max_consecutive_tool_failures": (
+                self.browser_max_consecutive_tool_failures
+            ),
+            "browser_runtime.max_failed_action_retries": (
+                self.browser_max_failed_action_retries
+            ),
+            "browser_runtime.max_eval_fallbacks": self.browser_max_eval_fallbacks,
+            "browser_runtime.max_recovery_steps": self.browser_max_recovery_steps,
+        }
+        for name, value in limits.items():
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{name} must be a non-negative integer")
 
 
 def build_client(config: GatewayConfig) -> AsyncOpenAI:

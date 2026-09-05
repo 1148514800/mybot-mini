@@ -7,7 +7,9 @@ from .interaction import (
     BrowserPressTool,
     BrowserSnapshotTool,
     BrowserTypeTool,
+    BrowserVerifyTool,
 )
+from .errors import BrowserErrorType, classify_browser_error
 from .navigation import (
     BrowserCloseTool,
     BrowserGotoTool,
@@ -34,6 +36,9 @@ __all__ = [
     "BrowserEvalTool",
     "BrowserInspectTool",
     "BrowserLinksTool",
+    "BrowserVerifyTool",
+    "BrowserErrorType",
+    "classify_browser_error",
     "BrowserSessionManager",
     "DEFAULT_SESSION",
     "LOCAL_BROWSER_SESSION",

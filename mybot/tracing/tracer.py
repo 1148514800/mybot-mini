@@ -317,6 +317,9 @@ class AgentTracer:
     def get_current_run(self) -> AgentRunTrace | None:
         return self._current_run
 
+    def get_current_step(self) -> AgentStepTrace | None:
+        return self._current_step
+
     def _finish_timer(self, trace_id: str) -> float:
         started = self._started.pop(trace_id, time.perf_counter())
         return max(0.0, (time.perf_counter() - started) * 1000)

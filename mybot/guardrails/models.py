@@ -49,4 +49,5 @@ class PendingApproval:
     task_id: str | None = None
     loaded_skills: list[str] = field(default_factory=list, repr=False)
     browser_initialized: bool = False
+    browser_state: dict[str, Any] = field(default_factory=dict, repr=False)
     status: str = "pending"

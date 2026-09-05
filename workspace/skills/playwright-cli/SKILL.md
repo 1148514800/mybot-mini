@@ -33,8 +33,10 @@ through `exec` when an equivalent browser tool exists.
 7. Interact with element refs from the latest snapshot when possible.
 8. If the destination URL is known, use `browser_goto` directly instead of
    clicking the same result and then navigating to it.
-9. Confirm the final important state once. When it satisfies the request, stop
-   calling tools and respond.
+9. After a final click, fill, Enter/Space, submit, send, or publish action,
+   call `browser_verify` once with a concrete structured postcondition. Action
+   success alone is not task success. When verification satisfies the request,
+   stop calling tools and respond.
 10. Use `browser_close` when the requested workflow is finished and the session
    is not meant to stay open.
 
@@ -46,6 +48,7 @@ through `exec` when an equivalent browser tool exists.
 - `browser_tab`: list, create, select, or close tabs
 - `browser_snapshot`: inspect the page or one element
 - `browser_inspect`: read DOM elements by selector/text/role/placeholder without caller JavaScript
+- `browser_verify`: prove a postcondition by selector/text/role/placeholder/URL before reporting task success
 - `browser_links`: list rendered, deduplicated links in visual order
 - `browser_click`: click or double-click an element
 - `browser_type`: type into the focused element or fill a target element
@@ -67,11 +70,18 @@ Do not silently switch between the user's Chrome and MyBot's managed profile.
   placeholder, and attribute lookup.
 - Prefer `browser_links` for ordinal results such as "the fifth video".
 - Take a new snapshot after navigation or when refs become stale.
+- Follow `error_type` and `recoverable` metadata. For stale/not-found targets,
+  use the Runtime refresh and relocate once; for ambiguity, narrow with inspect
+  or ask the user; never repeat an identical `tool_syntax_error` action.
 - Use `browser_eval` only for inspection or interactions not supported by the
   structured tools.
 - Respect the structured browser result status. A `[browser error ...]` result is
   a failed action even when playwright-cli itself exited with code 0; page
   console error messages inside an otherwise successful result are only data.
 - Do not claim that a page changed unless the returned state verifies it.
+- A successful click/type/press is only action evidence. If `browser_verify`
+  does not return `postcondition_met=true`, report the browser task incomplete.
+- Respect the task budget: one browser initialization, one failed-action retry,
+  bounded eval fallback, and bounded recovery. Do not explore indefinitely.
 - Do not repeat navigation, click, playback, or verification after the requested
   final state has already been confirmed.

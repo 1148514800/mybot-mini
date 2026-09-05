@@ -52,6 +52,7 @@ browser/
 | `browser_tab` | 列出、新建、选择或关闭标签页 | `action`、`index`、`url` |
 | `browser_snapshot` | 获取带元素 ref 的可访问性快照 | `target`、`depth` |
 | `browser_inspect` | 通过固定实现查询 DOM，不接受调用者 JavaScript | `selector`、`text`、`role`、`placeholder`、`limit` |
+| `browser_verify` | 验证结构化 DOM/URL 后置条件，不接受调用者 JavaScript | `selector`、`text`、`role`、`placeholder`、`url_contains` |
 | `browser_links` | 按视觉顺序列出并去重可见链接 | `target`、`url_contains`、`limit` |
 | `browser_click` | 单击或双击元素 | `target`、`double` |
 | `browser_type` | 输入或填充文本 | `text`、`target`、`submit` |
@@ -152,6 +153,22 @@ browser/
 Tool 内部运行固定的只读查询并返回匹配元素的 role、文本、placeholder、href 和
 可复用 target。调用者只能提供结构化过滤值，不能提供脚本。
 
+Windows 下 Runtime 不通过 npm 生成的 `playwright-cli.cmd` shim 传递固定 JS；该 shim
+会用 `%*` 二次解析括号、引号和 shell 元字符。Runtime 会解析同一安装目录中的 Node
+入口并直接执行，从而保证 inspect/links 内部脚本作为一个原始 argv 传入。
+
+### 完成验证与恢复
+
+点击、填写、Enter/Space、提交、发送或发布动作成功后，使用 `browser_verify` 验证一次
+具体后置条件。普通快照、输入成功或点击成功都不能单独证明任务完成。只有
+`postcondition_met=true` 时，Runtime 才允许完成式回复。
+
+失败结果通过 metadata 提供 `error_type` / `recoverable`。stale/not-found target 会在
+预算内自动刷新 snapshot，并只允许一次重新定位后的重试；ambiguous target 应先用
+inspect 缩小；tool syntax error 不允许原样重复。默认每个 task 浏览器初始化尝试 1 次、
+同一 Tool 连续失败不超过 2 次、失败 Action 额外重试 1 次、eval fallback 1 次、
+recovery step 2 次。
+
 ## 快照和输出限制
 
 - `browser_snapshot.depth` 默认是 `8`，范围为 `1..20`。
@@ -226,8 +243,10 @@ MyBot 在启动时加载工具和系统提示。修改本目录代码或 skill �
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-单元测试会 mock CLI 调用，不会操作真实 Chrome。需要手动验证本地 CDP 连接时，
-先打开 Chrome，再显式启用项目现有的集成测试：
+大多数单元测试会 mock CLI 调用；`test_browser_inspect_selector_text_role_and_placeholder`
+会启动一个隔离的 headless Chrome、加载 `about:blank` 并在结束时自动关闭，用于验证
+Windows CLI 参数传递和真实 DOM 查询。它不访问网络页面或账号。需要手动验证本地
+CDP 连接时，先打开 Chrome，再显式启用项目现有的集成测试：
 
 ```powershell
 $env:MYBOT_RUN_BROWSER_INTEGRATION = "1"

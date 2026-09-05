@@ -16,6 +16,7 @@ from .browser import (
     BrowserPressTool,
     BrowserSnapshotTool,
     BrowserTypeTool,
+    BrowserVerifyTool,
     BrowserTabTool,
     BrowserSessionManager,
 )
@@ -82,6 +83,7 @@ def build_default_tool_registry(
     registry.register(BrowserPressTool(browser_sessions))
     registry.register(BrowserLinksTool(browser_sessions))
     registry.register(BrowserInspectTool(browser_sessions))
+    registry.register(BrowserVerifyTool(browser_sessions))
     registry.register(BrowserEvalTool(browser_sessions))
     registry.register(BrowserCloseTool(browser_sessions))
     if memory_manager:

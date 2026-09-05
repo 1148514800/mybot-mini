@@ -23,6 +23,12 @@ class FakeCompletions:
         self._empty_responses = int(
             case.metadata.get("fake_empty_responses", 0)
         )
+        configured_sequence = case.metadata.get("fake_response_sequence")
+        self._response_sequence = (
+            list(configured_sequence)
+            if configured_sequence is not None
+            else None
+        )
         self._index = 0
         self.requests: list[dict[str, Any]] = []
 
@@ -33,6 +39,50 @@ class FakeCompletions:
             completion_tokens=5,
             total_tokens=15,
         )
+        if self._response_sequence is not None:
+            if self._index >= len(self._response_sequence):
+                item = {"output": self._final_output}
+            else:
+                item = self._response_sequence[self._index]
+            self._index += 1
+            if "tools" in item:
+                tool_calls = [
+                    SimpleNamespace(
+                        id=f"fake_sequence_{self._index:03d}_{index + 1:02d}",
+                        function=SimpleNamespace(
+                            name=str(tool["name"]),
+                            arguments=json.dumps(
+                                tool.get("arguments", {}),
+                                ensure_ascii=False,
+                            ),
+                        ),
+                    )
+                    for index, tool in enumerate(item["tools"])
+                ]
+                return SimpleNamespace(
+                    choices=[
+                        SimpleNamespace(
+                            message=SimpleNamespace(
+                                content=None,
+                                tool_calls=tool_calls,
+                            ),
+                            finish_reason="tool_calls",
+                        )
+                    ],
+                    usage=usage,
+                )
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content=str(item.get("output", self._final_output)),
+                            tool_calls=None,
+                        ),
+                        finish_reason="stop",
+                    )
+                ],
+                usage=usage,
+            )
         if self._index < self._empty_responses:
             self._index += 1
             message = SimpleNamespace(content=None, tool_calls=None)

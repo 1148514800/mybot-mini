@@ -12,6 +12,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 持久化会话和长期记忆
 - 确定性的 Tool Policy、风险分级和 Human-in-the-loop 审批
 - 跨 CLI / 飞书消息的 Approval 与普通 Clarification Pause / Resume
+- 浏览器错误分类、有限恢复、任务预算、完成证据与最近任务续接
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
@@ -254,6 +255,11 @@ config/
 | `llm.request_timeout_seconds` | 单次模型请求的总超时秒数，默认 `60`；超时不会阻塞其他异步通道 |
 | `llm.max_react_steps` | 一次请求最多执行多少轮 Agent/工具循环；程序硬上限为 30 |
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
+| `browser_runtime.max_open_attempts` | 每个 task 的 `browser_open/browser_attach` 尝试上限，默认 `1` |
+| `browser_runtime.max_consecutive_tool_failures` | 同一浏览器 Tool 连续失败上限，默认 `2` |
+| `browser_runtime.max_failed_action_retries` | 同一失败 Action 的额外重试次数，默认 `1` |
+| `browser_runtime.max_eval_fallbacks` | 每个 task 的 `browser_eval` fallback 上限，默认 `1`；Policy 确认仍生效 |
+| `browser_runtime.max_recovery_steps` | 每个 task 的自动恢复步骤上限，默认 `2` |
 | `feishu.enabled` | 是否启用飞书通道 |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
@@ -300,7 +306,8 @@ secret 等字段会自动脱敏，Tool 输出预览最多保留 2000 字符。Tr
 
 每个新用户目标会生成一个 `task_id`。如果任务因 Approval 或 Clarification 分成多个
 Run，每个 Run 仍各自保存一个 JSON，但 `metadata.task_id` 保持相同，并通过
-`resumed_from_run_id` 指向前一个 Run。
+`resumed_from_run_id` 指向前一个 Run。明显针对最近浏览器任务的纠正也沿用同一
+`task_id`，并在 Trace 中写入 `continuation=true`。
 
 默认 `tracing.trace_dir` 为 `null`，不会写入磁盘。需要在 Run 完成后保存 JSON 时，
 可在本机 `config/config.json` 中设置：
@@ -320,7 +327,8 @@ uv run python -m mybot.evals.runner
 ```
 
 Eval 数据位于根目录 `evals/`，当前覆盖 Tool Selection、Browser Navigation、
-Failure Recovery、Policy Guardrails、MCP Tools 和 Runtime Efficiency。Replay 只读取已有 Trace 并输出
+Failure Recovery、Policy Guardrails、MCP Tools、Runtime Efficiency 和 Browser
+Reliability。Replay 只读取已有 Trace 并输出
 timeline，不会再次调用模型或真实 Tool。
 
 ## Guardrails 与 Human-in-the-loop
@@ -445,6 +453,7 @@ MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和
 - `browser_tab`：列出、新建、选择或关闭标签页
 - `browser_snapshot`：读取当前页面
 - `browser_inspect`：通过 selector、text、role 或 placeholder 做只读 DOM 查询；调用者不能传 JavaScript
+- `browser_verify`：通过 selector、text、role、placeholder 或 URL 验证最终后置条件；调用者不能传 JavaScript
 - `browser_links`：按页面视觉顺序列出并去重链接，适合选择第 N 个结果
 - `browser_click`、`browser_type`、`browser_press`：操作页面
 - `browser_eval`：结构化工具无法满足时的任意 JavaScript fallback，始终要求确认
@@ -461,6 +470,29 @@ MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和
 即使 `playwright-cli` 进程退出码为 0，输出中的明确 `### Error` block 也会转换为
 `BrowserResult(success=False)`。网页自身的 Console Error 只作为页面数据保留，不会
 被误判成 Tool 执行失败。
+
+### Browser Runtime Reliability
+
+浏览器失败会在 `BrowserResult.metadata` 中提供稳定的 `error_type` 与 `recoverable`，
+当前分类包括 `stale_target`、`target_not_found`、`ambiguous_target`、
+`tool_syntax_error`、`page_timeout`、`navigation_failure`、`auth_required`、
+`policy_blocked`、`budget_exceeded` 和 `unknown`。Runtime 对 stale/not-found target
+最多自动刷新一次快照，再允许模型用新 ref 重试一次；歧义目标要求用 inspect 缩小，
+必要时向用户澄清；同一个 syntax error 不会被原样重复执行。
+
+`browser_click`、`browser_type` 和 Enter/Space 成功只表示动作调用成功。它们之后会把
+任务置为 `verification_required`，模型必须调用 `browser_verify`，且结构化后置条件
+实际满足后，Runtime 才把 Browser Task 标记为 `verified`。如果最终动作失败、超时、
+被 Policy 阻止、仍待确认或验证失败，Runtime 会阻止“已完成/已发送/已发布”等完成式
+声明；模型仍可诚实报告未完成，此时 Agent Run 可以正常结束，但 Trace 中的
+`browser_completion_state` 仍明确记录任务未完成。
+
+用户在同一 session 中说“你没有完成”“刚才没点成功”“继续”“不是这样”等明确纠正
+最近任务时，Runtime 会复用原 `task_id`、browser mode/session、当前 URL、最新
+snapshot、已加载 Skills、最近 Tool Results、完成状态和剩余预算。该机制只恢复上下文，
+不等于 Approval；任何新的 `browser_eval` 或高风险点击仍照常经过 ToolPolicy。
+
+这些机制是有限的 Runtime Reliability Layer，不是浏览器 sandbox，也不做无限重试。
 
 首次使用浏览器时可能会下载或初始化浏览器运行组件，请预留网络和磁盘空间。持久化 session 会保存到 Playwright 的运行目录中。
 

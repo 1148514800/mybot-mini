@@ -3,10 +3,13 @@ from __future__ import annotations
 import asyncio
 import os
 import re
+import shutil
 import subprocess
+from pathlib import Path
 
 from ..base import Tool
 from ..result import BrowserResult
+from .errors import browser_failure_metadata
 from .session import DEFAULT_SESSION, BrowserSessionManager
 
 
@@ -16,6 +19,8 @@ SNAPSHOT_MAX_OUTPUT_CHARS = 30000
 _CLI_ERROR_BLOCK = re.compile(
     r"(?ms)^### Error[ \t]*\r?\n(.*?)(?=^### [^\r\n]+[ \t]*\r?$|\Z)"
 )
+_PAGE_URL = re.compile(r"(?m)^- Page URL:\s*(.+?)\s*$")
+_PAGE_TITLE = re.compile(r"(?m)^- Page Title:\s*(.+?)\s*$")
 
 
 class PlaywrightCliTool(Tool):
@@ -56,7 +61,29 @@ class PlaywrightCliTool(Tool):
     def _spawn_command(self, parts: list[str]) -> tuple[list[str], dict]:
         if os.name == "nt":
             kwargs = {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)}
-            return ["cmd", "/c", *parts], kwargs
+            cli_path = shutil.which(parts[0])
+            if cli_path and cli_path.lower().endswith((".cmd", ".bat")):
+                cli_dir = Path(cli_path).resolve().parent
+                node = cli_dir / "node.exe"
+                cli_script = (
+                    cli_dir
+                    / "node_modules"
+                    / "@playwright"
+                    / "cli"
+                    / "playwright-cli.js"
+                )
+                node_command = str(node) if node.exists() else shutil.which("node")
+                if node_command and cli_script.exists():
+                    # npm's Windows .cmd shim expands `%*`, causing cmd.exe to
+                    # parse JavaScript metacharacters and quotes a second time.
+                    # Invoke the real Node entry point so every structured script
+                    # remains one untouched argv value.
+                    return [
+                        node_command,
+                        str(cli_script),
+                        *parts[1:],
+                    ], kwargs
+            return ["cmd", "/d", "/s", "/c", *parts], kwargs
         return parts, {}
 
     def _truncate_output(self, result: str, max_output_chars: int) -> str:
@@ -81,6 +108,32 @@ class PlaywrightCliTool(Tool):
         detail = match.group(1).strip()
         return detail[:2_000] or "playwright-cli reported an unspecified error"
 
+    @staticmethod
+    def _page_context(output: str) -> tuple[str | None, str | None]:
+        url_match = _PAGE_URL.search(output)
+        title_match = _PAGE_TITLE.search(output)
+        return (
+            url_match.group(1).strip() if url_match else None,
+            title_match.group(1).strip() if title_match else None,
+        )
+
+    @staticmethod
+    def _failure_metadata(
+        action: str,
+        error: str,
+        output: str,
+        metadata: dict | None = None,
+    ) -> dict:
+        combined = dict(metadata or {})
+        combined.update(
+            browser_failure_metadata(
+                error,
+                output,
+                action=action,
+            )
+        )
+        return combined
+
     async def _run_parts(
         self,
         parts: list[str],
@@ -104,6 +157,7 @@ class PlaywrightCliTool(Tool):
                 output += f"\nSTDERR:\n{err.decode(errors='replace')}"
             output = output or "(no output)"
             explicit_error = self._explicit_cli_error(output)
+            url, title = self._page_context(output)
             output_truncated = len(output) > max_output_chars
             output = self._truncate_output(output, max_output_chars)
             metadata = {
@@ -115,9 +169,16 @@ class PlaywrightCliTool(Tool):
                     success=False,
                     action=action,
                     session=session,
+                    url=url,
+                    title=title,
                     error=f"playwright-cli exited with code {proc.returncode}",
                     output=output,
-                    metadata=metadata,
+                    metadata=self._failure_metadata(
+                        action,
+                        f"playwright-cli exited with code {proc.returncode}",
+                        output,
+                        metadata,
+                    ),
                 )
             if explicit_error:
                 metadata["cli_error_block"] = True
@@ -125,47 +186,70 @@ class PlaywrightCliTool(Tool):
                     success=False,
                     action=action,
                     session=session,
+                    url=url,
+                    title=title,
                     error=f"playwright-cli reported an error: {explicit_error}",
                     output=output,
-                    metadata=metadata,
+                    metadata=self._failure_metadata(
+                        action,
+                        explicit_error,
+                        output,
+                        metadata,
+                    ),
                 )
             self._record_session(session)
             return BrowserResult(
                 success=True,
                 action=action,
                 session=session,
+                url=url,
+                title=title,
                 output=output,
                 metadata=metadata,
             )
         except FileNotFoundError:
+            error = (
+                "playwright-cli was not found in PATH. Install Node.js and "
+                "playwright-cli in this environment first."
+            )
             return BrowserResult(
                 success=False,
                 action=action,
                 session=session,
-                error=(
-                    "playwright-cli was not found in PATH. Install Node.js and "
-                    "playwright-cli in this environment first."
+                error=error,
+                metadata=self._failure_metadata(
+                    action,
+                    error,
+                    "",
+                    {"missing_cli": True},
                 ),
-                metadata={"missing_cli": True},
             )
         except asyncio.TimeoutError:
             if proc is not None and proc.returncode is None:
                 proc.kill()
                 await proc.communicate()
+            error = (
+                "playwright-cli timed out after "
+                f"{COMMAND_TIMEOUT_SECONDS} seconds."
+            )
             return BrowserResult(
                 success=False,
                 action=action,
                 session=session,
-                error=(
-                    "playwright-cli timed out after "
-                    f"{COMMAND_TIMEOUT_SECONDS} seconds."
+                error=error,
+                metadata=self._failure_metadata(
+                    action,
+                    error,
+                    "",
+                    {"timed_out": True},
                 ),
-                metadata={"timed_out": True},
             )
         except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
             return BrowserResult(
                 success=False,
                 action=action,
                 session=session,
-                error=f"{type(exc).__name__}: {exc}",
+                error=error,
+                metadata=self._failure_metadata(action, error, ""),
             )

@@ -1,6 +1,7 @@
 from .base import Tool
 from .browser import (
     BrowserAttachTool,
+    BrowserErrorType,
     BrowserClickTool,
     BrowserCloseTool,
     BrowserEvalTool,
@@ -10,8 +11,10 @@ from .browser import (
     BrowserPressTool,
     BrowserSnapshotTool,
     BrowserTypeTool,
+    BrowserVerifyTool,
     BrowserTabTool,
     BrowserSessionManager,
+    classify_browser_error,
 )
 from .memory import MemoryDeleteTool, MemoryWriteTool
 from .registry import ToolRegistry, build_default_tool_registry
@@ -23,6 +26,8 @@ __all__ = [
     "ToolRegistry",
     "ToolResult",
     "BrowserResult",
+    "BrowserErrorType",
+    "classify_browser_error",
     "BrowserSessionManager",
     "build_default_tool_registry",
     "BrowserAttachTool",
@@ -34,6 +39,7 @@ __all__ = [
     "BrowserEvalTool",
     "BrowserInspectTool",
     "BrowserLinksTool",
+    "BrowserVerifyTool",
     "BrowserTabTool",
     "BrowserCloseTool",
     "MemoryWriteTool",

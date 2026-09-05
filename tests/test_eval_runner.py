@@ -69,7 +69,7 @@ class EvalRunnerTests(unittest.TestCase):
         eval_dir = Path(__file__).resolve().parents[1] / "evals"
         cases = load_eval_suite(eval_dir)
 
-        self.assertEqual(len(cases), 34)
+        self.assertEqual(len(cases), 39)
         self.assertTrue(all("fake_tools" in case.metadata for case in cases))
 
 

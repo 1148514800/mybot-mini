@@ -27,6 +27,17 @@ from ..tools import ToolRegistry, ToolResult
 from ..tools.browser.connection import LOCAL_BROWSER_SESSION
 from ..tools.browser.navigation import MANAGED_BROWSER_SESSION
 from ..tracing import AgentRunTrace, AgentTracer, redact_mapping
+from ..tools.browser.errors import BrowserErrorType
+from .browser_reliability import (
+    BrowserRecoveryPolicy,
+    BrowserTaskBudget,
+    BrowserTaskState,
+    RecentBrowserTask,
+    RecentTaskManager,
+    contains_incomplete_report,
+    contains_success_claim,
+    is_recent_task_continuation,
+)
 from .context import (
     BROWSER_MODE_LOCAL,
     BROWSER_MODE_MANAGED,
@@ -59,6 +70,8 @@ class AgentLoop:
         tool_policy: ToolPolicy | None = None,
         approvals: ApprovalManager | None = None,
         clarifications: ClarificationManager | None = None,
+        recent_tasks: RecentTaskManager | None = None,
+        browser_recovery_policy: BrowserRecoveryPolicy | None = None,
     ):
         self.client = client
         self.config = config
@@ -70,6 +83,10 @@ class AgentLoop:
         self.tool_policy = tool_policy or ToolPolicy()
         self.approvals = approvals or ApprovalManager()
         self.clarifications = clarifications or ClarificationManager()
+        self.recent_tasks = recent_tasks or RecentTaskManager()
+        self.browser_recovery_policy = (
+            browser_recovery_policy or BrowserRecoveryPolicy()
+        )
 
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
@@ -109,6 +126,48 @@ class AgentLoop:
         except (TypeError, ValueError):
             timeout = DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS
         return timeout if timeout > 0 else DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS
+
+    def _browser_task_budget(self) -> BrowserTaskBudget:
+        return BrowserTaskBudget(
+            max_browser_open_attempts=max(
+                0,
+                int(
+                    getattr(self.config, "browser_max_open_attempts", 1)
+                ),
+            ),
+            max_consecutive_tool_failures=max(
+                0,
+                int(
+                    getattr(
+                        self.config,
+                        "browser_max_consecutive_tool_failures",
+                        2,
+                    )
+                ),
+            ),
+            max_failed_action_retries=max(
+                0,
+                int(
+                    getattr(
+                        self.config,
+                        "browser_max_failed_action_retries",
+                        1,
+                    )
+                ),
+            ),
+            max_browser_evals=max(
+                0,
+                int(
+                    getattr(self.config, "browser_max_eval_fallbacks", 1)
+                ),
+            ),
+            max_recovery_steps=max(
+                0,
+                int(
+                    getattr(self.config, "browser_max_recovery_steps", 2)
+                ),
+            ),
+        )
 
     @staticmethod
     def _timeout_error(timeout_seconds: float) -> str:
@@ -338,11 +397,15 @@ class AgentLoop:
         browser_mode: str,
         loaded_skills: set[str],
         browser_initialized: bool,
+        browser_state: BrowserTaskState | None = None,
+        browser_budget: BrowserTaskBudget | None = None,
     ) -> tuple[ToolResult, bool]:
         if (
             browser_initialized
             and name == self._browser_entry_tool(browser_mode)
         ):
+            if browser_state is not None:
+                browser_state.browser_initialized = True
             return (
                 ToolResult(
                     success=True,
@@ -373,7 +436,19 @@ class AgentLoop:
                 browser_initialized,
             )
 
+        effective_state = browser_state or BrowserTaskState()
+        effective_budget = browser_budget or self._browser_task_budget()
+        budget_result = effective_state.preflight(
+            name,
+            arguments,
+            effective_budget,
+        )
+        if budget_result is not None:
+            effective_state.note_result(name, arguments, budget_result)
+            return budget_result, browser_initialized
+
         result = await self._execute_normalized_tool(name, arguments)
+        effective_state.note_result(name, arguments, result)
         browser_initialized = self._record_task_result(
             name,
             arguments,
@@ -382,6 +457,81 @@ class AgentLoop:
             loaded_skills,
             browser_initialized,
         )
+        effective_state.browser_initialized = browser_initialized
+        recovery = self.browser_recovery_policy.plan(
+            result,
+            effective_state,
+            effective_budget,
+        )
+        if recovery is not None:
+            result.metadata.update(
+                {
+                    "recovery_hint": recovery.hint,
+                    "recovery_retry_allowed": recovery.retry_allowed,
+                }
+            )
+            if recovery.refresh_snapshot and browser_initialized:
+                effective_state.recovery_steps += 1
+                effective_state.pending_recovery_tool = name
+                effective_state.pending_recovery_retry_used = False
+                refresh_arguments = {
+                    "session": _BROWSER_SESSION_BY_MODE[browser_mode]
+                }
+                current_step = self.tracer.get_current_step()
+                recovery_trace = (
+                    self.tracer.start_tool_call(
+                        step_id=current_step.step_id,
+                        tool_name="browser_snapshot",
+                        arguments=refresh_arguments,
+                        metadata={
+                            "runtime_recovery": True,
+                            "recovery_for": name,
+                            "recovery_step": effective_state.recovery_steps,
+                        },
+                    )
+                    if current_step is not None and self._tracing_active()
+                    else None
+                )
+                refresh = await self._execute_normalized_tool(
+                    "browser_snapshot",
+                    refresh_arguments,
+                )
+                if recovery_trace:
+                    self.tracer.finish_tool_call(
+                        recovery_trace,
+                        result=refresh,
+                    )
+                effective_state.note_result(
+                    "browser_snapshot",
+                    refresh_arguments,
+                    refresh,
+                )
+                result.metadata.update(
+                    {
+                        "recovery_action": "browser_snapshot",
+                        "recovery_succeeded": refresh.success,
+                        "recovery_steps": effective_state.recovery_steps,
+                    }
+                )
+                if refresh.success:
+                    effective_state.browser_used = True
+                    result.output = "\n\n".join(
+                        part
+                        for part in (
+                            result.output,
+                            "Runtime recovery snapshot:\n" + refresh.output,
+                        )
+                        if part
+                    )
+                elif refresh.error:
+                    result.output = "\n\n".join(
+                        part
+                        for part in (
+                            result.output,
+                            "Runtime recovery snapshot failed: " + refresh.error,
+                        )
+                        if part
+                    )
         return result, browser_initialized
 
     async def _execute_tool_call(
@@ -407,7 +557,17 @@ class AgentLoop:
             return ToolResult(
                 success=False,
                 error=f"Blocked by tool policy: {policy.reason}",
-                metadata=metadata,
+                metadata={
+                    **metadata,
+                    **(
+                        {
+                            "error_type": BrowserErrorType.POLICY_BLOCKED.value,
+                            "recoverable": False,
+                        }
+                        if name.startswith("browser_")
+                        else {}
+                    ),
+                },
             )
         if policy.decision == PolicyDecision.REQUIRE_CONFIRMATION:
             return ToolResult(
@@ -467,6 +627,16 @@ class AgentLoop:
                 resolved,
                 message.content,
             )
+        elif (
+            is_recent_task_continuation(message.content)
+            and self.recent_tasks.get(message.session_key) is not None
+        ):
+            recent = self.recent_tasks.get(message.session_key)
+            assert recent is not None
+            reply, trace = await self._resume_recent_task(
+                recent,
+                message.content,
+            )
         else:
             if pending:
                 rejected = self.approvals.reject(
@@ -522,6 +692,7 @@ class AgentLoop:
         browser_snapshot: str = "",
         loaded_skills: set[str] | None = None,
         browser_initialized: bool = False,
+        browser_state: BrowserTaskState | dict | None = None,
     ) -> tuple[str, AgentRunTrace]:
         """Run the existing ReAct loop and return its completed in-memory trace."""
         supplied_metadata = dict(metadata or {})
@@ -542,6 +713,17 @@ class AgentLoop:
             user_input,
             metadata=run_metadata,
         )
+        task_browser_state = (
+            browser_state
+            if isinstance(browser_state, BrowserTaskState)
+            else BrowserTaskState.from_dict(browser_state)
+        )
+        if browser_snapshot and not task_browser_state.latest_snapshot:
+            task_browser_state.latest_snapshot = browser_snapshot
+        task_browser_state.browser_initialized = (
+            task_browser_state.browser_initialized or browser_initialized
+        )
+        task_loaded_skills = loaded_skills if loaded_skills is not None else set()
         try:
             output, status, error = await self._react_loop_outcome(
                 messages,
@@ -550,8 +732,9 @@ class AgentLoop:
                 session_key=session_key,
                 browser_snapshot=browser_snapshot,
                 task_id=effective_task_id,
-                loaded_skills=loaded_skills,
+                loaded_skills=task_loaded_skills,
                 browser_initialized=browser_initialized,
+                browser_state=task_browser_state,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -562,7 +745,110 @@ class AgentLoop:
             status=status,
             error=error,
         )
+        self._remember_browser_task(
+            session_key=session_key,
+            task_id=effective_task_id,
+            trace=trace,
+            browser_mode=browser_mode,
+            messages=messages,
+            output=output,
+            browser_snapshot=browser_snapshot,
+            loaded_skills=task_loaded_skills,
+            browser_state=task_browser_state,
+        )
         return output, trace
+
+    def _remember_browser_task(
+        self,
+        *,
+        session_key: str,
+        task_id: str,
+        trace: AgentRunTrace,
+        browser_mode: str,
+        messages: list[dict],
+        output: str,
+        browser_snapshot: str,
+        loaded_skills: set[str],
+        browser_state: BrowserTaskState,
+    ) -> None:
+        if not session_key or not browser_state.browser_used:
+            return
+        self.recent_tasks.save(
+            RecentBrowserTask(
+                session_key=session_key,
+                task_id=task_id,
+                origin_run_id=trace.run_id,
+                browser_mode=browser_mode,
+                messages=[
+                    *copy.deepcopy(messages),
+                    {"role": "assistant", "content": output},
+                ],
+                browser_snapshot=(
+                    browser_state.latest_snapshot or browser_snapshot
+                ),
+                loaded_skills=sorted(loaded_skills),
+                browser_initialized=browser_state.browser_initialized,
+                browser_state=browser_state.to_dict(),
+            )
+        )
+
+    async def _resume_recent_task(
+        self,
+        recent: RecentBrowserTask,
+        user_input: str,
+    ) -> tuple[str, AgentRunTrace]:
+        messages = copy.deepcopy(recent.messages)
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    f"{user_input}\n\n"
+                    "Runtime continuation: this corrects or continues the recent "
+                    "browser task. Reuse its task_id, browser session, current page, "
+                    "latest snapshot, loaded Skills, recent tool results, completion "
+                    "state, and budgets. This is not approval for any risky action; "
+                    "all new tool calls still require normal policy evaluation."
+                ),
+            }
+        )
+        return await self.run_traced(
+            user_input,
+            messages,
+            recent.browser_mode,
+            session_key=recent.session_key,
+            metadata={
+                "resumed_from_run_id": recent.origin_run_id,
+                "continuation": True,
+                "continuation_kind": "recent_task_correction",
+            },
+            task_id=recent.task_id,
+            browser_snapshot=recent.browser_snapshot,
+            loaded_skills=set(recent.loaded_skills),
+            browser_initialized=recent.browser_initialized,
+            browser_state=recent.browser_state,
+        )
+
+    async def resume_recent_task(
+        self,
+        session_key: str,
+        user_input: str,
+    ) -> tuple[str, AgentRunTrace]:
+        """Resume the most recent browser task without implying approval."""
+        recent = self.recent_tasks.get(session_key)
+        if recent is None:
+            self.tracer.start_run(
+                user_input,
+                metadata={
+                    "session_key": session_key,
+                    "task_id": uuid.uuid4().hex,
+                },
+            )
+            output = "当前会话没有可继续的浏览器任务。"
+            return output, self.tracer.finish_run(
+                final_output=output,
+                status="cancelled",
+            )
+        return await self._resume_recent_task(recent, user_input)
 
     def _cancelled_trace(
         self,
@@ -647,6 +933,13 @@ class AgentLoop:
     ) -> tuple[str, AgentRunTrace]:
         browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
         task_id = pending.task_id or uuid.uuid4().hex
+        loaded_skills = set(pending.loaded_skills)
+        browser_state = BrowserTaskState.from_dict(pending.browser_state)
+        browser_state.browser_initialized = (
+            browser_state.browser_initialized or pending.browser_initialized
+        )
+        if pending.browser_snapshot and not browser_state.latest_snapshot:
+            browser_state.latest_snapshot = pending.browser_snapshot
         self.tracer.start_run(
             user_input,
             metadata={
@@ -695,8 +988,9 @@ class AgentLoop:
                 session_key=pending.session_key,
                 browser_snapshot=pending.browser_snapshot,
                 task_id=task_id,
-                loaded_skills=set(pending.loaded_skills),
+                loaded_skills=loaded_skills,
                 browser_initialized=pending.browser_initialized,
+                browser_state=browser_state,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -706,6 +1000,17 @@ class AgentLoop:
             final_output=output,
             status=status,
             error=error,
+        )
+        self._remember_browser_task(
+            session_key=pending.session_key,
+            task_id=task_id,
+            trace=trace,
+            browser_mode=browser_mode,
+            messages=messages,
+            output=output,
+            browser_snapshot=pending.browser_snapshot,
+            loaded_skills=loaded_skills,
+            browser_state=browser_state,
         )
         return output, trace
 
@@ -735,6 +1040,7 @@ class AgentLoop:
         task_id: str,
         loaded_skills: set[str],
         browser_initialized: bool,
+        browser_state: BrowserTaskState,
     ) -> PendingApproval:
         current_run = self.tracer.get_current_run()
         effective_session_key = session_key or (
@@ -756,6 +1062,7 @@ class AgentLoop:
             task_id=task_id,
             loaded_skills=sorted(loaded_skills),
             browser_initialized=browser_initialized,
+            browser_state=browser_state.to_dict(),
         )
 
     def _create_clarification(
@@ -771,6 +1078,7 @@ class AgentLoop:
         task_id: str,
         loaded_skills: set[str],
         browser_initialized: bool,
+        browser_state: BrowserTaskState,
     ) -> PendingClarification:
         current_run = self.tracer.get_current_run()
         effective_session_key = session_key or (
@@ -791,6 +1099,7 @@ class AgentLoop:
             browser_snapshot=browser_snapshot,
             loaded_skills=sorted(loaded_skills),
             browser_initialized=browser_initialized,
+            browser_state=browser_state.to_dict(),
         )
 
     async def _resume_approved(
@@ -802,6 +1111,13 @@ class AgentLoop:
         task_id = pending.task_id or uuid.uuid4().hex
         loaded_skills = set(pending.loaded_skills)
         browser_initialized = pending.browser_initialized
+        browser_state = BrowserTaskState.from_dict(pending.browser_state)
+        browser_state.browser_initialized = (
+            browser_state.browser_initialized or browser_initialized
+        )
+        if pending.browser_snapshot and not browser_state.latest_snapshot:
+            browser_state.latest_snapshot = pending.browser_snapshot
+        browser_budget = self._browser_task_budget()
         self.tracer.start_run(
             user_input,
             metadata={
@@ -838,9 +1154,14 @@ class AgentLoop:
             },
         )
         try:
-            result = await self._execute_normalized_tool(
+            result, browser_initialized = await self._execute_task_tool(
                 pending.tool_name,
                 pending.arguments,
+                browser_mode=browser_mode,
+                loaded_skills=loaded_skills,
+                browser_initialized=browser_initialized,
+                browser_state=browser_state,
+                browser_budget=browser_budget,
             )
         except Exception as exc:
             self.tracer.finish_tool_call(
@@ -851,14 +1172,6 @@ class AgentLoop:
             self.tracer.finish_run(status="failed", error=str(exc))
             raise
         self.tracer.finish_tool_call(tool_trace, result=result)
-        browser_initialized = self._record_task_result(
-            pending.tool_name,
-            pending.arguments,
-            result,
-            browser_mode,
-            loaded_skills,
-            browser_initialized,
-        )
         messages.append(
             {
                 "role": "tool",
@@ -913,6 +1226,8 @@ class AgentLoop:
                             browser_mode=browser_mode,
                             loaded_skills=loaded_skills,
                             browser_initialized=browser_initialized,
+                            browser_state=browser_state,
+                            browser_budget=browser_budget,
                         )
                     )
                     if next_result.success:
@@ -927,6 +1242,7 @@ class AgentLoop:
                             task_id=task_id,
                             loaded_skills=loaded_skills,
                             browser_initialized=browser_initialized,
+                            browser_state=browser_state,
                         )
                         next_result.metadata.update(
                             {
@@ -965,6 +1281,7 @@ class AgentLoop:
                         task_id=task_id,
                         loaded_skills=loaded_skills,
                         browser_initialized=browser_initialized,
+                        browser_state=browser_state,
                     )
                     waiting = ToolResult(
                         success=False,
@@ -987,8 +1304,19 @@ class AgentLoop:
                     next_result = ToolResult(
                         success=False,
                         error=f"Blocked by tool policy: {next_policy.reason}",
-                        metadata=self._policy_metadata(next_policy),
+                        metadata={
+                            **self._policy_metadata(next_policy),
+                            **(
+                                {
+                                    "error_type": BrowserErrorType.POLICY_BLOCKED.value,
+                                    "recoverable": False,
+                                }
+                                if name.startswith("browser_")
+                                else {}
+                            ),
+                        },
                     )
+                    browser_state.note_result(name, arguments, next_result)
                 else:
                     next_result, browser_initialized = (
                         await self._execute_task_tool(
@@ -997,6 +1325,8 @@ class AgentLoop:
                             browser_mode=browser_mode,
                             loaded_skills=loaded_skills,
                             browser_initialized=browser_initialized,
+                            browser_state=browser_state,
+                            browser_budget=browser_budget,
                         )
                     )
             self.tracer.finish_tool_call(next_trace, result=next_result)
@@ -1022,6 +1352,7 @@ class AgentLoop:
                 task_id=task_id,
                 loaded_skills=loaded_skills,
                 browser_initialized=browser_initialized,
+                browser_state=browser_state,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -1031,6 +1362,17 @@ class AgentLoop:
             final_output=output,
             status=status,
             error=error,
+        )
+        self._remember_browser_task(
+            session_key=pending.session_key,
+            task_id=task_id,
+            trace=trace,
+            browser_mode=browser_mode,
+            messages=messages,
+            output=output,
+            browser_snapshot=browser_snapshot,
+            loaded_skills=loaded_skills,
+            browser_state=browser_state,
         )
         return output, trace
 
@@ -1054,6 +1396,7 @@ class AgentLoop:
         task_id: str = "",
         loaded_skills: set[str] | None = None,
         browser_initialized: bool = False,
+        browser_state: BrowserTaskState | None = None,
     ) -> tuple[str, str, str | None]:
         current_run = self.tracer.get_current_run()
         effective_task_id = (
@@ -1068,6 +1411,13 @@ class AgentLoop:
         task_loaded_skills = (
             loaded_skills if loaded_skills is not None else set()
         )
+        task_browser_state = browser_state or BrowserTaskState()
+        task_browser_state.browser_initialized = (
+            task_browser_state.browser_initialized or browser_initialized
+        )
+        if browser_snapshot and not task_browser_state.latest_snapshot:
+            task_browser_state.latest_snapshot = browser_snapshot
+        browser_budget = self._browser_task_budget()
         final_parts: list[str] = []
         rate_limit_retries = 0
         rate_limit_retry_limit = self._effective_rate_limit_retries()
@@ -1168,7 +1518,77 @@ class AgentLoop:
 
             if not message.tool_calls:
                 if content:
+                    completion_block = task_browser_state.completion_block_reason()
+                    if completion_block:
+                        current_run = self.tracer.get_current_run()
+                        claimed_success = contains_success_claim(content)
+                        if current_run:
+                            current_run.metadata.update(
+                                {
+                                    "browser_completion_state": (
+                                        task_browser_state.completion_state
+                                    ),
+                                    "completion_claim_blocked": claimed_success,
+                                }
+                            )
+                        if contains_incomplete_report(content):
+                            final_parts.append(content)
+                            if step_trace:
+                                self.tracer.finish_step()
+                            return "".join(final_parts).strip(), "success", None
+                        if (
+                            task_browser_state.completion_gate_prompts < 1
+                            and step + 1 < react_step_limit
+                        ):
+                            task_browser_state.completion_gate_prompts += 1
+                            messages.append(
+                                {"role": "assistant", "content": content}
+                            )
+                            messages.append(
+                                {
+                                    "role": "user",
+                                    "content": (
+                                        "Runtime completion gate: do not claim this "
+                                        f"browser task succeeded. {completion_block} "
+                                        "Use browser_verify with a concrete structured "
+                                        "postcondition, perform one bounded recovery, or "
+                                        "report that the task is incomplete."
+                                    ),
+                                }
+                            )
+                            if step_trace:
+                                self.tracer.finish_step(
+                                    status="completion_verification_required"
+                                )
+                            continue
+                        error = "Browser task completion was not verified"
+                        output = (
+                            "浏览器任务尚未完成："
+                            + completion_block
+                            + " Runtime 未取得可验证的任务完成证据。"
+                        )
+                        if step_trace:
+                            self.tracer.finish_step(
+                                status="failed",
+                                error=error,
+                            )
+                        return output, "failed", error
                     final_parts.append(content)
+                    current_run = self.tracer.get_current_run()
+                    if current_run and task_browser_state.browser_used:
+                        current_run.metadata.update(
+                            {
+                                "browser_completion_state": (
+                                    task_browser_state.completion_state
+                                ),
+                                "completion_verified": (
+                                    task_browser_state.completion_state == "verified"
+                                ),
+                                "completion_evidence": (
+                                    task_browser_state.completion_evidence
+                                ),
+                            }
+                        )
                     if step_trace:
                         self.tracer.finish_step()
                     return "".join(final_parts).strip(), "success", None
@@ -1286,6 +1706,8 @@ class AgentLoop:
                         browser_mode=browser_mode,
                         loaded_skills=task_loaded_skills,
                         browser_initialized=browser_initialized,
+                        browser_state=task_browser_state,
+                        browser_budget=browser_budget,
                     )
                     if result.success:
                         pending_clarification = self._create_clarification(
@@ -1301,6 +1723,7 @@ class AgentLoop:
                             task_id=effective_task_id,
                             loaded_skills=task_loaded_skills,
                             browser_initialized=browser_initialized,
+                            browser_state=task_browser_state,
                         )
                         result.metadata.update(
                             {
@@ -1328,8 +1751,20 @@ class AgentLoop:
                     result = ToolResult(
                         success=False,
                         error=f"Blocked by tool policy: {policy.reason}",
-                        metadata=self._policy_metadata(policy),
+                        metadata={
+                            **self._policy_metadata(policy),
+                            **(
+                                {
+                                    "error_type": BrowserErrorType.POLICY_BLOCKED.value,
+                                    "recoverable": False,
+                                }
+                                if name.startswith("browser_")
+                                else {}
+                            ),
+                        },
                     )
+                    assert arguments is not None
+                    task_browser_state.note_result(name, arguments, result)
                 elif (
                     policy
                     and policy.decision
@@ -1351,6 +1786,7 @@ class AgentLoop:
                         task_id=effective_task_id,
                         loaded_skills=task_loaded_skills,
                         browser_initialized=browser_initialized,
+                        browser_state=task_browser_state,
                     )
                     waiting = ToolResult(
                         success=False,
@@ -1385,6 +1821,8 @@ class AgentLoop:
                                 browser_mode=browser_mode,
                                 loaded_skills=task_loaded_skills,
                                 browser_initialized=browser_initialized,
+                                browser_state=task_browser_state,
+                                browser_budget=browser_budget,
                             )
                         )
                     except Exception as exc:
@@ -1405,10 +1843,17 @@ class AgentLoop:
                 )
                 if name == "browser_snapshot" and result.success:
                     browser_snapshot = result.output
+                elif task_browser_state.latest_snapshot:
+                    browser_snapshot = task_browser_state.latest_snapshot
 
             if step_trace:
                 self.tracer.finish_step()
 
+        current_run = self.tracer.get_current_run()
+        if current_run and task_browser_state.browser_used:
+            current_run.metadata["browser_completion_state"] = (
+                task_browser_state.completion_state
+            )
         return (
             f"已达到单次任务的 {react_step_limit} 步执行上限，任务尚未正常结束。",
             "max_steps",
