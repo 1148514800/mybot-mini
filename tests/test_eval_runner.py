@@ -1,4 +1,5 @@
 import asyncio
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -69,8 +70,21 @@ class EvalRunnerTests(unittest.TestCase):
         eval_dir = Path(__file__).resolve().parents[1] / "evals"
         cases = load_eval_suite(eval_dir)
 
-        self.assertEqual(len(cases), 39)
+        self.assertEqual(len(cases), 43)
         self.assertTrue(all("fake_tools" in case.metadata for case in cases))
+
+    def test_eval_suite_ignores_macos_resource_fork_sidecars(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            eval_dir = Path(directory)
+            (eval_dir / "case.json").write_text(
+                '[{"id":"one","name":"One","input":"hello"}]',
+                encoding="utf-8",
+            )
+            (eval_dir / "._case.json").write_bytes(b"\x00\x05\x16\x07")
+
+            cases = load_eval_suite(eval_dir)
+
+        self.assertEqual([case.id for case in cases], ["one"])
 
 
 if __name__ == "__main__":

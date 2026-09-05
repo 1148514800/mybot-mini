@@ -6,6 +6,9 @@ dist/
 wheels/
 *.egg-info
 
+# macOS metadata sidecars on non-APFS volumes
+._*
+
 # Virtual environments
 .venv/
 

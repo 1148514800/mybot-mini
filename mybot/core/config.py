@@ -6,6 +6,7 @@ from pathlib import Path
 
 from openai import AsyncOpenAI
 
+from ..guardrails import DEFAULT_APPROVAL_TTL_SECONDS
 from ..mcp.config import MCPConfig
 
 
@@ -60,6 +61,7 @@ _DEBUG_CONFIG = _section(_JSON_CONFIG, "debug")
 _TRACING_CONFIG = _section(_JSON_CONFIG, "tracing")
 _MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
 _BROWSER_RUNTIME_CONFIG = _section(_JSON_CONFIG, "browser_runtime")
+_GUARDRAILS_CONFIG = _section(_JSON_CONFIG, "guardrails")
 
 
 def _active_llm_provider() -> str:
@@ -271,6 +273,16 @@ class GatewayConfig:
         )
     )
 
+    approval_ttl_seconds: int = field(
+        default_factory=lambda: int(
+            _config_value(
+                _GUARDRAILS_CONFIG,
+                "approval_ttl_seconds",
+                DEFAULT_APPROVAL_TTL_SECONDS,
+            )
+        )
+    )
+
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
             _DEBUG_CONFIG,
@@ -312,6 +324,14 @@ class GatewayConfig:
         for name, value in limits.items():
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{name} must be a non-negative integer")
+        if (
+            isinstance(self.approval_ttl_seconds, bool)
+            or not isinstance(self.approval_ttl_seconds, int)
+            or self.approval_ttl_seconds <= 0
+        ):
+            raise ValueError(
+                "guardrails.approval_ttl_seconds must be a positive integer"
+            )
 
 
 def build_client(config: GatewayConfig) -> AsyncOpenAI:

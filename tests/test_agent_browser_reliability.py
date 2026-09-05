@@ -31,7 +31,7 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_failed_final_click_cannot_report_success(self):
         click = {
             "name": "browser_click",
-            "arguments": {"target": "e12"},
+            "arguments": {"target": "#submit"},
             "success": False,
             "error": "click failed",
             "result_metadata": {
@@ -97,6 +97,11 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
                 "recoverable": True,
             },
         }
+        initial_snapshot = {
+            "name": "browser_snapshot",
+            "arguments": {},
+            "output": "button Save [ref=e12]",
+        }
         refresh = {
             "name": "browser_snapshot",
             "arguments": {},
@@ -114,9 +119,17 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
         }
         agent = build_fake_agent(
             case(
-                [open_call, stale_click, refresh, retry_click, verify],
+                [
+                    open_call,
+                    initial_snapshot,
+                    stale_click,
+                    refresh,
+                    retry_click,
+                    verify,
+                ],
                 batches=[
                     [open_call],
+                    [initial_snapshot],
                     [stale_click],
                     [retry_click],
                     [verify],
@@ -137,6 +150,7 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
             [name for name, _ in agent.tools.executed_calls],
             [
                 "browser_open",
+                "browser_snapshot",
                 "browser_click",
                 "browser_snapshot",
                 "browser_click",
@@ -154,6 +168,7 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
             call
             for call in trace.tool_calls
             if call.tool_name == "browser_snapshot"
+            and call.metadata.get("runtime_recovery")
         )
         self.assertTrue(recovery_trace.metadata["runtime_recovery"])
         self.assertEqual(recovery_trace.metadata["recovery_for"], "browser_click")

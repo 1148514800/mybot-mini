@@ -32,10 +32,12 @@ class PendingApproval:
     approval_id: str
     session_key: str
     tool_name: str
-    arguments: dict[str, Any]
+    arguments: dict[str, Any] = field(repr=False)
     risk_level: RiskLevel
     reason: str
     created_at: str
+    expires_at: str
+    requester_sender_id: str | None = None
     origin_run_id: str | None = None
     browser_mode: str | None = None
     model_tool_call_id: str | None = None
@@ -50,4 +52,5 @@ class PendingApproval:
     loaded_skills: list[str] = field(default_factory=list, repr=False)
     browser_initialized: bool = False
     browser_state: dict[str, Any] = field(default_factory=dict, repr=False)
+    policy_metadata: dict[str, Any] = field(default_factory=dict, repr=False)
     status: str = "pending"

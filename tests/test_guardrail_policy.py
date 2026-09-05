@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
 
 from mybot.guardrails import PolicyDecision, RiskLevel, ToolPolicy
 
@@ -24,13 +26,60 @@ class ToolPolicyTests(unittest.TestCase):
             RiskLevel.READ,
         )
 
-    def test_safe_exec_is_allowed(self):
-        self.assert_decision(
-            "exec",
-            {"command": "python --version"},
-            PolicyDecision.ALLOW,
-            RiskLevel.READ,
-        )
+    def test_safe_exec_allowlist_matches_the_whole_command(self):
+        for command in (
+            "git status",
+            "git status --short",
+            "git diff",
+            "git diff --stat",
+            "git log -5",
+            "git show HEAD",
+            "python --version",
+            "node --version",
+            "uv --version",
+            "pwd",
+            "whoami",
+        ):
+            with self.subTest(command=command):
+                self.assert_decision(
+                    "exec",
+                    {"command": command},
+                    PolicyDecision.ALLOW,
+                    RiskLevel.READ,
+                )
+
+    def test_shell_control_syntax_never_gets_safe_query_allow(self):
+        for command in (
+            "git status && echo test",
+            "git status; echo test",
+            "git status | another-command",
+            "git status || another-command",
+            "python --version && echo test",
+            "pwd && another-command",
+            "git status > output.txt",
+            "git status\necho test",
+            "git show `whoami`",
+            "git show $(whoami)",
+            "git diff --output result.txt",
+            "git diff --ext-diff",
+        ):
+            with self.subTest(command=command):
+                result = self.policy.evaluate("exec", {"command": command})
+                self.assertNotEqual(result.decision, PolicyDecision.ALLOW)
+
+    def test_unknown_and_state_changing_exec_require_confirmation(self):
+        for command in (
+            "echo hello",
+            "git push",
+            "git commit -m test",
+            "pip install sample",
+            "npm install sample",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(
+                    self.policy.evaluate("exec", {"command": command}).decision,
+                    PolicyDecision.REQUIRE_CONFIRMATION,
+                )
 
     def test_destructive_exec_requires_confirmation(self):
         self.assert_decision(
@@ -90,14 +139,71 @@ class ToolPolicyTests(unittest.TestCase):
             {"browser_snapshot": "- button '永久删除' [ref=e11]"},
         )
 
-    def test_missing_snapshot_target_falls_back_to_allow(self):
-        self.assertEqual(
-            self.policy.evaluate(
+    def test_missing_snapshot_target_requires_confirmation(self):
+        result = self.policy.evaluate(
                 "browser_click",
                 {"target": "e99"},
                 context={"browser_snapshot": "- button '删除' [ref=e11]"},
+            )
+        self.assertEqual(
+            result.decision,
+            PolicyDecision.REQUIRE_CONFIRMATION,
+        )
+        self.assertEqual(result.rule, "browser_click_unknown_ref")
+
+    def test_snapshot_refs_are_matched_exactly(self):
+        for target, other in (("e1", "e10"), ("e11", "e110")):
+            with self.subTest(target=target, other=other):
+                result = self.policy.evaluate(
+                    "browser_click",
+                    {"target": target},
+                    context={
+                        "browser_snapshot": (
+                            f"- button '删除' [ref={other}]"
+                        )
+                    },
+                )
+                self.assertEqual(
+                    result.decision,
+                    PolicyDecision.REQUIRE_CONFIRMATION,
+                )
+                self.assertEqual(result.rule, "browser_click_unknown_ref")
+
+    def test_browser_submit_paths_require_confirmation(self):
+        self.assertEqual(
+            self.policy.evaluate(
+                "browser_type",
+                {"target": "e1", "text": "hello", "submit": False},
             ).decision,
             PolicyDecision.ALLOW,
+        )
+        self.assertEqual(
+            self.policy.evaluate(
+                "browser_type",
+                {"target": "e1", "text": "hello", "submit": True},
+            ).decision,
+            PolicyDecision.REQUIRE_CONFIRMATION,
+        )
+        for key in ("Enter", "Space", "Control+Enter", "NumpadEnter"):
+            with self.subTest(key=key):
+                self.assertEqual(
+                    self.policy.evaluate(
+                        "browser_press", {"key": key}
+                    ).decision,
+                    PolicyDecision.REQUIRE_CONFIRMATION,
+                )
+        self.assertEqual(
+            self.policy.evaluate(
+                "browser_press", {"key": "ArrowDown"}
+            ).decision,
+            PolicyDecision.ALLOW,
+        )
+        self.assertEqual(
+            self.policy.evaluate(
+                "browser_type",
+                {"target": "e1", "text": "hello", "submit": "false"},
+            ).decision,
+            PolicyDecision.REQUIRE_CONFIRMATION,
         )
 
     def test_sensitive_write_requires_confirmation(self):
@@ -114,6 +220,45 @@ class ToolPolicyTests(unittest.TestCase):
                     ).decision,
                     PolicyDecision.REQUIRE_CONFIRMATION,
                 )
+
+    def test_runtime_managed_paths_are_blocked_from_write_file(self):
+        for path in (
+            "memory/memory.json",
+            "sessions/cli_direct.jsonl",
+            "browser_profiles/managed_browser/state.json",
+            "runs/trace.json",
+            "workspace/memory/memory.json",
+        ):
+            with self.subTest(path=path):
+                result = self.policy.evaluate(
+                    "write_file",
+                    {"path": path, "content": "overwrite"},
+                )
+                self.assertEqual(result.decision, PolicyDecision.BLOCK)
+                self.assertEqual(
+                    result.rule,
+                    "runtime_managed_workspace_path",
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            result = ToolPolicy(workspace).evaluate(
+                "write_file",
+                {
+                    "path": str(workspace / "sessions" / "group.jsonl"),
+                    "content": "overwrite",
+                },
+            )
+            self.assertEqual(result.decision, PolicyDecision.BLOCK)
+
+    def test_ordinary_workspace_file_remains_allowed(self):
+        self.assertEqual(
+            self.policy.evaluate(
+                "write_file",
+                {"path": "notes/status.txt", "content": "ready"},
+            ).decision,
+            PolicyDecision.ALLOW,
+        )
 
     def test_memory_policy(self):
         self.assertEqual(

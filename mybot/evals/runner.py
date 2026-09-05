@@ -39,6 +39,8 @@ def load_eval_cases(path: Path) -> list[EvalCase]:
 def load_eval_suite(eval_dir: Path = DEFAULT_EVAL_DIR) -> list[EvalCase]:
     cases: list[EvalCase] = []
     for path in sorted(eval_dir.glob("*.json")):
+        if path.name.startswith("._"):
+            continue
         cases.extend(load_eval_cases(path))
     return cases
 

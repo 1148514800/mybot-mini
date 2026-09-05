@@ -13,6 +13,7 @@ class PendingClarification:
     session_key: str
     question: str
     created_at: str
+    requester_sender_id: str | None = None
     origin_run_id: str | None = None
     task_id: str | None = None
     browser_mode: str | None = None
@@ -41,6 +42,7 @@ class ClarificationManager:
         *,
         session_key: str,
         question: str,
+        requester_sender_id: str | None = None,
         origin_run_id: str | None = None,
         task_id: str | None = None,
         browser_mode: str | None = None,
@@ -58,6 +60,7 @@ class ClarificationManager:
             session_key=session_key,
             question=question.strip(),
             created_at=datetime.now(UTC).isoformat(),
+            requester_sender_id=requester_sender_id,
             origin_run_id=origin_run_id,
             task_id=task_id,
             browser_mode=browser_mode,

@@ -32,7 +32,9 @@ SENSITIVE_KEYS = (
 )
 SENSITIVE_TEXT_PATTERN = re.compile(
     r"(?i)(\b(?:password|passwd|token|api[_-]?key|apikey|authorization|"
-    r"cookie|secret)\b\s*[=:]\s*[\"']?)([^\s\"',;}]+)"
+    r"cookie|secret)\b[\"']?\s*[=:]\s*)"
+    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|bearer\s+[^\s,}\r\n]+|"
+    r"[^\s\"',}\r\n]+)"
 )
 
 
@@ -61,8 +63,32 @@ def redact_mapping(mapping: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def redact_tool_arguments(
+    tool_name: str,
+    arguments: dict[str, Any],
+) -> dict[str, Any]:
+    """Redact common keys plus tool-specific semantically sensitive values."""
+    redacted = redact_mapping(arguments)
+    if tool_name.strip().lower() == "browser_type" and "text" in redacted:
+        redacted["text"] = REDACTED
+    return redacted
+
+
 def redact_text(value: str) -> str:
     return SENSITIVE_TEXT_PATTERN.sub(rf"\1{REDACTED}", value)
+
+
+def redact_tool_text(
+    tool_name: str,
+    value: str,
+    arguments: dict[str, Any] | None = None,
+) -> str:
+    redacted = redact_text(value)
+    if tool_name.strip().lower() == "browser_type" and arguments:
+        typed_text = arguments.get("text")
+        if isinstance(typed_text, str) and typed_text:
+            redacted = redacted.replace(typed_text, REDACTED)
+    return redacted
 
 
 def _now() -> str:
@@ -77,6 +103,7 @@ class AgentTracer:
         self._current_run: AgentRunTrace | None = None
         self._current_step: AgentStepTrace | None = None
         self._started: dict[str, float] = {}
+        self._tool_arguments: dict[str, dict[str, Any]] = {}
 
     def start_run(
         self,
@@ -94,6 +121,7 @@ class AgentTracer:
         self._current_run = run
         self._current_step = None
         self._started = {run.run_id: time.perf_counter()}
+        self._tool_arguments = {}
         return run
 
     def finish_run(
@@ -124,7 +152,7 @@ class AgentTracer:
                 save_trace(run, self.trace_dir)
             except Exception as exc:
                 run.metadata["trace_persist_error"] = (
-                    f"{type(exc).__name__}: {exc}"
+                    redact_text(f"{type(exc).__name__}: {exc}")
                 )
         return run
 
@@ -151,7 +179,7 @@ class AgentTracer:
         step.finished_at = _now()
         step.duration_ms = self._finish_timer(step.step_id)
         step.status = status
-        step.error = error
+        step.error = redact_text(error) if error else None
         self._current_step = None
         return step
 
@@ -247,13 +275,14 @@ class AgentTracer:
             call_id=uuid.uuid4().hex,
             step_id=step_id,
             tool_name=tool_name,
-            arguments=redact_mapping(arguments),
+            arguments=redact_tool_arguments(tool_name, arguments),
             started_at=_now(),
             metadata=redact_mapping(metadata or {}),
         )
         run.tool_calls.append(call)
         step.tool_call_ids.append(call.call_id)
         self._started[call.call_id] = time.perf_counter()
+        self._tool_arguments[call.call_id] = dict(arguments)
         return call
 
     def finish_tool_call(
@@ -264,32 +293,51 @@ class AgentTracer:
     ) -> ToolCallTrace:
         call.finished_at = _now()
         call.duration_ms = self._finish_timer(call.call_id)
+        original_arguments = self._tool_arguments.pop(call.call_id, {})
         if result is None:
             call.success = False
             raw_error = error or "tool call did not return a result"
-            call.error = redact_text(raw_error)
+            call.error = redact_tool_text(
+                call.tool_name,
+                raw_error,
+                original_arguments,
+            )
             return call
 
         call.success = result.success
         call.result_type = type(result).__name__
-        call.result_preview = redact_text(result.output)[
+        call.result_preview = redact_tool_text(
+            call.tool_name,
+            result.output,
+            original_arguments,
+        )[
             :RESULT_PREVIEW_MAX_CHARS
         ]
         raw_error = result.error or error
-        call.error = redact_text(raw_error) if raw_error else None
+        call.error = (
+            redact_tool_text(
+                call.tool_name,
+                raw_error,
+                original_arguments,
+            )
+            if raw_error
+            else None
+        )
         call.metadata.update(redact_mapping(result.metadata))
         if isinstance(result, BrowserResult):
             call.metadata.update(
-                {
-                    key: value
-                    for key, value in {
-                        "action": result.action,
-                        "session": result.session,
-                        "url": result.url,
-                        "title": result.title,
-                    }.items()
-                    if value is not None and value != ""
-                }
+                redact_mapping(
+                    {
+                        key: value
+                        for key, value in {
+                            "action": result.action,
+                            "session": result.session,
+                            "url": result.url,
+                            "title": result.title,
+                        }.items()
+                        if value is not None and value != ""
+                    }
+                )
             )
         return call
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import UTC, datetime, timedelta
 
 from mybot.guardrails import (
     ApprovalIntent,
@@ -56,6 +57,78 @@ class ApprovalManagerTests(unittest.TestCase):
         pending = self.create("cli:a")
         self.assertIsNone(self.manager.approve("cli:b", pending.approval_id))
         self.assertIs(self.manager.get("cli:a"), pending)
+
+    def test_sender_mismatch_does_not_consume_pending(self):
+        pending = self.manager.create(
+            session_key="feishu:group-1",
+            tool_name="exec",
+            arguments={"command": "git push"},
+            policy=confirmation_policy(),
+            requester_sender_id="user-a",
+        )
+
+        self.assertIsNone(
+            self.manager.approve(
+                "feishu:group-1",
+                pending.approval_id,
+                "user-b",
+            )
+        )
+        self.assertIsNone(
+            self.manager.reject(
+                "feishu:group-1",
+                pending.approval_id,
+                "user-b",
+            )
+        )
+        self.assertIs(self.manager.get("feishu:group-1"), pending)
+        approved = self.manager.approve(
+            "feishu:group-1",
+            pending.approval_id,
+            "user-a",
+        )
+        self.assertEqual(approved.status, "approved")
+
+    def test_expired_approval_is_cleared_and_cannot_execute(self):
+        now = [datetime(2026, 9, 5, tzinfo=UTC)]
+        manager = ApprovalManager(
+            ttl_seconds=600,
+            clock=lambda: now[0],
+        )
+        pending = manager.create(
+            session_key="cli:a",
+            tool_name="exec",
+            arguments={"command": "git push"},
+            policy=confirmation_policy(),
+        )
+        self.assertIs(manager.get("cli:a"), pending)
+
+        now[0] += timedelta(seconds=600)
+        expired = manager.expire("cli:a")
+
+        self.assertIs(expired, pending)
+        self.assertEqual(expired.status, "expired")
+        self.assertIsNone(manager.get("cli:a"))
+        self.assertIsNone(manager.approve("cli:a", pending.approval_id))
+
+    def test_approval_within_ttl_can_be_consumed(self):
+        now = [datetime(2026, 9, 5, tzinfo=UTC)]
+        manager = ApprovalManager(
+            ttl_seconds=600,
+            clock=lambda: now[0],
+        )
+        pending = manager.create(
+            session_key="cli:a",
+            tool_name="exec",
+            arguments={"command": "git push"},
+            policy=confirmation_policy(),
+        )
+        now[0] += timedelta(seconds=599)
+
+        approved = manager.approve("cli:a", pending.approval_id)
+
+        self.assertIs(approved, pending)
+        self.assertEqual(approved.status, "approved")
 
     def test_arguments_are_copied_and_exact(self):
         arguments = {"command": "rm test.txt", "options": ["force"]}

@@ -33,6 +33,9 @@
     "max_eval_fallbacks": 1,
     "max_recovery_steps": 2
   },
+  "guardrails": {
+    "approval_ttl_seconds": 600
+  },
   "tracing": {
     "trace_dir": null
   },

@@ -1,4 +1,5 @@
 from .approvals import (
+    DEFAULT_APPROVAL_TTL_SECONDS,
     ApprovalIntent,
     ApprovalManager,
     classify_approval_intent,
@@ -10,6 +11,7 @@ from .policy import ToolPolicy
 __all__ = [
     "ApprovalIntent",
     "ApprovalManager",
+    "DEFAULT_APPROVAL_TTL_SECONDS",
     "ClarificationManager",
     "PendingApproval",
     "PendingClarification",

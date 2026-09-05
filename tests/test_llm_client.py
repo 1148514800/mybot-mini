@@ -29,6 +29,10 @@ class LLMClientTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must be greater than 0"):
             GatewayConfig(request_timeout_seconds=0)
 
+    def test_gateway_config_rejects_non_positive_approval_ttl(self) -> None:
+        with self.assertRaisesRegex(ValueError, "approval_ttl_seconds"):
+            GatewayConfig(approval_ttl_seconds=0)
+
 
 if __name__ == "__main__":
     unittest.main()

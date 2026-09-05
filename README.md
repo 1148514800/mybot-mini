@@ -260,6 +260,7 @@ config/
 | `browser_runtime.max_failed_action_retries` | 同一失败 Action 的额外重试次数，默认 `1` |
 | `browser_runtime.max_eval_fallbacks` | 每个 task 的 `browser_eval` fallback 上限，默认 `1`；Policy 确认仍生效 |
 | `browser_runtime.max_recovery_steps` | 每个 task 的自动恢复步骤上限，默认 `2` |
+| `guardrails.approval_ttl_seconds` | 待确认操作的有效期，默认 `600` 秒；过期后必须重新发起 |
 | `feishu.enabled` | 是否启用飞书通道 |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
@@ -292,17 +293,24 @@ workspace/
   skills/                 # 本地 Skills
   memory/                 # 长期记忆
   sessions/               # 对话历史（JSONL）
+  browser_profiles/       # Runtime 管理的浏览器 profile
+  runs/                   # 可选的持久化 Trace
 evals/                    # 离线 EvalCase JSON 数据
 ```
 
-`workspace/memory/` 和 `workspace/sessions/` 会随着运行产生数据。删除它们会丢失对应的记忆或会话历史，请先备份。
+`memory/`、`sessions/`、`browser_profiles/` 和 `runs/` 是 Runtime 管理目录，普通
+`write_file` 会直接阻止对这些目录的修改；记忆变更必须使用 `memory_write` 或
+`memory_delete`。`instructions/` 以及 `AGENTS.md`、`SOUL.md`、`USER.md`、`TOOLS.md`
+等指令文件仍需要明确确认。目录删除会丢失对应状态，请先备份。
 
 ## Tracing 与离线 Evals
 
 每次 Agent 请求都会在内存中生成独立 Trace，记录 Run、Agent Step、LLM 调用和
-Tool 调用。Tool 参数及 metadata 中常见的 password、token、api_key、cookie、
-secret 等字段会自动脱敏，Tool 输出预览最多保留 2000 字符。Trace summary 不会
-进入 LLM 上下文。
+Tool 调用。Tool 参数及 metadata 中常见的 password、token、api_key、authorization、
+cookie、secret 等字段会自动脱敏；`browser_type.text` 也按语义隐藏，避免普通字段名
+承载密码时泄漏。Tool 输出预览最多保留 2000 字符。开启
+`debug.show_internal_process` 后，终端中的 Tool 参数和结果同样经过这套脱敏。
+Trace summary 不会进入 LLM 上下文。
 
 每个新用户目标会生成一个 `task_id`。如果任务因 Approval 或 Clarification 分成多个
 Run，每个 Run 仍各自保存一个 JSON，但 `metadata.task_id` 保持相同，并通过
@@ -346,24 +354,36 @@ ALLOW / REQUIRE_CONFIRMATION / BLOCK
    ToolRegistry（仅 ALLOW 或已批准的 exact action）
 ```
 
-- 自动执行：文件读取、页面读取与导航、普通点击、普通工作区文件写入、记忆写入，
-  以及 `python --version`、`git status` 等高置信度只读 Shell 查询。
-- 要求确认：`browser_eval`、长期记忆删除、敏感配置或 instruction 文件写入、删除/
-  移动/安装/提交等会改变状态的 Shell 命令，以及快照中明确标记为删除、付款、发布、
-  发送等高影响动作的浏览器点击。
+- 自动执行：文件读取、页面读取与导航、能够在最新快照中精确识别且无危险语义的普通
+  点击、`browser_type(submit=false)`、普通工作区文件写入、记忆写入，以及严格
+  allowlist 完整匹配的 `python --version`、`git status --short`、`git diff --stat`、
+  `git log -5`、`git show HEAD`、`pwd` 等只读 Shell 查询。
+- 要求确认：`browser_eval`、`browser_type(submit=true)`、`browser_press` 的 Enter/
+  Space、最新快照中不存在的 ref、长期记忆删除、敏感配置或 instruction 文件写入、
+  删除/移动/安装/提交等会改变状态的 Shell 命令，以及快照中明确标记为删除、付款、
+  发布、发送等高影响动作的浏览器点击。未知 Shell 命令也采用保守确认策略。
 - 直接阻止：高置信度识别到的系统级破坏命令，例如删除文件系统根目录、格式化磁盘、
-  关机或重启。被阻止的调用不会进入 Tool Registry。
+  关机或重启，以及普通 `write_file` 对 Runtime 管理目录的覆盖。被阻止的调用不会
+  进入 Tool Registry。
+
+Exec allowlist 匹配的是整条命令；包含 `&&`、`||`、`;`、`|`、重定向、换行、反引号、
+`$(...)` 等 shell control syntax 的命令不会因为安全前缀而自动放行。`ExecTool` 默认以
+Agent workspace 作为 `cwd`，但这只确定相对路径的起点，不限制进程能够访问的操作系统
+资源，也不是 sandbox。
 
 需要确认时，本轮 Run 以 `awaiting_confirmation` 结束，CLI 或飞书会显示 Tool、风险、
-原因和 Approval ID。回复 `确认`、`继续`、`同意`、`执行`、`yes`、`y` 或 `approve`
-会批准当前会话中那个确切的 Tool 和参数，并且只执行一次；回复 `取消`、`拒绝`、
-`不要执行`、`停止`、`no`、`n` 或 `deny` 会取消它。其他回复会取消旧审批并作为新的
-正常任务处理。审批仅保存在内存中、按 `channel:chat_id` 隔离，程序重启后不会恢复。
+原因、经过脱敏的具体动作预览和 Approval ID。回复 `确认`、`继续`、`同意`、`执行`、
+`yes`、`y` 或 `approve` 会批准当前会话中那个确切的 Tool 和参数，并且只执行一次；
+回复 `取消`、`拒绝`、`不要执行`、`停止`、`no`、`n` 或 `deny` 会取消它。其他回复会
+取消旧审批并作为新的正常任务处理。审批按 `channel:chat_id` 关联 Conversation Session，
+同时单独绑定原始 `sender_id`；群聊中的其他用户不能批准或拒绝该操作，也不会消费它。
+审批默认 10 分钟过期，过期 Trace 记录 `approval_status=expired`。审批仅保存在内存中，
+程序重启后不会恢复。
 
 Policy 的 `risk_level`、`policy_decision`、`policy_rule`、`policy_reason`、`approval_id`
 和 `approval_status` 会写入现有 Tool Call Trace，并继续使用相同的敏感字段脱敏。
-Guardrails 是 Runtime Safety Layer 的第一版，不是完整 sandbox 或操作系统级安全边界；
-它只做少量高置信度、确定性、可测试的判断。
+`ToolPolicy` 是 Runtime Safety Layer，不是操作系统级 sandbox。它提供确定性、可测试的
+应用层执行边界，但不能替代容器、账户权限、文件系统 ACL 或其他 OS 隔离机制。
 
 ## 普通 Clarification 与任务连续性
 
@@ -465,7 +485,10 @@ MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和
 的活动 session 而串用浏览器，也不会在一种模式失败后自动切换到另一种模式。
 同一 task 内浏览器成功初始化一次后，后续 Run 会复用原 session。查找文本、输入框和
 按钮应优先使用 snapshot、links 和 inspect。Snapshot 中的 `[ref=e102]` 在点击参数中
-应写为 `e102`，不能写成 `ref=e102`。
+应写为 `e102`，不能写成 `ref=e102`。Policy 对 ref 做精确匹配：`e1` 不会匹配 `e10`；
+ref 不在最新 snapshot 中时需要确认，而能够明确识别为普通导航的目标仍可自动执行。
+带 `submit=true` 的输入和 Enter/Space 按键可能触发表单提交，因此也进入确认流程；
+普通 `submit=false` 文本输入保持低风险自动执行。`browser_eval` 始终要求确认。
 
 即使 `playwright-cli` 进程退出码为 0，输出中的明确 `### Error` block 也会转换为
 `BrowserResult(success=False)`。网页自身的 Console Error 只作为页面数据保留，不会

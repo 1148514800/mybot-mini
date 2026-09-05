@@ -93,6 +93,10 @@ class AgentTracerTests(unittest.TestCase):
                 "nested": {
                     "password": "p1",
                     "Authorization": "Bearer token",
+                    "api_key": "k1",
+                    "token": "t1",
+                    "cookie": "c1",
+                    "secret": "s1",
                 },
                 "safe": "visible",
             }
@@ -100,11 +104,46 @@ class AgentTracerTests(unittest.TestCase):
 
         self.assertEqual(value["nested"]["password"], REDACTED)
         self.assertEqual(value["nested"]["Authorization"], REDACTED)
+        for key in ("api_key", "token", "cookie", "secret"):
+            self.assertEqual(value["nested"][key], REDACTED)
         self.assertEqual(value["safe"], "visible")
         self.assertNotIn(
             "abc123",
             redact_text('api_key="abc123"'),
         )
+        redacted_json = redact_text(
+            '{"token":"t1","authorization":"Bearer bearer-value",'
+            '"cookie":"session=abc;theme=dark","secret":"s1"}'
+        )
+        for secret in ("t1", "bearer-value", "session=abc", "s1"):
+            self.assertNotIn(secret, redacted_json)
+
+    def test_browser_type_text_is_semantically_redacted(self) -> None:
+        typed_text = "plain-looking-secret-value"
+        tracer = AgentTracer()
+        tracer.start_run("type value")
+        step = tracer.start_step(1)
+        call = tracer.start_tool_call(
+            step_id=step.step_id,
+            tool_name="browser_type",
+            arguments={
+                "target": "e1",
+                "text": typed_text,
+                "submit": True,
+            },
+        )
+        tracer.finish_tool_call(
+            call,
+            BrowserResult(
+                success=True,
+                action="type",
+                output=f"filled {typed_text}",
+            ),
+        )
+
+        self.assertEqual(call.arguments["text"], REDACTED)
+        self.assertNotIn(typed_text, call.result_preview)
+        self.assertIn(REDACTED, call.result_preview)
 
 
 if __name__ == "__main__":

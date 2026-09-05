@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 from .base import Tool
 from .result import ToolResult
 
 
 class ExecTool(Tool):
+    def __init__(self, workspace: Path):
+        self.workspace = workspace.expanduser().resolve()
+
     @property
     def name(self) -> str:
         return "exec"
@@ -45,6 +49,7 @@ class ExecTool(Tool):
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                cwd=self.workspace,
             )
             out, err = await asyncio.wait_for(proc.communicate(), timeout=30)
             result = out.decode(errors="replace")

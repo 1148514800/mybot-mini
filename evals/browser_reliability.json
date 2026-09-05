@@ -8,13 +8,13 @@
     "expected_tool_call_counts": {
       "browser_open": 1,
       "browser_click": 2,
-      "browser_snapshot": 1,
+      "browser_snapshot": 2,
       "browser_verify": 1
     },
     "expected_tool_execution_counts": {
       "browser_open": 1,
       "browser_click": 2,
-      "browser_snapshot": 1,
+      "browser_snapshot": 2,
       "browser_verify": 1
     },
     "expected_trace_metadata": {
@@ -27,6 +27,7 @@
       "category": "browser_reliability",
       "fake_tools": [
         {"name": "browser_open", "arguments": {}, "output": "opened"},
+        {"name": "browser_snapshot", "arguments": {}, "output": "button Save [ref=e12]"},
         {
           "name": "browser_click",
           "arguments": {"target": "e12"},
@@ -40,6 +41,7 @@
       ],
       "fake_tool_batches": [
         [{"name": "browser_open", "arguments": {}, "output": "opened"}],
+        [{"name": "browser_snapshot", "arguments": {}}],
         [{"name": "browser_click", "arguments": {"target": "e12"}}],
         [{"name": "browser_click", "arguments": {"target": "e44"}}],
         [{"name": "browser_verify", "arguments": {"text": "Saved"}}]

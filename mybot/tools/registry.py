@@ -71,7 +71,7 @@ def build_default_tool_registry(
 ) -> ToolRegistry:
     registry = ToolRegistry()
     browser_sessions = BrowserSessionManager()
-    registry.register(ExecTool())
+    registry.register(ExecTool(workspace))
     registry.register(RequestUserInputTool())
     registry.register(BrowserAttachTool(browser_sessions))
     registry.register(BrowserOpenTool(workspace, browser_sessions))

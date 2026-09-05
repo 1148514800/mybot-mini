@@ -11,6 +11,7 @@ from openai import APITimeoutError, AsyncOpenAI
 
 from ..core.config import GatewayConfig
 from ..guardrails import (
+    DEFAULT_APPROVAL_TTL_SECONDS,
     ApprovalIntent,
     ApprovalManager,
     ClarificationManager,
@@ -26,7 +27,15 @@ from ..storage.session import SessionManager
 from ..tools import ToolRegistry, ToolResult
 from ..tools.browser.connection import LOCAL_BROWSER_SESSION
 from ..tools.browser.navigation import MANAGED_BROWSER_SESSION
-from ..tracing import AgentRunTrace, AgentTracer, redact_mapping
+from ..tracing import (
+    REDACTED,
+    AgentRunTrace,
+    AgentTracer,
+    redact_mapping,
+    redact_text,
+    redact_tool_arguments,
+    redact_tool_text,
+)
 from ..tools.browser.errors import BrowserErrorType
 from .browser_reliability import (
     BrowserRecoveryPolicy,
@@ -80,8 +89,16 @@ class AgentLoop:
         self.context = context
         self.sessions = sessions
         self.tracer = tracer or AgentTracer()
-        self.tool_policy = tool_policy or ToolPolicy()
-        self.approvals = approvals or ApprovalManager()
+        self.tool_policy = tool_policy or ToolPolicy(
+            getattr(config, "workspace", None)
+        )
+        self.approvals = approvals or ApprovalManager(
+            getattr(
+                config,
+                "approval_ttl_seconds",
+                DEFAULT_APPROVAL_TTL_SECONDS,
+            )
+        )
         self.clarifications = clarifications or ClarificationManager()
         self.recent_tasks = recent_tasks or RecentTaskManager()
         self.browser_recovery_policy = (
@@ -90,7 +107,7 @@ class AgentLoop:
 
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
-            print(f"[trace] {message}")
+            print(f"[trace] {redact_text(message)}")
 
     def _is_rate_limit_error(self, exc: Exception) -> bool:
         text = f"{type(exc).__name__}: {exc}"
@@ -298,12 +315,25 @@ class AgentLoop:
         name: str,
         arguments: dict,
     ) -> ToolResult:
+        safe_arguments = redact_tool_arguments(name, arguments)
         self._trace(
             f"tool call name={name} args="
-            f"{json.dumps(arguments, ensure_ascii=False)}"
+            f"{json.dumps(safe_arguments, ensure_ascii=False)}"
         )
         result = await self.tools.execute(name, arguments)
-        preview = result.to_text()[:300].replace("\n", " ")
+        safe_result = {
+            "success": result.success,
+            "output": redact_tool_text(name, result.output, arguments),
+            "error": (
+                redact_tool_text(name, result.error, arguments)
+                if result.error
+                else None
+            ),
+            "metadata": redact_mapping(result.metadata),
+        }
+        preview = json.dumps(safe_result, ensure_ascii=False)[
+            :300
+        ].replace("\n", " ")
         self._trace(f"tool result name={name} result={preview}")
         return result
 
@@ -595,15 +625,35 @@ class AgentLoop:
         message: InboundMessage,
     ) -> tuple[str, AgentRunTrace]:
         """Handle one bus message, including pending approval intent."""
+        intent = classify_approval_intent(message.content)
+        expired = self.approvals.expire(message.session_key)
         pending = self.approvals.get(message.session_key)
         pending_clarification = self.clarifications.get(message.session_key)
-        intent = classify_approval_intent(message.content)
         cancelled_approval_id: str | None = None
 
-        if pending and intent == ApprovalIntent.APPROVE:
+        if expired and intent in {
+            ApprovalIntent.APPROVE,
+            ApprovalIntent.REJECT,
+        }:
+            reply, trace = self._expired_approval_trace(
+                expired,
+                message.content,
+            )
+        elif (
+            pending
+            and intent in {ApprovalIntent.APPROVE, ApprovalIntent.REJECT}
+            and pending.requester_sender_id is not None
+            and pending.requester_sender_id != message.sender_id
+        ):
+            reply, trace = self._approval_authorization_mismatch_trace(
+                pending,
+                message.content,
+            )
+        elif pending and intent == ApprovalIntent.APPROVE:
             approved = self.approvals.approve(
                 message.session_key,
                 pending.approval_id,
+                message.sender_id,
             )
             assert approved is not None
             reply, trace = await self._resume_approved(
@@ -614,6 +664,7 @@ class AgentLoop:
             rejected = self.approvals.reject(
                 message.session_key,
                 pending.approval_id,
+                message.sender_id,
             )
             assert rejected is not None
             reply, trace = self._cancelled_trace(rejected, message.content)
@@ -636,12 +687,17 @@ class AgentLoop:
             reply, trace = await self._resume_recent_task(
                 recent,
                 message.content,
+                requester_sender_id=message.sender_id,
             )
         else:
-            if pending:
+            if pending and (
+                pending.requester_sender_id is None
+                or pending.requester_sender_id == message.sender_id
+            ):
                 rejected = self.approvals.reject(
                     message.session_key,
                     pending.approval_id,
+                    message.sender_id,
                 )
                 cancelled_approval_id = (
                     rejected.approval_id if rejected else None
@@ -655,6 +711,7 @@ class AgentLoop:
                 messages,
                 browser_mode,
                 session_key=message.session_key,
+                requester_sender_id=message.sender_id,
                 metadata={
                     "cancelled_approval_id": cancelled_approval_id,
                 }
@@ -693,6 +750,7 @@ class AgentLoop:
         loaded_skills: set[str] | None = None,
         browser_initialized: bool = False,
         browser_state: BrowserTaskState | dict | None = None,
+        requester_sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
         """Run the existing ReAct loop and return its completed in-memory trace."""
         supplied_metadata = dict(metadata or {})
@@ -735,6 +793,7 @@ class AgentLoop:
                 loaded_skills=task_loaded_skills,
                 browser_initialized=browser_initialized,
                 browser_state=task_browser_state,
+                requester_sender_id=requester_sender_id,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -796,6 +855,7 @@ class AgentLoop:
         self,
         recent: RecentBrowserTask,
         user_input: str,
+        requester_sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
         messages = copy.deepcopy(recent.messages)
         messages.append(
@@ -826,12 +886,14 @@ class AgentLoop:
             loaded_skills=set(recent.loaded_skills),
             browser_initialized=recent.browser_initialized,
             browser_state=recent.browser_state,
+            requester_sender_id=requester_sender_id,
         )
 
     async def resume_recent_task(
         self,
         session_key: str,
         user_input: str,
+        requester_sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
         """Resume the most recent browser task without implying approval."""
         recent = self.recent_tasks.get(session_key)
@@ -848,7 +910,11 @@ class AgentLoop:
                 final_output=output,
                 status="cancelled",
             )
-        return await self._resume_recent_task(recent, user_input)
+        return await self._resume_recent_task(
+            recent,
+            user_input,
+            requester_sender_id=requester_sender_id,
+        )
 
     def _cancelled_trace(
         self,
@@ -873,14 +939,60 @@ class AgentLoop:
             status="cancelled",
         )
 
+    def _approval_authorization_mismatch_trace(
+        self,
+        pending: PendingApproval,
+        user_input: str,
+    ) -> tuple[str, AgentRunTrace]:
+        self.tracer.start_run(
+            user_input,
+            metadata={
+                "browser_mode": pending.browser_mode,
+                "approval_id": pending.approval_id,
+                "approval_status": "authorization_mismatch",
+                "resumed_from_run_id": pending.origin_run_id,
+                "task_id": pending.task_id or uuid.uuid4().hex,
+            },
+        )
+        output = "该待确认操作只能由原操作发起人确认。"
+        return output, self.tracer.finish_run(
+            final_output=output,
+            status="cancelled",
+        )
+
+    def _expired_approval_trace(
+        self,
+        pending: PendingApproval,
+        user_input: str,
+    ) -> tuple[str, AgentRunTrace]:
+        self.tracer.start_run(
+            user_input,
+            metadata={
+                "browser_mode": pending.browser_mode,
+                "approval_id": pending.approval_id,
+                "approval_status": "expired",
+                "resumed_from_run_id": pending.origin_run_id,
+                "task_id": pending.task_id or uuid.uuid4().hex,
+            },
+        )
+        output = "该确认请求已经过期，请重新发起操作。"
+        return output, self.tracer.finish_run(
+            final_output=output,
+            status="cancelled",
+        )
+
     async def resume_pending(
         self,
         session_key: str,
         user_input: str,
+        sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
         """Deterministically approve, reject, or replace one pending action."""
-        pending = self.approvals.get(session_key)
         intent = classify_approval_intent(user_input)
+        expired = self.approvals.expire(session_key)
+        if expired is not None:
+            return self._expired_approval_trace(expired, user_input)
+        pending = self.approvals.get(session_key)
         if pending is None:
             self.tracer.start_run(
                 user_input,
@@ -892,11 +1004,27 @@ class AgentLoop:
                 status="cancelled",
             )
         if intent == ApprovalIntent.APPROVE:
-            approved = self.approvals.approve(session_key, pending.approval_id)
-            assert approved is not None
+            approved = self.approvals.approve(
+                session_key,
+                pending.approval_id,
+                sender_id,
+            )
+            if approved is None:
+                return self._approval_authorization_mismatch_trace(
+                    pending,
+                    user_input,
+                )
             return await self._resume_approved(approved, user_input)
-        rejected = self.approvals.reject(session_key, pending.approval_id)
-        assert rejected is not None
+        rejected = self.approvals.reject(
+            session_key,
+            pending.approval_id,
+            sender_id,
+        )
+        if rejected is None:
+            return self._approval_authorization_mismatch_trace(
+                pending,
+                user_input,
+            )
         return self._cancelled_trace(rejected, user_input)
 
     async def resume_clarification(
@@ -991,6 +1119,7 @@ class AgentLoop:
                 loaded_skills=loaded_skills,
                 browser_initialized=pending.browser_initialized,
                 browser_state=browser_state,
+                requester_sender_id=pending.requester_sender_id,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -1015,12 +1144,49 @@ class AgentLoop:
         return output, trace
 
     @staticmethod
-    def _approval_prompt(pending: PendingApproval) -> str:
+    def _approval_action_preview(pending: PendingApproval) -> str:
+        arguments = redact_tool_arguments(
+            pending.tool_name,
+            pending.arguments,
+        )
+        if pending.tool_name == "exec":
+            command = redact_text(str(arguments.get("command", "")))
+            return f"Arguments:\n  command: {command}"
+        if pending.tool_name == "browser_click":
+            lines = [f"Target: {arguments.get('target', '')}"]
+            target_text = pending.policy_metadata.get("target_text")
+            current_url = pending.policy_metadata.get("current_url")
+            if target_text:
+                lines.append(f"Target text: {redact_text(str(target_text))}")
+            if current_url:
+                lines.append(f"Current URL: {redact_text(str(current_url))}")
+            return "\n".join(lines)
+        if pending.tool_name == "browser_type":
+            return "\n".join(
+                [
+                    f"Target: {arguments.get('target', '')}",
+                    f"Submit: {bool(arguments.get('submit', False))}",
+                    f"Text: {REDACTED}",
+                ]
+            )
+        if pending.tool_name == "write_file":
+            return f"Path: {arguments.get('path', '')}"
+        serialized = json.dumps(
+            arguments,
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        return f"Arguments:\n{serialized}"
+
+    @classmethod
+    def _approval_prompt(cls, pending: PendingApproval) -> str:
         return (
             "准备执行需要确认的操作：\n\n"
             f"Tool: {pending.tool_name}\n"
             f"Risk: {pending.risk_level.value}\n"
             f"Reason: {pending.reason}\n"
+            f"{cls._approval_action_preview(pending)}\n"
             f"Approval ID: {pending.approval_id}\n\n"
             "是否继续？回复“确认”继续，回复“取消”放弃。"
         )
@@ -1041,6 +1207,7 @@ class AgentLoop:
         loaded_skills: set[str],
         browser_initialized: bool,
         browser_state: BrowserTaskState,
+        requester_sender_id: str | None,
     ) -> PendingApproval:
         current_run = self.tracer.get_current_run()
         effective_session_key = session_key or (
@@ -1051,6 +1218,7 @@ class AgentLoop:
             tool_name=name,
             arguments=arguments,
             policy=policy,
+            requester_sender_id=requester_sender_id,
             origin_run_id=current_run.run_id if current_run else None,
             browser_mode=browser_mode,
             model_tool_call_id=tool_call.id,
@@ -1079,6 +1247,7 @@ class AgentLoop:
         loaded_skills: set[str],
         browser_initialized: bool,
         browser_state: BrowserTaskState,
+        requester_sender_id: str | None,
     ) -> PendingClarification:
         current_run = self.tracer.get_current_run()
         effective_session_key = session_key or (
@@ -1087,6 +1256,7 @@ class AgentLoop:
         return self.clarifications.create(
             session_key=effective_session_key,
             question=question,
+            requester_sender_id=requester_sender_id,
             origin_run_id=current_run.run_id if current_run else None,
             task_id=task_id,
             browser_mode=browser_mode,
@@ -1243,6 +1413,7 @@ class AgentLoop:
                             loaded_skills=loaded_skills,
                             browser_initialized=browser_initialized,
                             browser_state=browser_state,
+                            requester_sender_id=pending.requester_sender_id,
                         )
                         next_result.metadata.update(
                             {
@@ -1282,6 +1453,7 @@ class AgentLoop:
                         loaded_skills=loaded_skills,
                         browser_initialized=browser_initialized,
                         browser_state=browser_state,
+                        requester_sender_id=pending.requester_sender_id,
                     )
                     waiting = ToolResult(
                         success=False,
@@ -1353,6 +1525,7 @@ class AgentLoop:
                 loaded_skills=loaded_skills,
                 browser_initialized=browser_initialized,
                 browser_state=browser_state,
+                requester_sender_id=pending.requester_sender_id,
             )
         except BaseException as exc:
             error = f"{type(exc).__name__}: {exc}"
@@ -1397,6 +1570,7 @@ class AgentLoop:
         loaded_skills: set[str] | None = None,
         browser_initialized: bool = False,
         browser_state: BrowserTaskState | None = None,
+        requester_sender_id: str | None = None,
     ) -> tuple[str, str, str | None]:
         current_run = self.tracer.get_current_run()
         effective_task_id = (
@@ -1696,7 +1870,7 @@ class AgentLoop:
                         ),
                     )
                     self._trace(
-                        f"blocked repeated tool call signature={signature[:200]}"
+                        f"blocked repeated tool call name={name}"
                     )
                 elif name == "request_user_input":
                     assert arguments is not None
@@ -1724,6 +1898,7 @@ class AgentLoop:
                             loaded_skills=task_loaded_skills,
                             browser_initialized=browser_initialized,
                             browser_state=task_browser_state,
+                            requester_sender_id=requester_sender_id,
                         )
                         result.metadata.update(
                             {
@@ -1787,6 +1962,7 @@ class AgentLoop:
                         loaded_skills=task_loaded_skills,
                         browser_initialized=browser_initialized,
                         browser_state=task_browser_state,
+                        requester_sender_id=requester_sender_id,
                     )
                     waiting = ToolResult(
                         success=False,
