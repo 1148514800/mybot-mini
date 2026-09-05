@@ -41,6 +41,10 @@ class ToolRegistry:
         tool = self._tools.get(name)
         return dict(tool.runtime_metadata) if tool else {}
 
+    def get_parameters(self, name: str) -> dict:
+        tool = self._tools.get(name)
+        return dict(tool.parameters) if tool else {}
+
     def get_definitions(self) -> list[dict]:
         return [tool.to_schema() for tool in self._tools.values()]
 

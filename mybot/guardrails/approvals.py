@@ -106,11 +106,15 @@ class ApprovalManager:
         pending = self._pending.get(session_key)
         if pending is None:
             return None
-        if self._now() < datetime.fromisoformat(pending.expires_at):
+        if not self.is_expired(pending):
             return None
         self._pending.pop(session_key, None)
         pending.status = "expired"
         return pending
+
+    def is_expired(self, pending: PendingApproval) -> bool:
+        """Validate TTL even after an approval has been consumed from storage."""
+        return self._now() >= datetime.fromisoformat(pending.expires_at)
 
     def approve(
         self,

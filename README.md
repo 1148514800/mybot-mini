@@ -279,7 +279,7 @@ config/
   config.example.json
 mybot/
   main.py                 # 程序入口
-  agent/                  # Agent 循环和上下文构建
+  agent/                  # Agent orchestration、统一 Tool 执行和显式任务状态
   guardrails/             # Tool Policy、审批和普通澄清的内存状态
   mcp/                    # MCP 配置、官方 Client 生命周期、命名和 Tool Adapter
   tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
@@ -303,6 +303,42 @@ evals/                    # 离线 EvalCase JSON 数据
 `memory_delete`。`instructions/` 以及 `AGENTS.md`、`SOUL.md`、`USER.md`、`TOOLS.md`
 等指令文件仍需要明确确认。目录删除会丢失对应状态，请先备份。
 
+## Agent Runtime 执行架构
+
+所有 Agent-visible Tool Call，包括正常 ReAct、Approval Resume 后的冻结动作以及
+同批次剩余调用，现在都进入同一个执行边界：
+
+~~~text
+AgentLoop
+    ↓
+ToolExecutionPipeline
+    ├── Tool lookup
+    ├── Arguments normalization / schema validation
+    ├── ToolPolicy
+    ├── Approval authorization / runtime preconditions
+    ├── ToolRegistry → Tool
+    ├── ToolResult / BrowserResult normalization
+    └── Trace + browser task state update
+~~~
+
+正常调用在 Policy ALLOW 后执行；REQUIRE_CONFIRMATION 只冻结动作并暂停，不会提前
+执行。用户确认后，Pipeline 执行 PendingApproval 中原样保存的 Tool 和 Arguments，
+不会重新请求模型生成调用；Tool lookup、参数校验、BLOCK 规则、Runtime-managed path
+保护、Approval TTL、sender/task 绑定和当前能够验证的 browser snapshot/URL
+precondition 仍会重新检查。未知 Tool、非法 JSON、缺少必填参数或参数类型错误统一转换为
+失败的 ToolResult，不会使 AgentLoop 崩溃。
+
+AgentTaskState 显式表示 new、running、waiting_approval、
+waiting_clarification、waiting_verification、completed、failed、
+max_steps 和 cancelled。Trace 的 status 是本次 Runtime Run 状态，
+task_status 是跨 pause/resume 的用户任务状态；因此允许 Runtime 正常结束但任务仍为
+waiting_verification。Task State 只保存小型状态和关联 ID，不保存 Tool Arguments、
+浏览器输入或 secret。
+
+这些 Task State、Approval、Clarification 和 Recent Browser Task 目前仍然只是进程内
+状态。它们具备明确的数据模型，但不是持久化或 restart-safe 存储；Restart Recovery
+仍未实现。
+
 ## Tracing 与离线 Evals
 
 每次 Agent 请求都会在内存中生成独立 Trace，记录 Run、Agent Step、LLM 调用和
@@ -313,9 +349,11 @@ cookie、secret 等字段会自动脱敏；`browser_type.text` 也按语义隐�
 Trace summary 不会进入 LLM 上下文。
 
 每个新用户目标会生成一个 `task_id`。如果任务因 Approval 或 Clarification 分成多个
-Run，每个 Run 仍各自保存一个 JSON，但 `metadata.task_id` 保持相同，并通过
-`resumed_from_run_id` 指向前一个 Run。明显针对最近浏览器任务的纠正也沿用同一
-`task_id`，并在 Trace 中写入 `continuation=true`。
+Run，每个 Run 仍各自保存一个 JSON，但顶层 `task_id` 和兼容字段
+`metadata.task_id` 保持相同，并通过 `resumed_from_run_id` 指向前一个 Run。顶层
+`task_status` 与 Run 自身的 `status` 分开记录。明显针对最近浏览器任务的纠正也沿用
+同一 `task_id`，并在 Trace 中写入 `continuation=true`。旧 Trace 没有新增字段时仍可
+读取和 Replay。
 
 默认 `tracing.trace_dir` 为 `null`，不会写入磁盘。需要在 Run 完成后保存 JSON 时，
 可在本机 `config/config.json` 中设置：
@@ -341,17 +379,20 @@ timeline，不会再次调用模型或真实 Tool。
 
 ## Guardrails 与 Human-in-the-loop
 
-每个模型提出的 Tool Call 都会先完成参数解析和浏览器 session 归一化，再进入
-`ToolPolicy`。Policy 在 `ToolRegistry.execute()` 前给出独立的风险等级和执行决策：
+每个模型提出的 Tool Call 都会由 `ToolExecutionPipeline` 完成 Tool lookup、参数解析、
+schema 校验和浏览器 session 归一化，再进入 `ToolPolicy`。Policy 在
+`ToolRegistry.execute()` 前给出独立的风险等级和执行决策：
 
 ```text
-Proposed Tool Call
+Proposed / Frozen Approved Tool Call
+        ↓
+ToolExecutionPipeline
         ↓
     ToolPolicy
         ↓
 ALLOW / REQUIRE_CONFIRMATION / BLOCK
         ↓
-   ToolRegistry（仅 ALLOW 或已批准的 exact action）
+   ToolRegistry（仅 ALLOW 或有效 Approval 授权的 exact action）
 ```
 
 - 自动执行：文件读取、页面读取与导航、能够在最新快照中精确识别且无危险语义的普通

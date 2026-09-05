@@ -283,6 +283,8 @@ class AgentLoopTests(unittest.TestCase):
 
         self.assertEqual(output, "done")
         self.assertEqual(trace.status, "success")
+        self.assertEqual(trace.task_status, "completed")
+        self.assertEqual(trace.task_id, trace.metadata["task_id"])
         self.assertEqual(len(trace.steps), 2)
         self.assertEqual(len(trace.llm_calls), 2)
         self.assertEqual(len(trace.tool_calls), 1)
@@ -301,6 +303,7 @@ class AgentLoopTests(unittest.TestCase):
 
         self.assertIn("1 步执行上限", output)
         self.assertEqual(trace.status, "max_steps")
+        self.assertEqual(trace.task_status, "max_steps")
 
     def test_unexpected_exception_finishes_run_and_open_trace_items(self) -> None:
         malformed_response = SimpleNamespace(choices=[])
@@ -316,6 +319,7 @@ class AgentLoopTests(unittest.TestCase):
 
         trace = loop.tracer.get_current_run()
         self.assertEqual(trace.status, "failed")
+        self.assertEqual(trace.task_status, "failed")
         self.assertEqual(trace.steps[0].status, "failed")
         self.assertIsNotNone(trace.llm_calls[0].finished_at)
 

@@ -57,6 +57,8 @@ class TracingModelTests(unittest.TestCase):
         self.assertEqual(summary["browser_calls"], 1)
         self.assertEqual(summary["retries"], 1)
         self.assertEqual(summary["errors"], 1)
+        self.assertEqual(summary["runtime_status"], "success")
+        self.assertIsNone(summary["task_status"])
         self.assertIn("Duration: 1.00s", trace.summary_text())
 
 

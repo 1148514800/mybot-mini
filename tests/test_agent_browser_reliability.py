@@ -28,6 +28,26 @@ def case(fake_tools, *, batches=None, output="done", max_steps=None):
 
 
 class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
+    async def test_incomplete_browser_run_keeps_task_waiting_verification(self):
+        click = {
+            "name": "browser_click",
+            "arguments": {"target": "#submit"},
+            "output": "clicked",
+        }
+        agent = build_fake_agent(
+            case([click], output="无法完成验证，任务尚未完成")
+        )
+
+        output, trace = await agent.run_traced(
+            "点击提交",
+            [{"role": "user", "content": "点击提交"}],
+            session_key="cli:a",
+        )
+
+        self.assertIn("尚未完成", output)
+        self.assertEqual(trace.status, "success")
+        self.assertEqual(trace.task_status, "waiting_verification")
+
     async def test_failed_final_click_cannot_report_success(self):
         click = {
             "name": "browser_click",
@@ -48,6 +68,7 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(trace.status, "failed")
+        self.assertEqual(trace.task_status, "failed")
         self.assertNotIn("已完成", output)
         self.assertIn("尚未完成", output)
         self.assertEqual(
@@ -77,6 +98,7 @@ class AgentBrowserReliabilityTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(trace.status, "success")
+        self.assertEqual(trace.task_status, "completed")
         self.assertEqual(output, "任务已完成")
         self.assertTrue(trace.metadata["completion_verified"])
         self.assertEqual(trace.metadata["browser_completion_state"], "verified")

@@ -45,6 +45,7 @@ class AgentConfirmationTests(unittest.IsolatedAsyncioTestCase):
             session_key="cli:a",
         )
         self.assertEqual(first_trace.status, "awaiting_confirmation")
+        self.assertEqual(first_trace.task_status, "waiting_approval")
         self.assertIn("回复“确认”", output)
         self.assertEqual(agent.tools.execution_count, 0)
 
@@ -55,6 +56,7 @@ class AgentConfirmationTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(final, "task complete")
         self.assertEqual(resumed_trace.status, "success")
+        self.assertEqual(resumed_trace.task_status, "completed")
         self.assertEqual(agent.tools.execution_count, 1)
         self.assertEqual(agent.tools.executed_calls[0][1], exact_arguments)
         resumed_call = resumed_trace.tool_calls[0]
@@ -146,6 +148,7 @@ class AgentConfirmationTests(unittest.IsolatedAsyncioTestCase):
                 denied_trace.metadata["approval_status"],
                 "authorization_mismatch",
             )
+            self.assertEqual(denied_trace.task_status, "waiting_approval")
             self.assertIs(agent.approvals.get("feishu:group-1"), pending)
             self.assertEqual(agent.tools.execution_count, 0)
 
@@ -183,6 +186,7 @@ class AgentConfirmationTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("已经过期", output)
         self.assertEqual(trace.metadata["approval_status"], "expired")
+        self.assertEqual(trace.task_status, "failed")
         self.assertEqual(agent.tools.execution_count, 0)
         self.assertIsNone(agent.approvals.get("cli:a"))
 

@@ -46,6 +46,16 @@ class TraceSerializerTests(unittest.TestCase):
             self.assertTrue(path.is_file())
             self.assertEqual(load_trace(path).final_output, "done")
 
+    def test_legacy_trace_without_task_fields_still_loads(self) -> None:
+        data = trace_to_dict(self.completed_trace())
+        data.pop("task_id")
+        data.pop("task_status")
+
+        restored = trace_from_dict(data)
+
+        self.assertIsNone(restored.task_id)
+        self.assertIsNone(restored.task_status)
+
 
 if __name__ == "__main__":
     unittest.main()

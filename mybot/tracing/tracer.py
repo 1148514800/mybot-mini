@@ -116,6 +116,7 @@ class AgentTracer:
             run_id=uuid.uuid4().hex,
             started_at=_now(),
             user_input=redact_text(user_input),
+            task_id=str((metadata or {}).get("task_id") or "") or None,
             metadata=redact_mapping(metadata or {}),
         )
         self._current_run = run
@@ -129,6 +130,7 @@ class AgentTracer:
         final_output: str = "",
         status: str = "success",
         error: str | None = None,
+        task_status: str | None = None,
     ) -> AgentRunTrace:
         run = self._require_run()
         if status not in RUN_STATUSES - {"running"}:
@@ -145,6 +147,7 @@ class AgentTracer:
         run.finished_at = _now()
         run.duration_ms = self._finish_timer(run.run_id)
         run.status = status
+        run.task_status = task_status
         run.final_output = redact_text(final_output)
         run.error = redact_text(error) if error else None
         if self.trace_dir:

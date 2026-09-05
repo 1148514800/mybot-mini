@@ -66,6 +66,10 @@ class AgentClarificationTests(unittest.IsolatedAsyncioTestCase):
             )
             pending = agent.clarifications.get("cli:a")
             self.assertEqual(first_trace.status, "awaiting_clarification")
+            self.assertEqual(
+                first_trace.task_status,
+                "waiting_clarification",
+            )
             self.assertIn("食物爱西昂", question)
             self.assertIsNotNone(pending)
             self.assertTrue(pending.browser_initialized)
@@ -81,6 +85,7 @@ class AgentClarificationTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(output, "original task complete")
         self.assertEqual(resumed_trace.status, "success")
+        self.assertEqual(resumed_trace.task_status, "completed")
         self.assertNotEqual(first_trace.run_id, resumed_trace.run_id)
         self.assertEqual(
             first_trace.metadata["task_id"],
