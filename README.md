@@ -13,6 +13,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 - 确定性的 Tool Policy、风险分级和 Human-in-the-loop 审批
 - 跨 CLI / 飞书消息的 Approval 与普通 Clarification Pause / Resume
 - 版本化 SQLite Active Task Checkpoint 与保守的进程重启恢复
+- 持久化继续状态采用删除成功后再执行的 fail-closed 消费语义，并校验澄清回答者与最近任务 TTL
 - 浏览器错误分类、有限恢复、任务预算、完成证据与最近任务续接
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills

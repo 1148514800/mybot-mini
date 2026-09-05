@@ -109,7 +109,11 @@ class AgentLoop:
             )
         )
         self.clarifications = clarifications or ClarificationManager()
-        self.recent_tasks = recent_tasks or RecentTaskManager()
+        self.recent_tasks = recent_tasks or RecentTaskManager(
+            clock=(getattr(checkpoint_store, "_clock", None) if checkpoint_store else None),
+            on_expire=(checkpoint_store.clear_recent if checkpoint_store else None),
+            ttl_seconds=(getattr(checkpoint_store, "recent_task_ttl_seconds", 86_400) if checkpoint_store else 86_400),
+        )
         self.browser_recovery_policy = (
             browser_recovery_policy or BrowserRecoveryPolicy()
         )
@@ -245,6 +249,15 @@ class AgentLoop:
     def _clear_active_checkpoint(self, session_key: str) -> None:
         if self.checkpoint_store is not None:
             self.checkpoint_store.clear_active(session_key)
+
+    def _consume_durable_approval(self, session_key: str) -> bool:
+        store = self.checkpoint_store
+        if store is None or not store.enabled:
+            return True
+        return store.consume_active(session_key)
+
+    def _consume_durable_active(self, session_key: str) -> bool:
+        return self._consume_durable_approval(session_key)
 
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
@@ -632,6 +645,11 @@ class AgentLoop:
                 message.content,
             )
         elif pending and intent == ApprovalIntent.APPROVE:
+            if not self._consume_durable_approval(message.session_key):
+                reply, trace = self._checkpoint_consume_failed_trace(
+                    pending, message.content
+                )
+                return self._save_message_result(message, reply, trace)
             approved = self.approvals.approve(
                 message.session_key,
                 pending.approval_id,
@@ -654,10 +672,29 @@ class AgentLoop:
             self._clear_active_checkpoint(message.session_key)
             reply, trace = self._cancelled_trace(rejected, message.content)
         elif pending_clarification is not None:
+            if (
+                pending_clarification.requester_sender_id is not None
+                and pending_clarification.requester_sender_id != message.sender_id
+            ):
+                reply, trace = self._clarification_authorization_mismatch_trace(
+                    pending_clarification, message.content
+                )
+                return self._save_message_result(message, reply, trace)
+            if not self._consume_durable_active(message.session_key):
+                reply, trace = self._checkpoint_consume_failed_trace(
+                    pending_clarification, message.content, kind="clarification"
+                )
+                return self._save_message_result(message, reply, trace)
             resolved = self.clarifications.resolve(
                 message.session_key,
                 pending_clarification.clarification_id,
+                message.sender_id,
             )
+            if resolved is None:
+                reply, trace = self._clarification_authorization_mismatch_trace(
+                    pending_clarification, message.content
+                )
+                return self._save_message_result(message, reply, trace)
             assert resolved is not None
             self._clear_active_checkpoint(message.session_key)
             reply, trace = await self._resume_clarification(
@@ -733,6 +770,15 @@ class AgentLoop:
                 "timestamp": datetime.now().isoformat(),
             }
         )
+        self.sessions.save(session)
+        return reply, trace
+
+    def _save_message_result(self, message, reply, trace):
+        session = self.sessions.get_or_create(message.session_key)
+        session.messages.extend([
+            {"role": "user", "content": message.content, "timestamp": datetime.now().isoformat()},
+            {"role": "assistant", "content": reply, "timestamp": datetime.now().isoformat()},
+        ])
         self.sessions.save(session)
         return reply, trace
 
@@ -1017,6 +1063,27 @@ class AgentLoop:
             runtime_status="cancelled",
         )
 
+    def _checkpoint_consume_failed_trace(self, pending, user_input, *, kind="approval"):
+        task_id = pending.task_id or uuid.uuid4().hex
+        task_state = self._task_state(task_id, pending.session_key, pending.requester_sender_id)
+        if task_state.status == AgentTaskStatus.NEW:
+            task_state.transition(AgentTaskStatus.RUNNING)
+            if kind == "approval":
+                task_state.transition(AgentTaskStatus.WAITING_APPROVAL, reason="approval_required", approval_id=pending.approval_id)
+            else:
+                task_state.transition(AgentTaskStatus.WAITING_CLARIFICATION, reason="clarification_required", clarification_id=pending.clarification_id)
+        metadata = {"approval_status" if kind == "approval" else "clarification_status": "checkpoint_consume_failed", "task_id": task_id}
+        self.tracer.start_run(user_input, metadata=metadata)
+        output = "无法安全消费已持久化的继续请求，操作未恢复，请稍后重试。"
+        return output, self._finish_run_for_task(task_state, final_output=output, runtime_status="failed", error="checkpoint consume failed")
+
+    def _clarification_authorization_mismatch_trace(self, pending, user_input):
+        task_id = pending.task_id or uuid.uuid4().hex
+        task_state = self._task_state(task_id, pending.session_key, pending.requester_sender_id)
+        self.tracer.start_run(user_input, metadata={"clarification_id": pending.clarification_id, "clarification_status": "authorization_mismatch", "task_id": task_id})
+        output = "该澄清问题只能由原操作发起人回答。"
+        return output, self._finish_run_for_task(task_state, final_output=output, runtime_status="cancelled")
+
     def _expired_approval_trace(
         self,
         pending: PendingApproval,
@@ -1074,6 +1141,8 @@ class AgentLoop:
                 status="cancelled",
             )
         if intent == ApprovalIntent.APPROVE:
+            if not self._consume_durable_approval(session_key):
+                return self._checkpoint_consume_failed_trace(pending, user_input)
             approved = self.approvals.approve(
                 session_key,
                 pending.approval_id,
@@ -1107,6 +1176,7 @@ class AgentLoop:
         self,
         session_key: str,
         user_input: str,
+        sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
         """Resume one ordinary question without rebuilding task context."""
         pending = self.clarifications.get(session_key)
@@ -1123,11 +1193,23 @@ class AgentLoop:
                 final_output=output,
                 status="cancelled",
             )
+        if (
+            pending.requester_sender_id is not None
+            and sender_id is not None
+            and pending.requester_sender_id != sender_id
+        ):
+            return self._clarification_authorization_mismatch_trace(pending, user_input)
+        if not self._consume_durable_active(session_key):
+            return self._checkpoint_consume_failed_trace(
+                pending, user_input, kind="clarification"
+            )
         resolved = self.clarifications.resolve(
             session_key,
             pending.clarification_id,
+            sender_id,
         )
-        assert resolved is not None
+        if resolved is None:
+            return self._clarification_authorization_mismatch_trace(pending, user_input)
         self._clear_active_checkpoint(session_key)
         return await self._resume_clarification(resolved, user_input)
 

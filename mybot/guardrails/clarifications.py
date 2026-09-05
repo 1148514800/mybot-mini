@@ -90,15 +90,17 @@ class ClarificationManager:
         self,
         session_key: str,
         clarification_id: str | None = None,
+        sender_id: str | None = None,
     ) -> PendingClarification | None:
-        return self._consume(session_key, clarification_id, "answered")
+        return self._consume(session_key, clarification_id, sender_id, "answered")
 
     def cancel(
         self,
         session_key: str,
         clarification_id: str | None = None,
+        sender_id: str | None = None,
     ) -> PendingClarification | None:
-        return self._consume(session_key, clarification_id, "cancelled")
+        return self._consume(session_key, clarification_id, sender_id, "cancelled")
 
     def clear(self, session_key: str) -> PendingClarification | None:
         return self._pending.pop(session_key, None)
@@ -107,6 +109,7 @@ class ClarificationManager:
         self,
         session_key: str,
         clarification_id: str | None,
+        sender_id: str | None,
         status: str,
     ) -> PendingClarification | None:
         pending = self._pending.get(session_key)
@@ -115,6 +118,12 @@ class ClarificationManager:
         if (
             clarification_id is not None
             and pending.clarification_id != clarification_id
+        ):
+            return None
+        if (
+            pending.requester_sender_id is not None
+            and sender_id is not None
+            and pending.requester_sender_id != sender_id
         ):
             return None
         self._pending.pop(session_key, None)

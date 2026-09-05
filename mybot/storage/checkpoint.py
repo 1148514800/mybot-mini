@@ -24,6 +24,14 @@ DEFAULT_RECENT_TASK_TTL_SECONDS = 86_400
 CHECKPOINT_DIRECTORY = "checkpoints"
 CHECKPOINT_FILENAME = "active_tasks.sqlite3"
 
+
+class _CheckpointConnection(sqlite3.Connection):
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
 _ACTIVE_KINDS = frozenset({"approval", "clarification", "verification"})
 _ALWAYS_NON_RESUMABLE_TOOLS = frozenset(
     {"browser_type", "memory_write", "write_file"}
@@ -219,11 +227,26 @@ class ActiveTaskCheckpointStore:
                 self.clear_recent(session_key)
         return recovered
 
-    def clear_active(self, session_key: str) -> None:
-        self._delete("active_tasks", session_key)
+    def clear_active(self, session_key: str) -> bool:
+        return self._delete("active_tasks", session_key)
 
-    def clear_recent(self, session_key: str) -> None:
-        self._delete("recent_browser_tasks", session_key)
+    def consume_active(self, session_key: str) -> bool:
+        """Delete exactly one durable active row before a side effect."""
+        if not self.available:
+            return not self.enabled
+        try:
+            with self._connect() as connection:
+                cursor = connection.execute(
+                    "DELETE FROM active_tasks WHERE session_key=?",
+                    (session_key,),
+                )
+                return cursor.rowcount == 1
+        except sqlite3.Error as exc:
+            self._record_error(exc)
+            return False
+
+    def clear_recent(self, session_key: str) -> bool:
+        return self._delete("recent_browser_tasks", session_key)
 
     def active_count(self) -> int:
         return self._count("active_tasks")
@@ -745,20 +768,22 @@ class ActiveTaskCheckpointStore:
                 return REDACTED
         return value
 
-    def _delete(self, table: str, session_key: str) -> None:
+    def _delete(self, table: str, session_key: str) -> bool:
         if not self.available or table not in {
             "active_tasks",
             "recent_browser_tasks",
         }:
-            return
+            return not self.enabled
         try:
             with self._connect() as connection:
                 connection.execute(
                     f"DELETE FROM {table} WHERE session_key=?",
                     (session_key,),
                 )
+            return True
         except sqlite3.Error as exc:
             self._record_error(exc)
+            return False
 
     def _count(self, table: str) -> int:
         if not self.available or table not in {
@@ -777,7 +802,7 @@ class ActiveTaskCheckpointStore:
             return 0
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path)
+        connection = sqlite3.connect(self.path, factory=_CheckpointConnection)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys=ON")
         return connection

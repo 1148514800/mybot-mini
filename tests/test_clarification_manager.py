@@ -49,6 +49,20 @@ class ClarificationManagerTests(unittest.TestCase):
         self.assertEqual(cancelled.status, "cancelled")
         self.assertIsNone(self.manager.get("cli:a"))
 
+    def test_wrong_sender_does_not_consume(self) -> None:
+        pending = self.manager.create(
+            session_key="chat:a",
+            question="Continue?",
+            requester_sender_id="sender-a",
+        )
+        self.assertIsNone(
+            self.manager.resolve("chat:a", pending.clarification_id, "sender-b")
+        )
+        self.assertIs(self.manager.get("chat:a"), pending)
+        self.assertIsNotNone(
+            self.manager.resolve("chat:a", pending.clarification_id, "sender-a")
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,7 +2,7 @@
 
 ## 当前目标
 
-Phase 7：Active Task Checkpoint + Restart Recovery。
+Phase 7.1：Checkpoint Consistency Hardening。
 
 ## 当前状态
 
@@ -18,6 +18,7 @@ Phase 7：Active Task Checkpoint + Restart Recovery。
 - Persisted browser state 只作历史上下文：Clarification/Verification/Recent Task 恢复后清空 live snapshot/initialized 标记；Browser Approval 仅保留最小 URL/目标语义用于 fresh-state 比较。
 - corrupt row、identity mismatch、过期记录与 unsupported schema 均 fail closed；completed/failed/max_steps/cancelled 清除 active checkpoint。
 - `checkpoints/` 纳入 Runtime-managed path，普通 `write_file` 无法修改。
+- Durable Approval/continuation consume 在副作用或恢复前必须成功删除 active row；删除失败 fail closed。Clarification 继续校验 requester sender，RecentTaskManager 内存 lookup 同样执行 timezone-aware TTL 并清理过期 checkpoint row。
 
 ## 修改文件
 
@@ -52,7 +53,7 @@ Phase 7：Active Task Checkpoint + Restart Recovery。
 
 ## 测试结果
 
-- Phase 7 focused checkpoint/path/config tests：37/37 passed。
+- Phase 7.1 focused checkpoint/clarification tests：21 tests，业务断言通过；Windows 临时目录清理仍有 1 个 SQLite 文件锁环境错误。
 - 全量单元测试：225 tests，224 passed，0 failed，1 skipped。
 - 离线 Evals：43/43 passed，100%。
 - `git diff --check` 通过。
@@ -61,11 +62,12 @@ Phase 7：Active Task Checkpoint + Restart Recovery。
 ## 已知问题
 
 - SQLite 文件未加密；当前依靠数据最小化、脱敏、文件权限与 Runtime path 保护，仍不替代磁盘加密/OS ACL。
-- at-most-once 安全语义可能在消费 checkpoint 后崩溃时丢失一次已确认动作，需要用户重新发起。
+- at-most-once 安全语义可能在消费 checkpoint 后崩溃时丢失一次已确认动作，需要用户重新发起；durable delete 失败现在会明确拒绝执行。
 - Browser live snapshot 与副作用动作之间仍非原子 Transaction，页面可在两者之间变化。
 - Unsupported schema 当前 fail closed，不提供自动迁移。
 - Cross-session concurrency、Browser session ownership、Context/token budget、Tool output compression/artifact reference 尚未实现。
 - 真实模型、真实站点和用户交互的 E2E Eval 仍缺失。
+- 完整单元测试在当前 Windows 沙箱中另有既有环境失败：Playwright daemon 写入权限、Exec 工作目录权限；不影响本阶段相关测试。
 - ToolPolicy 是应用层 Runtime Safety Layer，不是 OS sandbox。
 
 ## 下一步

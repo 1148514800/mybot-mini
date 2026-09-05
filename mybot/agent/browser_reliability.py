@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from datetime import UTC, datetime, timedelta
 import json
 import re
 from dataclasses import asdict, dataclass, field
@@ -322,14 +323,33 @@ class RecentBrowserTask:
 class RecentTaskManager:
     """In-memory browser task continuation state, separate from approval."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, clock=None, on_expire=None, ttl_seconds: int = 86_400) -> None:
         self._recent: dict[str, RecentBrowserTask] = {}
+        self._clock = clock or (lambda: datetime.now(UTC))
+        self._on_expire = on_expire
+        self._ttl_seconds = ttl_seconds
 
     def save(self, task: RecentBrowserTask) -> None:
-        self._recent[task.session_key] = copy.deepcopy(task)
+        saved = copy.deepcopy(task)
+        if saved.expires_at is None:
+            now = self._clock()
+            if now.tzinfo is None or now.utcoffset() is None:
+                raise ValueError("recent task clock must be timezone-aware")
+            saved.expires_at = (now + timedelta(seconds=self._ttl_seconds)).isoformat()
+        self._recent[task.session_key] = saved
 
     def get(self, session_key: str) -> RecentBrowserTask | None:
         task = self._recent.get(session_key)
+        if task and task.expires_at:
+            expires_at = datetime.fromisoformat(task.expires_at)
+            now = self._clock()
+            if now.tzinfo is None or now.utcoffset() is None:
+                raise ValueError("recent task clock must be timezone-aware")
+            if expires_at <= now:
+                self._recent.pop(session_key, None)
+                if self._on_expire is not None:
+                    self._on_expire(session_key)
+                return None
         return copy.deepcopy(task) if task else None
 
     def clear(self, session_key: str) -> RecentBrowserTask | None:

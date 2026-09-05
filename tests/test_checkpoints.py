@@ -111,8 +111,20 @@ class ActiveTaskCheckpointTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(restarted.checkpoint_store.active_count(), 0)
 
-            await restarted.resume_pending("cli:a", "确认", "user-a")
-            self.assertEqual(restarted.tools.execution_count, 1)
+    async def test_persisted_approval_delete_failure_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            store, _ = await self.create_exec_approval(workspace)
+            original = store.consume_active
+            store.consume_active = lambda session_key: False
+            agent = build_fake_agent(
+                checkpoint_case([exec_call()], output="must not execute"),
+                checkpoint_store=store,
+            )
+            output, _ = await agent.resume_pending("cli:a", "确认", "user-a")
+            self.assertIn("无法安全消费", output)
+            self.assertEqual(agent.tools.execution_count, 0)
+            store.consume_active = original
 
     async def test_restart_skips_unapproved_remaining_batch_side_effects(self):
         unapproved_secret = "unapproved-batch-secret-value"
@@ -318,6 +330,29 @@ class ActiveTaskCheckpointTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertIsNone(expired.recent_tasks.get("cli:a"))
             self.assertEqual(expired.checkpoint_store.recent_count(), 0)
+
+    async def test_recent_browser_task_expires_without_restart(self):
+        now = [datetime(2026, 9, 5, tzinfo=UTC)]
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            store = ActiveTaskCheckpointStore(
+                workspace, recent_task_ttl_seconds=10, clock=lambda: now[0]
+            )
+            agent = build_fake_agent(
+                checkpoint_case(
+                    [{"name": "browser_snapshot", "arguments": {}, "output": "page"}],
+                    output="done",
+                ),
+                checkpoint_store=store,
+            )
+            await agent.run_traced(
+                "inspect", [{"role": "user", "content": "inspect"}],
+                session_key="cli:a", requester_sender_id="user-a",
+            )
+            self.assertIsNotNone(agent.recent_tasks.get("cli:a"))
+            now[0] += timedelta(seconds=11)
+            self.assertIsNone(agent.recent_tasks.get("cli:a"))
+            self.assertEqual(store.recent_count(), 0)
 
     async def test_waiting_verification_task_state_restores_without_work(self):
         click = {
