@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -99,8 +100,23 @@ class ContextBuilder:
         tail = max(0, limit - len(marker) - head)
         return value[:head] + "\n" + marker + "\n" + (value[-tail:] if tail else "")
 
-    def prepare_messages(self, messages: list[dict]) -> tuple[list[dict], dict[str, int | bool]]:
-        before = sum(len(str(m.get("content", ""))) for m in messages)
+    @classmethod
+    def message_size(cls, message: dict) -> int:
+        size = len(str(message.get("content", "")))
+        for key in ("role", "tool_call_id", "name"):
+            size += len(str(message.get(key, "")))
+        tool_calls = message.get("tool_calls")
+        if tool_calls:
+            size += len(json.dumps(tool_calls, ensure_ascii=False, sort_keys=True))
+        return size
+
+    def prepare_messages(
+        self,
+        messages: list[dict],
+        *,
+        task_anchor: str | None = None,
+    ) -> tuple[list[dict], dict[str, int | bool]]:
+        before = sum(self.message_size(m) for m in messages)
         prepared = []
         for message in messages:
             item = dict(message)
@@ -112,35 +128,47 @@ class ContextBuilder:
                 message["content"] = self._truncate_memory_section(
                     str(message.get("content", ""))
                 )
-        system = [m for m in prepared if m.get("role") == "system"]
-        users = [m for m in prepared if m.get("role") == "user"]
-        required = system + ([users[-1]] if users else [])
+        anchor = None
+        if task_anchor is not None:
+            for message in reversed(prepared):
+                if message.get("role") == "user" and str(message.get("content", "")) == task_anchor:
+                    anchor = message
+                    break
+        if anchor is None:
+            users = [m for m in prepared if m.get("role") == "user"]
+            anchor = users[0] if users else None
+        required = [m for m in prepared if m.get("role") == "system"]
+        if anchor is not None:
+            required.append(anchor)
         required_ids = {id(message) for message in required}
-        units = self._context_units(
-            [message for message in prepared if id(message) not in required_ids]
-        )
-        required_chars = sum(len(str(m.get("content", ""))) for m in required)
+        units = self._context_units(prepared)
+        required_chars = sum(self.message_size(m) for m in required)
         budget = self.max_context_chars - required_chars
-        kept_units = []
+        required_unit_ids = {
+            id(unit)
+            for group in units
+            for unit in group
+            if id(unit) in required_ids
+        }
+        keep_ids = set(required_unit_ids)
         used = 0
         for unit in reversed(units):
-            size = sum(len(str(m.get("content", ""))) for m in unit)
+            if any(id(message) in keep_ids for message in unit):
+                continue
+            size = sum(self.message_size(m) for m in unit)
             if used + size > budget:
                 continue
-            kept_units.append(unit)
+            keep_ids.update(id(message) for message in unit)
             used += size
-        result = required[:1]
-        for unit in reversed(kept_units):
-            result.extend(unit)
-        result.extend(required[1:])
-        after = sum(len(str(m.get("content", ""))) for m in result)
+        result = [message for message in prepared if id(message) in keep_ids]
+        after = sum(self.message_size(m) for m in result)
         overflow = required_chars > self.max_context_chars
         return result, {
             "context_chars_before": before,
             "context_chars_after": after,
-            "history_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") in {"user", "assistant"}),
+            "history_chars": sum(self.message_size(m) for m in result if m.get("role") in {"user", "assistant"}),
             "memory_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") == "system"),
-            "tool_result_chars": sum(len(str(m.get("content", ""))) for m in result if m.get("role") == "tool"),
+            "tool_result_chars": sum(self.message_size(m) for m in result if m.get("role") == "tool"),
             "context_truncated": after < before,
             "context_budget_overflow": overflow,
         }
@@ -165,11 +193,10 @@ class ContextBuilder:
                 continue
             tool_calls = message.get("tool_calls") or []
             if message.get("role") == "assistant" and tool_calls:
-                ids = {
-                    str(call.get("id", ""))
-                    for call in tool_calls
-                    if isinstance(call, dict) and call.get("id")
-                }
+                if not all(isinstance(call, dict) and str(call.get("id", "")).strip() for call in tool_calls):
+                    index += 1
+                    continue
+                ids = {str(call["id"]) for call in tool_calls}
                 unit = [message]
                 cursor = index + 1
                 responses: list[dict] = []
@@ -179,7 +206,8 @@ class ContextBuilder:
                         break
                     responses.append(response)
                     cursor += 1
-                if len(responses) == len(ids):
+                response_ids = [str(response.get("tool_call_id", "")) for response in responses]
+                if len(responses) == len(ids) and len(response_ids) == len(set(response_ids)) and set(response_ids) == ids:
                     units.append(unit + responses)
                     index = cursor
                     continue

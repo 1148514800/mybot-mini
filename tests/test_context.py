@@ -101,6 +101,38 @@ class ContextBuilderTests(unittest.TestCase):
         self.assertTrue(stats["context_budget_overflow"])
         self.assertFalse(stats["context_truncated"])
 
+    def test_compaction_preserves_relative_order_and_task_anchor(self):
+        builder = ContextBuilder(Path("."), max_context_chars=500)
+        messages = [
+            {"role": "system", "content": "rules"},
+            {"role": "user", "content": "original task"},
+            {"role": "assistant", "tool_calls": [{"id": "c1", "function": {"name": "lookup", "arguments": "{}"}}], "content": None},
+            {"role": "tool", "tool_call_id": "c1", "content": "result"},
+            {"role": "assistant", "content": "thinking"},
+            {"role": "user", "content": "Runtime completion gate"},
+        ]
+        compacted, _ = builder.prepare_messages(messages, task_anchor="original task")
+        self.assertEqual([item["role"] for item in compacted], [item["role"] for item in messages])
+        self.assertEqual(compacted[1]["content"], "original task")
+
+    def test_invalid_tool_units_are_excluded_and_payload_is_counted(self):
+        builder = ContextBuilder(Path("."), max_context_chars=1000)
+        valid = {"role": "assistant", "tool_calls": [{"id": "c1", "function": {"name": "lookup", "arguments": "a" * 200}}], "content": None}
+        compacted, stats = builder.prepare_messages([
+            {"role": "system", "content": "rules"},
+            {"role": "user", "content": "task"},
+            valid,
+            {"role": "tool", "tool_call_id": "c1", "content": "ok"},
+            {"role": "assistant", "tool_calls": [{"id": "c2"}], "content": None},
+            {"role": "tool", "tool_call_id": "c2", "content": "one"},
+            {"role": "tool", "tool_call_id": "c2", "content": "duplicate"},
+            {"role": "tool", "content": "orphan"},
+        ], task_anchor="task")
+        self.assertTrue(any(item is not valid and item.get("tool_call_id") == "c1" for item in compacted))
+        self.assertFalse(any(item.get("tool_call_id") == "c2" for item in compacted))
+        self.assertFalse(any(item.get("content") == "orphan" for item in compacted))
+        self.assertGreater(stats["context_chars_before"], 200)
+
 
 if __name__ == "__main__":
     unittest.main()

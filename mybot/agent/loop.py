@@ -1695,7 +1695,9 @@ class AgentLoop:
             model_messages = messages
             context_metadata = {}
             if hasattr(self.context, "prepare_messages"):
-                model_messages, context_metadata = self.context.prepare_messages(messages)
+                model_messages, context_metadata = self.context.prepare_messages(
+                    messages, task_anchor=user_input
+                )
                 if llm_trace:
                     llm_trace.metadata.update(context_metadata)
             try:
