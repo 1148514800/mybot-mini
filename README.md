@@ -297,6 +297,7 @@ mybot/
   core/                   # 配置和应用组装
   messaging/              # CLI、飞书和消息总线
   storage/                # 会话、记忆和版本化 SQLite checkpoint
+  storage/checkpoints/    # SQLite checkpoint store、payload adapters 和 sanitizer exports
   tools/                  # Agent 可调用的工具
 workspace/
   instructions/           # AGENTS.md、SOUL.md、USER.md、TOOLS.md

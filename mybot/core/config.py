@@ -8,7 +8,7 @@ from openai import AsyncOpenAI
 
 from ..guardrails import DEFAULT_APPROVAL_TTL_SECONDS
 from ..mcp.config import MCPConfig
-from ..storage.checkpoint import DEFAULT_RECENT_TASK_TTL_SECONDS
+from ..storage.checkpoints.models import DEFAULT_RECENT_TASK_TTL_SECONDS
 
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent

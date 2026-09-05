@@ -9,7 +9,7 @@ from ..messaging import CLIChannel, FeishuChannel, BaseChannel, MessageBus, rout
 from ..mcp import MCPClientManager
 from ..storage.memory import MemoryManager
 from ..storage.session import SessionManager
-from ..storage.checkpoint import ActiveTaskCheckpointStore
+from ..storage.checkpoints.store import ActiveTaskCheckpointStore
 from ..tools import build_default_tool_registry
 from ..tracing import AgentTracer
 from ..workspace import init_instructions, init_workspace

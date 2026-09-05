@@ -2,7 +2,7 @@
 
 ## 当前目标
 
-Phase 8.2：Context order and payload integrity。
+Runtime Consolidation：Checkpoint storage and task lifecycle boundaries。
 
 ## 当前状态
 
@@ -22,6 +22,7 @@ Phase 8.2：Context order and payload integrity。
 - ContextBuilder 集中管理模型输入字符预算：系统/指令和当前用户输入优先保留，历史、Memory 与 Tool Result 确定性裁剪；Tool Result 使用前后片段与 truncation marker。原始 ToolResult、Trace 与浏览器 live precondition 不受压缩影响。
 - Tool call 与对应 tool response 作为完整原子 unit 一起保留或删除；孤立 tool response 不进入模型输入。`build_messages()` 保留完整 runtime chain，仅在 LLM request boundary 生成压缩副本。`max_context_chars` 是 soft target，required context 超出时记录 `context_budget_overflow`。
 - Compaction 保持 runtime message 的原始 relative order，不把 current user 移到末尾；task anchor 使用明确的原始用户输入匹配，避免被 Runtime synthetic user message 替换。统一 message size estimator 计入 content、tool call payload、IDs 和 arguments；duplicate/missing/invalid tool response unit fail closed。
+- Checkpoint SQLite implementation moved to `mybot/storage/checkpoints/store.py`, with compatibility export at `mybot/storage/checkpoint.py`; public models, serialization adapters and sanitizer exports have dedicated module locations. `TaskRuntimeManager` now owns task lifecycle, checkpoint restore/sync and durable consume coordination, leaving AgentLoop as orchestration boundary.
 
 ## 修改文件
 
@@ -56,7 +57,7 @@ Phase 8.2：Context order and payload integrity。
 
 ## 测试结果
 
-- Phase 8.2 focused context/tracing/config tests：29/29 passed；Phase 8.3 order/payload tests included；离线 Evals：43/43 passed。
+- Runtime Consolidation focused regression tests：通过（Windows SQLite temporary-file lock remains an environment issue）；离线 Evals：43/43 passed。
 - 全量单元测试：236 tests，2 failures，1 error，1 skipped；失败为既有 Windows 沙箱 Playwright daemon/Exec 权限及 SQLite 临时文件锁环境问题。
 
 - Phase 7.1 focused checkpoint/clarification tests：21 tests，业务断言通过；Windows 临时目录清理仍有 1 个 SQLite 文件锁环境错误。
@@ -78,7 +79,7 @@ Phase 8.2：Context order and payload integrity。
 
 ## 下一步
 
-- 后续可单独评估 Context 摘要或 artifact reference；不要引入 Vector DB/RAG 或重构 AgentLoop。
+- 后续可单独评估 Context 摘要或 artifact reference；不要引入 Vector DB/RAG 或进一步扩大 AgentLoop 重构。
 - 再后续单独处理 cross-session concurrency、Browser session ownership 与多 Agent/session orchestration；不要在 Phase 8 顺带重构。
 
 ## 不要重复进行的工作

@@ -22,7 +22,7 @@ from ..guardrails import (
 )
 from ..messaging import InboundMessage, MessageBus, OutboundMessage
 from ..storage.session import SessionManager
-from ..storage.checkpoint import ActiveTaskCheckpointStore
+from ..storage.checkpoints.store import ActiveTaskCheckpointStore
 from ..tools import ToolRegistry, ToolResult
 from ..tools.browser.connection import LOCAL_BROWSER_SESSION
 from ..tools.browser.navigation import MANAGED_BROWSER_SESSION
@@ -43,12 +43,8 @@ from .browser_reliability import (
     contains_success_claim,
     is_recent_task_continuation,
 )
-from .checkpoint_recovery import (
-    approval_from_checkpoint,
-    clarification_from_checkpoint,
-    recent_task_from_checkpoint,
-)
 from .task_state import AgentTaskState, AgentTaskStatus
+from .runtime_manager import TaskRuntimeManager
 from .tool_execution import (
     ToolExecutionContext,
     ToolExecutionPipeline,
@@ -125,57 +121,23 @@ class AgentLoop:
             self.browser_recovery_policy,
             debug_trace=self._trace,
         )
-        self.task_states: dict[str, AgentTaskState] = {}
         self.checkpoint_store = checkpoint_store
         if hasattr(self.context, "max_context_chars"):
             self.context.max_context_chars = getattr(config, "max_context_chars", self.context.max_context_chars)
             self.context.max_recent_messages = getattr(config, "max_recent_messages", self.context.max_recent_messages)
             self.context.max_tool_result_chars = getattr(config, "max_tool_result_chars", self.context.max_tool_result_chars)
             self.context.max_memory_chars = getattr(config, "max_memory_chars", self.context.max_memory_chars)
+        self.runtime = TaskRuntimeManager(
+            approvals=self.approvals,
+            clarifications=self.clarifications,
+            recent_tasks=self.recent_tasks,
+            checkpoint_store=self.checkpoint_store,
+        )
+        self.task_states = self.runtime.task_states
         self._restore_checkpoints()
 
     def _restore_checkpoints(self) -> None:
-        if self.checkpoint_store is None:
-            return
-        recent_identities: set[tuple[str, str]] = set()
-        for payload in self.checkpoint_store.load_recent():
-            try:
-                recent = recent_task_from_checkpoint(payload)
-                self.recent_tasks.save(recent)
-                recent_identities.add((recent.session_key, recent.task_id))
-            except (KeyError, TypeError, ValueError):
-                session_key = str(payload.get("session_key", ""))
-                if session_key:
-                    self.checkpoint_store.clear_recent(session_key)
-        for recovered in self.checkpoint_store.load_active():
-            try:
-                state = AgentTaskState.from_dict(recovered.task_state)
-                if (
-                    recovered.kind == "verification"
-                    and (state.session_key, state.task_id)
-                    not in recent_identities
-                ):
-                    self.checkpoint_store.clear_active(state.session_key)
-                    continue
-                restored = True
-                if recovered.kind == "approval":
-                    restored = self.approvals.restore(
-                        approval_from_checkpoint(recovered.payload)
-                    )
-                elif recovered.kind == "clarification":
-                    restored = self.clarifications.restore(
-                        clarification_from_checkpoint(recovered.payload)
-                    )
-                if not restored:
-                    self.checkpoint_store.clear_active(state.session_key)
-                    continue
-                self.task_states[state.task_id] = state
-            except (KeyError, TypeError, ValueError):
-                session_key = str(
-                    recovered.task_state.get("session_key", "")
-                )
-                if session_key:
-                    self.checkpoint_store.clear_active(session_key)
+        self.runtime.restore()
 
     def _pipeline(self) -> ToolExecutionPipeline:
         """Keep injected test/runtime dependencies aligned with the pipeline."""
@@ -192,20 +154,7 @@ class AgentLoop:
         session_key: str,
         requester_sender_id: str | None,
     ) -> AgentTaskState:
-        state = self.task_states.get(task_id)
-        if state is None or state.status in {
-            AgentTaskStatus.COMPLETED,
-            AgentTaskStatus.FAILED,
-            AgentTaskStatus.MAX_STEPS,
-            AgentTaskStatus.CANCELLED,
-        }:
-            state = AgentTaskState(
-                task_id=task_id,
-                session_key=session_key,
-                requester_sender_id=requester_sender_id,
-            )
-            self.task_states[task_id] = state
-        return state
+        return self.runtime.task_state(task_id, session_key, requester_sender_id)
 
     @staticmethod
     def _start_or_resume_task(state: AgentTaskState) -> None:
@@ -226,40 +175,17 @@ class AgentLoop:
             error=error,
             task_status=task_state.status.value,
         )
-        self._sync_task_checkpoint(task_state)
+        self.runtime.sync(task_state)
         return trace
 
     def _sync_task_checkpoint(self, state: AgentTaskState) -> None:
-        store = self.checkpoint_store
-        if store is None or not state.session_key:
-            return
-        if state.status == AgentTaskStatus.WAITING_APPROVAL:
-            pending = self.approvals.get(state.session_key)
-            if pending and pending.approval_id == state.active_approval_id:
-                store.save_approval(state, pending)
-                return
-        elif state.status == AgentTaskStatus.WAITING_CLARIFICATION:
-            pending = self.clarifications.get(state.session_key)
-            if (
-                pending
-                and pending.clarification_id == state.active_clarification_id
-            ):
-                store.save_clarification(state, pending)
-                return
-        elif state.status == AgentTaskStatus.WAITING_VERIFICATION:
-            store.save_verification(state)
-            return
-        store.clear_active(state.session_key)
+        self.runtime.sync(state)
 
     def _clear_active_checkpoint(self, session_key: str) -> None:
-        if self.checkpoint_store is not None:
-            self.checkpoint_store.clear_active(session_key)
+        self.runtime.clear(session_key)
 
     def _consume_durable_approval(self, session_key: str) -> bool:
-        store = self.checkpoint_store
-        if store is None or not store.enabled:
-            return True
-        return store.consume_active(session_key)
+        return self.runtime.consume(session_key)
 
     def _consume_durable_active(self, session_key: str) -> bool:
         return self._consume_durable_approval(session_key)
