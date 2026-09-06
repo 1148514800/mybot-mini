@@ -6,6 +6,8 @@
 
 代码仓库、Git 历史以及项目文档是项目状态的事实来源。
 
+GitHub 仓库：`mybot_desktop`（`https://github.com/1148514800/mybot_desktop.git`）。
+
 ---
 
 ## 每次会话开始

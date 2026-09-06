@@ -31,6 +31,7 @@ Phase 10：single-process cross-session concurrency 与 exclusive Browser owners
 - `mybot/agent/tool_execution.py`：把 trusted `session_key/task_id` 传到 registry boundary。
 - `tests/test_concurrency.py`：覆盖 session overlap/serialization、Tracer isolation、Browser ownership/release。
 - `README.md`：记录调度、shutdown 与 Browser lease 语义。
+- `AGENTS.md`：记录 GitHub 仓库名称与远端地址。
 
 ## 架构决策与行为约束
 
