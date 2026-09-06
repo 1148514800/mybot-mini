@@ -141,7 +141,7 @@ def _browser_prerequisite() -> str | None:
 
 def _failure_category(reason: str, traces: list[AgentRunTrace]) -> str:
     lowered = reason.lower()
-    if any(token in lowered for token in ("apiconnection", "apitimeout", "timeout", "connection", "429", "rate limit", "network")):
+    if any(token in lowered for token in ("apiconnection", "apitimeout", "timeout", "connection", "401", "429", "authentication", "unauthorized", "rate limit", "network")):
         return "environment/network"
     if any(call.success is False for trace in traces for call in trace.tool_calls):
         return "tool failure"
@@ -206,6 +206,14 @@ def _result(
             for key in {"completion_evidence", "postcondition_met", "browser_completion_state"}
         )
     ]
+    if status == "fail" and traces:
+        trace_errors = [
+            trace.error
+            for trace in traces
+            if trace.error
+        ]
+        if trace_errors:
+            failure_reason = f"{_failure(trace_errors[-1], traces)}; {failure_reason or 'assertion failed'}"
     return LiveEvalResult(
         name=name,
         status=status,
@@ -619,7 +627,9 @@ async def run_live_suite(
     selected = cases or live_cases()
     if not _enabled(LIVE_OPT_IN, values):
         return [LiveEvalResult.skipped(case.name, f"opt-in required: set {LIVE_OPT_IN}=1") for case in selected]
-    key, base_url, model, provider = _api_settings(values)
+    key, base_url, model, provider = _api_settings(
+        None if environ is None else values
+    )
     if not key:
         return [LiveEvalResult.skipped(case.name, "environment/network: no API key configured") for case in selected]
     browser_reason = _browser_prerequisite() if _enabled(BROWSER_OPT_IN, values) else f"opt-in required: set {BROWSER_OPT_IN}=1"

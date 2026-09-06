@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默认 skip）。Harness 已完成；真实 API/Browser 未在当前环境执行。
+Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默认 skip）。Harness 已完成；已使用 config.json 尝试真实模型执行。
 
 ## 已完成内容与修改文件
 
@@ -16,6 +16,7 @@ Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默�
 - `mybot/evals/live.py`：六个显式 opt-in case（basic、read_file、approval、restart、context budget、browser read-only），每 case 使用临时 workspace，结果脱敏并记录 task/run/provider/model、Tool/LLM 计数、Trace context stats 和失败分类。
 - `tests/test_live_evals.py`：覆盖默认 opt-in、无 key、Browser 条件和脱敏报告。
 - `mybot/agent/loop.py`：`resume_pending()` 在消费 durable checkpoint 前先校验原 sender，错误 sender 不会删除待确认记录。
+- `mybot/evals/live.py`：CLI 未传入隔离 env 时正确回退到 `config/config.json`；Trace 中的认证/网络错误归类为 `environment/network` 并保留脱敏短原因。
 
 ## 架构决策与行为约束
 
@@ -35,14 +36,15 @@ Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默�
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
 - `uv run python -m mybot.evals.runner`：43/43 passed，100%。
 - `git diff --check`：通过。
-- `uv run python -m mybot.evals.live`（无 `MYBOT_RUN_LIVE_E2E`）：6/6 明确 SKIP，退出码 0；本阶段未显式启用真实 Live E2E。
+- `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
+- `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（读取当前 config，Browser opt-in 未启用）：5 个真实模型 case 均在首个 LLM 请求收到 provider `401 Authentication failed`，无 Tool/副作用执行；`browser_live` 明确 SKIP。未取得真实 Live PASS。
 
 ## 已知问题
 
 - SQLite 未加密；数据最小化、脱敏、文件权限和 Runtime path 保护不能替代磁盘加密。
 - durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
 - Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
-- Cross-session concurrency、Browser ownership、artifact reference 尚未实现；真实模型/站点 E2E 已有 harness，但当前环境未取得 PASS。
+- Cross-session concurrency、Browser ownership、artifact reference 尚未实现；当前 config 中 provider 凭证被服务端拒绝，需更新有效凭证后重跑 Live E2E。
 
 ## 下一步
 
