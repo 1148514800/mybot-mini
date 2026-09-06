@@ -267,7 +267,7 @@ config/
 
 Context compaction 只发生在每次 LLM request 前。Tool call 及其全部 tool result 作为原子单元按原始顺序一起保留或删除；孤立、缺失或重复配对不会发送给模型。`max_context_chars` 是 soft target，必要的系统指令和当前任务输入超出目标时会保留，并在 Trace 中标记 overflow。
 
-大型非 Browser 文本结果在发送给模型前写入 `workspace/artifacts/`，模型只收到脱敏 preview 和不可预测的 `artifact_id`。模型通过 `artifact_read` 按 session identity 读取有限字符或 query 周边片段；普通 `read_file`、`write_file` 和 `exec` 不能访问该 Runtime 管理目录。Artifact 文本会脱敏并受存储上限约束，Browser snapshot/result 始终保留原有运行时语义。
+大型非 Browser 文本结果在发送给模型前写入 `workspace/artifacts/`，模型只收到脱敏 preview 和不可预测的 `artifact_id`。模型通过 `artifact_read` 按 session identity 读取有限字符或 query 周边片段；`read_file` 和 `write_file` 禁止直接访问该 Runtime 管理目录。`exec` 仍不是 OS sandbox，未知 shell command 继续走现有 confirmation policy，并保留明显 artifacts 直接访问的 defense-in-depth 拦截。Artifact 文本会脱敏并受存储上限约束，Browser snapshot/result 始终保留原有运行时语义。
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
 | `browser_runtime.max_open_attempts` | 每个 task 的 `browser_open/browser_attach` 尝试上限，默认 `1` |
 | `browser_runtime.max_consecutive_tool_failures` | 同一浏览器 Tool 连续失败上限，默认 `2` |

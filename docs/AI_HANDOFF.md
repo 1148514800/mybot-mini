@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 11：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模型只收到 preview 与 artifact_id，使用受限 artifact_read 按需读取。Browser result 不外置，ToolExecutionPipeline 安全语义保持不变。
+Phase 11 收尾：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模型只收到 preview 与 artifact_id，使用受限 artifact_read 按需读取。关闭配置、失败 bounded fallback、large error/metadata 和 checkpoint/browser 回归已补齐。Browser result 不外置，ToolExecutionPipeline 安全语义保持不变。
 
 ## 已完成内容与修改文件
 
@@ -42,6 +42,9 @@ Phase 11：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模
 - `mybot/guardrails/paths.py`、`mybot/tools/file_tools.py`、`mybot/tools/exec.py`：保护 Runtime-managed `artifacts/` 路径。
 - `tests/test_artifacts.py`：覆盖外置、脱敏、bounded/query、缺失 identity、session 隔离和并发写入。
 - `README.md`：记录 Artifact 配置、读取边界和 Runtime 路径保护。
+- `mybot/tools/registry.py`、`mybot/core/app.py`：`artifact.enabled=false` 时不注册 `artifact_read`，旧磁盘 artifacts 不可经 Agent Tool 读取。
+- `mybot/agent/artifact_results.py`：按最终 model-facing rendered 长度判断；Store 失败返回脱敏 bounded preview，不返回完整结果或 artifact_id。
+- `tests/test_artifacts.py`、`tests/test_checkpoints.py`：新增 disabled mode、fallback、large error、Browser snapshot 和 checkpoint/restart 集成覆盖。
 
 ## 架构决策与行为约束
 
@@ -57,11 +60,12 @@ Phase 11：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模
 
 本阶段在 Windows 沙箱工作区验证：
 
-- `.venv\Scripts\python.exe -m unittest discover -s tests -v`：262 tests；功能性回归通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
+- `uv run python -m unittest discover -s tests -v`：269 tests；新增 Phase 11 功能测试通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
 - 定向 Concurrency、Tracer、ModelExecution、ToolExecution、AgentLoop、Checkpoint 测试：30/30 passed。
 - 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
 - `.venv\Scripts\python.exe -m mybot.evals.runner`：44/44 passed，100%；新增 Artifact Results case。
+- `uv run python -m mybot.evals.runner`：44/44 passed，100%。
 - `git diff --check`：通过。
 - `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
 - `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（luchikey / `gpt-5.6-sol`，Browser opt-in 未启用）：5/6 passed；`real_llm_basic`、`read_file_tool`、`approval_side_effect`、`restart_recovery`、`context_budget` 真实执行通过；`browser_live` 因未设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1` SKIP。
@@ -76,6 +80,7 @@ Phase 11：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模
 - Browser ownership 不持久化；进程重启后 lease 为 none，恢复动作必须先重新建立 live Browser 状态。Browser Live 尚未在本次运行启用。
 - Artifact 文件独立于 checkpoint 持久化；同 session 重启后可通过 `artifact_read` 读取，artifact ownership 不跨 session 转移。
 - Artifact Store 当前没有 TTL/GC；每个文本最多保存 1,000,000 字符，长期运行仍需运维清理旧 artifacts。
+- `read_file` / `write_file` 禁止直接访问 `artifacts/`；`artifact_read` 按 trusted session authorization。`exec` 不是 OS sandbox，未知 shell command 仍走既有 confirmation policy，只保留明显 artifacts direct access defense-in-depth。
 - `SessionExecutionCoordinator._locks` 不回收；本阶段仅记录为 remaining risk。
 - 无 owner 或缺失 trusted session identity 的 Browser 调用不会进入真实 Tool；重启恢复不会从 persisted browser state 恢复 ownership。
 

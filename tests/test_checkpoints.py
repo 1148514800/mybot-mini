@@ -17,6 +17,8 @@ from mybot.guardrails import (
     RiskLevel,
 )
 from mybot.storage.checkpoint import ActiveTaskCheckpointStore
+from mybot.storage.artifacts import ArtifactStore
+from mybot.tools.artifact import ArtifactReadTool
 from mybot.tracing import REDACTED
 
 
@@ -46,6 +48,67 @@ def exec_call() -> dict:
 
 
 class ActiveTaskCheckpointTests(unittest.IsolatedAsyncioTestCase):
+    async def test_large_result_reference_survives_approval_checkpoint_restart(self):
+        sentinel = "LARGE_SENTINEL_FULL_BODY_12345"
+        large_result = "A" * 5000 + sentinel + "B" * 5000
+        read_call = {
+            "name": "read_file",
+            "arguments": {"path": "large.txt"},
+            "output": large_result,
+        }
+        dangerous_call = exec_call()
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
+            workspace = Path(directory)
+            checkpoint_store = ActiveTaskCheckpointStore(workspace)
+            first = build_fake_agent(
+                checkpoint_case([read_call, dangerous_call]),
+                checkpoint_store=checkpoint_store,
+            )
+            first.artifact_store = ArtifactStore(workspace)
+            prompt, trace = await first.run_traced(
+                "read and commit",
+                [{"role": "user", "content": "read and commit"}],
+                session_key="cli:a",
+                requester_sender_id="user-a",
+            )
+            self.assertEqual(trace.status, "awaiting_confirmation")
+            self.assertIn("确认", prompt)
+
+            payload = checkpoint_store.path.read_bytes()
+            self.assertIn(b"art_", payload)
+            self.assertNotIn(sentinel.encode(), payload)
+            self.assertNotIn(large_result.encode(), payload)
+            with sqlite3.connect(checkpoint_store.path) as connection:
+                self.assertEqual(
+                    connection.execute(
+                        "SELECT schema_version FROM active_tasks WHERE session_key='cli:a'"
+                    ).fetchone()[0],
+                    1,
+                )
+
+            restarted = build_fake_agent(
+                checkpoint_case([], output="unused"),
+                checkpoint_store=ActiveTaskCheckpointStore(workspace),
+            )
+            pending = restarted.approvals.get("cli:a")
+            self.assertIsNotNone(pending)
+            reference = next(
+                item["content"].split("artifact_id=", 1)[1].split("\n", 1)[0]
+                for item in pending.messages
+                if item.get("role") == "tool" and "artifact_id=art_" in item.get("content", "")
+            )
+            reader = ArtifactReadTool(ArtifactStore(workspace), read_max_chars=4000)
+            available = await reader.execute(
+                reference,
+                max_chars=100,
+                session_key="cli:a",
+            )
+            self.assertTrue(available.success)
+            denied = await reader.execute(
+                available.metadata["artifact_id"], max_chars=100, session_key="cli:b"
+            )
+            self.assertFalse(denied.success)
+            self.assertEqual(denied.metadata["error_type"], "artifact_unavailable")
     async def create_exec_approval(
         self,
         workspace: Path,

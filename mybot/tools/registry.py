@@ -147,13 +147,15 @@ def build_default_tool_registry(
     memory_manager: MemoryManager | None = None,
     artifact_store: ArtifactStore | None = None,
     artifact_read_max_chars: int = 8000,
+    artifact_enabled: bool = True,
 ) -> ToolRegistry:
     registry = ToolRegistry()
     artifact_store = artifact_store or ArtifactStore(workspace)
     browser_sessions = BrowserSessionManager()
     registry.register(ExecTool(workspace))
     registry.register(RequestUserInputTool())
-    registry.register(ArtifactReadTool(artifact_store, read_max_chars=artifact_read_max_chars))
+    if artifact_enabled:
+        registry.register(ArtifactReadTool(artifact_store, read_max_chars=artifact_read_max_chars))
     registry.register(BrowserAttachTool(browser_sessions))
     registry.register(BrowserOpenTool(workspace, browser_sessions))
     registry.register(BrowserSnapshotTool(browser_sessions))

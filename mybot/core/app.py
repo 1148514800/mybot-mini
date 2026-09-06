@@ -30,6 +30,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
         memory_manager=memory,
         artifact_store=artifact_store,
         artifact_read_max_chars=config.artifact_read_max_chars,
+        artifact_enabled=config.artifact_enabled,
     )
     mcp_manager = MCPClientManager(config.mcp, tools)
     try:

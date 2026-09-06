@@ -4,10 +4,11 @@ import unittest
 from pathlib import Path
 
 from mybot.agent.artifact_results import externalize_tool_result
+from mybot.agent.browser_reliability import BrowserTaskState
 from mybot.storage.artifacts import ArtifactStore
 from mybot.tools.artifact import ArtifactReadTool
 from mybot.tools.base import Tool
-from mybot.tools.registry import ToolRegistry
+from mybot.tools.registry import ToolRegistry, build_default_tool_registry
 from mybot.tools.result import BrowserResult, ToolResult
 
 
@@ -33,6 +34,16 @@ class _CountingArtifactTool(Tool):
 
 
 class ArtifactTests(unittest.TestCase):
+    def test_disabled_registry_does_not_expose_artifact_read(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            old = ArtifactStore(workspace).put("A", None, "read_file", "old artifact")
+            registry = build_default_tool_registry(workspace, artifact_enabled=False)
+            self.assertFalse(registry.has_tool("artifact_read"))
+            self.assertFalse(any(item["function"]["name"] == "artifact_read" for item in registry.get_definitions()))
+            result = asyncio.run(registry.execute("artifact_read", {"artifact_id": old.artifact_id}, session_key="A"))
+            self.assertFalse(result.success)
+
     def test_large_result_externalizes_and_redacts(self):
         with tempfile.TemporaryDirectory() as directory:
             store = ArtifactStore(Path(directory))
@@ -66,6 +77,52 @@ class ArtifactTests(unittest.TestCase):
                 )
                 self.assertIsNone(record)
                 self.assertEqual(rendered, result.to_text())
+                if isinstance(result, BrowserResult):
+                    self.assertEqual(len(rendered), len(result.to_text()))
+
+    def test_store_failure_returns_bounded_sanitized_fallback(self):
+        class FailingStore:
+            def put(self, *args, **kwargs):
+                raise OSError("disk full")
+
+        value = "api_key=SUPER_SECRET_VALUE " + "LARGE_SENTINEL " * 1000
+        rendered, record = externalize_tool_result(
+            ToolResult(True, output=value), tool_name="read_file", arguments={},
+            session_key="A", task_id=None, store=FailingStore(), enabled=True,
+            threshold_chars=20,
+        )
+        self.assertIsNone(record)
+        self.assertIn("could not be externalized", rendered)
+        self.assertNotIn("SUPER_SECRET_VALUE", rendered)
+        self.assertNotIn("LARGE_SENTINEL " * 100, rendered)
+        self.assertLessEqual(len(rendered), 2000)
+
+    def test_large_error_and_metadata_trigger_externalization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = ArtifactStore(Path(directory))
+            result = ToolResult(False, error="E" * 9000, metadata={"detail": "M" * 9000})
+            rendered, record = externalize_tool_result(
+                result, tool_name="exec", arguments={}, session_key="A", task_id=None,
+                store=store, enabled=True, threshold_chars=8000,
+            )
+            self.assertIsNotNone(record)
+            self.assertIn("artifact_id=", rendered)
+            self.assertLess(len(rendered), 2000)
+
+    def test_large_browser_snapshot_keeps_runtime_state_and_no_artifact(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = ArtifactStore(Path(directory))
+            browser = BrowserResult(True, output="SNAPSHOT " * 2000, action="snapshot", session="managed_browser", url="https://example.com")
+            rendered, record = externalize_tool_result(
+                browser, tool_name="browser_snapshot", arguments={}, session_key="A", task_id="t",
+                store=store, enabled=True, threshold_chars=10,
+            )
+            state = BrowserTaskState()
+            state.note_result("browser_snapshot", {}, browser)
+            self.assertIsNone(record)
+            self.assertEqual(rendered, browser.to_text())
+            self.assertEqual(state.latest_snapshot, browser.output)
+            self.assertFalse((Path(directory) / "artifacts").exists())
 
     def test_read_is_bounded_and_session_bound(self):
         with tempfile.TemporaryDirectory() as directory:

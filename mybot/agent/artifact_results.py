@@ -10,6 +10,19 @@ _EXCLUDED_PREFIXES = ("browser_",)
 _PREVIEW_CHARS = 1600
 
 
+def _bounded_preview(value: str, arguments: dict[str, Any] | None) -> str:
+    from ..tracing import redact_text, redact_tool_text
+
+    sanitized = redact_tool_text("tool_result", value, arguments or {})
+    sanitized = redact_text(sanitized)
+    if len(sanitized) <= _PREVIEW_CHARS:
+        return sanitized
+    marker = "\n...[preview truncated]...\n"
+    available = _PREVIEW_CHARS - len(marker)
+    head = max(0, available // 2)
+    return sanitized[:head] + marker + sanitized[-(available - head):]
+
+
 def externalize_tool_result(
     result: ToolResult,
     *,
@@ -29,7 +42,7 @@ def externalize_tool_result(
         or isinstance(result, BrowserResult)
         or normalized_name.startswith(_EXCLUDED_PREFIXES)
         or normalized_name in {"artifact_read", "request_user_input"}
-        or len(result.output) <= threshold_chars
+        or len(rendered) <= threshold_chars
     ):
         return rendered, None
     try:
@@ -41,7 +54,15 @@ def externalize_tool_result(
             arguments,
         )
     except Exception:
-        return rendered, None
+        preview = _bounded_preview(rendered, arguments)
+        return (
+            "[large tool output could not be externalized]\n"
+            f"original_chars={len(rendered)}\n\n"
+            "Preview:\n"
+            f"{preview}\n\n"
+            "The omitted content is unavailable. Do not guess it.",
+            None,
+        )
     content_result = store.read(
         session_key,
         record.artifact_id,
