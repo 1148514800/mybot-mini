@@ -21,6 +21,8 @@ from .session import (
     LOCAL_BROWSER_SESSION,
     MANAGED_BROWSER_SESSION,
     BrowserSessionManager,
+    BrowserOwnershipManager,
+    BrowserLease,
 )
 
 __all__ = [
@@ -40,6 +42,8 @@ __all__ = [
     "BrowserErrorType",
     "classify_browser_error",
     "BrowserSessionManager",
+    "BrowserOwnershipManager",
+    "BrowserLease",
     "DEFAULT_SESSION",
     "LOCAL_BROWSER_SESSION",
     "MANAGED_BROWSER_SESSION",

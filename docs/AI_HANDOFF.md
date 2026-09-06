@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 9：Production-like Live E2E harness 已完成；Phase 9.5 仅修复 Live harness 的 restart 配置继承和 Browser smoke prompt/assertions。Live suite 默认 skip，使用 luchikey 配置的五个非浏览器 case 保持真实通过。
+Phase 10：single-process cross-session concurrency 与 exclusive Browser ownership 已实现。Live suite 默认 skip，既有非 Browser live case 保持原行为。
 
 ## 已完成内容与修改文件
 
@@ -23,6 +23,14 @@ Phase 9：Production-like Live E2E harness 已完成；Phase 9.5 仅修复 Live 
 - `tests/test_model_execution.py`、`tests/test_tool_calls.py`：覆盖模型请求、trace/timeout、无 active trace 和 codec round-trip。
 - `mybot/evals/live.py`：restart 重建上下文完整继承原 `GatewayConfig` 的 provider/model/key/base URL、context/react/tool/result/request 限制；Browser smoke 明确要求五个只读工具顺序并验证 `browser_verify.success` 与 `postcondition_met=true`，拒绝副作用 Browser Tool。
 - `tests/test_live_evals.py`：新增 custom provider/model restart 配置一致性 regression test。
+- `mybot/core/concurrency.py`：新增按 session 串行、跨 session 并发且有 `1..32` 上限的 coordinator。
+- `mybot/core/config.py`、`config/config.example.json`：新增 `max_concurrent_sessions`，默认 4。
+- `mybot/agent/loop.py`：入站消息创建受 coordinator 管理的 inflight task；shutdown cancel/await 全部任务。
+- `mybot/tracing/tracer.py`：`current_run/current_step` 改为 `ContextVar`，并发 run 独立记录。
+- `mybot/tools/browser/session.py`、`mybot/tools/registry.py`：新增进程级 Browser exclusive lease；冲突 fail closed，close 成功释放。
+- `mybot/agent/tool_execution.py`：把 trusted `session_key/task_id` 传到 registry boundary。
+- `tests/test_concurrency.py`：覆盖 session overlap/serialization、Tracer isolation、Browser ownership/release。
+- `README.md`：记录调度、shutdown 与 Browser lease 语义。
 
 ## 架构决策与行为约束
 
@@ -38,7 +46,8 @@ Phase 9：Production-like Live E2E harness 已完成；Phase 9.5 仅修复 Live 
 
 本阶段在 Windows 沙箱工作区验证：
 
-- `uv run python -m unittest discover -s tests -v`：248 tests，244 passed，1 skipped，2 failures，1 error。
+- `uv run python -m unittest discover -s tests -v`：252 tests；新增并发相关测试通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
+- 定向并发、Tracer、ToolExecution、AgentLoop、Browser 测试：63/63 passed。
 - 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
 - `uv run python -m mybot.evals.runner`：43/43 passed，100%。
@@ -53,12 +62,12 @@ Phase 9：Production-like Live E2E harness 已完成；Phase 9.5 仅修复 Live 
 - SQLite 未加密；数据最小化、脱敏、文件权限和 Runtime path 保护不能替代磁盘加密。
 - durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
 - Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
-- Cross-session concurrency、Browser ownership、artifact reference 尚未实现；Browser Live 尚未在本次运行启用。
+- Browser ownership 不持久化；进程重启后 lease 丢失，恢复动作仍必须重新建立 live Browser 状态。Browser Live 尚未在本次运行启用。
 
 ## 下一步
 
 - 在具备 Browser 条件且 provider 稳定的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
-- Cross-session concurrency、Browser ownership、artifact reference 仍是未实现能力，需独立任务评估。
+- Cross-session concurrency 与 Browser ownership 已完成；artifact reference 仍未实现，需独立任务评估。
 
 ## 不要重复进行的工作
 

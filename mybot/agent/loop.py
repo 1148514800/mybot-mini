@@ -9,6 +9,7 @@ from datetime import datetime
 from openai import AsyncOpenAI
 
 from ..core.config import GatewayConfig
+from ..core.concurrency import SessionExecutionCoordinator
 from ..guardrails import (
     DEFAULT_APPROVAL_TTL_SECONDS,
     ApprovalIntent,
@@ -144,6 +145,9 @@ class AgentLoop:
             context=self.context,
             tracer=self.tracer,
         )
+        self.coordinator = SessionExecutionCoordinator(
+            getattr(config, "max_concurrent_sessions", 4)
+        )
 
     def _pipeline(self) -> ToolExecutionPipeline:
         """Keep injected test/runtime dependencies aligned with the pipeline."""
@@ -235,6 +239,8 @@ class AgentLoop:
     def _execution_context(
         self,
         *,
+        session_key: str = "",
+        task_id: str | None = None,
         browser_mode: str,
         browser_snapshot: str,
         loaded_skills: set[str],
@@ -242,6 +248,8 @@ class AgentLoop:
         browser_state: BrowserTaskState,
     ) -> ToolExecutionContext:
         return ToolExecutionContext(
+            session_key=session_key,
+            task_id=task_id,
             browser_mode=browser_mode,
             browser_snapshot=browser_snapshot,
             loaded_skills=loaded_skills,
@@ -444,17 +452,42 @@ class AgentLoop:
         return outcome.tool_result
 
     async def run(self):
-        while True:
-            try:
-                message = await asyncio.wait_for(self.bus.consume_inbound(), timeout=1.0)
-            except asyncio.TimeoutError:
-                continue
+        try:
+            while True:
+                try:
+                    message = await asyncio.wait_for(
+                        self.bus.consume_inbound(), timeout=1.0
+                    )
+                except asyncio.TimeoutError:
+                    continue
+                task = asyncio.create_task(
+                    self._process_inbound_message(message),
+                    name=f"session:{message.session_key}",
+                )
+                self.coordinator.track(task)
+                if len(self.coordinator._tasks) >= self.coordinator.max_concurrent_sessions * 4:
+                    done, _ = await asyncio.wait(
+                        list(self.coordinator._tasks),
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                    for completed in done:
+                        completed.result()
+        finally:
+            await self.coordinator.shutdown()
 
+    async def _process_inbound_message(self, message: InboundMessage) -> None:
+        async def operation() -> None:
             reply, run_trace = await self.handle_inbound_message(message)
             self._trace(run_trace.summary_text().replace("\n", " | "))
             await self.bus.publish_outbound(
-                OutboundMessage(channel=message.channel, chat_id=message.chat_id, content=reply)
+                OutboundMessage(
+                    channel=message.channel,
+                    chat_id=message.chat_id,
+                    content=reply,
+                )
             )
+
+        await self.coordinator.execute(message.session_key, operation)
 
     async def handle_inbound_message(
         self,
@@ -1292,6 +1325,8 @@ class AgentLoop:
         if pending.browser_snapshot and not browser_state.latest_snapshot:
             browser_state.latest_snapshot = pending.browser_snapshot
         execution_context = self._execution_context(
+            session_key=pending.session_key,
+            task_id=task_id,
             browser_mode=browser_mode,
             browser_snapshot=pending.browser_snapshot,
             loaded_skills=set(pending.loaded_skills),
@@ -1709,6 +1744,8 @@ class AgentLoop:
             )
 
             execution_context = self._execution_context(
+                session_key=effective_task_state.session_key,
+                task_id=effective_task_id,
                 browser_mode=browser_mode,
                 browser_snapshot=browser_snapshot,
                 loaded_skills=task_loaded_skills,

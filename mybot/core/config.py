@@ -141,6 +141,12 @@ class FeishuConfig:
 @dataclass
 class GatewayConfig:
 
+    max_concurrent_sessions: int = field(
+        default_factory=lambda: int(
+            _config_value(_JSON_CONFIG, "max_concurrent_sessions", 4)
+        )
+    )
+
     provider: str = field(
         default_factory=lambda: _ACTIVE_LLM_PROVIDER
     )
@@ -373,6 +379,12 @@ class GatewayConfig:
         }.items():
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
                 raise ValueError(f"{name} must be a positive integer")
+        if (
+            isinstance(self.max_concurrent_sessions, bool)
+            or not isinstance(self.max_concurrent_sessions, int)
+            or not 1 <= self.max_concurrent_sessions <= 32
+        ):
+            raise ValueError("max_concurrent_sessions must be an integer from 1 to 32")
 
 
 def build_client(config: GatewayConfig) -> AsyncOpenAI:

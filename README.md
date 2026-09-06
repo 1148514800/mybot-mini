@@ -260,6 +260,7 @@ config/
 | `llm.max_recent_messages` | 历史消息数量上限，默认 `12` |
 | `llm.max_tool_result_chars` | 单条 Tool Result 在模型 Context 中的字符上限，默认 `8000` |
 | `llm.max_memory_chars` | Memory 摘要在模型 Context 中的字符上限，默认 `8000` |
+| `max_concurrent_sessions` | 跨 session 最大并发消息任务数，默认 `4`，范围 `1..32` |
 
 Context compaction 只发生在每次 LLM request 前。Tool call 及其全部 tool result 作为原子单元按原始顺序一起保留或删除；孤立、缺失或重复配对不会发送给模型。`max_context_chars` 是 soft target，必要的系统指令和当前任务输入超出目标时会保留，并在 Trace 中标记 overflow。
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
@@ -316,6 +317,15 @@ evals/                    # 离线 EvalCase JSON 数据
 等指令文件仍需要明确确认。目录删除会丢失对应状态，请先备份。
 
 ## Agent Runtime 执行架构
+
+Gateway 对入站消息按 `channel:chat_id` 建立 session。相同 session 严格按入站顺序执行，
+不同 session 可并行运行，并受 `max_concurrent_sessions` 全局上限约束。停止 Gateway 时会取消并等待
+所有 inflight session task，再关闭 channel、LLM client 和 MCP。
+
+Browser 是进程级共享资源，采用独占 lease：首个 `browser_open` 或 `browser_attach` 成功的 session
+成为 owner；其他 session 的 Browser 调用会返回 `browser_ownership_conflict`，不会执行真实命令。
+owner 必须成功调用 `browser_close` 才会释放 lease。Approval/重启恢复沿用原 session identity，
+不会借批准动作抢占其他 session 的 Browser。
 
 所有 Agent-visible Tool Call，包括正常 ReAct、Approval Resume 后的冻结动作以及
 同批次剩余调用，现在都进入同一个执行边界：

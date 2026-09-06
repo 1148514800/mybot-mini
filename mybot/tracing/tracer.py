@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 import uuid
 import re
+from contextvars import ContextVar
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -100,8 +101,13 @@ class AgentTracer:
 
     def __init__(self, trace_dir: Path | None = None):
         self.trace_dir = trace_dir.resolve() if trace_dir else None
-        self._current_run: AgentRunTrace | None = None
-        self._current_step: AgentStepTrace | None = None
+        self._current_run_var: ContextVar[AgentRunTrace | None] = ContextVar(
+            f"agent_tracer_run_{id(self)}", default=None
+        )
+        self._current_step_var: ContextVar[AgentStepTrace | None] = ContextVar(
+            f"agent_tracer_step_{id(self)}", default=None
+        )
+        self._last_run: AgentRunTrace | None = None
         self._started: dict[str, float] = {}
         self._tool_arguments: dict[str, dict[str, Any]] = {}
 
@@ -110,7 +116,8 @@ class AgentTracer:
         user_input: str,
         metadata: dict[str, Any] | None = None,
     ) -> AgentRunTrace:
-        if self._current_run and self._current_run.status == "running":
+        current_run = self._current_run_var.get()
+        if current_run and current_run.status == "running":
             raise RuntimeError("an agent run is already active")
         run = AgentRunTrace(
             run_id=uuid.uuid4().hex,
@@ -119,10 +126,10 @@ class AgentTracer:
             task_id=str((metadata or {}).get("task_id") or "") or None,
             metadata=redact_mapping(metadata or {}),
         )
-        self._current_run = run
-        self._current_step = None
-        self._started = {run.run_id: time.perf_counter()}
-        self._tool_arguments = {}
+        self._current_run_var.set(run)
+        self._current_step_var.set(None)
+        self._last_run = run
+        self._started[run.run_id] = time.perf_counter()
         return run
 
     def finish_run(
@@ -142,7 +149,8 @@ class AgentTracer:
         for call in run.tool_calls:
             if call.finished_at is None:
                 self.finish_tool_call(call, error=unfinished_error)
-        if self._current_step and self._current_step.status == "running":
+        current_step = self.get_current_step()
+        if current_step and current_step.status == "running":
             self.finish_step(status="failed", error=error or "run ended")
         run.finished_at = _now()
         run.duration_ms = self._finish_timer(run.run_id)
@@ -161,7 +169,8 @@ class AgentTracer:
 
     def start_step(self, step_index: int) -> AgentStepTrace:
         run = self._require_running_run()
-        if self._current_step and self._current_step.status == "running":
+        current_step = self.get_current_step()
+        if current_step and current_step.status == "running":
             raise RuntimeError("an agent step is already active")
         step = AgentStepTrace(
             step_id=uuid.uuid4().hex,
@@ -169,7 +178,7 @@ class AgentTracer:
             started_at=_now(),
         )
         run.steps.append(step)
-        self._current_step = step
+        self._current_step_var.set(step)
         self._started[step.step_id] = time.perf_counter()
         return step
 
@@ -183,7 +192,7 @@ class AgentTracer:
         step.duration_ms = self._finish_timer(step.step_id)
         step.status = status
         step.error = redact_text(error) if error else None
-        self._current_step = None
+        self._current_step_var.set(None)
         return step
 
     def start_llm_call(
@@ -366,19 +375,27 @@ class AgentTracer:
         return call
 
     def get_current_run(self) -> AgentRunTrace | None:
-        return self._current_run
+        current = self._current_run_var.get()
+        if current is not None:
+            return current
+        # Preserve the historical post-run inspection API without exposing a
+        # different task's active run to concurrent callers.
+        if self._last_run is not None and self._last_run.status != "running":
+            return self._last_run
+        return None
 
     def get_current_step(self) -> AgentStepTrace | None:
-        return self._current_step
+        return self._current_step_var.get()
 
     def _finish_timer(self, trace_id: str) -> float:
         started = self._started.pop(trace_id, time.perf_counter())
         return max(0.0, (time.perf_counter() - started) * 1000)
 
     def _require_run(self) -> AgentRunTrace:
-        if self._current_run is None:
+        run = self.get_current_run()
+        if run is None:
             raise RuntimeError("no agent run has been started")
-        return self._current_run
+        return run
 
     def _require_running_run(self) -> AgentRunTrace:
         run = self._require_run()
@@ -387,9 +404,10 @@ class AgentTracer:
         return run
 
     def _require_step(self) -> AgentStepTrace:
-        if self._current_step is None:
+        step = self.get_current_step()
+        if step is None:
             raise RuntimeError("no agent step has been started")
-        return self._current_step
+        return step
 
     def _step_by_id(self, step_id: str) -> AgentStepTrace:
         run = self._require_running_run()

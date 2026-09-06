@@ -14,6 +14,7 @@ from .browser import (
     BrowserVerifyTool,
     BrowserTabTool,
     BrowserSessionManager,
+    BrowserOwnershipManager,
     classify_browser_error,
 )
 from .memory import MemoryDeleteTool, MemoryWriteTool
@@ -29,6 +30,7 @@ __all__ = [
     "BrowserErrorType",
     "classify_browser_error",
     "BrowserSessionManager",
+    "BrowserOwnershipManager",
     "build_default_tool_registry",
     "BrowserAttachTool",
     "BrowserOpenTool",

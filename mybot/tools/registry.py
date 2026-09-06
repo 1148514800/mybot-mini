@@ -19,6 +19,7 @@ from .browser import (
     BrowserVerifyTool,
     BrowserTabTool,
     BrowserSessionManager,
+    BrowserOwnershipManager,
 )
 from .exec import ExecTool
 from .file_tools import ReadFileTool, WriteFileTool
@@ -28,8 +29,9 @@ from .runtime import RequestUserInputTool
 
 
 class ToolRegistry:
-    def __init__(self):
+    def __init__(self, browser_ownership: BrowserOwnershipManager | None = None):
         self._tools: dict[str, Tool] = {}
+        self.browser_ownership = browser_ownership or BrowserOwnershipManager()
 
     def register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
@@ -48,24 +50,59 @@ class ToolRegistry:
     def get_definitions(self) -> list[dict]:
         return [tool.to_schema() for tool in self._tools.values()]
 
-    async def execute(self, name: str, params: dict) -> ToolResult:
+    async def execute(
+        self,
+        name: str,
+        params: dict,
+        *,
+        session_key: str | None = None,
+        task_id: str | None = None,
+    ) -> ToolResult:
         tool = self._tools.get(name)
         if not tool:
             return ToolResult(success=False, error=f"Unknown tool '{name}'")
+        acquired = False
+        if name.startswith("browser_"):
+            allowed, acquired = await self.browser_ownership.authorize(
+                session_key or "",
+                entry=name in {"browser_open", "browser_attach"},
+                browser_mode=(
+                    "local" if name == "browser_attach" else
+                    "managed" if name == "browser_open" else None
+                ),
+                task_id=task_id,
+            )
+            if not allowed:
+                return ToolResult(
+                    success=False,
+                    error="Browser is currently owned by another session.",
+                    metadata={
+                        "error_type": "browser_ownership_conflict",
+                        "recoverable": True,
+                    },
+                )
         try:
             result = await tool.execute(**params)
             if isinstance(result, ToolResult):
-                return result
-            if isinstance(result, str):
-                return ToolResult.from_legacy(result)
-            return ToolResult(
-                success=False,
-                error=(
-                    f"Tool '{name}' returned unsupported result type "
-                    f"{type(result).__name__}"
-                ),
-            )
+                normalized = result
+            elif isinstance(result, str):
+                normalized = ToolResult.from_legacy(result)
+            else:
+                normalized = ToolResult(
+                    success=False,
+                    error=(
+                        f"Tool '{name}' returned unsupported result type "
+                        f"{type(result).__name__}"
+                    ),
+                )
+            if name == "browser_close" and normalized.success:
+                await self.browser_ownership.release_if_owner(session_key or "")
+            elif acquired and not normalized.success:
+                await self.browser_ownership.release_claim(session_key or "")
+            return normalized
         except Exception as exc:
+            if acquired:
+                await self.browser_ownership.release_claim(session_key or "")
             return ToolResult(success=False, error=f"{type(exc).__name__}: {exc}")
 
 

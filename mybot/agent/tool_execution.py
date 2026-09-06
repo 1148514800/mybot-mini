@@ -79,6 +79,8 @@ class ToolExecutionRequest:
 
 @dataclass(slots=True)
 class ToolExecutionContext:
+    session_key: str = ""
+    task_id: str | None = None
     browser_mode: str = BROWSER_MODE_MANAGED
     browser_snapshot: str = ""
     loaded_skills: set[str] = field(default_factory=set)
@@ -150,6 +152,8 @@ class ToolExecutionPipeline:
                 tool_trace=tool_trace,
             )
         assert arguments is not None
+        context.session_key = request.session_key
+        context.task_id = request.task_id
 
         if not self._tool_exists(name):
             return self._finish(
@@ -650,6 +654,8 @@ class ToolExecutionPipeline:
             refresh = await self._execute_registry(
                 "browser_snapshot",
                 refresh_arguments,
+                session_key=context.session_key,
+                task_id=context.task_id,
             )
         except Exception as exc:
             refresh = ToolResult(
@@ -774,7 +780,12 @@ class ToolExecutionPipeline:
             context.browser_state.note_result(name, arguments, budget_result)
             return budget_result
 
-        result = await self._execute_registry(name, arguments)
+        result = await self._execute_registry(
+            name,
+            arguments,
+            session_key=context.session_key,
+            task_id=context.task_id,
+        )
         context.browser_state.note_result(name, arguments, result)
         self._record_task_result(name, arguments, result, context)
 
@@ -825,6 +836,8 @@ class ToolExecutionPipeline:
         refresh = await self._execute_registry(
             "browser_snapshot",
             refresh_arguments,
+            session_key=context.session_key,
+            task_id=context.task_id,
         )
         if recovery_trace is not None:
             self.tracer.finish_tool_call(recovery_trace, result=refresh)
@@ -861,13 +874,24 @@ class ToolExecutionPipeline:
         self,
         name: str,
         arguments: dict[str, Any],
+        *,
+        session_key: str = "",
+        task_id: str | None = None,
     ) -> ToolResult:
         safe_arguments = redact_tool_arguments(name, arguments)
         self.debug_trace(
             f"tool call name={name} args="
             f"{json.dumps(safe_arguments, ensure_ascii=False)}"
         )
-        result = await self.tools.execute(name, arguments)
+        if isinstance(self.tools, ToolRegistry):
+            result = await self.tools.execute(
+                name,
+                arguments,
+                session_key=session_key,
+                task_id=task_id,
+            )
+        else:
+            result = await self.tools.execute(name, arguments)
         safe_result = {
             "success": result.success,
             "output": redact_tool_text(name, result.output, arguments),

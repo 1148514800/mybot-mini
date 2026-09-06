@@ -1,4 +1,5 @@
 {
+  "max_concurrent_sessions": 4,
   "llm": {
     "provider": "siliconflow",
     "max_completion_tokens": 20000,
