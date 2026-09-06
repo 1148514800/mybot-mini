@@ -12,6 +12,7 @@ from mybot.agent.tool_execution import (
 )
 from mybot.guardrails import ApprovalManager, ToolPolicy
 from mybot.tools import BrowserResult, Tool, ToolRegistry, ToolResult
+from mybot.tools.browser.session import BrowserLease
 from mybot.tracing import AgentTracer, REDACTED
 
 
@@ -60,6 +61,8 @@ class ToolExecutionPipelineTests(unittest.IsolatedAsyncioTestCase):
         debug_trace=None,
     ) -> tuple[ToolExecutionPipeline, AgentTracer]:
         registry = ToolRegistry()
+        # Browser action tests model an already established trusted lease.
+        registry.browser_ownership._lease = BrowserLease("cli:test")
         registry.register(tool)
         for extra_tool in extra_tools:
             registry.register(extra_tool)

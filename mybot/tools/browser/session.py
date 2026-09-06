@@ -68,14 +68,14 @@ class BrowserOwnershipManager:
         task_id: str | None = None,
     ) -> tuple[bool, bool]:
         """Return (allowed, newly_acquired), atomically claiming entry calls."""
-        requester = session_key.strip() or "__anonymous__"
+        requester = session_key.strip()
+        if not requester:
+            return False, False
         async with self._lock:
             if self._lease is not None:
                 return self._lease.owner_session_key == requester, False
             if not entry:
-                # Read-only operations remain compatible before an explicit
-                # browser_open/attach establishes ownership.
-                return True, False
+                return False, False
             self._lease = BrowserLease(
                 owner_session_key=requester,
                 owner_task_id=task_id,
@@ -85,7 +85,9 @@ class BrowserOwnershipManager:
             return True, True
 
     async def release_if_owner(self, session_key: str) -> bool:
-        requester = session_key.strip() or "__anonymous__"
+        requester = session_key.strip()
+        if not requester:
+            return False
         async with self._lock:
             if self._lease is None or self._lease.owner_session_key != requester:
                 return False

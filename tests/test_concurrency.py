@@ -13,6 +13,7 @@ from mybot.tracing import AgentTracer
 class _DelayedTool(Tool):
     def __init__(self, name):
         self._name = name
+        self.execution_count = 0
 
     @property
     def name(self):
@@ -22,6 +23,7 @@ class _DelayedTool(Tool):
     parameters = {"type": "object", "properties": {}}
 
     async def execute(self, **kwargs):
+        self.execution_count += 1
         await asyncio.sleep(0)
         return ToolResult(success=True, output="opened")
 
@@ -92,6 +94,65 @@ class ConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(closed.success)
         reopened = await registry.execute("browser_open", {}, session_key="b")
         self.assertTrue(reopened.success)
+
+    async def test_browser_without_owner_fails_closed(self):
+        registry = ToolRegistry()
+        snapshot = _DelayedTool("browser_snapshot")
+        registry.register(snapshot)
+        result = await registry.execute(
+            "browser_snapshot", {}, session_key="a"
+        )
+        self.assertFalse(result.success)
+        self.assertEqual(result.metadata["error_type"], "browser_ownership_required")
+        self.assertEqual(snapshot.execution_count, 0)
+
+    async def test_browser_missing_identity_fails_closed(self):
+        registry = ToolRegistry()
+        opened = _DelayedTool("browser_open")
+        registry.register(opened)
+        result = await registry.execute("browser_open", {}, session_key="")
+        self.assertFalse(result.success)
+        self.assertEqual(
+            result.metadata["error_type"],
+            "browser_ownership_identity_missing",
+        )
+        self.assertEqual(opened.execution_count, 0)
+
+    async def test_restart_starts_without_browser_authority(self):
+        old = ToolRegistry()
+        old_open = _DelayedTool("browser_open")
+        old_snapshot = _DelayedTool("browser_snapshot")
+        old.register(old_open)
+        old.register(old_snapshot)
+        self.assertTrue(
+            (await old.execute("browser_open", {}, session_key="a")).success
+        )
+
+        restarted = ToolRegistry()
+        snapshot = _DelayedTool("browser_snapshot")
+        restarted.register(snapshot)
+        result = await restarted.execute(
+            "browser_snapshot", {}, session_key="b"
+        )
+        self.assertFalse(result.success)
+        self.assertEqual(result.metadata["error_type"], "browser_ownership_required")
+        self.assertEqual(snapshot.execution_count, 0)
+
+    async def test_tracer_post_run_inspection_is_task_local(self):
+        tracer = AgentTracer()
+        barrier = asyncio.Barrier(2)
+        seen = {}
+
+        async def run(key):
+            trace = tracer.start_run(key)
+            await barrier.wait()
+            tracer.finish_run(key)
+            seen[key] = tracer.get_current_run().run_id
+            await asyncio.sleep(0)
+            self.assertEqual(tracer.get_current_run().run_id, trace.run_id)
+
+        await asyncio.gather(run("a"), run("b"))
+        self.assertNotEqual(seen["a"], seen["b"])
 
 
 if __name__ == "__main__":

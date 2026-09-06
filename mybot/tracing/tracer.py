@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 import uuid
 import re
@@ -96,6 +97,13 @@ def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def _current_task() -> asyncio.Task[Any] | None:
+    try:
+        return asyncio.current_task()
+    except RuntimeError:
+        return None
+
+
 class AgentTracer:
     """Collect one agent run in memory and optionally persist it on completion."""
 
@@ -107,7 +115,13 @@ class AgentTracer:
         self._current_step_var: ContextVar[AgentStepTrace | None] = ContextVar(
             f"agent_tracer_step_{id(self)}", default=None
         )
-        self._last_run: AgentRunTrace | None = None
+        self._last_run_var: ContextVar[AgentRunTrace | None] = ContextVar(
+            f"agent_tracer_last_run_{id(self)}", default=None
+        )
+        self._legacy_post_run: AgentRunTrace | None = None
+        self._run_owner_var: ContextVar[asyncio.Task[Any] | None] = ContextVar(
+            f"agent_tracer_run_owner_{id(self)}", default=None
+        )
         self._started: dict[str, float] = {}
         self._tool_arguments: dict[str, dict[str, Any]] = {}
 
@@ -116,7 +130,10 @@ class AgentTracer:
         user_input: str,
         metadata: dict[str, Any] | None = None,
     ) -> AgentRunTrace:
+        current_task = _current_task()
         current_run = self._current_run_var.get()
+        if self._run_owner_var.get() is not current_task:
+            current_run = None
         if current_run and current_run.status == "running":
             raise RuntimeError("an agent run is already active")
         run = AgentRunTrace(
@@ -128,7 +145,8 @@ class AgentTracer:
         )
         self._current_run_var.set(run)
         self._current_step_var.set(None)
-        self._last_run = run
+        self._last_run_var.set(run)
+        self._run_owner_var.set(current_task)
         self._started[run.run_id] = time.perf_counter()
         return run
 
@@ -158,6 +176,7 @@ class AgentTracer:
         run.task_status = task_status
         run.final_output = redact_text(final_output)
         run.error = redact_text(error) if error else None
+        self._legacy_post_run = run
         if self.trace_dir:
             try:
                 save_trace(run, self.trace_dir)
@@ -375,13 +394,15 @@ class AgentTracer:
         return call
 
     def get_current_run(self) -> AgentRunTrace | None:
-        current = self._current_run_var.get()
-        if current is not None:
+        current = self._current_run_var.get() or self._last_run_var.get()
+        current_task = _current_task()
+        if current is not None and (
+            self._run_owner_var.get() is current_task
+            or self._run_owner_var.get() is None
+        ):
             return current
-        # Preserve the historical post-run inspection API without exposing a
-        # different task's active run to concurrent callers.
-        if self._last_run is not None and self._last_run.status != "running":
-            return self._last_run
+        if current_task is None:
+            return self._legacy_post_run
         return None
 
     def get_current_step(self) -> AgentStepTrace | None:

@@ -63,8 +63,17 @@ class ToolRegistry:
             return ToolResult(success=False, error=f"Unknown tool '{name}'")
         acquired = False
         if name.startswith("browser_"):
+            if not session_key or not session_key.strip():
+                return ToolResult(
+                    success=False,
+                    error="Browser ownership identity is missing from runtime context.",
+                    metadata={
+                        "error_type": "browser_ownership_identity_missing",
+                        "recoverable": False,
+                    },
+                )
             allowed, acquired = await self.browser_ownership.authorize(
-                session_key or "",
+                session_key,
                 entry=name in {"browser_open", "browser_attach"},
                 browser_mode=(
                     "local" if name == "browser_attach" else
@@ -73,11 +82,21 @@ class ToolRegistry:
                 task_id=task_id,
             )
             if not allowed:
+                ownership_required = self.browser_ownership.lease is None
                 return ToolResult(
                     success=False,
-                    error="Browser is currently owned by another session.",
+                    error=(
+                        "Browser ownership is required; establish it with browser_open "
+                        "or browser_attach first."
+                        if ownership_required
+                        else "Browser is currently owned by another session."
+                    ),
                     metadata={
-                        "error_type": "browser_ownership_conflict",
+                        "error_type": (
+                            "browser_ownership_required"
+                            if ownership_required
+                            else "browser_ownership_conflict"
+                        ),
                         "recoverable": True,
                     },
                 )

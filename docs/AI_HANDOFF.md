@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 10：single-process cross-session concurrency 与 exclusive Browser ownership 已实现。Live suite 默认 skip，既有非 Browser live case 保持原行为。
+Phase 10 收尾：single-process cross-session concurrency 与 exclusive Browser ownership 的安全边界已完成。Live suite 默认 skip，既有非 Browser live case 保持原行为。
 
 ## 已完成内容与修改文件
 
@@ -32,6 +32,9 @@ Phase 10：single-process cross-session concurrency 与 exclusive Browser owners
 - `tests/test_concurrency.py`：覆盖 session overlap/serialization、Tracer isolation、Browser ownership/release。
 - `README.md`：记录调度、shutdown 与 Browser lease 语义。
 - `AGENTS.md`：记录 GitHub 仓库名称与远端地址。
+- `mybot/tools/browser/session.py`、`mybot/tools/registry.py`：无 owner 的 Browser 操作 fail closed；空 trusted session identity fail closed；只有 `browser_open`/`browser_attach` 可在无 owner 时尝试 acquire。
+- `mybot/tracing/tracer.py`：run owner 与 current run 使用 task-local ContextVar；仅同步兼容路径允许无 event-loop 的历史 post-run 检查，不向其他 asyncio task 暴露 last run。
+- `tests/test_concurrency.py`、`tests/test_tool_execution.py`：覆盖 no-owner、missing identity、restart lease reset 与 post-run isolation。
 
 ## 架构决策与行为约束
 
@@ -47,8 +50,8 @@ Phase 10：single-process cross-session concurrency 与 exclusive Browser owners
 
 本阶段在 Windows 沙箱工作区验证：
 
-- `uv run python -m unittest discover -s tests -v`：252 tests；新增并发相关测试通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
-- 定向并发、Tracer、ToolExecution、AgentLoop、Browser 测试：63/63 passed。
+- `uv run python -m unittest discover -s tests -v`：256 tests；功能性回归通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
+- 定向 Concurrency、Tracer、ModelExecution、ToolExecution、AgentLoop、Checkpoint 测试：30/30 passed。
 - 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
 - `uv run python -m mybot.evals.runner`：43/43 passed，100%。
@@ -63,12 +66,14 @@ Phase 10：single-process cross-session concurrency 与 exclusive Browser owners
 - SQLite 未加密；数据最小化、脱敏、文件权限和 Runtime path 保护不能替代磁盘加密。
 - durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
 - Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
-- Browser ownership 不持久化；进程重启后 lease 丢失，恢复动作仍必须重新建立 live Browser 状态。Browser Live 尚未在本次运行启用。
+- Browser ownership 不持久化；进程重启后 lease 为 none，恢复动作必须先重新建立 live Browser 状态。Browser Live 尚未在本次运行启用。
+- `SessionExecutionCoordinator._locks` 不回收；本阶段仅记录为 remaining risk。
+- 无 owner 或缺失 trusted session identity 的 Browser 调用不会进入真实 Tool；重启恢复不会从 persisted browser state 恢复 ownership。
 
 ## 下一步
 
 - 在具备 Browser 条件且 provider 稳定的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
-- Cross-session concurrency 与 Browser ownership 已完成；artifact reference 仍未实现，需独立任务评估。
+- Phase 10 安全收尾已完成；artifact reference 仍未实现，需独立任务评估。
 
 ## 不要重复进行的工作
 
