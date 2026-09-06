@@ -408,6 +408,32 @@ Failure Recovery、Policy Guardrails、MCP Tools、Runtime Efficiency 和 Browse
 Reliability。Replay 只读取已有 Trace 并输出
 timeline，不会再次调用模型或真实 Tool。
 
+### Production-like Live E2E（显式启用）
+
+真实模型链路与离线 Eval 完全分开，默认不会执行。需要显式设置
+`MYBOT_RUN_LIVE_E2E=1`，并提供 `OPENAI_API_KEY`（或 `MYBOT_LIVE_API_KEY`）；可选的
+`MYBOT_LIVE_BASE_URL`、`MYBOT_LIVE_MODEL` 和 `MYBOT_LIVE_PROVIDER` 用于 OpenAI-compatible
+服务：
+
+```powershell
+$env:MYBOT_RUN_LIVE_E2E = "1"
+$env:OPENAI_API_KEY = "你的 API Key"
+uv run python -m mybot.evals.live
+```
+
+Live suite 每个 case 都在临时 workspace 中运行，结果包含 case、状态、耗时、task/run ID、
+provider/model、Tool/LLM 计数、最终 task 状态和可定位的失败原因；不会输出 API Key、cookie、
+token 或原始敏感 Tool 参数。没有 opt-in 或 API Key 时会明确 `SKIP`，不会影响普通测试和 43
+个离线 Eval。使用 `--json` 可输出适合 CI 收集的脱敏结果记录。
+
+浏览器只读 smoke test 还需要额外设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1`，并要求
+`playwright-cli` 可用：
+
+```powershell
+$env:MYBOT_RUN_BROWSER_LIVE_E2E = "1"
+uv run python -m mybot.evals.live
+```
+
 ## Guardrails 与 Human-in-the-loop
 
 每个模型提出的 Tool Call 都会由 `ToolExecutionPipeline` 完成 Tool lookup、参数解析、

@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Checkpoint package 真实职责拆分已完成。TaskRuntimeManager 抽取保持不变，本阶段未修改 AgentLoop，checkpoint schema 仍为 v1。
+Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默认 skip）。Harness 已完成；真实 API/Browser 未在当前环境执行。
 
 ## 已完成内容与修改文件
 
@@ -13,6 +13,9 @@ Checkpoint package 真实职责拆分已完成。TaskRuntimeManager 抽取保持
 - `mybot/storage/checkpoints/__init__.py` 与 `mybot/storage/checkpoint.py`：保留兼容 Store、常量和恢复行模型导出。
 - `mybot/agent/checkpoint_recovery.py`：仅兼容导出；`mybot/agent/runtime_manager.py` 直接使用 storage serializer。
 - `tests/test_checkpoint_modules.py`：新增冷启动导入兼容、脱敏不修改 live 输入、恢复 sender/task/TTL 绑定测试。
+- `mybot/evals/live.py`：六个显式 opt-in case（basic、read_file、approval、restart、context budget、browser read-only），每 case 使用临时 workspace，结果脱敏并记录 task/run/provider/model、Tool/LLM 计数、Trace context stats 和失败分类。
+- `tests/test_live_evals.py`：覆盖默认 opt-in、无 key、Browser 条件和脱敏报告。
+- `mybot/agent/loop.py`：`resume_pending()` 在消费 durable checkpoint 前先校验原 sender，错误 sender 不会删除待确认记录。
 
 ## 架构决策与行为约束
 
@@ -25,24 +28,25 @@ Checkpoint package 真实职责拆分已完成。TaskRuntimeManager 抽取保持
 
 ## 测试结果
 
-本阶段在 macOS 工作区验证：
+本阶段在 Windows 沙箱工作区验证：
 
-- `uv run python -m unittest discover -s tests -p 'test_checkpoint*.py' -v`：17/17 通过。
-- `uv run python -m unittest discover -s tests -v`：239 tests，238 passed，1 skipped，0 failures/errors。
+- `uv run python -m unittest discover -s tests -v`：243 tests，238 passed，1 skipped，2 failures，1 error。
+- 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
 - `uv run python -m mybot.evals.runner`：43/43 passed，100%。
 - `git diff --check`：通过。
+- `uv run python -m mybot.evals.live`（无 `MYBOT_RUN_LIVE_E2E`）：6/6 明确 SKIP，退出码 0；本阶段未显式启用真实 Live E2E。
 
 ## 已知问题
 
 - SQLite 未加密；数据最小化、脱敏、文件权限和 Runtime path 保护不能替代磁盘加密。
 - durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
 - Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
-- Cross-session concurrency、Browser ownership、artifact reference、真实模型/站点 E2E 尚未实现，本阶段未扩展这些功能。
+- Cross-session concurrency、Browser ownership、artifact reference 尚未实现；真实模型/站点 E2E 已有 harness，但当前环境未取得 PASS。
 
 ## 下一步
 
-- 本阶段无待完成实现；后续工作由用户另行指定。
+- 在具备真实 API key 的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`；浏览器场景另加 `MYBOT_RUN_BROWSER_LIVE_E2E=1` 与 `playwright-cli`。
 - 如评估 Context 摘要或 artifact reference，应作为独立任务，保持当前 checkpoint 安全与兼容契约。
 
 ## 不要重复进行的工作

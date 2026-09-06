@@ -1073,6 +1073,14 @@ class AgentLoop:
                 final_output=output,
                 status="cancelled",
             )
+        if (
+            pending.requester_sender_id is not None
+            and sender_id != pending.requester_sender_id
+        ):
+            return self._approval_authorization_mismatch_trace(
+                pending,
+                user_input,
+            )
         if intent == ApprovalIntent.APPROVE:
             if not self._consume_durable_approval(session_key):
                 return self._checkpoint_consume_failed_trace(pending, user_input)
