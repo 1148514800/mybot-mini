@@ -5,12 +5,12 @@ from typing import Any
 
 from ..guardrails import ApprovalManager, ClarificationManager
 from ..storage.checkpoints.store import ActiveTaskCheckpointStore
-from .browser_reliability import RecentTaskManager
-from .checkpoint_recovery import (
+from ..storage.checkpoints.serialization import (
     approval_from_checkpoint,
     clarification_from_checkpoint,
     recent_task_from_checkpoint,
 )
+from .browser_reliability import RecentTaskManager
 from .task_state import AgentTaskState, AgentTaskStatus
 
 
