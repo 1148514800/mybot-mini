@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默认 skip）。Harness 已完成；已使用 config.json 尝试真实模型执行。
+Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默认 skip）。Harness 已完成并使用 luchikey 配置取得非浏览器 Live PASS。
 
 ## 已完成内容与修改文件
 
@@ -37,14 +37,14 @@ Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默�
 - `uv run python -m mybot.evals.runner`：43/43 passed，100%。
 - `git diff --check`：通过。
 - `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
-- `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（读取当前 config，Browser opt-in 未启用）：5 个真实模型 case 均在首个 LLM 请求收到 provider `401 Authentication failed`，无 Tool/副作用执行；`browser_live` 明确 SKIP。未取得真实 Live PASS。
+- `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（luchikey / `gpt-5.6-sol`，Browser opt-in 未启用）：5/6 passed；`real_llm_basic`、`read_file_tool`、`approval_side_effect`、`restart_recovery`、`context_budget` 真实执行通过；`browser_live` 因未设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1` SKIP。
 
 ## 已知问题
 
 - SQLite 未加密；数据最小化、脱敏、文件权限和 Runtime path 保护不能替代磁盘加密。
 - durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
 - Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
-- Cross-session concurrency、Browser ownership、artifact reference 尚未实现；当前 config 中 provider 凭证被服务端拒绝，需更新有效凭证后重跑 Live E2E。
+- Cross-session concurrency、Browser ownership、artifact reference 尚未实现；Browser Live 尚未在本次运行启用。
 
 ## 下一步
 
