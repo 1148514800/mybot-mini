@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 import unittest
+from pathlib import Path
 
 from mybot.evals.live import (
     BROWSER_OPT_IN,
     LIVE_OPT_IN,
     LiveEvalCase,
     LiveEvalResult,
+    _make_context,
     format_live_report,
     run_live_suite,
 )
@@ -58,6 +61,55 @@ class LiveEvalHarnessTests(unittest.TestCase):
         public = result.public_dict()
         self.assertEqual(public["task_id"], "task-1")
         self.assertNotIn("arguments", public)
+
+    def test_restart_context_inherits_provider_and_model_configuration(self) -> None:
+        async def scenario() -> None:
+            with tempfile.TemporaryDirectory(prefix="mybot-live-config-") as directory:
+                workspace = Path(directory)
+                first = await _make_context(
+                    workspace,
+                    key="custom-key",
+                    base_url="https://provider.example/v1",
+                    provider="custom-provider",
+                    model="custom-model",
+                    max_react_steps=7,
+                    max_context_chars=1234,
+                    max_tool_result_chars=567,
+                )
+                source = first.config
+                second = await _make_context(
+                    workspace,
+                    key="ignored-key",
+                    base_url="https://ignored.example/v1",
+                    provider="ignored-provider",
+                    model="ignored-model",
+                    source_config=source,
+                )
+                try:
+                    for name in (
+                        "provider",
+                        "model",
+                        "api_key",
+                        "base_url",
+                        "max_react_steps",
+                        "max_context_chars",
+                        "max_recent_messages",
+                        "max_tool_result_chars",
+                        "max_memory_chars",
+                        "max_completion_tokens",
+                        "rate_limit_retries",
+                        "request_timeout_seconds",
+                    ):
+                        self.assertEqual(
+                            getattr(second.config, name),
+                            getattr(source, name),
+                            name,
+                        )
+                finally:
+                    await second.close()
+                    await first.close()
+
+        asyncio.run(scenario())
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ import shutil
 import subprocess
 import tempfile
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
@@ -242,24 +242,34 @@ async def _make_context(
     max_react_steps: int = 10,
     max_context_chars: int = 60_000,
     max_tool_result_chars: int = 8_000,
+    source_config: GatewayConfig | None = None,
 ) -> LiveEvalContext:
+    if source_config is not None:
+        config = replace(source_config, workspace=workspace, trace_dir=None)
+        key = config.api_key or key
+        base_url = config.base_url
+    else:
+        config = None
     init_instructions(workspace / "instructions")
     init_workspace(workspace)
-    config = GatewayConfig(
-        provider=provider,
-        model=model,
-        api_key=key,
-        base_url=base_url,
-        workspace=workspace,
-        trace_dir=None,
-        max_react_steps=max_react_steps,
-        max_context_chars=max_context_chars,
-        max_tool_result_chars=max_tool_result_chars,
-        checkpoint_enabled=True,
-        show_internal_process=False,
-        rate_limit_retries=0,
-        request_timeout_seconds=float(os.environ.get("MYBOT_LIVE_TIMEOUT_SECONDS", "60")),
-    )
+    if config is None:
+        config = GatewayConfig(
+            provider=provider,
+            model=model,
+            api_key=key,
+            base_url=base_url,
+            workspace=workspace,
+            trace_dir=None,
+            max_react_steps=max_react_steps,
+            max_context_chars=max_context_chars,
+            max_tool_result_chars=max_tool_result_chars,
+            checkpoint_enabled=True,
+            show_internal_process=False,
+            rate_limit_retries=0,
+            request_timeout_seconds=float(
+                os.environ.get("MYBOT_LIVE_TIMEOUT_SECONDS", "60")
+            ),
+        )
     memory = MemoryManager(workspace)
     tools = build_default_tool_registry(workspace, memory_manager=memory)
     client = build_client(config)
@@ -271,8 +281,8 @@ async def _make_context(
         context=ContextBuilder(
             workspace,
             memory_manager=memory,
-            max_context_chars=max_context_chars,
-            max_tool_result_chars=max_tool_result_chars,
+            max_context_chars=config.max_context_chars,
+            max_tool_result_chars=config.max_tool_result_chars,
         ),
         sessions=SessionManager(workspace),
         tracer=AgentTracer(),
@@ -384,9 +394,11 @@ async def _run_approval(context: LiveEvalContext, *, name: str, restart: bool = 
                 key=context.key,
                 base_url=context.base_url,
                 model=context.config.model,
+                provider=context.config.provider,
                 max_react_steps=context.config.max_react_steps,
                 max_context_chars=context.config.max_context_chars,
                 max_tool_result_chars=context.config.max_tool_result_chars,
+                source_config=context.config,
             )
             context = restarted
             pending = context.agent.approvals.get(session)
@@ -465,9 +477,11 @@ async def _run_restart_recovery(context: LiveEvalContext) -> LiveEvalResult:
             key=context.key,
             base_url=context.base_url,
             model=context.config.model,
+            provider=context.config.provider,
             max_react_steps=context.config.max_react_steps,
             max_context_chars=context.config.max_context_chars,
             max_tool_result_chars=context.config.max_tool_result_chars,
+            source_config=context.config,
         )
         context = restarted
         pending = context.agent.clarifications.get(session)
@@ -567,9 +581,14 @@ async def _run_browser(context: LiveEvalContext) -> LiveEvalResult:
     traces: list[AgentRunTrace] = []
     try:
         prompt = (
-            "Use the browser tools in read-only mode. Open https://example.com, take a snapshot, "
-            "inspect the visible heading text 'Example Domain', then verify that the URL contains example.com. "
-            "Do not click, type, submit, or use browser_eval. Finish only after structured verification succeeds."
+            "You must perform this read-only browser workflow using exactly these browser tools in this order:\n"
+            "1. Call browser_open with no URL.\n"
+            "2. Call browser_goto with url=https://example.com.\n"
+            "3. Call browser_snapshot.\n"
+            "4. Call browser_inspect with text=Example Domain.\n"
+            "5. Call browser_verify with url_contains=example.com and text=Example Domain.\n"
+            "Do not click, type, submit, press, use browser_eval, or skip any step. "
+            "Only finish after browser_verify reports success and postcondition_met=true."
         )
         output, trace = await context.agent.run_traced(
             prompt,
@@ -579,15 +598,24 @@ async def _run_browser(context: LiveEvalContext) -> LiveEvalResult:
             requester_sender_id="live-sender",
         )
         traces.append(trace)
-        names = {call.tool_name for call in trace.tool_calls}
+        names = [call.tool_name for call in trace.tool_calls]
         reasons = []
         if trace.status != "success" or trace.task_status != "completed":
             reasons.append(f"task ended as {trace.status}/{trace.task_status}")
-        for required in ("browser_open", "browser_goto", "browser_snapshot", "browser_inspect", "browser_verify"):
-            if required not in names:
-                reasons.append(f"model behavior did not call {required}")
-        if not any(call.metadata.get("postcondition_met") for call in trace.tool_calls if call.tool_name == "browser_verify"):
-            reasons.append("browser verification evidence is missing")
+        required = ("browser_open", "browser_goto", "browser_snapshot", "browser_inspect", "browser_verify")
+        if not all(tool_name in names for tool_name in required):
+            for tool_name in required:
+                if tool_name not in names:
+                    reasons.append(f"model behavior did not call {tool_name}")
+        elif [name for name in names if name in required][: len(required)] != list(required):
+            reasons.append(f"browser tool order was {names}")
+        verify_calls = [call for call in trace.tool_calls if call.tool_name == "browser_verify"]
+        if not any(call.success and call.metadata.get("postcondition_met") is True for call in verify_calls):
+            reasons.append("browser_verify did not report success/postcondition_met=true")
+        forbidden = {"browser_click", "browser_type", "browser_press", "browser_eval"}
+        used_forbidden = sorted(forbidden.intersection(names))
+        if used_forbidden:
+            reasons.append(f"read-only workflow used forbidden tools: {used_forbidden}")
         if reasons:
             return _result(name, started, context.config, traces, status="fail", failure_reason=_failure("; ".join(reasons), traces))
         return _result(name, started, context.config, traces)

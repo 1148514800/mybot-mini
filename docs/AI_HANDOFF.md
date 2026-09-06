@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 9：Production-like Live E2E harness 已完成；本轮完成第二轮 Runtime 瘦身。Live suite 默认 skip，使用 luchikey 配置的五个非浏览器 case 保持真实通过。
+Phase 9：Production-like Live E2E harness 已完成；Phase 9.5 仅修复 Live harness 的 restart 配置继承和 Browser smoke prompt/assertions。Live suite 默认 skip，使用 luchikey 配置的五个非浏览器 case 保持真实通过。
 
 ## 已完成内容与修改文件
 
@@ -21,6 +21,8 @@ Phase 9：Production-like Live E2E harness 已完成；本轮完成第二轮 Run
 - `mybot/agent/tool_calls.py`：提供无状态的 tool call signature、serialize、deserialize 纯函数。
 - `mybot/agent/loop.py`：直接使用 `TaskRuntimeManager`，移除 checkpoint/approval delegation wrappers 和 tool-call codec；ReAct 模型请求改由 `ModelExecutor` 执行。
 - `tests/test_model_execution.py`、`tests/test_tool_calls.py`：覆盖模型请求、trace/timeout、无 active trace 和 codec round-trip。
+- `mybot/evals/live.py`：restart 重建上下文完整继承原 `GatewayConfig` 的 provider/model/key/base URL、context/react/tool/result/request 限制；Browser smoke 明确要求五个只读工具顺序并验证 `browser_verify.success` 与 `postcondition_met=true`，拒绝副作用 Browser Tool。
+- `tests/test_live_evals.py`：新增 custom provider/model restart 配置一致性 regression test。
 
 ## 架构决策与行为约束
 
@@ -44,6 +46,7 @@ Phase 9：Production-like Live E2E harness 已完成；本轮完成第二轮 Run
 - `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
 - `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（luchikey / `gpt-5.6-sol`，Browser opt-in 未启用）：5/6 passed；`real_llm_basic`、`read_file_tool`、`approval_side_effect`、`restart_recovery`、`context_budget` 真实执行通过；`browser_live` 因未设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1` SKIP。
 - 本轮重构后 Live E2E 结果无 behavior regression：同一命令再次得到 5/6 passed，Browser Live 明确 SKIP。
+- Phase 9.5 harness 修复后：一次真实运行 `restart_recovery` PASS；重复运行受 provider 间歇返回 `unknown provider for model gpt-5.6-sol` 影响，最终一次报告为 4/6。Browser Live 仍未通过：一次运行因 Playwright/Chrome 初始化 `EPERM` 失败，另一轮因同一 provider 错误未进入工具链；独立 Browser trace 中工具顺序为 `browser_open, browser_open, browser_goto, browser_snapshot, browser_inspect, browser_verify`，`browser_verify.postcondition_met=false`，未判定为 Runtime correctness bug。
 
 ## 已知问题
 
@@ -54,7 +57,7 @@ Phase 9：Production-like Live E2E harness 已完成；本轮完成第二轮 Run
 
 ## 下一步
 
-- 在具备 Browser 条件的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
+- 在具备 Browser 条件且 provider 稳定的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
 - Cross-session concurrency、Browser ownership、artifact reference 仍是未实现能力，需独立任务评估。
 
 ## 不要重复进行的工作
