@@ -45,6 +45,11 @@
     "enabled": true,
     "recent_task_ttl_seconds": 86400
   },
+  "artifact": {
+    "enabled": true,
+    "externalize_threshold_chars": 8000,
+    "read_max_chars": 8000
+  },
   "tracing": {
     "trace_dir": null
   },

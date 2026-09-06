@@ -116,6 +116,7 @@ class ToolPolicy:
 
         if name in {
             "read_file",
+            "artifact_read",
             "browser_snapshot",
             "browser_links",
             "browser_inspect",

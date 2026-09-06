@@ -1,0 +1,28 @@
+[
+  {
+    "id": "artifact_001",
+    "name": "Externalize a large text result",
+    "input": "读取大型文本结果并总结关键信息",
+    "expected_tools": ["read_file"],
+    "forbidden_tools": ["browser_snapshot"],
+    "must_contain": ["artifact"],
+    "max_steps": 3,
+    "metadata": {
+      "category": "artifact_results",
+      "fake_tools": [
+        {
+          "name": "read_file",
+          "arguments": {"path": "large.txt"},
+          "output": "LARGE_RESULT_SENTINEL_12345 repeated output ",
+          "output_repeat": 300
+        },
+        {
+          "name": "artifact_read",
+          "arguments": {"artifact_id": "artifact-from-preview", "max_chars": 4000},
+          "output": "artifact content retrieved"
+        }
+      ],
+      "fake_output": "已通过 artifact 引用读取大型结果。"
+    }
+  }
+]

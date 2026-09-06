@@ -52,6 +52,8 @@ class ReadFileTool(WorkspaceFileTool):
 
     async def execute(self, path: str, **kwargs) -> str:
         try:
+            if classify_workspace_write_path(path, self.workspace) == WorkspaceWriteKind.RUNTIME_MANAGED:
+                return "Error: Runtime-managed workspace paths cannot be read with read_file."
             target = self._resolve_path(path)
             if not target.exists():
                 return f"Error: Not found: {path}"

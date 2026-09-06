@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 10 收尾：single-process cross-session concurrency 与 exclusive Browser ownership 的安全边界已完成。Live suite 默认 skip，既有非 Browser live case 保持原行为。
+Phase 11：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模型只收到 preview 与 artifact_id，使用受限 artifact_read 按需读取。Browser result 不外置，ToolExecutionPipeline 安全语义保持不变。
 
 ## 已完成内容与修改文件
 
@@ -35,6 +35,13 @@ Phase 10 收尾：single-process cross-session concurrency 与 exclusive Browser
 - `mybot/tools/browser/session.py`、`mybot/tools/registry.py`：无 owner 的 Browser 操作 fail closed；空 trusted session identity fail closed；只有 `browser_open`/`browser_attach` 可在无 owner 时尝试 acquire。
 - `mybot/tracing/tracer.py`：run owner 与 current run 使用 task-local ContextVar；仅同步兼容路径允许无 event-loop 的历史 post-run 检查，不向其他 asyncio task 暴露 last run。
 - `tests/test_concurrency.py`、`tests/test_tool_execution.py`：覆盖 no-owner、missing identity、restart lease reset 与 post-run isolation。
+- `mybot/storage/artifacts/`：新增 text-only、session-bound ArtifactRecord/ArtifactStore，原子写入、脱敏、sha256、存储上限和 bounded offset/query 读取。
+- `mybot/tools/artifact.py`、`mybot/tools/registry.py`、`mybot/tools/base.py`：新增受 trusted Runtime identity 约束的 `artifact_read`，模型 schema 不暴露 owner。
+- `mybot/agent/artifact_results.py`、`mybot/agent/loop.py`：大型非 Browser model-facing result 统一 externalize；记录 run artifact metadata，Browser 与 runtime result 保持完整。
+- `mybot/core/config.py`、`config/config.example.json`、`mybot/core/app.py`：新增 Artifact 配置并组装共享 store。
+- `mybot/guardrails/paths.py`、`mybot/tools/file_tools.py`、`mybot/tools/exec.py`：保护 Runtime-managed `artifacts/` 路径。
+- `tests/test_artifacts.py`：覆盖外置、脱敏、bounded/query、缺失 identity、session 隔离和并发写入。
+- `README.md`：记录 Artifact 配置、读取边界和 Runtime 路径保护。
 
 ## 架构决策与行为约束
 
@@ -50,11 +57,11 @@ Phase 10 收尾：single-process cross-session concurrency 与 exclusive Browser
 
 本阶段在 Windows 沙箱工作区验证：
 
-- `uv run python -m unittest discover -s tests -v`：256 tests；功能性回归通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
+- `.venv\Scripts\python.exe -m unittest discover -s tests -v`：262 tests；功能性回归通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
 - 定向 Concurrency、Tracer、ModelExecution、ToolExecution、AgentLoop、Checkpoint 测试：30/30 passed。
 - 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
-- `uv run python -m mybot.evals.runner`：43/43 passed，100%。
+- `.venv\Scripts\python.exe -m mybot.evals.runner`：44/44 passed，100%；新增 Artifact Results case。
 - `git diff --check`：通过。
 - `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
 - `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（luchikey / `gpt-5.6-sol`，Browser opt-in 未启用）：5/6 passed；`real_llm_basic`、`read_file_tool`、`approval_side_effect`、`restart_recovery`、`context_budget` 真实执行通过；`browser_live` 因未设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1` SKIP。
@@ -67,13 +74,15 @@ Phase 10 收尾：single-process cross-session concurrency 与 exclusive Browser
 - durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
 - Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
 - Browser ownership 不持久化；进程重启后 lease 为 none，恢复动作必须先重新建立 live Browser 状态。Browser Live 尚未在本次运行启用。
+- Artifact 文件独立于 checkpoint 持久化；同 session 重启后可通过 `artifact_read` 读取，artifact ownership 不跨 session 转移。
+- Artifact Store 当前没有 TTL/GC；每个文本最多保存 1,000,000 字符，长期运行仍需运维清理旧 artifacts。
 - `SessionExecutionCoordinator._locks` 不回收；本阶段仅记录为 remaining risk。
 - 无 owner 或缺失 trusted session identity 的 Browser 调用不会进入真实 Tool；重启恢复不会从 persisted browser state 恢复 ownership。
 
 ## 下一步
 
 - 在具备 Browser 条件且 provider 稳定的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
-- Phase 10 安全收尾已完成；artifact reference 仍未实现，需独立任务评估。
+- Phase 11 已实现；后续可在稳定 provider/Browser 条件下运行完整 live suite。
 
 ## 不要重复进行的工作
 
@@ -81,3 +90,4 @@ Phase 10 收尾：single-process cross-session concurrency 与 exclusive Browser
 - 不要通过 Store 私有方法暴露 sanitizer，或让 models / sanitizer 反向依赖 Store。
 - 不要在启动恢复时执行 Tool、信任 persisted browser state 或自动重放副作用。
 - 不要降低 sender/TTL/task、Policy、live precondition、Context Budget、Runtime path 与 secret redaction 约束。
+- 不要把 Browser snapshot/result、Artifact 内容或 filesystem path 写入模型以外的 checkpoint schema；不要让模型参数提供 Artifact owner。

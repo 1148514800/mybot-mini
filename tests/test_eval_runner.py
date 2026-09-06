@@ -70,7 +70,7 @@ class EvalRunnerTests(unittest.TestCase):
         eval_dir = Path(__file__).resolve().parents[1] / "evals"
         cases = load_eval_suite(eval_dir)
 
-        self.assertEqual(len(cases), 43)
+        self.assertEqual(len(cases), 44)
         self.assertTrue(all("fake_tools" in case.metadata for case in cases))
 
     def test_eval_suite_ignores_macos_resource_fork_sidecars(self) -> None:

@@ -35,6 +35,14 @@ class ExecToolTests(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(Path(result.output.strip()).resolve(), workspace)
 
+    def test_artifact_paths_are_blocked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result = asyncio.run(
+                ExecTool(Path(directory)).execute("type artifacts\\data.txt")
+            )
+        self.assertFalse(result.success)
+        self.assertIn("artifact paths", result.error)
+
 
 if __name__ == "__main__":
     unittest.main()

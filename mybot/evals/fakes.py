@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 from ..agent.loop import AgentLoop
+from ..storage.artifacts import ArtifactStore
 from ..tools.result import BrowserResult, ToolResult
 from ..tracing import AgentTracer
 from .models import EvalCase
@@ -172,6 +175,8 @@ class FakeToolRegistry:
 
         success = bool(scripted.get("success", True))
         output = str(scripted.get("output", "ok"))
+        if "output_repeat" in scripted:
+            output = output * int(scripted["output_repeat"])
         error = scripted.get("error")
         metadata = dict(scripted.get("result_metadata", {}))
         if name.startswith("browser_"):
@@ -213,6 +218,9 @@ def build_fake_agent(
         rate_limit_retries=0,
         request_timeout_seconds=60,
         show_internal_process=False,
+        artifact_enabled=True,
+        artifact_externalize_threshold_chars=8000,
+        artifact_read_max_chars=8000,
     )
     client = SimpleNamespace(
         chat=SimpleNamespace(
@@ -229,4 +237,5 @@ def build_fake_agent(
         tracer=AgentTracer(),
         checkpoint_store=checkpoint_store,
         approvals=approvals,
+        artifact_store=ArtifactStore(Path(tempfile.mkdtemp(prefix="mybot-eval-artifacts-"))),
     )

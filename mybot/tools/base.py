@@ -8,6 +8,11 @@ from .result import ToolResult
 
 class Tool(ABC):
     @property
+    def requires_runtime_identity(self) -> bool:
+        """Whether execution must receive identity from trusted runtime context."""
+        return False
+
+    @property
     @abstractmethod
     def name(self) -> str: ...
 

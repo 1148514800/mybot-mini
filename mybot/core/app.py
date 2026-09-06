@@ -10,6 +10,7 @@ from ..mcp import MCPClientManager
 from ..storage.memory import MemoryManager
 from ..storage.session import SessionManager
 from ..storage.checkpoints.store import ActiveTaskCheckpointStore
+from ..storage.artifacts import ArtifactStore
 from ..tools import build_default_tool_registry
 from ..tracing import AgentTracer
 from ..workspace import init_instructions, init_workspace
@@ -23,9 +24,12 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
 
     bus = MessageBus()
     memory = MemoryManager(config.workspace)
+    artifact_store = ArtifactStore(config.workspace)
     tools = build_default_tool_registry(
         config.workspace,
         memory_manager=memory,
+        artifact_store=artifact_store,
+        artifact_read_max_chars=config.artifact_read_max_chars,
     )
     mcp_manager = MCPClientManager(config.mcp, tools)
     try:
@@ -67,6 +71,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
             sessions=sessions,
             tracer=tracer,
             checkpoint_store=checkpoints,
+            artifact_store=artifact_store,
         )
 
         channels["cli"] = CLIChannel(bus)

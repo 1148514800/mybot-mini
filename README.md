@@ -260,9 +260,14 @@ config/
 | `llm.max_recent_messages` | 历史消息数量上限，默认 `12` |
 | `llm.max_tool_result_chars` | 单条 Tool Result 在模型 Context 中的字符上限，默认 `8000` |
 | `llm.max_memory_chars` | Memory 摘要在模型 Context 中的字符上限，默认 `8000` |
+| `artifact.enabled` | 是否将大型非 Browser Tool Result 外置为受控文本 Artifact，默认 `true` |
+| `artifact.externalize_threshold_chars` | 触发外置的结果字符阈值，默认 `8000` |
+| `artifact.read_max_chars` | 单次 `artifact_read` 返回上限，默认 `8000` |
 | `max_concurrent_sessions` | 跨 session 最大并发消息任务数，默认 `4`，范围 `1..32` |
 
 Context compaction 只发生在每次 LLM request 前。Tool call 及其全部 tool result 作为原子单元按原始顺序一起保留或删除；孤立、缺失或重复配对不会发送给模型。`max_context_chars` 是 soft target，必要的系统指令和当前任务输入超出目标时会保留，并在 Trace 中标记 overflow。
+
+大型非 Browser 文本结果在发送给模型前写入 `workspace/artifacts/`，模型只收到脱敏 preview 和不可预测的 `artifact_id`。模型通过 `artifact_read` 按 session identity 读取有限字符或 query 周边片段；普通 `read_file`、`write_file` 和 `exec` 不能访问该 Runtime 管理目录。Artifact 文本会脱敏并受存储上限约束，Browser snapshot/result 始终保留原有运行时语义。
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
 | `browser_runtime.max_open_attempts` | 每个 task 的 `browser_open/browser_attach` 尝试上限，默认 `1` |
 | `browser_runtime.max_consecutive_tool_failures` | 同一浏览器 Tool 连续失败上限，默认 `2` |
@@ -307,11 +312,12 @@ workspace/
   sessions/               # 对话历史（JSONL）
   browser_profiles/       # Runtime 管理的浏览器 profile
   checkpoints/            # Runtime 管理的 Active Task SQLite checkpoint
+  artifacts/              # Runtime 管理的大型文本 Tool Result Artifact
   runs/                   # 可选的持久化 Trace
 evals/                    # 离线 EvalCase JSON 数据
 ```
 
-`memory/`、`sessions/`、`browser_profiles/`、`checkpoints/` 和 `runs/` 是 Runtime 管理目录，普通
+`memory/`、`sessions/`、`browser_profiles/`、`checkpoints/`、`artifacts/` 和 `runs/` 是 Runtime 管理目录，普通
 `write_file` 会直接阻止对这些目录的修改；记忆变更必须使用 `memory_write` 或
 `memory_delete`。`instructions/` 以及 `AGENTS.md`、`SOUL.md`、`USER.md`、`TOOLS.md`
 等指令文件仍需要明确确认。目录删除会丢失对应状态，请先备份。

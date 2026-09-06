@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..storage.memory import MemoryManager
+from ..storage.artifacts import ArtifactStore
 from .base import Tool
 from .browser import (
     BrowserAttachTool,
@@ -22,6 +23,7 @@ from .browser import (
     BrowserOwnershipManager,
 )
 from .exec import ExecTool
+from .artifact import ArtifactReadTool
 from .file_tools import ReadFileTool, WriteFileTool
 from .memory import MemoryDeleteTool, MemoryWriteTool
 from .result import ToolResult
@@ -100,8 +102,23 @@ class ToolRegistry:
                         "recoverable": True,
                     },
                 )
+        if tool.requires_runtime_identity and (not session_key or not session_key.strip()):
+            return ToolResult(
+                success=False,
+                error="Artifact read requires trusted runtime identity.",
+                metadata={
+                    "error_type": "artifact_ownership_identity_missing",
+                    "recoverable": False,
+                },
+            )
         try:
-            result = await tool.execute(**params)
+            runtime_params = dict(params)
+            if tool.requires_runtime_identity:
+                runtime_params.pop("session_key", None)
+                runtime_params.pop("task_id", None)
+                runtime_params["session_key"] = session_key or ""
+                runtime_params["task_id"] = task_id
+            result = await tool.execute(**runtime_params)
             if isinstance(result, ToolResult):
                 normalized = result
             elif isinstance(result, str):
@@ -128,11 +145,15 @@ class ToolRegistry:
 def build_default_tool_registry(
     workspace: Path,
     memory_manager: MemoryManager | None = None,
+    artifact_store: ArtifactStore | None = None,
+    artifact_read_max_chars: int = 8000,
 ) -> ToolRegistry:
     registry = ToolRegistry()
+    artifact_store = artifact_store or ArtifactStore(workspace)
     browser_sessions = BrowserSessionManager()
     registry.register(ExecTool(workspace))
     registry.register(RequestUserInputTool())
+    registry.register(ArtifactReadTool(artifact_store, read_max_chars=artifact_read_max_chars))
     registry.register(BrowserAttachTool(browser_sessions))
     registry.register(BrowserOpenTool(workspace, browser_sessions))
     registry.register(BrowserSnapshotTool(browser_sessions))

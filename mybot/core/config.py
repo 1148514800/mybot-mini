@@ -64,6 +64,7 @@ _MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
 _BROWSER_RUNTIME_CONFIG = _section(_JSON_CONFIG, "browser_runtime")
 _GUARDRAILS_CONFIG = _section(_JSON_CONFIG, "guardrails")
 _CHECKPOINT_CONFIG = _section(_JSON_CONFIG, "checkpoint")
+_ARTIFACT_CONFIG = _section(_JSON_CONFIG, "artifact")
 
 
 def _active_llm_provider() -> str:
@@ -314,6 +315,10 @@ class GatewayConfig:
     max_tool_result_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_tool_result_chars", 8000)))
     max_memory_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_memory_chars", 8000)))
 
+    artifact_enabled: bool = field(default_factory=lambda: _config_bool(_ARTIFACT_CONFIG, "enabled", True))
+    artifact_externalize_threshold_chars: int = field(default_factory=lambda: int(_config_value(_ARTIFACT_CONFIG, "externalize_threshold_chars", 8000)))
+    artifact_read_max_chars: int = field(default_factory=lambda: int(_config_value(_ARTIFACT_CONFIG, "read_max_chars", 8000)))
+
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
             _DEBUG_CONFIG,
@@ -376,6 +381,12 @@ class GatewayConfig:
             "llm.max_recent_messages": self.max_recent_messages,
             "llm.max_tool_result_chars": self.max_tool_result_chars,
             "llm.max_memory_chars": self.max_memory_chars,
+        }.items():
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"{name} must be a positive integer")
+        for name, value in {
+            "artifact.externalize_threshold_chars": self.artifact_externalize_threshold_chars,
+            "artifact.read_max_chars": self.artifact_read_max_chars,
         }.items():
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
                 raise ValueError(f"{name} must be a positive integer")

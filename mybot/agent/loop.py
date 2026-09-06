@@ -46,6 +46,7 @@ from .browser_reliability import (
 from .task_state import AgentTaskState, AgentTaskStatus
 from .runtime_manager import TaskRuntimeManager
 from .model_execution import ModelExecutor
+from .artifact_results import externalize_tool_result
 from .tool_calls import (
     deserialize_tool_call,
     serialize_tool_call,
@@ -90,6 +91,7 @@ class AgentLoop:
         recent_tasks: RecentTaskManager | None = None,
         browser_recovery_policy: BrowserRecoveryPolicy | None = None,
         checkpoint_store: ActiveTaskCheckpointStore | None = None,
+        artifact_store=None,
     ):
         self.client = client
         self.config = config
@@ -126,6 +128,7 @@ class AgentLoop:
             debug_trace=self._trace,
         )
         self.checkpoint_store = checkpoint_store
+        self.artifact_store = artifact_store
         if hasattr(self.context, "max_context_chars"):
             self.context.max_context_chars = getattr(config, "max_context_chars", self.context.max_context_chars)
             self.context.max_recent_messages = getattr(config, "max_recent_messages", self.context.max_recent_messages)
@@ -183,6 +186,34 @@ class AgentLoop:
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
             print(f"[trace] {redact_text(message)}")
+
+    def _model_tool_result_text(
+        self,
+        result: ToolResult,
+        *,
+        tool_name: str,
+        arguments: dict,
+        session_key: str,
+        task_id: str | None,
+    ) -> str:
+        text, record = externalize_tool_result(
+            result,
+            tool_name=tool_name,
+            arguments=arguments,
+            session_key=session_key,
+            task_id=task_id,
+            store=self.artifact_store,
+            enabled=getattr(self.config, "artifact_enabled", False),
+            threshold_chars=getattr(self.config, "artifact_externalize_threshold_chars", 8000),
+        )
+        if record is not None:
+            run = self.tracer.get_current_run()
+            if run is not None and run.status == "running":
+                run.metadata["artifact_count"] = int(run.metadata.get("artifact_count", 0)) + 1
+                run.metadata["artifact_chars_externalized"] = int(run.metadata.get("artifact_chars_externalized", 0)) + record.original_chars
+                if record.storage_truncated:
+                    run.metadata["artifact_storage_truncated_count"] = int(run.metadata.get("artifact_storage_truncated_count", 0)) + 1
+        return text
 
     def _effective_react_steps(self) -> int:
         return max(
@@ -377,7 +408,13 @@ class AgentLoop:
                 {
                     "role": "tool",
                     "tool_call_id": tool_call.id,
-                    "content": result.to_text(),
+                    "content": self._model_tool_result_text(
+                        result,
+                        tool_name=tool_call.function.name,
+                        arguments=tool_call.function.arguments or {},
+                        session_key=task_state.session_key,
+                        task_id=task_state.task_id,
+                    ),
                 }
             )
             self._sync_verification_task_state(task_state, execution_context)
@@ -1370,7 +1407,13 @@ class AgentLoop:
                 {
                     "role": "tool",
                     "tool_call_id": pending.model_tool_call_id,
-                    "content": approved_outcome.tool_result.to_text(),
+                    "content": self._model_tool_result_text(
+                        approved_outcome.tool_result,
+                        tool_name=pending.tool_name,
+                        arguments=pending.arguments,
+                        session_key=pending.session_key,
+                        task_id=task_id,
+                    ),
                 }
             )
             self._sync_verification_task_state(task_state, execution_context)
