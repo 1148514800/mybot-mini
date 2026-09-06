@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默认 skip）。Harness 已完成并使用 luchikey 配置取得非浏览器 Live PASS。
+Phase 9：Production-like Live E2E harness 已完成；本轮完成第二轮 Runtime 瘦身。Live suite 默认 skip，使用 luchikey 配置的五个非浏览器 case 保持真实通过。
 
 ## 已完成内容与修改文件
 
@@ -17,6 +17,10 @@ Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默�
 - `tests/test_live_evals.py`：覆盖默认 opt-in、无 key、Browser 条件和脱敏报告。
 - `mybot/agent/loop.py`：`resume_pending()` 在消费 durable checkpoint 前先校验原 sender，错误 sender 不会删除待确认记录。
 - `mybot/evals/live.py`：CLI 未传入隔离 env 时正确回退到 `config/config.json`；Trace 中的认证/网络错误归类为 `environment/network` 并保留脱敏短原因。
+- `mybot/agent/model_execution.py`：集中 ContextBuilder message preparation、OpenAI-compatible request、timeout/rate-limit retry、LLM trace 和 usage/result 提取。
+- `mybot/agent/tool_calls.py`：提供无状态的 tool call signature、serialize、deserialize 纯函数。
+- `mybot/agent/loop.py`：直接使用 `TaskRuntimeManager`，移除 checkpoint/approval delegation wrappers 和 tool-call codec；ReAct 模型请求改由 `ModelExecutor` 执行。
+- `tests/test_model_execution.py`、`tests/test_tool_calls.py`：覆盖模型请求、trace/timeout、无 active trace 和 codec round-trip。
 
 ## 架构决策与行为约束
 
@@ -26,18 +30,20 @@ Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默�
 - 重启只恢复等待状态，不调用 LLM 或 Tool。副作用前必须成功消费 active row，保证 at-most-once；未单独批准的旧批次调用不自动重放。
 - secret 写入前脱敏；恢复所需敏感参数被清除时 Approval non-resumable。Persisted browser state 仅历史上下文，Approval 仍检查 fresh live precondition、Policy、TTL 和 sender/task。
 - ContextBuilder 的预算及 tool call/response 原子裁剪保持不变；runtime chain 完整，仅 LLM request boundary 压缩，required context 超预算记录 overflow。
+- AgentLoop 从 1827 行降至 1691 行；依赖方向为 AgentLoop → ModelExecutor / tool_calls，ModelExecutor → ContextBuilder / client / tracer，纯 codec 不依赖 Runtime、Tool、Approval 或 Browser。Browser 核心行为未改动，ToolExecutionPipeline 未拆分。
 
 ## 测试结果
 
 本阶段在 Windows 沙箱工作区验证：
 
-- `uv run python -m unittest discover -s tests -v`：243 tests，238 passed，1 skipped，2 failures，1 error。
+- `uv run python -m unittest discover -s tests -v`：248 tests，244 passed，1 skipped，2 failures，1 error。
 - 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
 - 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
 - `uv run python -m mybot.evals.runner`：43/43 passed，100%。
 - `git diff --check`：通过。
 - `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
 - `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（luchikey / `gpt-5.6-sol`，Browser opt-in 未启用）：5/6 passed；`real_llm_basic`、`read_file_tool`、`approval_side_effect`、`restart_recovery`、`context_budget` 真实执行通过；`browser_live` 因未设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1` SKIP。
+- 本轮重构后 Live E2E 结果无 behavior regression：同一命令再次得到 5/6 passed，Browser Live 明确 SKIP。
 
 ## 已知问题
 
@@ -48,12 +54,12 @@ Phase 9：Production-like Live E2E harness（真实模型/Runtime 链路，默�
 
 ## 下一步
 
-- 在具备真实 API key 的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`；浏览器场景另加 `MYBOT_RUN_BROWSER_LIVE_E2E=1` 与 `playwright-cli`。
-- 如评估 Context 摘要或 artifact reference，应作为独立任务，保持当前 checkpoint 安全与兼容契约。
+- 在具备 Browser 条件的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
+- Cross-session concurrency、Browser ownership、artifact reference 仍是未实现能力，需独立任务评估。
 
 ## 不要重复进行的工作
 
-- 不要再拆 AgentLoop，或把 SQLite、payload 转换、脱敏移回 AgentLoop / Store。
+- 不要继续为达到行数目标拆分 AgentLoop；不要把 SQLite、payload 转换、脱敏或 Browser 核心移回 AgentLoop / Store。
 - 不要通过 Store 私有方法暴露 sanitizer，或让 models / sanitizer 反向依赖 Store。
 - 不要在启动恢复时执行 Tool、信任 persisted browser state 或自动重放副作用。
 - 不要降低 sender/TTL/task、Policy、live precondition、Context Budget、Runtime path 与 secret redaction 约束。

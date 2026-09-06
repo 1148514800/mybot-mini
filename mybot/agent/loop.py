@@ -5,9 +5,8 @@ import copy
 import json
 import uuid
 from datetime import datetime
-from types import SimpleNamespace
 
-from openai import APITimeoutError, AsyncOpenAI
+from openai import AsyncOpenAI
 
 from ..core.config import GatewayConfig
 from ..guardrails import (
@@ -45,6 +44,12 @@ from .browser_reliability import (
 )
 from .task_state import AgentTaskState, AgentTaskStatus
 from .runtime_manager import TaskRuntimeManager
+from .model_execution import ModelExecutor
+from .tool_calls import (
+    deserialize_tool_call,
+    serialize_tool_call,
+    tool_call_signature,
+)
 from .tool_execution import (
     ToolExecutionContext,
     ToolExecutionPipeline,
@@ -59,10 +64,8 @@ from .context import (
 
 
 MAX_REACT_STEPS_HARD_LIMIT = 30
-MAX_RATE_LIMIT_RETRIES_HARD_LIMIT = 10
 MAX_CONSECUTIVE_IDENTICAL_TOOL_CALLS = 2
 MAX_EMPTY_MODEL_RESPONSES = 2
-DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS = 60.0
 
 _BROWSER_SESSION_BY_MODE = {
     BROWSER_MODE_LOCAL: LOCAL_BROWSER_SESSION,
@@ -134,10 +137,13 @@ class AgentLoop:
             checkpoint_store=self.checkpoint_store,
         )
         self.task_states = self.runtime.task_states
-        self._restore_checkpoints()
-
-    def _restore_checkpoints(self) -> None:
         self.runtime.restore()
+        self.model_execution = ModelExecutor(
+            client=self.client,
+            config=self.config,
+            context=self.context,
+            tracer=self.tracer,
+        )
 
     def _pipeline(self) -> ToolExecutionPipeline:
         """Keep injected test/runtime dependencies aligned with the pipeline."""
@@ -147,14 +153,6 @@ class AgentLoop:
         self.tool_execution.tracer = self.tracer
         self.tool_execution.browser_recovery_policy = self.browser_recovery_policy
         return self.tool_execution
-
-    def _task_state(
-        self,
-        task_id: str,
-        session_key: str,
-        requester_sender_id: str | None,
-    ) -> AgentTaskState:
-        return self.runtime.task_state(task_id, session_key, requester_sender_id)
 
     @staticmethod
     def _start_or_resume_task(state: AgentTaskState) -> None:
@@ -178,29 +176,9 @@ class AgentLoop:
         self.runtime.sync(task_state)
         return trace
 
-    def _sync_task_checkpoint(self, state: AgentTaskState) -> None:
-        self.runtime.sync(state)
-
-    def _clear_active_checkpoint(self, session_key: str) -> None:
-        self.runtime.clear(session_key)
-
-    def _consume_durable_approval(self, session_key: str) -> bool:
-        return self.runtime.consume(session_key)
-
-    def _consume_durable_active(self, session_key: str) -> bool:
-        return self._consume_durable_approval(session_key)
-
     def _trace(self, message: str) -> None:
         if self.config.show_internal_process:
             print(f"[trace] {redact_text(message)}")
-
-    def _is_rate_limit_error(self, exc: Exception) -> bool:
-        text = f"{type(exc).__name__}: {exc}"
-        return (
-            "RateLimitError" in text
-            or "429" in text
-            or "TPM limit reached" in text
-        )
 
     def _effective_react_steps(self) -> int:
         return max(
@@ -209,25 +187,8 @@ class AgentLoop:
         )
 
     def _effective_rate_limit_retries(self) -> int:
-        return max(
-            0,
-            min(
-                self.config.rate_limit_retries,
-                MAX_RATE_LIMIT_RETRIES_HARD_LIMIT,
-            ),
-        )
-
-    def _effective_request_timeout_seconds(self) -> float:
-        raw_timeout = getattr(
-            self.config,
-            "request_timeout_seconds",
-            DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS,
-        )
-        try:
-            timeout = float(raw_timeout)
-        except (TypeError, ValueError):
-            timeout = DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS
-        return timeout if timeout > 0 else DEFAULT_LLM_REQUEST_TIMEOUT_SECONDS
+        """Compatibility access for callers that inspect configured limits."""
+        return self.model_execution._effective_rate_limit_retries()
 
     def _browser_task_budget(self) -> BrowserTaskBudget:
         return BrowserTaskBudget(
@@ -271,47 +232,6 @@ class AgentLoop:
             ),
         )
 
-    @staticmethod
-    def _timeout_error(timeout_seconds: float) -> str:
-        return f"LLM request timeout after {timeout_seconds:g}s"
-
-    def _tool_call_signature(self, tool_call) -> str:
-        name = tool_call.function.name
-        raw_arguments = tool_call.function.arguments or "{}"
-        try:
-            arguments = json.loads(raw_arguments)
-            normalized = json.dumps(
-                arguments,
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            )
-        except (TypeError, json.JSONDecodeError):
-            normalized = str(raw_arguments)
-        return f"{name}:{normalized}"
-
-    @staticmethod
-    def _serialize_tool_call(tool_call) -> dict:
-        return {
-            "id": tool_call.id,
-            "type": "function",
-            "function": {
-                "name": tool_call.function.name,
-                "arguments": tool_call.function.arguments,
-            },
-        }
-
-    @staticmethod
-    def _deserialize_tool_call(value: dict):
-        function = value.get("function", {})
-        return SimpleNamespace(
-            id=str(value.get("id", "")),
-            function=SimpleNamespace(
-                name=str(function.get("name", "")),
-                arguments=function.get("arguments", "{}"),
-            ),
-        )
-
     def _execution_context(
         self,
         *,
@@ -346,7 +266,7 @@ class AgentLoop:
         for tool_index, tool_call in enumerate(tool_calls):
             execution_guard = None
             if repeat_tracker is not None:
-                signature = self._tool_call_signature(tool_call)
+                signature = tool_call_signature(tool_call)
                 if signature == repeat_tracker.get("last_signature"):
                     count = int(repeat_tracker.get("count", 0)) + 1
                 else:
@@ -383,7 +303,7 @@ class AgentLoop:
                 step_id=step_id,
                 messages=messages,
                 remaining_tool_calls=[
-                    self._serialize_tool_call(item)
+                    serialize_tool_call(item)
                     for item in tool_calls[tool_index + 1 :]
                 ],
                 execution_guard=execution_guard,
@@ -478,16 +398,6 @@ class AgentLoop:
                 reason="browser_postcondition_verified",
             )
 
-    def _usage_value(self, usage, name: str) -> int | None:
-        if usage is None:
-            return None
-        value = usage.get(name) if isinstance(usage, dict) else getattr(
-            usage,
-            name,
-            None,
-        )
-        return value if isinstance(value, int) else None
-
     def _tracing_active(self) -> bool:
         run = self.tracer.get_current_run()
         return run is not None and run.status == "running"
@@ -576,7 +486,7 @@ class AgentLoop:
                 message.content,
             )
         elif pending and intent == ApprovalIntent.APPROVE:
-            if not self._consume_durable_approval(message.session_key):
+            if not self.runtime.consume(message.session_key):
                 reply, trace = self._checkpoint_consume_failed_trace(
                     pending, message.content
                 )
@@ -587,7 +497,7 @@ class AgentLoop:
                 message.sender_id,
             )
             assert approved is not None
-            self._clear_active_checkpoint(message.session_key)
+            self.runtime.clear(message.session_key)
             reply, trace = await self._resume_approved(
                 approved,
                 message.content,
@@ -600,7 +510,7 @@ class AgentLoop:
                 message.sender_id,
             )
             assert rejected is not None
-            self._clear_active_checkpoint(message.session_key)
+            self.runtime.clear(message.session_key)
             reply, trace = self._cancelled_trace(rejected, message.content)
         elif pending_clarification is not None:
             if (
@@ -611,7 +521,7 @@ class AgentLoop:
                     pending_clarification, message.content
                 )
                 return self._save_message_result(message, reply, trace)
-            if not self._consume_durable_active(message.session_key):
+            if not self.runtime.consume(message.session_key):
                 reply, trace = self._checkpoint_consume_failed_trace(
                     pending_clarification, message.content, kind="clarification"
                 )
@@ -627,7 +537,7 @@ class AgentLoop:
                 )
                 return self._save_message_result(message, reply, trace)
             assert resolved is not None
-            self._clear_active_checkpoint(message.session_key)
+            self.runtime.clear(message.session_key)
             reply, trace = await self._resume_clarification(
                 resolved,
                 message.content,
@@ -657,7 +567,7 @@ class AgentLoop:
                     rejected.approval_id if rejected else None
                 )
                 if rejected is not None:
-                    self._clear_active_checkpoint(message.session_key)
+                    self.runtime.clear(message.session_key)
                 if rejected and rejected.task_id:
                     cancelled_state = self.task_states.get(rejected.task_id)
                     if (
@@ -745,7 +655,7 @@ class AgentLoop:
         }
         run_metadata.update(supplied_metadata)
         run_metadata["task_id"] = effective_task_id
-        task_state = self._task_state(
+        task_state = self.runtime.task_state(
             effective_task_id,
             session_key,
             requester_sender_id,
@@ -931,7 +841,7 @@ class AgentLoop:
         user_input: str,
     ) -> tuple[str, AgentRunTrace]:
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(
+        task_state = self.runtime.task_state(
             task_id,
             pending.session_key,
             pending.requester_sender_id,
@@ -967,7 +877,7 @@ class AgentLoop:
         user_input: str,
     ) -> tuple[str, AgentRunTrace]:
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(
+        task_state = self.runtime.task_state(
             task_id,
             pending.session_key,
             pending.requester_sender_id,
@@ -998,7 +908,7 @@ class AgentLoop:
 
     def _checkpoint_consume_failed_trace(self, pending, user_input, *, kind="approval"):
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(task_id, pending.session_key, pending.requester_sender_id)
+        task_state = self.runtime.task_state(task_id, pending.session_key, pending.requester_sender_id)
         if task_state.status == AgentTaskStatus.NEW:
             task_state.transition(AgentTaskStatus.RUNNING)
             if kind == "approval":
@@ -1012,7 +922,7 @@ class AgentLoop:
 
     def _clarification_authorization_mismatch_trace(self, pending, user_input):
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(task_id, pending.session_key, pending.requester_sender_id)
+        task_state = self.runtime.task_state(task_id, pending.session_key, pending.requester_sender_id)
         self.tracer.start_run(user_input, metadata={"clarification_id": pending.clarification_id, "clarification_status": "authorization_mismatch", "task_id": task_id})
         output = "该澄清问题只能由原操作发起人回答。"
         return output, self._finish_run_for_task(task_state, final_output=output, runtime_status="cancelled")
@@ -1023,7 +933,7 @@ class AgentLoop:
         user_input: str,
     ) -> tuple[str, AgentRunTrace]:
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(
+        task_state = self.runtime.task_state(
             task_id,
             pending.session_key,
             pending.requester_sender_id,
@@ -1082,7 +992,7 @@ class AgentLoop:
                 user_input,
             )
         if intent == ApprovalIntent.APPROVE:
-            if not self._consume_durable_approval(session_key):
+            if not self.runtime.consume(session_key):
                 return self._checkpoint_consume_failed_trace(pending, user_input)
             approved = self.approvals.approve(
                 session_key,
@@ -1094,7 +1004,7 @@ class AgentLoop:
                     pending,
                     user_input,
                 )
-            self._clear_active_checkpoint(session_key)
+            self.runtime.clear(session_key)
             return await self._resume_approved(
                 approved,
                 user_input,
@@ -1110,7 +1020,7 @@ class AgentLoop:
                 pending,
                 user_input,
             )
-        self._clear_active_checkpoint(session_key)
+        self.runtime.clear(session_key)
         return self._cancelled_trace(rejected, user_input)
 
     async def resume_clarification(
@@ -1140,7 +1050,7 @@ class AgentLoop:
             and pending.requester_sender_id != sender_id
         ):
             return self._clarification_authorization_mismatch_trace(pending, user_input)
-        if not self._consume_durable_active(session_key):
+        if not self.runtime.consume(session_key):
             return self._checkpoint_consume_failed_trace(
                 pending, user_input, kind="clarification"
             )
@@ -1151,7 +1061,7 @@ class AgentLoop:
         )
         if resolved is None:
             return self._clarification_authorization_mismatch_trace(pending, user_input)
-        self._clear_active_checkpoint(session_key)
+        self.runtime.clear(session_key)
         return await self._resume_clarification(resolved, user_input)
 
     async def _resume_clarification(
@@ -1159,10 +1069,10 @@ class AgentLoop:
         pending: PendingClarification,
         user_input: str,
     ) -> tuple[str, AgentRunTrace]:
-        self._clear_active_checkpoint(pending.session_key)
+        self.runtime.clear(pending.session_key)
         browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(
+        task_state = self.runtime.task_state(
             task_id,
             pending.session_key,
             pending.requester_sender_id,
@@ -1210,7 +1120,7 @@ class AgentLoop:
             }
         )
         for serialized_call in pending.remaining_tool_calls:
-            stale_call = self._deserialize_tool_call(serialized_call)
+            stale_call = deserialize_tool_call(serialized_call)
             messages.append(
                 {
                     "role": "tool",
@@ -1352,7 +1262,7 @@ class AgentLoop:
             model_tool_call_id=tool_call.id,
             messages=messages,
             remaining_tool_calls=[
-                self._serialize_tool_call(item) for item in remaining_tool_calls
+                serialize_tool_call(item) for item in remaining_tool_calls
             ],
             browser_snapshot=browser_snapshot,
             loaded_skills=sorted(loaded_skills),
@@ -1366,10 +1276,10 @@ class AgentLoop:
         user_input: str,
         sender_id: str | None = None,
     ) -> tuple[str, AgentRunTrace]:
-        self._clear_active_checkpoint(pending.session_key)
+        self.runtime.clear(pending.session_key)
         browser_mode = pending.browser_mode or BROWSER_MODE_MANAGED
         task_id = pending.task_id or uuid.uuid4().hex
-        task_state = self._task_state(
+        task_state = self.runtime.task_state(
             task_id,
             pending.session_key,
             pending.requester_sender_id,
@@ -1452,7 +1362,7 @@ class AgentLoop:
                 return output, trace
             if pending.recovered_from_checkpoint:
                 for serialized_call in pending.remaining_tool_calls:
-                    stale_call = self._deserialize_tool_call(serialized_call)
+                    stale_call = deserialize_tool_call(serialized_call)
                     messages.append(
                         {
                             "role": "tool",
@@ -1466,7 +1376,7 @@ class AgentLoop:
                 remaining = []
             else:
                 remaining = [
-                    self._deserialize_tool_call(value)
+                    deserialize_tool_call(value)
                     for value in pending.remaining_tool_calls
                 ]
             pause_output, pause_status = await self._execute_tool_batch(
@@ -1577,7 +1487,7 @@ class AgentLoop:
             loaded_skills if loaded_skills is not None else set()
         )
         task_browser_state = browser_state or BrowserTaskState()
-        effective_task_state = task_state or self._task_state(
+        effective_task_state = task_state or self.runtime.task_state(
             effective_task_id,
             session_key,
             requester_sender_id,
@@ -1594,15 +1504,12 @@ class AgentLoop:
         if browser_snapshot and not task_browser_state.latest_snapshot:
             task_browser_state.latest_snapshot = browser_snapshot
         final_parts: list[str] = []
-        rate_limit_retries = 0
-        rate_limit_retry_limit = self._effective_rate_limit_retries()
         react_step_limit = self._effective_react_steps()
         empty_response_count = 0
         repeat_tracker: dict[str, object] = {
             "last_signature": "",
             "count": 0,
         }
-        request_timeout = self._effective_request_timeout_seconds()
         for step in range(react_step_limit):
             step_index = step + 1 + step_index_offset
             self._trace(f"model step={step_index}")
@@ -1615,86 +1522,30 @@ class AgentLoop:
                 if self._tracing_active()
                 else None
             )
-            llm_trace = (
-                self.tracer.start_llm_call(
-                    step_id=step_trace.step_id,
-                    model=self.config.model,
-                    provider=getattr(self.config, "provider", ""),
-                    message_count=len(messages),
-                    retry_count=rate_limit_retries,
-                )
-                if step_trace
-                else None
+            model_turn = await self.model_execution.request(
+                messages,
+                step_id=step_trace.step_id if step_trace else None,
+                task_anchor=user_input,
+                tool_definitions=tool_definitions,
             )
-            model_messages = messages
-            context_metadata = {}
-            if hasattr(self.context, "prepare_messages"):
-                model_messages, context_metadata = self.context.prepare_messages(
-                    messages, task_anchor=user_input
-                )
-                if llm_trace:
-                    llm_trace.metadata.update(context_metadata)
-            try:
-                response = await asyncio.wait_for(
-                    self.client.chat.completions.create(
-                        model=self.config.model,
-                        messages=model_messages,
-                        tools=tool_definitions or None,
-                        temperature=0.1,
-                        max_tokens=self.config.max_completion_tokens,
-                    ),
-                    timeout=request_timeout,
-                )
-            except (TimeoutError, APITimeoutError):
-                error = self._timeout_error(request_timeout)
-                if llm_trace:
-                    self.tracer.finish_llm_call(llm_trace, error=error)
+            if model_turn.error:
+                error = model_turn.error
                 if step_trace:
                     self.tracer.finish_step(status="failed", error=error)
                 effective_task_state.transition(
                     AgentTaskStatus.FAILED,
-                    reason="llm_timeout",
+                    reason=model_turn.error_reason or "llm_error",
                 )
-                return error, "failed", error
-            except Exception as exc:
-                error = f"{type(exc).__name__}: {exc}"
-                if llm_trace:
-                    self.tracer.finish_llm_call(llm_trace, error=error)
-                if step_trace:
-                    self.tracer.finish_step(status="failed", error=error)
-                if (
-                    self._is_rate_limit_error(exc)
-                    and rate_limit_retries < rate_limit_retry_limit
-                ):
-                    rate_limit_retries += 1
-                    self._trace(
-                        "rate limited, waiting 60s before retry "
-                        f"{rate_limit_retries}/{rate_limit_retry_limit}"
-                    )
-                    await asyncio.sleep(60)
-                    continue
-                effective_task_state.transition(
-                    AgentTaskStatus.FAILED,
-                    reason="llm_error",
+                output = (
+                    error
+                    if model_turn.error_reason == "llm_timeout"
+                    else f"调用模型时出错: {error}"
                 )
-                return f"调用模型时出错: {error}", "failed", error
+                return output, "failed", error
 
-            choice = response.choices[0]
-            message = choice.message
-            finish_reason = choice.finish_reason
-            content = (message.content or "").strip()
-            if llm_trace:
-                usage = getattr(response, "usage", None)
-                self.tracer.finish_llm_call(
-                    llm_trace,
-                    finish_reason=finish_reason,
-                    input_tokens=self._usage_value(usage, "prompt_tokens"),
-                    output_tokens=self._usage_value(
-                        usage,
-                        "completion_tokens",
-                    ),
-                    total_tokens=self._usage_value(usage, "total_tokens"),
-                )
+            message = model_turn.message
+            finish_reason = model_turn.finish_reason
+            content = model_turn.content
 
             if finish_reason == "length" and content:
                 final_parts.append(content)
