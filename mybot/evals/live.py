@@ -256,6 +256,7 @@ async def _make_context(
         max_context_chars=max_context_chars,
         max_tool_result_chars=max_tool_result_chars,
         checkpoint_enabled=True,
+        show_internal_process=False,
         rate_limit_retries=0,
         request_timeout_seconds=float(os.environ.get("MYBOT_LIVE_TIMEOUT_SECONDS", "60")),
     )
@@ -356,11 +357,11 @@ async def _run_approval(context: LiveEvalContext, *, name: str, restart: bool = 
     traces: list[AgentRunTrace] = []
     session = f"live:{'restart' if restart else 'approval'}"
     sender = "live-original-sender"
-    path = "approved-output.txt"
+    path = "instructions/approved-output.txt"
     content = "MYBOT_LIVE_APPROVED_CONTENT"
     try:
         prompt = (
-            "Use the write_file tool to create approved-output.txt with exactly this content: "
+            f"Use the write_file tool to create {path} with exactly this content: "
             f"{content}. You must use the tool; do not merely describe the action."
         )
         first_context = context
@@ -438,7 +439,7 @@ async def _run_restart_recovery(context: LiveEvalContext) -> LiveEvalResult:
     traces: list[AgentRunTrace] = []
     session = "live:restart"
     sender = "live-original-sender"
-    path = "restart-output.txt"
+    path = "instructions/restart-output.txt"
     content = "MYBOT_LIVE_RESTART_CONTENT"
     try:
         prompt = (
@@ -530,8 +531,8 @@ async def _run_context_budget(context: LiveEvalContext) -> LiveEvalResult:
         )
     try:
         prompt = (
-            "Read context-0.txt, context-1.txt, and context-2.txt with read_file, one file at a time. "
-            "Keep the three markers in mind and answer with all three markers. Do not use another tool."
+            "In one assistant tool-call batch, call read_file exactly once for each of context-0.txt, context-1.txt, and context-2.txt. "
+            "Do not call any path twice. After the three tool results arrive, answer with all three markers and do not call another tool."
         )
         output, trace = await context.agent.run_traced(
             prompt,
@@ -650,7 +651,7 @@ async def run_live_suite(
                     key=key,
                     base_url=base_url,
                     model=model,
-                    max_context_chars=(1800 if case.name == "context_budget" else 60_000),
+                    max_context_chars=(6000 if case.name == "context_budget" else 60_000),
                     max_tool_result_chars=(700 if case.name == "context_budget" else 8_000),
                     provider=provider,
                 )
