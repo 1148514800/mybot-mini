@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..storage.memory import MemoryManager
 from ..storage.artifacts import ArtifactStore
 from .base import Tool
 from .browser import (
@@ -25,9 +24,7 @@ from .browser import (
 from .exec import ExecTool
 from .artifact import ArtifactReadTool
 from .file_tools import ReadFileTool, WriteFileTool
-from .memory import MemoryDeleteTool, MemoryWriteTool
 from .result import ToolResult
-from .runtime import RequestUserInputTool
 
 
 class ToolRegistry:
@@ -144,7 +141,6 @@ class ToolRegistry:
 
 def build_default_tool_registry(
     workspace: Path,
-    memory_manager: MemoryManager | None = None,
     artifact_store: ArtifactStore | None = None,
     artifact_read_max_chars: int = 8000,
     artifact_enabled: bool = True,
@@ -153,7 +149,6 @@ def build_default_tool_registry(
     artifact_store = artifact_store or ArtifactStore(workspace)
     browser_sessions = BrowserSessionManager()
     registry.register(ExecTool(workspace))
-    registry.register(RequestUserInputTool())
     if artifact_enabled:
         registry.register(ArtifactReadTool(artifact_store, read_max_chars=artifact_read_max_chars))
     registry.register(BrowserAttachTool(browser_sessions))
@@ -169,9 +164,6 @@ def build_default_tool_registry(
     registry.register(BrowserVerifyTool(browser_sessions))
     registry.register(BrowserEvalTool(browser_sessions))
     registry.register(BrowserCloseTool(browser_sessions))
-    if memory_manager:
-        registry.register(MemoryWriteTool(memory_manager))
-        registry.register(MemoryDeleteTool(memory_manager))
     registry.register(ReadFileTool(workspace))
     registry.register(WriteFileTool(workspace))
     return registry

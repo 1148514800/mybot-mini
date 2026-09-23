@@ -2,104 +2,90 @@
 
 ## 当前目标与状态
 
-Phase 11 收尾：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模型只收到 preview 与 artifact_id，使用受限 artifact_read 按需读取。关闭配置、失败 bounded fallback、large error/metadata 和 checkpoint/browser 回归已补齐。Browser result 不外置，ToolExecutionPipeline 安全语义保持不变。
+Agent 功能裁剪完成：删除 Evals、Guardrails（Tool Policy / Approval / Clarification）、
+Messaging（消息总线 + 飞书通道）和长期记忆四个子系统，只保留 Agent 基本功能
+（CLI 对话、ReAct 循环、Tool 执行、Browser、MCP、Skills、Tracing、Checkpoint）。
 
-仓库已做一次瘦身：删除全部可再生运行数据（browser profile、缓存、__pycache__、playwright 控制台日志、session jsonl），未改动任何受版本管理的代码。
+当前入口是纯 CLI 交互循环；不再有消息总线抽象，也不再有任何审批 / 澄清暂停状态。
 
 ## 已完成内容与修改文件
 
-- 仓库瘦身：删除可再生运行期数据 workspace/browser_profiles/（284 MB）、.uv-cache/、.playwright-cli/、.pytest_cache/、全部 __pycache__/、workspace/sessions/cli_direct.jsonl。仓库由约 400 MB 降至约 114 MB，227 个受跟踪文件零改动，git status 保持干净。uv 真实缓存在 F:\software\uv\uv_cache，仓库内 .uv-cache 为陈旧残留。
-- 未删除任何代码模块：80 个模块全部被入口或测试引用，无死代码；evals / mcp / browser / tracing / skills 均仍在核心链路中被引用，未做功能裁剪。
-- 移除第三方 skills 内与运行无关的开发基建：xiaohongshu-skills 的 .github/、docs/superpowers/、tests/、CLAUDE.md、publish_test.png；self-improving-agent 的 assets/、hooks/。保留其 SKILL.md、scripts/、references/、pyproject.toml、uv.lock 与被 SKILL.md 明确引用的 .learnings/，5 个 skill 仍可被 SkillsLoader 正常加载。
-- `mybot/storage/checkpoints/models.py`：真实定义 schema version、默认 Recent Task TTL 和 RecoveredActiveCheckpoint，不依赖 store。
-- `mybot/storage/checkpoints/sanitizer.py`：真实实现 tool arguments、messages、tool calls、browser state、敏感文本、approval snapshot 与 policy metadata 脱敏；不依赖 Store。
-- `mybot/storage/checkpoints/serialization.py`：Approval / Clarification / RecentBrowserTask 的 payload 编码与恢复转换，以及 recent recovery payload 归一化。
-- `mybot/storage/checkpoints/store.py`：837 → 475 行；只保留 SQLite/schema、事务、CRUD、TTL、行身份校验、durable consume、JSON I/O 与错误处理。
-- `mybot/storage/checkpoints/__init__.py` 与 `mybot/storage/checkpoint.py`：保留兼容 Store、常量和恢复行模型导出。
-- `mybot/agent/checkpoint_recovery.py`：仅兼容导出；`mybot/agent/runtime_manager.py` 直接使用 storage serializer。
-- `tests/test_checkpoint_modules.py`：新增冷启动导入兼容、脱敏不修改 live 输入、恢复 sender/task/TTL 绑定测试。
-- `mybot/evals/live.py`：六个显式 opt-in case（basic、read_file、approval、restart、context budget、browser read-only），每 case 使用临时 workspace，结果脱敏并记录 task/run/provider/model、Tool/LLM 计数、Trace context stats 和失败分类。
-- `tests/test_live_evals.py`：覆盖默认 opt-in、无 key、Browser 条件和脱敏报告。
-- `mybot/agent/loop.py`：`resume_pending()` 在消费 durable checkpoint 前先校验原 sender，错误 sender 不会删除待确认记录。
-- `mybot/evals/live.py`：CLI 未传入隔离 env 时正确回退到 `config/config.json`；Trace 中的认证/网络错误归类为 `environment/network` 并保留脱敏短原因。
-- `mybot/agent/model_execution.py`：集中 ContextBuilder message preparation、OpenAI-compatible request、timeout/rate-limit retry、LLM trace 和 usage/result 提取。
-- `mybot/agent/tool_calls.py`：提供无状态的 tool call signature、serialize、deserialize 纯函数。
-- `mybot/agent/loop.py`：直接使用 `TaskRuntimeManager`，移除 checkpoint/approval delegation wrappers 和 tool-call codec；ReAct 模型请求改由 `ModelExecutor` 执行。
-- `tests/test_model_execution.py`、`tests/test_tool_calls.py`：覆盖模型请求、trace/timeout、无 active trace 和 codec round-trip。
-- `mybot/evals/live.py`：restart 重建上下文完整继承原 `GatewayConfig` 的 provider/model/key/base URL、context/react/tool/result/request 限制；Browser smoke 明确要求五个只读工具顺序并验证 `browser_verify.success` 与 `postcondition_met=true`，拒绝副作用 Browser Tool。
-- `tests/test_live_evals.py`：新增 custom provider/model restart 配置一致性 regression test。
-- `mybot/core/concurrency.py`：新增按 session 串行、跨 session 并发且有 `1..32` 上限的 coordinator。
-- `mybot/core/config.py`、`config/config.example.json`：新增 `max_concurrent_sessions`，默认 4。
-- `mybot/agent/loop.py`：入站消息创建受 coordinator 管理的 inflight task；shutdown cancel/await 全部任务。
-- `mybot/tracing/tracer.py`：`current_run/current_step` 改为 `ContextVar`，并发 run 独立记录。
-- `mybot/tools/browser/session.py`、`mybot/tools/registry.py`：新增进程级 Browser exclusive lease；冲突 fail closed，close 成功释放。
-- `mybot/agent/tool_execution.py`：把 trusted `session_key/task_id` 传到 registry boundary。
-- `tests/test_concurrency.py`：覆盖 session overlap/serialization、Tracer isolation、Browser ownership/release。
-- `README.md`：记录调度、shutdown 与 Browser lease 语义。
-- `AGENTS.md`：记录 GitHub 仓库名称与远端地址。
-- `mybot/tools/browser/session.py`、`mybot/tools/registry.py`：无 owner 的 Browser 操作 fail closed；空 trusted session identity fail closed；只有 `browser_open`/`browser_attach` 可在无 owner 时尝试 acquire。
-- `mybot/tracing/tracer.py`：run owner 与 current run 使用 task-local ContextVar；仅同步兼容路径允许无 event-loop 的历史 post-run 检查，不向其他 asyncio task 暴露 last run。
-- `tests/test_concurrency.py`、`tests/test_tool_execution.py`：覆盖 no-owner、missing identity、restart lease reset 与 post-run isolation。
-- `mybot/storage/artifacts/`：新增 text-only、session-bound ArtifactRecord/ArtifactStore，原子写入、脱敏、sha256、存储上限和 bounded offset/query 读取。
-- `mybot/tools/artifact.py`、`mybot/tools/registry.py`、`mybot/tools/base.py`：新增受 trusted Runtime identity 约束的 `artifact_read`，模型 schema 不暴露 owner。
-- `mybot/agent/artifact_results.py`、`mybot/agent/loop.py`：大型非 Browser model-facing result 统一 externalize；记录 run artifact metadata，Browser 与 runtime result 保持完整。
-- `mybot/core/config.py`、`config/config.example.json`、`mybot/core/app.py`：新增 Artifact 配置并组装共享 store。
-- `mybot/guardrails/paths.py`、`mybot/tools/file_tools.py`、`mybot/tools/exec.py`：保护 Runtime-managed `artifacts/` 路径。
-- `tests/test_artifacts.py`：覆盖外置、脱敏、bounded/query、缺失 identity、session 隔离和并发写入。
-- `README.md`：记录 Artifact 配置、读取边界和 Runtime 路径保护。
-- `mybot/tools/registry.py`、`mybot/core/app.py`：`artifact.enabled=false` 时不注册 `artifact_read`，旧磁盘 artifacts 不可经 Agent Tool 读取。
-- `mybot/agent/artifact_results.py`：按最终 model-facing rendered 长度判断；Store 失败返回脱敏 bounded preview，不返回完整结果或 artifact_id。
-- `tests/test_artifacts.py`、`tests/test_checkpoints.py`：新增 disabled mode、fallback、large error、Browser snapshot 和 checkpoint/restart 集成覆盖。
+**删除的模块**
 
-## 架构决策与行为约束
+- `mybot/evals/`、根目录 `evals/`：确定性 Eval runner / FakeLLM / live harness 与全部 EvalCase JSON。
+- `mybot/guardrails/`（policy、approvals、clarifications、models、paths）、`mybot/tools/runtime.py`（RequestUserInputTool）。
+- `mybot/messaging/`（bus、channels、Feishu 通道）。
+- `mybot/storage/memory/`、`mybot/tools/memory.py`。
+- 对应测试：`test_approval_manager`、`test_clarification_manager`、`test_guardrail_policy`、
+  `test_agent_confirmation`、`test_agent_clarification`、`test_mcp_policy`、`test_memory`、
+  `test_eval_*`、`test_live_evals`。
 
-- 依赖方向：RuntimeManager → store / serialization；store → models / serialization；serialization → sanitizer / guardrail models；sanitizer → tracing。models 无项目内部依赖。
-- RecentBrowserTask 仍属于现有 browser_reliability 模块；serializer 在恢复函数内延迟导入该数据类型，避免 agent 包初始化带来的循环导入，不依赖 agent/checkpoint_recovery 的实现。
-- SQLite `active_tasks` 每 session 一个 waiting checkpoint；`recent_browser_tasks` 独立存储并按 timezone-aware TTL 清理。DB/payload schema、kind、session、task、sender、expiry、resumable identity 继续 fail closed。
-- 重启只恢复等待状态，不调用 LLM 或 Tool。副作用前必须成功消费 active row，保证 at-most-once；未单独批准的旧批次调用不自动重放。
-- secret 写入前脱敏；恢复所需敏感参数被清除时 Approval non-resumable。Persisted browser state 仅历史上下文，Approval 仍检查 fresh live precondition、Policy、TTL 和 sender/task。
-- ContextBuilder 的预算及 tool call/response 原子裁剪保持不变；runtime chain 完整，仅 LLM request boundary 压缩，required context 超预算记录 overflow。
-- AgentLoop 从 1827 行降至 1691 行；依赖方向为 AgentLoop → ModelExecutor / tool_calls，ModelExecutor → ContextBuilder / client / tracer，纯 codec 不依赖 Runtime、Tool、Approval 或 Browser。Browser 核心行为未改动，ToolExecutionPipeline 未拆分。
+**改造的核心模块**
+
+- `mybot/agent/loop.py`：由消息驱动改为直接 CLI 读循环。`run()` 用 `asyncio.to_thread(input)`
+  读取 `You: `，`exit`/`quit`/EOF 退出。新增 `handle_inbound_message()` 作为唯一外部入口。
+  删除全部 approval / clarification 暂停与恢复路径（`resume_pending`、`resume_clarification`、
+  `_resume_approved`、approval 预览与提示等）。
+- `mybot/agent/tool_execution.py`：Pipeline 现在只做 normalization → trace → 存在性 / 参数校验
+  → `execution_guard` → registry 调用。`ToolExecutionStatus` 只剩 `EXECUTED` / `FAILED`。
+- `mybot/agent/task_state.py`：`AgentTaskStatus` 只剩 `new / running / waiting_verification /
+  completed / failed / max_steps / cancelled`。
+- `mybot/agent/runtime_manager.py`：只负责 recent task 与 verification 状态。
+- `mybot/agent/checkpoint_recovery.py`：只剩 `recent_task_from_checkpoint`。
+- `mybot/tools/file_tools.py`：移除 Runtime-managed path 拦截。
+- `mybot/core/app.py`：直接构建 `AgentLoop` 并 `await agent.run()`，打印 `Gateway started. Channel: cli`。
+- `mybot/core/config.py`：移除 `FeishuConfig`、`guardrails`、`approval_ttl_seconds`、
+  `max_memory_chars` 及其校验。
+- `mybot/storage/checkpoints/`：serialization / sanitizer / store 移除全部 approval、
+  clarification 的序列化、脱敏与 consume 逻辑；`_ACTIVE_KINDS` 只剩 `verification`。
+- `mybot/mcp/config.py`、`mybot/mcp/adapter.py`：移除无人消费的 `tool_policy` 覆盖管线。
+- `mybot/tracing/models.py`、`mybot/tracing/replay.py`：移除 `awaiting_confirmation` /
+  `awaiting_clarification` 状态与 policy / approval trace 字段。
+- `mybot/agent/tool_calls.py`：删除只为 checkpoint 持久化待审批动作而存在的
+  `serialize_tool_call` / `deserialize_tool_call`。
+- `mybot/tools/browser/errors.py`：删除已无生产者的 `POLICY_BLOCKED` 分类。
+- `mybot/agent/context.py`：System Prompt 移除 approval / clarification / Policy Block /
+  `request_user_input` 描述。
+- `mybot/workspace/bootstrap.py`：不再创建 `workspace/memory/`。
+
+**新增**
+
+- `tests/fakes.py`：共享测试夹具（`FakeCase`、`FakeCompletions`、`FakeToolRegistry`、
+  `build_fake_agent`），替代被删除的 `mybot.evals.fakes` / `models`。
+
+**配置与依赖**
+
+- `config/config.example.json`：删除 `feishu`、`guardrails`、`llm.max_memory_chars` 与 MCP `tool_policy`。
+- `pyproject.toml` / `uv.lock`：删除 `lark-oapi`（连带移除 7 个仅飞书使用的传递依赖）。
+- `.gitignore`：删除 `workspace/memory/`。
+- `README.md`：重写功能概览、项目结构、Runtime 架构、Tracing、MCP 章节，删除飞书、
+  Evals、Guardrails、Clarification、记忆相关内容。
 
 ## 测试结果
 
-本阶段在 Windows 沙箱工作区验证：
-
-- `uv run python -m unittest discover -s tests -v`：269 tests；新增 Phase 11 功能测试通过。剩余 2 failures 与 1 error 均为 Windows 环境限制（Playwright daemon/Exec 工作目录 EPERM，以及 SQLite 临时文件锁 WinError 32）。
-- 定向 Concurrency、Tracer、ModelExecution、ToolExecution、AgentLoop、Checkpoint 测试：30/30 passed。
-- 新增 Live harness 单测及 checkpoint/approval 相关回归通过；剩余失败是既有环境限制：Playwright daemon 写入 `EPERM`、Exec 工作目录权限失败、SQLite 临时文件清理时文件锁 `WinError 32`。
-- 跳过项为需要 `MYBOT_RUN_BROWSER_INTEGRATION=1` 的本地 Chrome 集成测试。
-- `.venv\Scripts\python.exe -m mybot.evals.runner`：44/44 passed，100%；新增 Artifact Results case。
-- `uv run python -m mybot.evals.runner`：44/44 passed，100%。
-- `git diff --check`：通过。
-- `uv run python -m mybot.evals.live`（无 opt-in）：6/6 明确 SKIP，退出码 0。
-- `MYBOT_RUN_LIVE_E2E=1 uv run python -m mybot.evals.live`（luchikey / `gpt-5.6-sol`，Browser opt-in 未启用）：5/6 passed；`real_llm_basic`、`read_file_tool`、`approval_side_effect`、`restart_recovery`、`context_budget` 真实执行通过；`browser_live` 因未设置 `MYBOT_RUN_BROWSER_LIVE_E2E=1` SKIP。
-- 本轮重构后 Live E2E 结果无 behavior regression：同一命令再次得到 5/6 passed，Browser Live 明确 SKIP。
-- Phase 9.5 harness 修复后：一次真实运行 `restart_recovery` PASS；重复运行受 provider 间歇返回 `unknown provider for model gpt-5.6-sol` 影响，最终一次报告为 4/6。Browser Live 仍未通过：一次运行因 Playwright/Chrome 初始化 `EPERM` 失败，另一轮因同一 provider 错误未进入工具链；独立 Browser trace 中工具顺序为 `browser_open, browser_open, browser_goto, browser_snapshot, browser_inspect, browser_verify`，`browser_verify.postcondition_met=false`，未判定为 Runtime correctness bug。
+- `.venv\Scripts\python.exe -m unittest discover -s tests -q`：176 tests，1 failure + 1 skip。
+- 唯一失败 `tests/test_exec.py::test_commands_run_with_workspace_as_cwd` 是**既有环境问题**
+  （测试依赖 `pwd`，Windows `cmd` 无此内建命令），不是本次裁剪引入的回归；skip 为既有的
+  Playwright 集成用例。
+- `python -m compileall -q mybot tests`：通过。
 
 ## 已知问题
 
-- SQLite 未加密；数据最小化、脱敏、文件权限和 Runtime path 保护不能替代磁盘加密。
-- durable consume 成功后、执行前崩溃可能丢失一次动作，需要用户重新发起；不自动重放。
-- Browser live snapshot 与副作用之间仍非原子事务；unsupported schema 不提供迁移。
-- Browser ownership 不持久化；进程重启后 lease 为 none，恢复动作必须先重新建立 live Browser 状态。Browser Live 尚未在本次运行启用。
-- Artifact 文件独立于 checkpoint 持久化；同 session 重启后可通过 `artifact_read` 读取，artifact ownership 不跨 session 转移。
-- Artifact Store 当前没有 TTL/GC；每个文本最多保存 1,000,000 字符，长期运行仍需运维清理旧 artifacts。
-- `read_file` / `write_file` 禁止直接访问 `artifacts/`；`artifact_read` 按 trusted session authorization。`exec` 不是 OS sandbox，未知 shell command 仍走既有 confirmation policy，只保留明显 artifacts direct access defense-in-depth。
-- `SessionExecutionCoordinator._locks` 不回收；本阶段仅记录为 remaining risk。
-- 无 owner 或缺失 trusted session identity 的 Browser 调用不会进入真实 Tool；重启恢复不会从 persisted browser state 恢复 ownership。
+- 删除 Guardrails 后不再有任何工具级审批 / 拦截：`exec`、`write_file` 等可被模型直接调用，
+  仅剩 `exec` 内针对 `playwright-cli` 的硬编码拒绝。这是用户明确要求的取舍。
+- 删除 Memory 后，跨会话只保留 Session JSONL 对话历史，没有长期记忆层。
+- 删除 Messaging 后没有并发 session 抽象，`max_concurrent_sessions` 仅保留配置字段。
+- `config/config.json` 是本机真实配置（含明文 API Key），已被 `.gitignore` 忽略，不要提交。
 
 ## 下一步
 
-- 在具备 Browser 条件且 provider 稳定的隔离环境运行 `MYBOT_RUN_LIVE_E2E=1 MYBOT_RUN_BROWSER_LIVE_E2E=1 uv run python -m mybot.evals.live`；本轮未改变 Browser 核心。
-- Phase 11 已实现；后续可在稳定 provider/Browser 条件下运行完整 live suite。
+- 无进行中的开发任务。如需恢复审批 / 拦截能力，应从 Git 历史取回 `mybot/guardrails/`
+  与 `ToolExecutionPipeline` 的 policy 分支。
 
 ## 不要重复进行的工作
 
-- 不要把 workspace/browser_profiles/、.uv-cache/、.playwright-cli/、__pycache__/、workspace/sessions/*.jsonl 等运行期可再生数据提交进版本库；它们已由 .gitignore 覆盖，用时自动重建。
-
-- 不要继续为达到行数目标拆分 AgentLoop；不要把 SQLite、payload 转换、脱敏或 Browser 核心移回 AgentLoop / Store。
-- 不要通过 Store 私有方法暴露 sanitizer，或让 models / sanitizer 反向依赖 Store。
-- 不要在启动恢复时执行 Tool、信任 persisted browser state 或自动重放副作用。
-- 不要降低 sender/TTL/task、Policy、live precondition、Context Budget、Runtime path 与 secret redaction 约束。
-- 不要把 Browser snapshot/result、Artifact 内容或 filesystem path 写入模型以外的 checkpoint schema；不要让模型参数提供 Artifact owner。
+- 不要把 Evals、Guardrails、Messaging/Feishu、Memory 四个子系统重新引入；
+  用户的明确目标是只保留 Agent 基本功能。
+- 不要重新创建 `workspace/memory/` 目录或 `memory_write` / `memory_delete` 工具。
+- 不要把消息总线抽象加回 `AgentLoop`；CLI 读循环是当前唯一入口。
+- 不要提交 `config/config.json`。

@@ -18,18 +18,6 @@ class AgentTaskStateTests(unittest.TestCase):
         self.assertEqual(state.status, AgentTaskStatus.NEW)
 
         state.transition(AgentTaskStatus.RUNNING)
-        state.transition(
-            AgentTaskStatus.WAITING_APPROVAL,
-            approval_id="approval-1",
-        )
-        self.assertEqual(state.active_approval_id, "approval-1")
-        state.transition(AgentTaskStatus.RUNNING)
-        state.transition(
-            AgentTaskStatus.WAITING_CLARIFICATION,
-            clarification_id="clarification-1",
-        )
-        self.assertEqual(state.active_clarification_id, "clarification-1")
-        state.transition(AgentTaskStatus.RUNNING)
         state.transition(AgentTaskStatus.WAITING_VERIFICATION)
         state.transition(AgentTaskStatus.RUNNING)
         state.transition(AgentTaskStatus.COMPLETED)
@@ -50,22 +38,18 @@ class AgentTaskStateTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     state.transition(AgentTaskStatus.RUNNING)
 
-    def test_waiting_approval_can_fail_when_expired(self) -> None:
+    def test_waiting_verification_can_fail(self) -> None:
         state = self.new_state()
         state.transition(AgentTaskStatus.RUNNING)
-        state.transition(AgentTaskStatus.WAITING_APPROVAL)
-        state.transition(AgentTaskStatus.FAILED, reason="approval_expired")
+        state.transition(AgentTaskStatus.WAITING_VERIFICATION)
+        state.transition(AgentTaskStatus.FAILED, reason="verification_expired")
         self.assertEqual(state.status, AgentTaskStatus.FAILED)
-        self.assertEqual(state.status_reason, "approval_expired")
+        self.assertEqual(state.status_reason, "verification_expired")
 
     def test_round_trip_is_serializable_and_contains_no_tool_arguments(self) -> None:
         state = self.new_state()
         state.transition(AgentTaskStatus.RUNNING)
-        state.transition(
-            AgentTaskStatus.WAITING_APPROVAL,
-            approval_id="approval-1",
-        )
-
+        state.transition(AgentTaskStatus.WAITING_VERIFICATION)
         data = state.to_dict()
         restored = AgentTaskState.from_dict(data)
 

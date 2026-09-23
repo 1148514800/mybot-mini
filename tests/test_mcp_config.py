@@ -110,24 +110,12 @@ class MCPConfigTests(unittest.TestCase):
         )
         self.assertNotIn("literal-secret", redacted)
 
-    def test_rejects_invalid_transport_and_policy(self):
+    def test_rejects_invalid_transport(self):
         with self.assertRaises(MCPConfigError):
             MCPConfig.from_dict(
                 {
                     "servers": {
                         "bad": {"transport": "sse", "url": "http://x"}
-                    }
-                }
-            )
-        with self.assertRaises(MCPConfigError):
-            MCPConfig.from_dict(
-                {
-                    "servers": {
-                        "bad": {
-                            "transport": "stdio",
-                            "command": "python",
-                            "tool_policy": {"x": "execute_python"},
-                        }
                     }
                 }
             )

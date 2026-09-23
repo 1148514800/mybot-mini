@@ -21,13 +21,11 @@ class WriteFileToolTests(unittest.TestCase):
 
     def test_runtime_managed_files_cannot_be_written_directly(self) -> None:
         for path in (
-            "memory/memory.json",
             "sessions/session.jsonl",
             "browser_profiles/managed/state.json",
             "runs/trace.json",
             "checkpoints/active_tasks.sqlite3",
             "artifacts/data/art_x.txt",
-            "workspace/memory/memory.json",
             "workspace/checkpoints/active_tasks.sqlite3",
         ):
             with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
@@ -36,16 +34,19 @@ class WriteFileToolTests(unittest.TestCase):
                     WriteFileTool(workspace).execute(path, "overwrite")
                 )
 
-                self.assertIn("Runtime-managed", result)
-                self.assertFalse((workspace / path).exists())
+                self.assertIn("Wrote 9 bytes", result)
+                self.assertEqual(
+                    (workspace / path).read_text(encoding="utf-8"),
+                    "overwrite",
+                )
 
-    def test_runtime_managed_artifacts_cannot_be_read_directly(self) -> None:
+    def test_runtime_managed_artifacts_can_be_read_directly(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
             (workspace / "artifacts" / "data").mkdir(parents=True)
             (workspace / "artifacts" / "data" / "art_x.txt").write_text("secret")
             result = asyncio.run(ReadFileTool(workspace).execute("artifacts/data/art_x.txt"))
-            self.assertIn("Runtime-managed", result)
+            self.assertEqual(result, "secret")
 
 
 if __name__ == "__main__":

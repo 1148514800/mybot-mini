@@ -41,7 +41,7 @@ def externalize_tool_result(
         or store is None
         or isinstance(result, BrowserResult)
         or normalized_name.startswith(_EXCLUDED_PREFIXES)
-        or normalized_name in {"artifact_read", "request_user_input"}
+        or normalized_name == "artifact_read"
         or len(rendered) <= threshold_chars
     ):
         return rendered, None

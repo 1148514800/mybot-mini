@@ -1,20 +1,36 @@
+"""Shared deterministic fakes for AgentLoop-level tests.
+
+These fixtures script an LLM client and a tool registry so orchestration tests
+run without network access or a real model.
+"""
 from __future__ import annotations
 
 import json
 import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from ..agent.loop import AgentLoop
-from ..storage.artifacts import ArtifactStore
-from ..tools.result import BrowserResult, ToolResult
-from ..tracing import AgentTracer
-from .models import EvalCase
+from mybot.agent.loop import AgentLoop
+from mybot.storage.artifacts import ArtifactStore
+from mybot.tools.result import BrowserResult, ToolResult
+from mybot.tracing import AgentTracer
+
+
+@dataclass(slots=True)
+class FakeCase:
+    """Small scripted-run description used by the fake LLM client."""
+
+    id: str
+    name: str
+    input: str
+    max_steps: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class FakeCompletions:
-    def __init__(self, case: EvalCase):
+    def __init__(self, case: FakeCase):
         self._tools = list(case.metadata.get("fake_tools", []))
         configured_batches = case.metadata.get("fake_tool_batches")
         self._tool_batches = (
@@ -148,7 +164,7 @@ class FakeToolRegistry:
                 "type": "function",
                 "function": {
                     "name": name,
-                    "description": "Deterministic fake eval tool",
+                    "description": "Deterministic fake test tool",
                     "parameters": {"type": "object", "properties": {}},
                 },
             }
@@ -200,10 +216,10 @@ class FakeToolRegistry:
 
 
 def build_fake_agent(
-    case: EvalCase,
+    case: FakeCase,
     *,
     checkpoint_store=None,
-    approvals=None,
+    recent_tasks=None,
 ) -> AgentLoop:
     tool_script = list(case.metadata.get("fake_tools", []))
     minimum_steps = len(tool_script) + int(
@@ -211,7 +227,7 @@ def build_fake_agent(
     ) + 1
     configured_steps = max(case.max_steps or 10, minimum_steps)
     config = SimpleNamespace(
-        model="fake-eval-model",
+        model="fake-test-model",
         provider="fake",
         max_completion_tokens=100,
         max_react_steps=configured_steps,
@@ -230,12 +246,13 @@ def build_fake_agent(
     return AgentLoop(
         client=client,
         config=config,
-        bus=None,
         tools=FakeToolRegistry(tool_script),
         context=None,
         sessions=None,
         tracer=AgentTracer(),
+        recent_tasks=recent_tasks,
         checkpoint_store=checkpoint_store,
-        approvals=approvals,
-        artifact_store=ArtifactStore(Path(tempfile.mkdtemp(prefix="mybot-eval-artifacts-"))),
+        artifact_store=ArtifactStore(
+            Path(tempfile.mkdtemp(prefix="mybot-test-artifacts-"))
+        ),
     )

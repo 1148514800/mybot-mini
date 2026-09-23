@@ -1,13 +1,7 @@
 from __future__ import annotations
 
-import uuid
-from typing import Any
-
-from ..guardrails import ApprovalManager, ClarificationManager
 from ..storage.checkpoints.store import ActiveTaskCheckpointStore
 from ..storage.checkpoints.serialization import (
-    approval_from_checkpoint,
-    clarification_from_checkpoint,
     recent_task_from_checkpoint,
 )
 from .browser_reliability import RecentTaskManager
@@ -20,13 +14,9 @@ class TaskRuntimeManager:
     def __init__(
         self,
         *,
-        approvals: ApprovalManager,
-        clarifications: ClarificationManager,
         recent_tasks: RecentTaskManager,
         checkpoint_store: ActiveTaskCheckpointStore | None,
     ) -> None:
-        self.approvals = approvals
-        self.clarifications = clarifications
         self.recent_tasks = recent_tasks
         self.checkpoint_store = checkpoint_store
         self.task_states: dict[str, AgentTaskState] = {}
@@ -60,16 +50,7 @@ class TaskRuntimeManager:
         for recovered in store.load_active():
             try:
                 state = AgentTaskState.from_dict(recovered.task_state)
-                if recovered.kind == "verification" and (state.session_key, state.task_id) not in recent_identities:
-                    store.clear_active(state.session_key)
-                    continue
-                if recovered.kind == "approval":
-                    restored = self.approvals.restore(approval_from_checkpoint(recovered.payload))
-                elif recovered.kind == "clarification":
-                    restored = self.clarifications.restore(clarification_from_checkpoint(recovered.payload))
-                else:
-                    restored = True
-                if not restored:
+                if (state.session_key, state.task_id) not in recent_identities:
                     store.clear_active(state.session_key)
                     continue
                 self.task_states[state.task_id] = state
@@ -82,26 +63,10 @@ class TaskRuntimeManager:
         store = self.checkpoint_store
         if store is None or not state.session_key:
             return
-        if state.status == AgentTaskStatus.WAITING_APPROVAL:
-            pending = self.approvals.get(state.session_key)
-            if pending and pending.approval_id == state.active_approval_id:
-                store.save_approval(state, pending)
-                return
-        elif state.status == AgentTaskStatus.WAITING_CLARIFICATION:
-            pending = self.clarifications.get(state.session_key)
-            if pending and pending.clarification_id == state.active_clarification_id:
-                store.save_clarification(state, pending)
-                return
-        elif state.status == AgentTaskStatus.WAITING_VERIFICATION:
+        if state.status == AgentTaskStatus.WAITING_VERIFICATION:
             store.save_verification(state)
             return
         store.clear_active(state.session_key)
-
-    def consume(self, session_key: str) -> bool:
-        store = self.checkpoint_store
-        if store is None or not store.enabled:
-            return True
-        return store.consume_active(session_key)
 
     def clear(self, session_key: str) -> bool:
         store = self.checkpoint_store

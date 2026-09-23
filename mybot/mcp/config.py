@@ -9,7 +9,6 @@ from typing import Any
 DEFAULT_TOOL_TIMEOUT_SECONDS = 30.0
 DEFAULT_MAX_OUTPUT_CHARS = 12_000
 SUPPORTED_TRANSPORTS = frozenset({"stdio", "streamable_http"})
-SUPPORTED_POLICY_OVERRIDES = frozenset({"allow", "confirm", "block"})
 _ENV_REFERENCE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 _SENSITIVE_KEY_PARTS = (
     "authorization",
@@ -77,7 +76,6 @@ class MCPServerConfig:
     env: dict[str, str] = field(default_factory=dict)
     url: str | None = None
     headers: dict[str, str] = field(default_factory=dict)
-    tool_policy: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, name: str, data: dict[str, Any]) -> MCPServerConfig:
@@ -106,25 +104,6 @@ class MCPServerConfig:
         if max_output <= 0:
             raise MCPConfigError(
                 f"mcp.servers.{name}.max_output_chars must be positive"
-            )
-
-        raw_policy = _string_mapping(
-            data.get("tool_policy"),
-            f"mcp.servers.{name}.tool_policy",
-        )
-        policy = {
-            tool_name: decision.strip().lower()
-            for tool_name, decision in raw_policy.items()
-        }
-        invalid = {
-            decision
-            for decision in policy.values()
-            if decision not in SUPPORTED_POLICY_OVERRIDES
-        }
-        if invalid:
-            raise MCPConfigError(
-                f"mcp server '{name}' has unsupported tool policy decision(s): "
-                + ", ".join(sorted(invalid))
             )
 
         command_value = data.get("command")
@@ -160,7 +139,6 @@ class MCPServerConfig:
                 data.get("headers"),
                 f"mcp.servers.{name}.headers",
             ),
-            tool_policy=policy,
         )
 
     def resolved_env(self) -> dict[str, str]:
@@ -170,9 +148,6 @@ class MCPServerConfig:
         return {
             key: _expand_environment(value) for key, value in self.headers.items()
         }
-
-    def policy_for(self, external_tool_name: str) -> str | None:
-        return self.tool_policy.get(external_tool_name)
 
     def redact_secrets(self, value: str) -> str:
         redacted = value

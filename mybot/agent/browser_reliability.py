@@ -29,7 +29,7 @@ _INCOMPLETE_REPORT = re.compile(
     r"(?:失败|未完成|没有完成|没完成|无法完成|未成功|没成功|未发送|"
     r"没有发送|状态不确定|尚未|需要(?:用户|你)|等待确认|已取消|"
     r"\bfailed\b|\bincomplete\b|\bnot completed?\b|\bcould not\b|"
-    r"\bunable to\b|\buncertain\b|\bawaiting (?:approval|confirmation)\b|"
+    r"\bunable to\b|\buncertain\b|\bawaiting confirmation\b|"
     r"\bcancelled\b)",
     re.I,
 )
@@ -321,7 +321,7 @@ class RecentBrowserTask:
 
 
 class RecentTaskManager:
-    """In-memory browser task continuation state, separate from approval."""
+    """In-memory browser task continuation state, separate from verification."""
 
     def __init__(self, *, clock=None, on_expire=None, ttl_seconds: int = 86_400) -> None:
         self._recent: dict[str, RecentBrowserTask] = {}
@@ -397,7 +397,7 @@ class BrowserRecoveryPolicy:
                 retry_allowed=True,
                 hint=(
                     "Narrow the target with browser_inspect; if it remains ambiguous, "
-                    "call request_user_input."
+                    "ask the user in the final reply."
                 ),
             )
         if error_type == BrowserErrorType.PAGE_TIMEOUT.value:
@@ -410,7 +410,7 @@ class BrowserRecoveryPolicy:
             return RecoveryPlan(
                 refresh_snapshot=False,
                 retry_allowed=False,
-                hint="Ask the user to complete login with request_user_input.",
+                hint="Ask the user to complete login.",
             )
         if error_type == BrowserErrorType.NAVIGATION_FAILURE.value:
             return RecoveryPlan(

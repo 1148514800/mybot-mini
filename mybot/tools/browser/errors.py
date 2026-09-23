@@ -14,7 +14,6 @@ class BrowserErrorType(str, Enum):
     PAGE_TIMEOUT = "page_timeout"
     NAVIGATION_FAILURE = "navigation_failure"
     AUTH_REQUIRED = "auth_required"
-    POLICY_BLOCKED = "policy_blocked"
     BUDGET_EXCEEDED = "budget_exceeded"
     UNKNOWN = "unknown"
 

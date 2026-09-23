@@ -15,60 +15,10 @@ from ...tracing import (
 )
 
 
-_PAGE_URL_PATTERN = re.compile(r"(?m)^- Page URL:\s*(.+?)\s*$")
 _SENSITIVE_ARGUMENT_TEXT_PATTERN = re.compile(
     r"(?i)(?:\b(?:password|passwd|token|api[_-]?key|apikey|authorization|"
     r"cookie|secret)\b|\bbearer\s+\S+)"
 )
-
-
-def sanitize_approval_snapshot(pending: Any) -> str:
-    url_match = _PAGE_URL_PATTERN.search(pending.browser_snapshot or "")
-    lines = (
-        [
-            "- Page URL: "
-            + scrub_sensitive_argument_text(
-                url_match.group(1).strip()
-            )
-        ]
-        if url_match
-        else []
-    )
-    target = str(pending.arguments.get("target", "")).strip()
-    if target and re.fullmatch(r"e\d+", target, re.I):
-        ref_pattern = re.compile(
-            rf"\[ref\s*=\s*['\"]?{re.escape(target)}['\"]?\]",
-            re.I,
-        )
-        for line in pending.browser_snapshot.splitlines():
-            if ref_pattern.search(line):
-                lines.append(
-                    redact_tool_text(
-                        pending.tool_name,
-                        line,
-                        pending.arguments,
-                    )
-                )
-                break
-    return "\n".join(lines)
-
-
-def sanitize_policy_metadata(
-    metadata: dict[str, Any],
-    snapshot: str,
-) -> dict[str, Any]:
-    url_match = _PAGE_URL_PATTERN.search(snapshot)
-    safe: dict[str, Any] = {}
-    if url_match:
-        safe["current_url"] = scrub_sensitive_argument_text(
-            url_match.group(1).strip()
-        )
-    target_text = metadata.get("target_text")
-    if target_text:
-        safe["target_text"] = scrub_sensitive_argument_text(
-            str(target_text)
-        )[:500]
-    return safe
 
 
 def sanitize_messages(
@@ -231,8 +181,6 @@ def sanitize_tool_arguments(
     normalized_name = tool_name.strip().lower()
     if normalized_name == "write_file" and "content" in safe:
         safe["content"] = REDACTED
-    elif normalized_name == "memory_write" and "value" in safe:
-        safe["value"] = REDACTED
     return safe
 
 

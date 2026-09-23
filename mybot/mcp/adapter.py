@@ -107,9 +107,6 @@ class MCPToolAdapter(Tool):
             "trust_annotations": server_config.trust_annotations,
             **annotation_metadata(getattr(mcp_tool, "annotations", None)),
         }
-        override = server_config.policy_for(self._mcp_tool_name)
-        if override:
-            self._metadata["mcp_policy_override"] = override
         if len(raw_description) > MAX_DESCRIPTION_CHARS:
             self._metadata["description_truncated"] = True
 

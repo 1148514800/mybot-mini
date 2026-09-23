@@ -6,7 +6,6 @@ from pathlib import Path
 
 from openai import AsyncOpenAI
 
-from ..guardrails import DEFAULT_APPROVAL_TTL_SECONDS
 from ..mcp.config import MCPConfig
 from ..storage.checkpoints.models import DEFAULT_RECENT_TASK_TTL_SECONDS
 
@@ -56,13 +55,11 @@ def _config_bool(
 _JSON_CONFIG = _load_json_config()
 
 _LLM_CONFIG = _section(_JSON_CONFIG, "llm")
-_FEISHU_CONFIG = _section(_JSON_CONFIG, "feishu")
 _WORKSPACE_CONFIG = _section(_JSON_CONFIG, "workspace")
 _DEBUG_CONFIG = _section(_JSON_CONFIG, "debug")
 _TRACING_CONFIG = _section(_JSON_CONFIG, "tracing")
 _MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
 _BROWSER_RUNTIME_CONFIG = _section(_JSON_CONFIG, "browser_runtime")
-_GUARDRAILS_CONFIG = _section(_JSON_CONFIG, "guardrails")
 _CHECKPOINT_CONFIG = _section(_JSON_CONFIG, "checkpoint")
 _ARTIFACT_CONFIG = _section(_JSON_CONFIG, "artifact")
 
@@ -105,38 +102,6 @@ def _resolve_optional_path(raw_value: str | Path | None) -> Path | None:
     if raw_value is None or not str(raw_value).strip():
         return None
     return _resolve_workspace_path(raw_value)
-
-
-@dataclass
-class FeishuConfig:
-
-    enabled: bool = field(
-        default_factory=lambda: _config_bool(
-            _FEISHU_CONFIG,
-            "enabled",
-            False,
-        )
-    )
-
-    app_id: str = field(
-        default_factory=lambda: str(
-            _config_value(
-                _FEISHU_CONFIG,
-                "app_id",
-                "",
-            )
-        ).strip()
-    )
-
-    app_secret: str = field(
-        default_factory=lambda: str(
-            _config_value(
-                _FEISHU_CONFIG,
-                "app_secret",
-                "",
-            )
-        ).strip()
-    )
 
 
 @dataclass
@@ -282,16 +247,6 @@ class GatewayConfig:
         )
     )
 
-    approval_ttl_seconds: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _GUARDRAILS_CONFIG,
-                "approval_ttl_seconds",
-                DEFAULT_APPROVAL_TTL_SECONDS,
-            )
-        )
-    )
-
     checkpoint_enabled: bool = field(
         default_factory=lambda: _config_bool(
             _CHECKPOINT_CONFIG,
@@ -313,7 +268,6 @@ class GatewayConfig:
     max_context_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_context_chars", 60000)))
     max_recent_messages: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_recent_messages", 12)))
     max_tool_result_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_tool_result_chars", 8000)))
-    max_memory_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_memory_chars", 8000)))
 
     artifact_enabled: bool = field(default_factory=lambda: _config_bool(_ARTIFACT_CONFIG, "enabled", True))
     artifact_externalize_threshold_chars: int = field(default_factory=lambda: int(_config_value(_ARTIFACT_CONFIG, "externalize_threshold_chars", 8000)))
@@ -325,10 +279,6 @@ class GatewayConfig:
             "show_internal_process",
             False,
         )
-    )
-
-    feishu: FeishuConfig = field(
-        default_factory=FeishuConfig
     )
 
     mcp: MCPConfig = field(
@@ -361,14 +311,6 @@ class GatewayConfig:
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{name} must be a non-negative integer")
         if (
-            isinstance(self.approval_ttl_seconds, bool)
-            or not isinstance(self.approval_ttl_seconds, int)
-            or self.approval_ttl_seconds <= 0
-        ):
-            raise ValueError(
-                "guardrails.approval_ttl_seconds must be a positive integer"
-            )
-        if (
             isinstance(self.checkpoint_recent_task_ttl_seconds, bool)
             or not isinstance(self.checkpoint_recent_task_ttl_seconds, int)
             or self.checkpoint_recent_task_ttl_seconds <= 0
@@ -380,7 +322,6 @@ class GatewayConfig:
             "llm.max_context_chars": self.max_context_chars,
             "llm.max_recent_messages": self.max_recent_messages,
             "llm.max_tool_result_chars": self.max_tool_result_chars,
-            "llm.max_memory_chars": self.max_memory_chars,
         }.items():
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
                 raise ValueError(f"{name} must be a positive integer")

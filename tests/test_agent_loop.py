@@ -73,7 +73,7 @@ class AgentLoopTests(unittest.TestCase):
             ],
             execute=AsyncMock(return_value=ToolResult(success=True, output="ok")),
         )
-        return AgentLoop(client, config, None, tools, None, None)
+        return AgentLoop(client, config, tools, None, None)
 
     def test_managed_mode_hides_attach_and_local_mode_hides_open(self) -> None:
         loop = self.build_loop([])

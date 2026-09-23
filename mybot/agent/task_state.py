@@ -9,8 +9,6 @@ from typing import Any
 class AgentTaskStatus(str, Enum):
     NEW = "new"
     RUNNING = "running"
-    WAITING_APPROVAL = "waiting_approval"
-    WAITING_CLARIFICATION = "waiting_clarification"
     WAITING_VERIFICATION = "waiting_verification"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -24,26 +22,10 @@ _ALLOWED_TRANSITIONS: dict[AgentTaskStatus, frozenset[AgentTaskStatus]] = {
     ),
     AgentTaskStatus.RUNNING: frozenset(
         {
-            AgentTaskStatus.WAITING_APPROVAL,
-            AgentTaskStatus.WAITING_CLARIFICATION,
             AgentTaskStatus.WAITING_VERIFICATION,
             AgentTaskStatus.COMPLETED,
             AgentTaskStatus.FAILED,
             AgentTaskStatus.MAX_STEPS,
-            AgentTaskStatus.CANCELLED,
-        }
-    ),
-    AgentTaskStatus.WAITING_APPROVAL: frozenset(
-        {
-            AgentTaskStatus.RUNNING,
-            AgentTaskStatus.FAILED,
-            AgentTaskStatus.CANCELLED,
-        }
-    ),
-    AgentTaskStatus.WAITING_CLARIFICATION: frozenset(
-        {
-            AgentTaskStatus.RUNNING,
-            AgentTaskStatus.FAILED,
             AgentTaskStatus.CANCELLED,
         }
     ),
@@ -76,8 +58,6 @@ class AgentTaskState:
     requester_sender_id: str | None = None
     status: AgentTaskStatus = AgentTaskStatus.NEW
     status_reason: str | None = None
-    active_approval_id: str | None = None
-    active_clarification_id: str | None = None
     created_at: str = field(default_factory=_now)
     updated_at: str = field(default_factory=_now)
 
@@ -86,8 +66,6 @@ class AgentTaskState:
         status: AgentTaskStatus,
         *,
         reason: str | None = None,
-        approval_id: str | None = None,
-        clarification_id: str | None = None,
     ) -> None:
         if status == self.status:
             self.status_reason = reason
@@ -100,14 +78,6 @@ class AgentTaskState:
             )
         self.status = status
         self.status_reason = reason
-        self.active_approval_id = (
-            approval_id if status == AgentTaskStatus.WAITING_APPROVAL else None
-        )
-        self.active_clarification_id = (
-            clarification_id
-            if status == AgentTaskStatus.WAITING_CLARIFICATION
-            else None
-        )
         self.updated_at = _now()
 
     def to_dict(self) -> dict[str, Any]:

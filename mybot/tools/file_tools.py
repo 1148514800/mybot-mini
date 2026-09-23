@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..guardrails.paths import (
-    WorkspaceWriteKind,
-    classify_workspace_write_path,
-)
 from .base import Tool
 
 
@@ -52,8 +48,6 @@ class ReadFileTool(WorkspaceFileTool):
 
     async def execute(self, path: str, **kwargs) -> str:
         try:
-            if classify_workspace_write_path(path, self.workspace) == WorkspaceWriteKind.RUNTIME_MANAGED:
-                return "Error: Runtime-managed workspace paths cannot be read with read_file."
             target = self._resolve_path(path)
             if not target.exists():
                 return f"Error: Not found: {path}"
@@ -87,14 +81,6 @@ class WriteFileTool(WorkspaceFileTool):
 
     async def execute(self, path: str, content: str, **kwargs) -> str:
         try:
-            if (
-                classify_workspace_write_path(path, self.workspace)
-                == WorkspaceWriteKind.RUNTIME_MANAGED
-            ):
-                return (
-                    "Error: Runtime-managed workspace paths cannot be modified "
-                    "with write_file; use the dedicated runtime tool."
-                )
             target = self._resolve_path(path)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")

@@ -15,8 +15,6 @@ from .models import (
 )
 from .serialization import (
     recent_recovery_payload,
-    serialize_approval,
-    serialize_clarification,
     serialize_recent,
 )
 
@@ -32,7 +30,7 @@ class _CheckpointConnection(sqlite3.Connection):
         finally:
             self.close()
 
-_ACTIVE_KINDS = frozenset({"approval", "clarification", "verification"})
+_ACTIVE_KINDS = frozenset({"verification"})
 
 
 class ActiveTaskCheckpointStore:
@@ -62,30 +60,6 @@ class ActiveTaskCheckpointStore:
     @property
     def available(self) -> bool:
         return self.enabled and self._available
-
-    def save_approval(
-        self,
-        task_state: Any,
-        pending: Any,
-    ) -> None:
-        payload = serialize_approval(pending)
-        self._save_active(
-            task_state,
-            "approval",
-            payload,
-            expires_at=pending.expires_at,
-        )
-
-    def save_clarification(
-        self,
-        task_state: Any,
-        pending: Any,
-    ) -> None:
-        self._save_active(
-            task_state,
-            "clarification",
-            serialize_clarification(pending),
-        )
 
     def save_verification(self, task_state: Any) -> None:
         self._save_active(task_state, "verification", {})
@@ -137,7 +111,7 @@ class ActiveTaskCheckpointStore:
             with self._connect() as connection:
                 rows = connection.execute(
                     "SELECT session_key, schema_version, task_id, kind, "
-                    "payload_json, resumable, expires_at FROM active_tasks"
+                    "payload_json, expires_at FROM active_tasks"
                 ).fetchall()
         except sqlite3.Error as exc:
             self._record_error(exc)
@@ -159,19 +133,6 @@ class ActiveTaskCheckpointStore:
                     row["task_id"]
                 ):
                     raise ValueError("active checkpoint task mismatch")
-                if item.kind == "approval" and bool(
-                    item.payload.get("resumable", False)
-                ) != bool(row["resumable"]):
-                    raise ValueError("approval resumability mismatch")
-                if item.kind == "approval" and str(
-                    item.payload.get("expires_at", "")
-                ) != str(expires_at or ""):
-                    raise ValueError("approval expiry mismatch")
-                if item.kind in {"approval", "clarification"} and (
-                    item.payload.get("requester_sender_id")
-                    != item.task_state.get("requester_sender_id")
-                ):
-                    raise ValueError("checkpoint requester mismatch")
                 recovered.append(item)
             except (KeyError, TypeError, ValueError, json.JSONDecodeError):
                 self.clear_active(session_key)
@@ -214,21 +175,6 @@ class ActiveTaskCheckpointStore:
 
     def clear_active(self, session_key: str) -> bool:
         return self._delete("active_tasks", session_key)
-
-    def consume_active(self, session_key: str) -> bool:
-        """Delete exactly one durable active row before a side effect."""
-        if not self.available:
-            return not self.enabled
-        try:
-            with self._connect() as connection:
-                cursor = connection.execute(
-                    "DELETE FROM active_tasks WHERE session_key=?",
-                    (session_key,),
-                )
-                return cursor.rowcount == 1
-        except sqlite3.Error as exc:
-            self._record_error(exc)
-            return False
 
     def clear_recent(self, session_key: str) -> bool:
         return self._delete("recent_browser_tasks", session_key)
@@ -298,8 +244,6 @@ class ActiveTaskCheckpointStore:
         task_state: Any,
         kind: str,
         payload: dict[str, Any],
-        *,
-        expires_at: str | None = None,
     ) -> None:
         if not self.available or kind not in _ACTIVE_KINDS:
             return
@@ -309,7 +253,6 @@ class ActiveTaskCheckpointStore:
             "task_state": task_state.to_dict(),
             "payload": payload,
         }
-        resumable = bool(payload.get("resumable", True))
         try:
             serialized = self._json_dump(document)
             with self._connect() as connection:
@@ -334,9 +277,9 @@ class ActiveTaskCheckpointStore:
                         task_state.task_id,
                         kind,
                         serialized,
-                        int(resumable),
+                        0,
                         self._now().isoformat(),
-                        expires_at,
+                        None,
                     ),
                 )
         except (OSError, sqlite3.Error, TypeError, ValueError) as exc:
@@ -357,8 +300,6 @@ class ActiveTaskCheckpointStore:
         if str(task_state.get("session_key", "")) != session_key:
             raise ValueError("checkpoint session mismatch")
         expected_status = {
-            "approval": "waiting_approval",
-            "clarification": "waiting_clarification",
             "verification": "waiting_verification",
         }[kind]
         if str(task_state.get("status", "")) != expected_status:
@@ -366,17 +307,6 @@ class ActiveTaskCheckpointStore:
         payload = document["payload"]
         if not isinstance(payload, dict):
             raise ValueError("checkpoint payload must be an object")
-        if kind == "approval":
-            if str(payload.get("session_key", "")) != session_key or str(
-                payload.get("task_id", "")
-            ) != str(task_state.get("task_id", "")):
-                raise ValueError("approval checkpoint identity mismatch")
-            return RecoveredActiveCheckpoint(kind, task_state, payload)
-        if kind == "clarification":
-            if str(payload.get("session_key", "")) != session_key or str(
-                payload.get("task_id", "")
-            ) != str(task_state.get("task_id", "")):
-                raise ValueError("clarification checkpoint identity mismatch")
         return RecoveredActiveCheckpoint(kind, task_state, payload)
 
     def _validate_recent_row_payload(

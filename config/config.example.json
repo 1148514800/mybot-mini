@@ -9,7 +9,6 @@
     "max_context_chars": 60000,
     "max_recent_messages": 12,
     "max_tool_result_chars": 8000,
-    "max_memory_chars": 8000,
     "providers": {
       "siliconflow": {
         "api_key": "YOUR_SILICONFLOW_API_KEY",
@@ -23,11 +22,6 @@
       }
     }
   },
-  "feishu": {
-    "enabled": false,
-    "app_id": "YOUR_FEISHU_APP_ID",
-    "app_secret": "YOUR_FEISHU_APP_SECRET"
-  },
   "workspace": {
     "path": "./workspace"
   },
@@ -37,9 +31,6 @@
     "max_failed_action_retries": 1,
     "max_eval_fallbacks": 1,
     "max_recovery_steps": 2
-  },
-  "guardrails": {
-    "approval_ttl_seconds": 600
   },
   "checkpoint": {
     "enabled": true,
@@ -67,12 +58,7 @@
         "required": false,
         "trust_annotations": false,
         "tool_timeout_seconds": 30,
-        "max_output_chars": 12000,
-        "tool_policy": {
-          "search": "allow",
-          "create_item": "confirm",
-          "delete_all": "block"
-        }
+        "max_output_chars": 12000
       },
       "remote_demo": {
         "enabled": false,

@@ -17,7 +17,6 @@ config/config.json
 
 # Runtime data
 workspace/sessions/
-workspace/memory/
 workspace/state/
 workspace/browser_profiles/
 workspace/runs/

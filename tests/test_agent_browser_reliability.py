@@ -8,17 +8,15 @@ from types import SimpleNamespace
 
 from mybot.agent.context import BROWSER_MODE_MANAGED
 from mybot.agent.loop import AgentLoop
-from mybot.evals.fakes import FakeToolRegistry, build_fake_agent
-from mybot.evals.models import EvalCase
-from mybot.messaging import InboundMessage
 from mybot.storage.session import SessionManager
+from tests.fakes import FakeCase, FakeToolRegistry, build_fake_agent
 
 
 def case(fake_tools, *, batches=None, output="done", max_steps=None):
     metadata = {"fake_tools": fake_tools, "fake_output": output}
     if batches is not None:
         metadata["fake_tool_batches"] = batches
-    return EvalCase(
+    return FakeCase(
         id="browser-reliability",
         name="browser reliability",
         input="browser task",
@@ -331,16 +329,17 @@ class RecentTaskContinuationTests(unittest.IsolatedAsyncioTestCase):
                     chat=SimpleNamespace(completions=completions)
                 ),
                 config,
-                None,
                 tools,
                 context,
                 SessionManager(Path(directory)),
             )
             _, first = await agent.handle_inbound_message(
-                InboundMessage("cli", "user", "a", "打开页面检查结果")
+                "打开页面检查结果",
+                session_key="cli:a",
             )
             output, resumed = await agent.handle_inbound_message(
-                InboundMessage("cli", "user", "a", "你没有完成，继续")
+                "你没有完成，继续",
+                session_key="cli:a",
             )
 
         self.assertEqual(first.status, "success")

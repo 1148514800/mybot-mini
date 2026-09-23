@@ -1,13 +1,7 @@
 """
                        User
                          │
-               ┌─────────┴─────────┐
-               │                   │
-              CLI                Feishu
-               │                   │
-               └─────────┬─────────┘
-                         │
-                    MessageBus
+                        CLI
                          │
                          ↓
                     AgentLoop
@@ -16,24 +10,20 @@
              │                       │
         ContextBuilder              LLM
              │                       │
-      ┌──────┼──────┐                │
-      │      │      │                │
-Instructions Skills Memory           │
-                                     ↓
-                                Tool Calling
-                                     │
-                                ToolPolicy
-                                     │
-                           ALLOW / CONFIRM / BLOCK
-                                     │
+      ┌──────┴──────┐                │
+      │             │                │
+ Instructions     Skills             │
+                                      ↓
+                                 Tool Calling
+                                      │
                                ToolRegistry
-                                     │
+                                      │
                   ┌──────────────────┴──────────────────┐
-                  ↓                                     ↓
-             Native Tools                          MCP Tools
-                  │                                     │
-          File / Exec / Memory / Browser         MCPToolAdapter
-                                                        │
+                   ↓                                     ↓
+              Native Tools                          MCP Tools
+                   │                                     │
+          File / Exec / Browser                   MCPToolAdapter
+                                                         │
                                                MCPClientManager
                                                         │
                                              stdio / Streamable HTTP
@@ -44,14 +34,11 @@ Instructions Skills Memory           │
                       Tracer
                          │
           ┌──────────────┼───────────────┐
-          ↓              ↓               ↓
+           ↓              ↓               ↓
         Run            Step         LLM / Tool Call
-          │
-          ↓
+           │
+           ↓
      JSON / Replay
-          │
-          ↓
-        Evals
 """
 
 from __future__ import annotations

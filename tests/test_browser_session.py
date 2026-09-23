@@ -145,7 +145,6 @@ class BrowserSessionTests(unittest.TestCase):
         self.assertIn("browser_links", tool_names)
         self.assertIn("browser_inspect", tool_names)
         self.assertIn("browser_verify", tool_names)
-        self.assertIn("request_user_input", tool_names)
         self.assertIn("browser_attach", tool_names)
         self.assertIn("browser_open", tool_names)
         self.assertNotIn("browser_new_tab", tool_names)
