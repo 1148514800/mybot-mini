@@ -1,6 +1,6 @@
 # MyBot
 
-MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用大模型，提供命令行对话；Agent 还可以使用本地文件、会话和浏览器自动化工具。
+MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用大模型，提供命令行对话；Agent 还可以使用本地文件、命令执行和浏览器自动化工具。
 
 本文面向第一次接触本项目的用户。按照“快速开始”完成后，你就可以在命令行中与 Bot 对话。
 
@@ -8,7 +8,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 
 - 命令行（CLI）对话
 - 基于 `playwright-cli` 的浏览器操作
-- 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
+- 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时（默认关闭）
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
 - 使用 `AsyncOpenAI` 发起非阻塞模型请求，并提供默认 60 秒总超时
 
@@ -223,18 +223,13 @@ config/
 | `llm.request_timeout_seconds` | 单次模型请求的总超时秒数，默认 `60`；超时不会阻塞其他异步通道 |
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
 | `llm.max_react_steps` | 一次请求最多执行多少轮 Agent/工具循环；程序硬上限为 30 |
-| `llm.max_context_chars` | 发送给模型的 Context 目标字符预算，默认 `60000`；System 指令超出时允许 soft overflow |
-| `llm.max_tool_result_chars` | 单条 Tool Result 在模型 Context 中的字符上限，默认 `8000` |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
 | `mcp.enabled` | 是否在 Gateway 启动时连接并发现 MCP Tools；默认 `false` |
 | `mcp.servers.*.required` | MCP Server 失败时是否阻止 Gateway 启动 |
-| `mcp.servers.*.trust_annotations` | 是否在 Trace 中记录 MCP Tool annotation；默认 `false` |
 | `debug.show_internal_process` | 是否输出 Agent 的内部 trace |
 
 修改 JSON 后需要重启程序才会生效。
-
-Context compaction 只发生在每次 LLM request 前。Tool call 及其全部 tool result 作为原子单元按原始顺序一起保留或删除；孤立、缺失或重复配对不会发送给模型。`max_context_chars` 是 soft target，必要的系统指令和当前任务输入超出目标时会保留，并在 Trace 中标记 overflow。
 
 程序不保留历史会话：每次启动都是全新对话，上下文只包含 System Prompt 与当前这条用户消息。需要长期保留的信息应写入项目文件。`exec` 不是 OS sandbox。
 
@@ -246,11 +241,20 @@ config/
   config.example.json
 mybot/
   main.py                 # 程序入口
-  agent/                  # Agent orchestration 与统一 Tool 执行
-  mcp/                    # MCP 配置、官方 Client 生命周期、命名和 Tool Adapter
-  tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
-  core/                   # 配置和应用组装
-  tools/                  # Agent 可调用的工具
+  app.py                  # 应用组装：config → tools → agent → CLI
+  config.py               # 读取 config/config.json 并构建 LLM client
+  mcp.py                  # MCP 配置、官方 Client 生命周期与 Tool Adapter
+  tracing.py              # Run、Step、LLM、Tool trace
+  workspace.py            # 初始化 workspace 与 instructions
+  agent/
+    context.py            # System Prompt 与消息组装
+    loop.py               # ReAct 主循环与 Tool 执行边界
+  tools/
+    base.py               # Tool / ToolResult / BrowserResult
+    registry.py           # ToolRegistry
+    exec.py               # exec
+    file.py               # read_file / write_file
+    browser.py            # 全部 browser_* 工具
 workspace/
   instructions/           # AGENTS.md、SOUL.md、USER.md、TOOLS.md
   browser_profiles/       # Runtime 管理的浏览器 profile
@@ -262,21 +266,13 @@ workspace/
 
 ## Agent Runtime 执行架构
 
-Gateway 以单个 CLI 会话运行。退出时会关闭 LLM client 和 MCP Server 连接。
+Gateway 以单个 CLI 进程运行。退出时会关闭 LLM client 和 MCP Server 连接。
 
-Browser 是进程级共享资源，采用独占 lease：首个 `browser_open` 或 `browser_attach` 成功的调用
-成为 owner；其他调用会返回 `browser_ownership_conflict`，不会执行真实命令。
-owner 必须成功调用 `browser_close` 才会释放 lease。
-
-所有 Agent-visible Tool Call 都进入同一个执行边界：
+所有 Agent-visible Tool Call 都进入 AgentLoop 中同一个执行边界：
 
 ~~~text
 AgentLoop
-    ↓
-ToolExecutionPipeline
-    ├── Tool lookup
     ├── Arguments normalization / schema validation
-    ├── execution guard / runtime preconditions
     ├── ToolRegistry → Tool
     ├── ToolResult / BrowserResult normalization
     └── Trace update
@@ -298,8 +294,7 @@ cookie、secret 等字段会自动脱敏；`browser_type.text` 也按语义隐�
 `debug.show_internal_process` 后，终端中的 Tool 参数和结果同样经过这套脱敏。
 Trace summary 不会进入 LLM 上下文。
 
-每次 Run 记录自己的 `status`（success、max_steps 或 failed）。旧 Trace 缺少新增字段时
-仍可读取和 Replay。
+每次 Run 记录自己的 `status`（success、max_steps 或 failed）。
 
 默认 `tracing.trace_dir` 为 `null`，不会写入磁盘。需要在 Run 完成后保存 JSON 时，
 可在本机 `config/config.json` 中设置：
@@ -311,8 +306,6 @@ Trace summary 不会进入 LLM 上下文。
   }
 }
 ```
-
-Replay 只读取已有 Trace 并输出 timeline，不会再次调用模型或真实 Tool。
 
 ## MCP External Tool Runtime
 
@@ -335,7 +328,6 @@ MCP 默认关闭。启用后，Gateway 会在 AgentLoop 启动前使用官方 `m
         "args": ["-m", "demo_mcp_server"],
         "env": {"DEMO_API_KEY": "${DEMO_API_KEY}"},
         "required": false,
-        "trust_annotations": false,
         "tool_timeout_seconds": 30,
         "max_output_chars": 12000
       },
@@ -347,7 +339,6 @@ MCP 默认关闭。启用后，Gateway 会在 AgentLoop 启动前使用官方 `m
           "Authorization": "Bearer ${DEMO_MCP_TOKEN}"
         },
         "required": false,
-        "trust_annotations": false,
         "tool_timeout_seconds": 30
       }
     }
@@ -363,9 +354,6 @@ Streamable HTTP 使用官方 `streamable_http_client`；不支持 legacy SSE。`
 发现的工具使用 `mcp__<server>__<tool>` namespace。非法字符和超长名称会确定性清理
 并附加稳定 hash，collision 不会覆盖现有 Tool。输入 JSON Schema 尽量原样保留；无法
 作为 Function Tool object schema 使用的工具会跳过并记入 Server Status。
-
-Tool annotation（`readOnlyHint`、`destructiveHint`、`idempotentHint`、`openWorldHint`）
-会作为 metadata 记录到 Trace，供人工审查；Runtime 当前不对 MCP Tool 施加独立策略。
 
 MCP 文本和 `structuredContent` 会转换为 `ToolResult`；图片、音频和 Resource 只返回
 可读 placeholder，不把 base64 塞入模型上下文。输出默认限制为 12000 字符，每次调用
@@ -458,7 +446,7 @@ py -3.12 -m venv .venv
 python -m pip install -e .
 ```
 
-删除 `.venv` 不会删除源码、配置模板或 `workspace` 数据；但请不要随意删除 `workspace`，其中可能包含你的会话记录。
+删除 `.venv` 不会删除源码、配置模板或 `workspace` 数据。
 
 ## 安全提醒
 

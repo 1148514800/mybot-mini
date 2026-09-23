@@ -4,7 +4,7 @@
                         CLI
                          │
                          ↓
-                    AgentLoop
+                    AgentLoop ────── Tracer
                          │
              ┌───────────┴───────────┐
              │                       │
@@ -20,24 +20,13 @@
                    ↓                                     ↓
               Native Tools                          MCP Tools
                    │                                     │
-          File / Exec / Browser                   MCPToolAdapter
+          File / Exec / Browser                       MCPTool
                                                          │
-                                               MCPClientManager
+                                                   MCPManager
                                                         │
                                              stdio / Streamable HTTP
-
-                     AgentLoop
-                         │
-                         ↓
-                      Tracer
-                         │
-          ┌──────────────┼───────────────┐
-           ↓              ↓               ↓
-        Run            Step         LLM / Tool Call
-           │
-           ↓
-     JSON / Replay
 """
+
 
 from __future__ import annotations
 
@@ -46,10 +35,9 @@ from pathlib import Path
 import sys
 
 if __package__ in {None, ""}:
-    # Running ``python mybot/main.py`` puts ``mybot/`` at sys.path[0].  That
-    # makes the internal ``mybot/mcp`` package shadow the third-party ``mcp``
-    # SDK.  Remove the package directory as a top-level import root and import
-    # the application through the repository root instead.
+    # Running ``python mybot/main.py`` puts ``mybot/`` on sys.path, which makes
+    # ``mybot/mcp.py`` shadow the third-party ``mcp`` SDK.  Import through the
+    # repository root instead.
     package_dir = Path(__file__).resolve().parent
     repo_root = package_dir.parent
     cleaned_path: list[str] = []

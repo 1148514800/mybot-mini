@@ -11,14 +11,10 @@ DEFAULT_INSTRUCTION_FILES = {
 }
 
 
-def init_instructions(instructions_dir: Path) -> None:
-    instructions_dir.mkdir(parents=True, exist_ok=True)
-
+def init_workspace(workspace: Path) -> None:
+    """Create the workspace and seed any missing instruction files."""
+    (workspace / "instructions").mkdir(parents=True, exist_ok=True)
     for name, content in DEFAULT_INSTRUCTION_FILES.items():
-        path = instructions_dir / name
+        path = workspace / "instructions" / name
         if not path.exists():
             path.write_text(content, encoding="utf-8")
-
-
-def init_workspace(workspace: Path) -> None:
-    workspace.mkdir(parents=True, exist_ok=True)
