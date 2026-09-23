@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import re
 from pathlib import Path
 
 from .base import Tool
@@ -43,12 +42,6 @@ class ExecTool(Tool):
                     "browser_* tools, which enforce approved browser profiles."
                 ),
             )
-        if re.search(r"(?i)(?:^|[\\/\s'\"`])artifacts(?:[\\/\s'\"`]|$)", command):
-            return ToolResult(
-                success=False,
-                error="Runtime-managed artifact paths cannot be accessed with exec.",
-            )
-
         proc = None
         try:
             proc = await asyncio.create_subprocess_shell(

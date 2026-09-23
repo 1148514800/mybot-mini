@@ -10,11 +10,7 @@ def replay_trace(trace: AgentRunTrace) -> str:
     """Render a trace timeline without invoking an LLM or a real tool."""
     llm_by_id = {call.call_id: call for call in trace.llm_calls}
     tools_by_id = {call.call_id: call for call in trace.tool_calls}
-    task_suffix = (
-        f" task_id={trace.task_id} task_status={trace.task_status}"
-        if trace.task_id or trace.task_status
-        else ""
-    )
+    task_suffix = f" task_id={trace.task_id}" if trace.task_id else ""
     lines = [
         f"RUN {trace.run_id} runtime_status={trace.status}{task_suffix}"
     ]

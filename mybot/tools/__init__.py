@@ -17,7 +17,6 @@ from .browser import (
     BrowserOwnershipManager,
     classify_browser_error,
 )
-from .artifact import ArtifactReadTool
 from .registry import ToolRegistry, build_default_tool_registry
 from .result import BrowserResult, ToolResult
 
@@ -43,5 +42,4 @@ __all__ = [
     "BrowserVerifyTool",
     "BrowserTabTool",
     "BrowserCloseTool",
-    "ArtifactReadTool",
 ]

@@ -8,9 +8,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 
 - 命令行（CLI）对话
 - 基于 `playwright-cli` 的浏览器操作
-- 持久化会话
-- 版本化 SQLite Checkpoint 与保守的进程重启恢复
-- 浏览器错误分类、有限恢复、任务预算、完成证据与最近任务续接
+- 单会话上下文记忆（对话历史持久化到 `workspace/sessions/`）
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
 - 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
@@ -230,17 +228,6 @@ config/
 | `llm.max_context_chars` | 发送给模型的 Context 目标字符预算，默认 `60000`；System、核心指令和当前任务 anchor 超出时允许 soft overflow |
 | `llm.max_recent_messages` | 历史消息数量上限，默认 `12` |
 | `llm.max_tool_result_chars` | 单条 Tool Result 在模型 Context 中的字符上限，默认 `8000` |
-| `artifact.enabled` | 是否将大型非 Browser Tool Result 外置为受控文本 Artifact，默认 `true` |
-| `artifact.externalize_threshold_chars` | 触发外置的结果字符阈值，默认 `8000` |
-| `artifact.read_max_chars` | 单次 `artifact_read` 返回上限，默认 `8000` |
-| `browser_runtime.max_open_attempts` | 每个 task 的 `browser_open/browser_attach` 尝试上限，默认 `1` |
-| `browser_runtime.max_consecutive_tool_failures` | 同一浏览器 Tool 连续失败上限，默认 `2` |
-| `browser_runtime.max_failed_action_retries` | 同一失败 Action 的额外重试次数，默认 `1` |
-| `browser_runtime.max_eval_fallbacks` | 每个 task 的 `browser_eval` fallback 上限，默认 `1` |
-| `browser_runtime.max_recovery_steps` | 每个 task 的自动恢复步骤上限，默认 `2` |
-| `checkpoint.enabled` | 是否持久化 Checkpoint，默认 `true`；设为 `false` 时保持纯内存模式 |
-| `checkpoint.recent_task_ttl_seconds` | 最近 Browser Task checkpoint 的有效期，默认 `86400` 秒 |
-| `max_concurrent_sessions` | 跨 session 最大并发消息任务数，默认 `4`，范围 `1..32` |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
 | `mcp.enabled` | 是否在 Gateway 启动时连接并发现 MCP Tools；默认 `false` |
@@ -252,7 +239,7 @@ config/
 
 Context compaction 只发生在每次 LLM request 前。Tool call 及其全部 tool result 作为原子单元按原始顺序一起保留或删除；孤立、缺失或重复配对不会发送给模型。`max_context_chars` 是 soft target，必要的系统指令和当前任务输入超出目标时会保留，并在 Trace 中标记 overflow。
 
-大型非 Browser 文本结果在发送给模型前写入 `workspace/artifacts/`，模型只收到脱敏 preview 和不可预测的 `artifact_id`。模型通过 `artifact_read` 按 session identity 读取有限字符或 query 周边片段；`read_file` 和 `write_file` 禁止直接访问该 Runtime 管理目录。`exec` 不是 OS sandbox；`read_file` 和 `write_file` 仍保留明显 artifacts 直接访问的 defense-in-depth 拦截。Artifact 文本会脱敏并受存储上限约束，Browser snapshot/result 始终保留原有运行时语义。
+对话历史按 session 写入 `workspace/sessions/`，重启后继续在同一 session 中对话即可复用上下文。超出 `max_context_chars` 或 `max_recent_messages` 的历史会被压缩；需要长期保留的信息应写入项目文件，而不是依赖聊天记录。`exec` 不是 OS sandbox。
 
 ## 运行数据和项目结构
 
@@ -262,29 +249,26 @@ config/
   config.example.json
 mybot/
   main.py                 # 程序入口
-  agent/                  # Agent orchestration、统一 Tool 执行和显式任务状态
+  agent/                  # Agent orchestration 与统一 Tool 执行
   mcp/                    # MCP 配置、官方 Client 生命周期、命名和 Tool Adapter
   tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
   core/                   # 配置和应用组装
-  storage/                # 会话和版本化 SQLite checkpoint
-  storage/checkpoints/    # SQLite checkpoint store、payload adapters 和 sanitizer exports
+  session.py              # 会话与对话历史持久化
   tools/                  # Agent 可调用的工具
 workspace/
   instructions/           # AGENTS.md、SOUL.md、USER.md、TOOLS.md
   skills/                 # 本地 Skills
   sessions/               # 对话历史（JSONL）
   browser_profiles/       # Runtime 管理的浏览器 profile
-  checkpoints/            # Runtime 管理的 SQLite checkpoint
-  artifacts/              # Runtime 管理的大型文本 Tool Result Artifact
   runs/                   # 可选的持久化 Trace
 ```
 
-`browser_profiles/`、`checkpoints/`、`artifacts/` 和 `runs/` 是 Runtime 管理目录，普通
-`write_file` 会阻止对这些目录的修改。目录删除会丢失对应状态，请先备份。
+`workspace/sessions/`、`workspace/browser_profiles/` 和 `workspace/runs/` 会被程序自己写入；
+删除 `workspace/sessions/` 会丢失对话历史，删除 `browser_profiles/` 会丢失浏览器登录状态。
 
 ## Agent Runtime 执行架构
 
-Gateway 以单个 CLI 会话运行。停止 Gateway 时会取消并等待 inflight 任务，再关闭 LLM client 和 MCP。
+Gateway 以单个 CLI 会话运行。退出时会关闭 LLM client 和 MCP Server 连接。
 
 Browser 是进程级共享资源，采用独占 lease：首个 `browser_open` 或 `browser_attach` 成功的调用
 成为 owner；其他调用会返回 `browser_ownership_conflict`，不会执行真实命令。
@@ -301,29 +285,15 @@ ToolExecutionPipeline
     ├── execution guard / runtime preconditions
     ├── ToolRegistry → Tool
     ├── ToolResult / BrowserResult normalization
-    └── Trace + browser task state update
+    └── Trace update
 ~~~
 
 未知 Tool、非法 JSON、缺少必填参数或参数类型错误统一转换为失败的 ToolResult，不会使
 AgentLoop 崩溃。
 
-AgentTaskState 显式表示 new、running、waiting_verification、completed、failed、
-max_steps 和 cancelled。Trace 的 status 是本次 Runtime Run 状态，
-task_status 是跨 Run 的用户任务状态；因此允许 Runtime 正常结束但任务仍为
-waiting_verification。Task State 只保存小型状态和关联 ID，不保存 Tool Arguments、
-浏览器输入或 secret。
-
-等待 Verification 的 Active Task State 与 Recent Browser Task 会保存到
-`workspace/checkpoints/active_tasks.sqlite3`。存储层使用 SQLite transaction、
-明确的 JSON-compatible payload 和 `schema_version=1`，不使用 pickle；每个 session 的
-active checkpoint 原子覆盖。任务进入 completed、failed、max_steps 或 cancelled 后会清除
-active checkpoint，Recent Browser Task 则按独立 TTL 保留，供用户纠正或继续。
-
-重启只重建小型任务状态，不调用模型，也不执行 Tool。Checkpoint 写入前会递归清理
-password、token、cookie、authorization、secret、API key 以及 `browser_type.text`。
-持久化 browser snapshot/session 状态只视为历史上下文：恢复后的 Verification 和 Recent Task
-必须重新连接并读取 live state。无法解析、row identity 不一致或 schema 不受支持的 checkpoint
-会 fail closed。将 `checkpoint.enabled` 设为 `false` 可完全关闭 SQLite 文件并保留原有纯内存行为。
+AgentLoop 只保留一条 ReAct 主循环：调用模型、执行 Tool、把结果回灌上下文，直到模型
+给出最终回复或达到 `max_react_steps`。任务状态不跨 Run 持久化，Runtime 不保存
+Tool Arguments、浏览器输入或 secret。
 
 ## Tracing
 
@@ -334,12 +304,8 @@ cookie、secret 等字段会自动脱敏；`browser_type.text` 也按语义隐�
 `debug.show_internal_process` 后，终端中的 Tool 参数和结果同样经过这套脱敏。
 Trace summary 不会进入 LLM 上下文。
 
-每个新用户目标会生成一个 `task_id`。如果任务因 Verification 分成多个
-Run，每个 Run 仍各自保存一个 JSON，但顶层 `task_id` 和兼容字段
-`metadata.task_id` 保持相同，并通过 `resumed_from_run_id` 指向前一个 Run。顶层
-`task_status` 与 Run 自身的 `status` 分开记录。明显针对最近浏览器任务的纠正也沿用
-同一 `task_id`，并在 Trace 中写入 `continuation=true`。旧 Trace 没有新增字段时仍可
-读取和 Replay。
+每次 Run 记录自己的 `status`（success、max_steps 或 failed）。旧 Trace 缺少新增字段时
+仍可读取和 Replay。
 
 默认 `tracing.trace_dir` 为 `null`，不会写入磁盘。需要在 Run 完成后保存 JSON 时，
 可在本机 `config/config.json` 中设置：
@@ -439,33 +405,6 @@ System 或 User 指令，也不能自行获得额外 Tool 权限。
 即使 `playwright-cli` 进程退出码为 0，输出中的明确 `### Error` block 也会转换为
 `BrowserResult(success=False)`。网页自身的 Console Error 只作为页面数据保留，不会
 被误判成 Tool 执行失败。
-
-### Browser Runtime Reliability
-
-浏览器失败会在 `BrowserResult.metadata` 中提供稳定的 `error_type` 与 `recoverable`，
-当前分类包括 `stale_target`、`target_not_found`、`ambiguous_target`、
-`tool_syntax_error`、`page_timeout`、`navigation_failure`、`auth_required`、
-`budget_exceeded` 和 `unknown`。Runtime 对 stale/not-found target
-最多自动刷新一次快照，再允许模型用新 ref 重试一次；歧义目标要求用 inspect 缩小，
-必要时向用户澄清；同一个 syntax error 不会被原样重复执行。
-
-`browser_click`、`browser_type` 和 Enter/Space 成功只表示动作调用成功。它们之后会把
-任务置为 `verification_required`，模型必须调用 `browser_verify`，且结构化后置条件
-实际满足后，Runtime 才把 Browser Task 标记为 `verified`。如果最终动作失败、超时或
-验证失败，Runtime 会阻止“已完成/已发送/已发布”等完成式
-声明；模型仍可诚实报告未完成，此时 Agent Run 可以正常结束，但 Trace 中的
-`browser_completion_state` 仍明确记录任务未完成。
-
-用户在同一 session 中说“你没有完成”“刚才没点成功”“继续”“不是这样”等明确纠正
-最近任务时，Runtime 会复用原 `task_id`、browser mode/session、当前 URL、最新
-snapshot、已加载 Skills、最近 Tool Results、完成状态和剩余预算。该机制只恢复上下文，
-不会改变工具权限。
-
-启用 checkpoint 后 Recent Browser Task 可在配置 TTL 内跨重启恢复。此时只复用 task_id、
-经过脱敏的消息和历史完成状态；browser session、URL 和 snapshot 会被明确标记为 stale，
-后续动作必须读取 fresh state。过期 Recent Task 会从 SQLite 删除。
-
-这些机制是有限的 Runtime Reliability Layer，不是浏览器 sandbox，也不做无限重试。
 
 首次使用浏览器时可能会下载或初始化浏览器运行组件，请预留网络和磁盘空间。持久化 session 会保存到 Playwright 的运行目录中。
 

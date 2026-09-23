@@ -155,7 +155,6 @@ class AgentTracer:
         final_output: str = "",
         status: str = "success",
         error: str | None = None,
-        task_status: str | None = None,
     ) -> AgentRunTrace:
         run = self._require_run()
         if status not in RUN_STATUSES - {"running"}:
@@ -173,7 +172,6 @@ class AgentTracer:
         run.finished_at = _now()
         run.duration_ms = self._finish_timer(run.run_id)
         run.status = status
-        run.task_status = task_status
         run.final_output = redact_text(final_output)
         run.error = redact_text(error) if error else None
         self._legacy_post_run = run

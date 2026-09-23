@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from ..agent import AgentLoop, ContextBuilder
 from ..mcp import MCPClientManager
-from ..storage.session import SessionManager
-from ..storage.checkpoints.store import ActiveTaskCheckpointStore
-from ..storage.artifacts import ArtifactStore
+from ..session import SessionManager
 from ..tools import build_default_tool_registry
 from ..tracing import AgentTracer
 from ..workspace import init_instructions, init_workspace
@@ -16,13 +14,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     init_instructions(config.workspace / "instructions")
     init_workspace(config.workspace)
 
-    artifact_store = ArtifactStore(config.workspace)
-    tools = build_default_tool_registry(
-        config.workspace,
-        artifact_store=artifact_store,
-        artifact_read_max_chars=config.artifact_read_max_chars,
-        artifact_enabled=config.artifact_enabled,
-    )
+    tools = build_default_tool_registry(config.workspace)
     mcp_manager = MCPClientManager(config.mcp, tools)
     try:
         await mcp_manager.start()
@@ -36,18 +28,6 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
         context = ContextBuilder(config.workspace)
         sessions = SessionManager(config.workspace)
         tracer = AgentTracer(trace_dir=config.trace_dir)
-        checkpoints = ActiveTaskCheckpointStore(
-            config.workspace,
-            enabled=config.checkpoint_enabled,
-            recent_task_ttl_seconds=(
-                config.checkpoint_recent_task_ttl_seconds
-            ),
-        )
-        if checkpoints.enabled and not checkpoints.available:
-            print(
-                "Active task checkpoint storage disabled after initialization "
-                f"failure: {checkpoints.last_error}"
-            )
         llm_client = build_client(config)
         agent = AgentLoop(
             client=llm_client,
@@ -56,8 +36,6 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
             context=context,
             sessions=sessions,
             tracer=tracer,
-            checkpoint_store=checkpoints,
-            artifact_store=artifact_store,
         )
 
         for status in mcp_manager.statuses:

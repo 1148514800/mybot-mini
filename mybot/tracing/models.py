@@ -69,7 +69,6 @@ class AgentRunTrace:
     started_at: str
     user_input: str
     task_id: str | None = None
-    task_status: str | None = None
     finished_at: str | None = None
     duration_ms: float | None = None
     status: str = "running"
@@ -93,7 +92,6 @@ class AgentRunTrace:
             "status": self.status,
             "runtime_status": self.status,
             "task_id": self.task_id,
-            "task_status": self.task_status,
             "duration_ms": self.duration_ms,
             "steps": len(self.steps),
             "llm_calls": len(self.llm_calls),
@@ -110,7 +108,6 @@ class AgentRunTrace:
             [
                 f"Run: {self.run_id}",
                 f"Runtime Status: {self.status}",
-                f"Task Status: {self.task_status or 'unknown'}",
                 f"Duration: {duration:.2f}s",
                 f"Steps: {summary['steps']}",
                 f"LLM Calls: {summary['llm_calls']}",

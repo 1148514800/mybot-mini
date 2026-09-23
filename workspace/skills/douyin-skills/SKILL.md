@@ -16,9 +16,8 @@ version: 0.4.0
 
 ## 技能依赖
 
-执行网页操作前先阅读并遵守以下文件；同一个 task 每个文件只读一次。Approval 或普通澄清恢复后，直接复用已经保存在 messages 中的内容，不要再次调用 `read_file`：
+执行网页操作前先阅读并遵守以下文件；同一个 task 每个文件只读一次，已读取的内容在后续轮次直接复用，不要再次调用 `read_file`：
 
-- `../playwright-cli/SKILL.md`
 - `references/send-direct-message.md`
 
 所有抖音网页操作只能使用项目提供的结构化 `browser_*` 工具，禁止通过 `exec`、`npx` 或 shell 运行 Playwright。
@@ -36,11 +35,11 @@ version: 0.4.0
 - `friend_name`：好友昵称或可唯一识别好友的信息
 - `message`：要发送的完整消息内容
 
-若任一参数缺失，调用 `request_user_input` 询问并暂停，不得猜测，也不要用普通最终回复代替澄清工具。
+若任一参数缺失，直接在最终回复中向用户提问、停止调用工具，并等待用户下一条消息继续原任务；不得猜测。
 
 ## Task 连续性与工具优先级
 
-1. 一个用户目标在 Approval / Clarification 前后仍是同一个 task；继续使用已有 messages、browser mode、session 和最新 snapshot。
+1. 同一用户目标的后续轮次仍是同一个 task；继续使用已有 messages、browser mode、session 和最新 snapshot。
 2. `browser_open` 或 `browser_attach` 在当前 task 成功一次后不得重复调用。恢复后从当前页面继续，必要时先 `browser_snapshot`。
 3. 查找昵称、文本、输入框和按钮时依次优先使用：`browser_snapshot` → `browser_inspect` → `browser_links`（链接列表场景）。
 4. `browser_eval` 仅在上述结构化读取工具无法取得必要信息时作为 fallback；它仍需要用户确认，不得为了省步骤主动使用任意 JavaScript。
@@ -59,8 +58,8 @@ version: 0.4.0
 ## 全局约束
 
 1. 用户未明确要求使用本地、当前或已打开的浏览器时，使用 `browser_open` 启动 managed browser；当前 task 只启动一次并全程复用同一 session。
-2. 进入抖音后确认登录状态。若未登录，停在登录页面并调用 `request_user_input` 请用户完成登录；用户回答后在原 session 重新检查，不得重新 `browser_open` 或直接假设已登录。
-3. 发送前必须核对聊天对象；存在多个同名结果且无法唯一判断时，调用 `request_user_input`，回答后继续原任务。
+2. 进入抖音后确认登录状态。若未登录，停在登录页面并在最终回复中请用户完成登录；用户下一条消息确认后在原 session 重新检查，不得重新 `browser_open` 或直接假设已登录。
+3. 发送前必须核对聊天对象；存在多个同名结果且无法唯一判断时，在最终回复中请用户确认，收到下一条消息后继续原任务。
 4. 发送消息属于对外操作。只有用户已明确提供收件人与消息正文时才能执行；不得擅自改写消息。
 5. 发送完成后用 `browser_verify(text=消息正文, exact=true)` 等页面实际支持的结构化条件最多验证一次；消息已出现在目标会话最新位置即停止。
 6. 若点击发送、按 Enter 或工具调用发生超时/中断，不得直接重试。应先重新查看目标会话最新记录：

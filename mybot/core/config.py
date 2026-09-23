@@ -7,7 +7,6 @@ from pathlib import Path
 from openai import AsyncOpenAI
 
 from ..mcp.config import MCPConfig
-from ..storage.checkpoints.models import DEFAULT_RECENT_TASK_TTL_SECONDS
 
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
@@ -59,9 +58,6 @@ _WORKSPACE_CONFIG = _section(_JSON_CONFIG, "workspace")
 _DEBUG_CONFIG = _section(_JSON_CONFIG, "debug")
 _TRACING_CONFIG = _section(_JSON_CONFIG, "tracing")
 _MCP_CONFIG = _section(_JSON_CONFIG, "mcp")
-_BROWSER_RUNTIME_CONFIG = _section(_JSON_CONFIG, "browser_runtime")
-_CHECKPOINT_CONFIG = _section(_JSON_CONFIG, "checkpoint")
-_ARTIFACT_CONFIG = _section(_JSON_CONFIG, "artifact")
 
 
 def _active_llm_provider() -> str:
@@ -106,12 +102,6 @@ def _resolve_optional_path(raw_value: str | Path | None) -> Path | None:
 
 @dataclass
 class GatewayConfig:
-
-    max_concurrent_sessions: int = field(
-        default_factory=lambda: int(
-            _config_value(_JSON_CONFIG, "max_concurrent_sessions", 4)
-        )
-    )
 
     provider: str = field(
         default_factory=lambda: _ACTIVE_LLM_PROVIDER
@@ -197,81 +187,9 @@ class GatewayConfig:
         )
     )
 
-    browser_max_consecutive_tool_failures: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _BROWSER_RUNTIME_CONFIG,
-                "max_consecutive_tool_failures",
-                2,
-            )
-        )
-    )
-
-    browser_max_open_attempts: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _BROWSER_RUNTIME_CONFIG,
-                "max_open_attempts",
-                1,
-            )
-        )
-    )
-
-    browser_max_failed_action_retries: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _BROWSER_RUNTIME_CONFIG,
-                "max_failed_action_retries",
-                1,
-            )
-        )
-    )
-
-    browser_max_eval_fallbacks: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _BROWSER_RUNTIME_CONFIG,
-                "max_eval_fallbacks",
-                1,
-            )
-        )
-    )
-
-    browser_max_recovery_steps: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _BROWSER_RUNTIME_CONFIG,
-                "max_recovery_steps",
-                2,
-            )
-        )
-    )
-
-    checkpoint_enabled: bool = field(
-        default_factory=lambda: _config_bool(
-            _CHECKPOINT_CONFIG,
-            "enabled",
-            True,
-        )
-    )
-
-    checkpoint_recent_task_ttl_seconds: int = field(
-        default_factory=lambda: int(
-            _config_value(
-                _CHECKPOINT_CONFIG,
-                "recent_task_ttl_seconds",
-                DEFAULT_RECENT_TASK_TTL_SECONDS,
-            )
-        )
-    )
-
     max_context_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_context_chars", 60000)))
     max_recent_messages: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_recent_messages", 12)))
     max_tool_result_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_tool_result_chars", 8000)))
-
-    artifact_enabled: bool = field(default_factory=lambda: _config_bool(_ARTIFACT_CONFIG, "enabled", True))
-    artifact_externalize_threshold_chars: int = field(default_factory=lambda: int(_config_value(_ARTIFACT_CONFIG, "externalize_threshold_chars", 8000)))
-    artifact_read_max_chars: int = field(default_factory=lambda: int(_config_value(_ARTIFACT_CONFIG, "read_max_chars", 8000)))
 
     show_internal_process: bool = field(
         default_factory=lambda: _config_bool(
@@ -296,28 +214,13 @@ class GatewayConfig:
             raise ValueError(
                 "llm.request_timeout_seconds must be greater than 0"
             )
-        limits = {
-            "browser_runtime.max_open_attempts": self.browser_max_open_attempts,
-            "browser_runtime.max_consecutive_tool_failures": (
-                self.browser_max_consecutive_tool_failures
-            ),
-            "browser_runtime.max_failed_action_retries": (
-                self.browser_max_failed_action_retries
-            ),
-            "browser_runtime.max_eval_fallbacks": self.browser_max_eval_fallbacks,
-            "browser_runtime.max_recovery_steps": self.browser_max_recovery_steps,
-        }
-        for name, value in limits.items():
+        for name, value in {
+            "llm.max_react_steps": self.max_react_steps,
+            "llm.rate_limit_retries": self.rate_limit_retries,
+            "llm.max_completion_tokens": self.max_completion_tokens,
+        }.items():
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{name} must be a non-negative integer")
-        if (
-            isinstance(self.checkpoint_recent_task_ttl_seconds, bool)
-            or not isinstance(self.checkpoint_recent_task_ttl_seconds, int)
-            or self.checkpoint_recent_task_ttl_seconds <= 0
-        ):
-            raise ValueError(
-                "checkpoint.recent_task_ttl_seconds must be a positive integer"
-            )
         for name, value in {
             "llm.max_context_chars": self.max_context_chars,
             "llm.max_recent_messages": self.max_recent_messages,
@@ -325,18 +228,6 @@ class GatewayConfig:
         }.items():
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
                 raise ValueError(f"{name} must be a positive integer")
-        for name, value in {
-            "artifact.externalize_threshold_chars": self.artifact_externalize_threshold_chars,
-            "artifact.read_max_chars": self.artifact_read_max_chars,
-        }.items():
-            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-                raise ValueError(f"{name} must be a positive integer")
-        if (
-            isinstance(self.max_concurrent_sessions, bool)
-            or not isinstance(self.max_concurrent_sessions, int)
-            or not 1 <= self.max_concurrent_sessions <= 32
-        ):
-            raise ValueError("max_concurrent_sessions must be an integer from 1 to 32")
 
 
 def build_client(config: GatewayConfig) -> AsyncOpenAI:

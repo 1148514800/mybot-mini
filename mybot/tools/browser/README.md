@@ -157,17 +157,16 @@ Windows 下 Runtime 不通过 npm 生成的 `playwright-cli.cmd` shim 传递固�
 会用 `%*` 二次解析括号、引号和 shell 元字符。Runtime 会解析同一安装目录中的 Node
 入口并直接执行，从而保证 inspect/links 内部脚本作为一个原始 argv 传入。
 
-### 完成验证与恢复
+### 完成验证
 
 点击、填写、Enter/Space、提交、发送或发布动作成功后，使用 `browser_verify` 验证一次
-具体后置条件。普通快照、输入成功或点击成功都不能单独证明任务完成。只有
-`postcondition_met=true` 时，Runtime 才允许完成式回复。
+具体后置条件。普通快照、输入成功或点击成功都不能单独证明任务完成；只有
+`postcondition_met=true` 才能判定该动作达成目标。
 
-失败结果通过 metadata 提供 `error_type` / `recoverable`。stale/not-found target 会在
-预算内自动刷新 snapshot，并只允许一次重新定位后的重试；ambiguous target 应先用
-inspect 缩小；tool syntax error 不允许原样重复。默认每个 task 浏览器初始化尝试 1 次、
-同一 Tool 连续失败不超过 2 次、失败 Action 额外重试 1 次、eval fallback 1 次、
-recovery step 2 次。
+失败结果通过 metadata 提供 `error_type` / `recoverable`。stale/not-found target 应重新
+读取快照后定位；ambiguous target 应先用 inspect 缩小范围，必要时询问用户；
+tool syntax error 不允许原样重复。是否重试由模型依据当前页面状态决定，Runtime 不
+自动重试，也不施加任务级预算。
 
 ## 快照和输出限制
 
@@ -268,8 +267,6 @@ $env:MYBOT_RUN_BROWSER_INTEGRATION = "1"
 1. `mybot/tools/browser/__init__.py`
 2. `mybot/tools/__init__.py`
 3. `mybot/tools/registry.py`
-4. `workspace/skills/playwright-cli/SKILL.md`
-5. `tests/test_browser_session.py`
 
 新增启动方式时必须使用 workspace 内的受控持久化 profile，并继续禁止通过
 `exec` 绕过结构化浏览器工具。

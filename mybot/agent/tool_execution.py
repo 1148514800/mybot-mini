@@ -9,17 +9,6 @@ from typing import Any, Callable
 from ..tools import ToolRegistry, ToolResult
 from ..tools.browser.connection import LOCAL_BROWSER_SESSION
 from ..tools.browser.navigation import MANAGED_BROWSER_SESSION
-from ..tracing import (
-    AgentTracer,
-    redact_mapping,
-    redact_tool_arguments,
-    redact_tool_text,
-)
-from .browser_reliability import (
-    BrowserRecoveryPolicy,
-    BrowserTaskBudget,
-    BrowserTaskState,
-)
 from .context import BROWSER_MODE_LOCAL, BROWSER_MODE_MANAGED
 
 
@@ -27,6 +16,7 @@ _BROWSER_SESSION_BY_MODE = {
     BROWSER_MODE_LOCAL: LOCAL_BROWSER_SESSION,
     BROWSER_MODE_MANAGED: MANAGED_BROWSER_SESSION,
 }
+
 
 class ToolExecutionStatus(str, Enum):
     EXECUTED = "executed"
@@ -44,10 +34,6 @@ class ToolExecutionRequest:
     user_input: str = ""
     step_id: str | None = None
     messages: list[dict[str, Any]] = field(default_factory=list, repr=False)
-    remaining_tool_calls: list[dict[str, Any]] = field(
-        default_factory=list,
-        repr=False,
-    )
     execution_guard: ToolResult | None = field(default=None, repr=False)
 
 
@@ -59,8 +45,6 @@ class ToolExecutionContext:
     browser_snapshot: str = ""
     loaded_skills: set[str] = field(default_factory=set)
     browser_initialized: bool = False
-    browser_state: BrowserTaskState = field(default_factory=BrowserTaskState)
-    browser_budget: BrowserTaskBudget = field(default_factory=BrowserTaskBudget)
 
 
 @dataclass(slots=True)
@@ -78,16 +62,12 @@ class ToolExecutionPipeline:
     def __init__(
         self,
         tools: ToolRegistry,
-        tracer: AgentTracer,
-        browser_recovery_policy: BrowserRecoveryPolicy | None = None,
+        tracer: Any,
         *,
         debug_trace: Callable[[str], None] | None = None,
     ) -> None:
         self.tools = tools
         self.tracer = tracer
-        self.browser_recovery_policy = (
-            browser_recovery_policy or BrowserRecoveryPolicy()
-        )
         self.debug_trace = debug_trace or (lambda message: None)
 
     async def execute(
@@ -102,11 +82,7 @@ class ToolExecutionPipeline:
             context.browser_mode,
         )
         trace_arguments = arguments or self._arguments_for_trace(request.arguments)
-        tool_trace = self._start_trace(
-            request,
-            name,
-            trace_arguments,
-        )
+        tool_trace = self._start_trace(request, name, trace_arguments)
 
         if normalization_error is not None:
             return self._finish(
@@ -182,7 +158,7 @@ class ToolExecutionPipeline:
             context.browser_initialized
             and name == self.browser_entry_tool(context.browser_mode)
         ):
-            context.browser_state.browser_initialized = True
+            context.browser_initialized = True
             return ToolResult(
                 success=True,
                 output=(
@@ -207,104 +183,14 @@ class ToolExecutionPipeline:
                 },
             )
 
-        budget_result = context.browser_state.preflight(
-            name,
-            arguments,
-            context.browser_budget,
-        )
-        if budget_result is not None:
-            context.browser_state.note_result(name, arguments, budget_result)
-            return budget_result
-
         result = await self._execute_registry(
             name,
             arguments,
             session_key=context.session_key,
             task_id=context.task_id,
         )
-        context.browser_state.note_result(name, arguments, result)
         self._record_task_result(name, arguments, result, context)
-
-        recovery = self.browser_recovery_policy.plan(
-            result,
-            context.browser_state,
-            context.browser_budget,
-        )
-        if recovery is not None:
-            result.metadata.update(
-                {
-                    "recovery_hint": recovery.hint,
-                    "recovery_retry_allowed": recovery.retry_allowed,
-                }
-            )
-            if recovery.refresh_snapshot and context.browser_initialized:
-                await self._refresh_recovery_snapshot(name, result, context)
         return result
-
-    async def _refresh_recovery_snapshot(
-        self,
-        failed_tool: str,
-        result: ToolResult,
-        context: ToolExecutionContext,
-    ) -> None:
-        state = context.browser_state
-        state.recovery_steps += 1
-        state.pending_recovery_tool = failed_tool
-        state.pending_recovery_retry_used = False
-        refresh_arguments = {
-            "session": _BROWSER_SESSION_BY_MODE[context.browser_mode]
-        }
-        current_step = self.tracer.get_current_step()
-        recovery_trace = (
-            self.tracer.start_tool_call(
-                step_id=current_step.step_id,
-                tool_name="browser_snapshot",
-                arguments=refresh_arguments,
-                metadata={
-                    "runtime_recovery": True,
-                    "recovery_for": failed_tool,
-                    "recovery_step": state.recovery_steps,
-                },
-            )
-            if current_step is not None and self._tracing_active()
-            else None
-        )
-        refresh = await self._execute_registry(
-            "browser_snapshot",
-            refresh_arguments,
-            session_key=context.session_key,
-            task_id=context.task_id,
-        )
-        if recovery_trace is not None:
-            self.tracer.finish_tool_call(recovery_trace, result=refresh)
-        state.note_result("browser_snapshot", refresh_arguments, refresh)
-        result.metadata.update(
-            {
-                "recovery_action": "browser_snapshot",
-                "recovery_succeeded": refresh.success,
-                "recovery_steps": state.recovery_steps,
-            }
-        )
-        if refresh.success:
-            state.browser_used = True
-            context.browser_snapshot = refresh.output
-            result.output = "\n\n".join(
-                part
-                for part in (
-                    result.output,
-                    "Runtime recovery snapshot:\n" + refresh.output,
-                )
-                if part
-            )
-        elif refresh.error:
-            result.output = "\n\n".join(
-                part
-                for part in (
-                    result.output,
-                    "Runtime recovery snapshot failed: " + refresh.error,
-                )
-                if part
-            )
 
     async def _execute_registry(
         self,
@@ -314,6 +200,8 @@ class ToolExecutionPipeline:
         session_key: str = "",
         task_id: str | None = None,
     ) -> ToolResult:
+        from ..tracing import redact_mapping, redact_tool_arguments, redact_tool_text
+
         safe_arguments = redact_tool_arguments(name, arguments)
         self.debug_trace(
             f"tool call name={name} args="
@@ -363,11 +251,8 @@ class ToolExecutionPipeline:
             context.browser_initialized = True
         elif result.success and name == "browser_close":
             context.browser_initialized = False
-        context.browser_state.browser_initialized = context.browser_initialized
         if name == "browser_snapshot" and result.success:
             context.browser_snapshot = result.output
-        elif context.browser_state.latest_snapshot:
-            context.browser_snapshot = context.browser_state.latest_snapshot
 
     def _normalize_arguments(
         self,

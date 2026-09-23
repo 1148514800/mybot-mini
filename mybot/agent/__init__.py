@@ -1,6 +1,5 @@
 from .context import ContextBuilder
 from .loop import AgentLoop
-from .task_state import AgentTaskState, AgentTaskStatus
 from .tool_execution import (
     ToolExecutionContext,
     ToolExecutionOutcome,
@@ -11,8 +10,6 @@ from .tool_execution import (
 
 __all__ = [
     "AgentLoop",
-    "AgentTaskState",
-    "AgentTaskStatus",
     "ContextBuilder",
     "ToolExecutionContext",
     "ToolExecutionOutcome",
