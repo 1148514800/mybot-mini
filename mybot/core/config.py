@@ -188,7 +188,6 @@ class GatewayConfig:
     )
 
     max_context_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_context_chars", 60000)))
-    max_recent_messages: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_recent_messages", 12)))
     max_tool_result_chars: int = field(default_factory=lambda: int(_config_value(_LLM_CONFIG, "max_tool_result_chars", 8000)))
 
     show_internal_process: bool = field(
@@ -223,7 +222,6 @@ class GatewayConfig:
                 raise ValueError(f"{name} must be a non-negative integer")
         for name, value in {
             "llm.max_context_chars": self.max_context_chars,
-            "llm.max_recent_messages": self.max_recent_messages,
             "llm.max_tool_result_chars": self.max_tool_result_chars,
         }.items():
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:

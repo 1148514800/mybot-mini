@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from ..agent import AgentLoop, ContextBuilder
 from ..mcp import MCPClientManager
-from ..session import SessionManager
 from ..tools import build_default_tool_registry
 from ..tracing import AgentTracer
 from ..workspace import init_instructions, init_workspace
@@ -26,7 +25,6 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
 
     try:
         context = ContextBuilder(config.workspace)
-        sessions = SessionManager(config.workspace)
         tracer = AgentTracer(trace_dir=config.trace_dir)
         llm_client = build_client(config)
         agent = AgentLoop(
@@ -34,7 +32,6 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
             config=config,
             tools=tools,
             context=context,
-            sessions=sessions,
             tracer=tracer,
         )
 

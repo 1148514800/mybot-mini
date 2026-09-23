@@ -10,9 +10,7 @@
              │                       │
         ContextBuilder              LLM
              │                       │
-      ┌──────┴──────┐                │
-      │             │                │
- Instructions     Skills             │
+      Instructions                   │
                                       ↓
                                  Tool Calling
                                       │

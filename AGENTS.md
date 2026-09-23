@@ -15,7 +15,7 @@ GitHub 仓库：`mybot_desktop`（`https://github.com/1148514800/mybot_desktop.g
 开始新的开发会话时，必须：
 
 1. 阅读 `AGENTS.md`。
-2. 如果存在，阅读 `docs/AI_HANDOFF.md`。
+2. 如果存在，阅读 `AI_HANDOFF.md`。
 3. 执行：
 
 ```bash
@@ -24,7 +24,7 @@ git log -5 --oneline
 ```
 
 4. 修改代码之前先阅读相关实现。
-5. 优先从 `docs/AI_HANDOFF.md` 的 `下一步` 继续开发。
+5. 优先从 `AI_HANDOFF.md` 的 `下一步` 继续开发。
 
 除非确有必要，不要一开始扫描整个仓库。
 
@@ -56,7 +56,7 @@ git log -5 --oneline
 完成一个独立任务后：
 
 1. 运行相关测试。
-2. 更新 `docs/AI_HANDOFF.md`。
+2. 更新 `AI_HANDOFF.md`。
 3. 检查代码修改：
 
 ```bash
@@ -104,13 +104,13 @@ git commit -m "<type>: <清晰的修改说明>"
 
 重要测试结果需要记录到：
 
-`docs/AI_HANDOFF.md`
+`AI_HANDOFF.md`
 
 ---
 
 ## AI 交接
 
-`docs/AI_HANDOFF.md` 用于记录当前开发状态。
+`AI_HANDOFF.md` 用于记录当前开发状态。
 
 完成一个有意义的开发阶段后，需要更新：
 
@@ -144,7 +144,7 @@ git commit -m "<type>: <清晰的修改说明>"
 1. 当前代码
 2. Git 历史
 3. `AGENTS.md`
-4. `docs/AI_HANDOFF.md`
+4. `AI_HANDOFF.md`
 5. 架构和技术决策文档
 
 当聊天上下文越来越长时，应把重要信息写入项目文档，而不是一直依赖旧聊天记录。
@@ -179,7 +179,7 @@ rm -rf
 * 功能实现完成
 * 相关测试通过
 * 已检查 `git diff`
-* 已更新 `docs/AI_HANDOFF.md`
+* 已更新 `AI_HANDOFF.md`
 * 已完成 Git Commit
 * 剩余问题已经记录
 
@@ -189,7 +189,7 @@ rm -rf
 
 ## AI_HANDOFF 维护规则
 
-`docs/AI_HANDOFF.md` 是当前状态快照，而不是开发日志。
+`AI_HANDOFF.md` 是当前状态快照，而不是开发日志。
 
 更新时：
 - 删除已经失效的信息

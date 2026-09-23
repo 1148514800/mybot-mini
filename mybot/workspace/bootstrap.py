@@ -22,4 +22,3 @@ def init_instructions(instructions_dir: Path) -> None:
 
 def init_workspace(workspace: Path) -> None:
     workspace.mkdir(parents=True, exist_ok=True)
-    (workspace / "sessions").mkdir(exist_ok=True)

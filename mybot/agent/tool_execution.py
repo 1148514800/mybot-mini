@@ -43,7 +43,6 @@ class ToolExecutionContext:
     task_id: str | None = None
     browser_mode: str = BROWSER_MODE_MANAGED
     browser_snapshot: str = ""
-    loaded_skills: set[str] = field(default_factory=set)
     browser_initialized: bool = False
 
 
@@ -168,21 +167,6 @@ class ToolExecutionPipeline:
                 metadata={"execution_skipped": "browser_already_initialized"},
             )
 
-        skill_path = self.skill_path(name, arguments)
-        if skill_path and skill_path in context.loaded_skills:
-            return ToolResult(
-                success=True,
-                output=(
-                    "This Skill was already loaded in this task. Reuse the "
-                    "earlier SKILL.md instructions."
-                ),
-                metadata={
-                    "execution_skipped": "skill_already_loaded",
-                    "skill_cache_hit": True,
-                    "skill_path": skill_path,
-                },
-            )
-
         result = await self._execute_registry(
             name,
             arguments,
@@ -240,11 +224,6 @@ class ToolExecutionPipeline:
         result: ToolResult,
         context: ToolExecutionContext,
     ) -> None:
-        skill_path = self.skill_path(name, arguments)
-        if result.success and skill_path:
-            context.loaded_skills.add(skill_path)
-            result.metadata.setdefault("skill_path", skill_path)
-            result.metadata.setdefault("skill_loaded", True)
         if result.success and name == self.browser_entry_tool(
             context.browser_mode
         ):
@@ -437,15 +416,6 @@ class ToolExecutionPipeline:
                 return parsed
             return {"arguments_type": type(parsed).__name__}
         return {"arguments_type": type(raw_arguments).__name__}
-
-    @staticmethod
-    def skill_path(name: str, arguments: dict[str, Any]) -> str | None:
-        if name != "read_file":
-            return None
-        path = str(arguments.get("path", "")).strip().replace("\\", "/")
-        if not path or path.rsplit("/", 1)[-1].lower() != "skill.md":
-            return None
-        return path.lower()
 
     @staticmethod
     def browser_entry_tool(browser_mode: str) -> str:

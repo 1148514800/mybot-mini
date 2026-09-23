@@ -16,8 +16,6 @@ wheels/
 config/config.json
 
 # Runtime data
-workspace/sessions/
-workspace/state/
 workspace/browser_profiles/
 workspace/runs/
 runs/

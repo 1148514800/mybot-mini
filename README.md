@@ -8,9 +8,7 @@ MyBot 是一个运行在本地的 AI Agent。它通过 OpenAI 兼容接口调用
 
 - 命令行（CLI）对话
 - 基于 `playwright-cli` 的浏览器操作
-- 单会话上下文记忆（对话历史持久化到 `workspace/sessions/`）
 - 基于官方 MCP Python SDK v2 的 stdio 和 Streamable HTTP 外部工具运行时
-- 从 `workspace/skills/` 自动加载本地 Skills
 - 支持 SiliconFlow、OpenAI 以及其他 OpenAI 兼容服务
 - 使用 `AsyncOpenAI` 发起非阻塞模型请求，并提供默认 60 秒总超时
 
@@ -225,8 +223,7 @@ config/
 | `llm.request_timeout_seconds` | 单次模型请求的总超时秒数，默认 `60`；超时不会阻塞其他异步通道 |
 | `llm.rate_limit_retries` | 遇到限流时自动重试次数；每次等待约 60 秒，程序硬上限为 10 |
 | `llm.max_react_steps` | 一次请求最多执行多少轮 Agent/工具循环；程序硬上限为 30 |
-| `llm.max_context_chars` | 发送给模型的 Context 目标字符预算，默认 `60000`；System、核心指令和当前任务 anchor 超出时允许 soft overflow |
-| `llm.max_recent_messages` | 历史消息数量上限，默认 `12` |
+| `llm.max_context_chars` | 发送给模型的 Context 目标字符预算，默认 `60000`；System 指令超出时允许 soft overflow |
 | `llm.max_tool_result_chars` | 单条 Tool Result 在模型 Context 中的字符上限，默认 `8000` |
 | `workspace.path` | 工作区路径，默认是 `./workspace` |
 | `tracing.trace_dir` | Trace JSON 保存目录；默认 `null`，只保存在内存中 |
@@ -239,7 +236,7 @@ config/
 
 Context compaction 只发生在每次 LLM request 前。Tool call 及其全部 tool result 作为原子单元按原始顺序一起保留或删除；孤立、缺失或重复配对不会发送给模型。`max_context_chars` 是 soft target，必要的系统指令和当前任务输入超出目标时会保留，并在 Trace 中标记 overflow。
 
-对话历史按 session 写入 `workspace/sessions/`，重启后继续在同一 session 中对话即可复用上下文。超出 `max_context_chars` 或 `max_recent_messages` 的历史会被压缩；需要长期保留的信息应写入项目文件，而不是依赖聊天记录。`exec` 不是 OS sandbox。
+程序不保留历史会话：每次启动都是全新对话，上下文只包含 System Prompt 与当前这条用户消息。需要长期保留的信息应写入项目文件。`exec` 不是 OS sandbox。
 
 ## 运行数据和项目结构
 
@@ -253,18 +250,15 @@ mybot/
   mcp/                    # MCP 配置、官方 Client 生命周期、命名和 Tool Adapter
   tracing/                # Run、Step、LLM、Tool trace 与 timeline replay
   core/                   # 配置和应用组装
-  session.py              # 会话与对话历史持久化
   tools/                  # Agent 可调用的工具
 workspace/
   instructions/           # AGENTS.md、SOUL.md、USER.md、TOOLS.md
-  skills/                 # 本地 Skills
-  sessions/               # 对话历史（JSONL）
   browser_profiles/       # Runtime 管理的浏览器 profile
   runs/                   # 可选的持久化 Trace
 ```
 
-`workspace/sessions/`、`workspace/browser_profiles/` 和 `workspace/runs/` 会被程序自己写入；
-删除 `workspace/sessions/` 会丢失对话历史，删除 `browser_profiles/` 会丢失浏览器登录状态。
+`workspace/browser_profiles/` 和 `workspace/runs/` 会被程序自己写入；
+删除 `browser_profiles/` 会丢失浏览器登录状态。
 
 ## Agent Runtime 执行架构
 

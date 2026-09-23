@@ -231,7 +231,7 @@ Console Error 不属于该 block，不会被误判为 Tool Failure。
 
 ### 修改代码后行为没有变化
 
-MyBot 在启动时加载工具和系统提示。修改本目录代码或 skill 后，需要重启
+MyBot 在启动时加载工具和系统提示。修改本目录代码后，需要重启
 `mybot/main.py`。
 
 ## 测试

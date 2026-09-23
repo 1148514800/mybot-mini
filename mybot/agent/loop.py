@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 
 from openai import AsyncOpenAI
 
 from ..core.config import GatewayConfig
-from ..session import SessionManager
 from ..tools import ToolRegistry, ToolResult
 from ..tracing import (
     AgentRunTrace,
@@ -39,14 +37,12 @@ class AgentLoop:
         config: GatewayConfig,
         tools: ToolRegistry,
         context: ContextBuilder,
-        sessions: SessionManager,
         tracer: AgentTracer | None = None,
     ):
         self.client = client
         self.config = config
         self.tools = tools
         self.context = context
-        self.sessions = sessions
         self.tracer = tracer or AgentTracer()
         self.tool_execution = ToolExecutionPipeline(
             self.tools,
@@ -55,7 +51,6 @@ class AgentLoop:
         )
         if hasattr(self.context, "max_context_chars"):
             self.context.max_context_chars = getattr(config, "max_context_chars", self.context.max_context_chars)
-            self.context.max_recent_messages = getattr(config, "max_recent_messages", self.context.max_recent_messages)
             self.context.max_tool_result_chars = getattr(config, "max_tool_result_chars", self.context.max_tool_result_chars)
         self.model_execution = ModelExecutor(
             client=self.client,
@@ -94,7 +89,6 @@ class AgentLoop:
         task_id: str | None = None,
         browser_mode: str,
         browser_snapshot: str,
-        loaded_skills: set[str],
         browser_initialized: bool,
     ) -> ToolExecutionContext:
         return ToolExecutionContext(
@@ -102,7 +96,6 @@ class AgentLoop:
             task_id=task_id,
             browser_mode=browser_mode,
             browser_snapshot=browser_snapshot,
-            loaded_skills=loaded_skills,
             browser_initialized=browser_initialized,
         )
 
@@ -222,35 +215,15 @@ class AgentLoop:
         *,
         session_key: str = "cli:direct",
     ) -> tuple[str, AgentRunTrace]:
-        """Handle one user message and record it in the session history."""
-        session = self.sessions.get_or_create(session_key)
-        history = session.build_prompt_history(
-            max_recent_messages=getattr(self.config, "max_recent_messages", 12)
-        )
-        messages = self.context.build_messages(history, user_input)
+        """Handle one user message from the CLI."""
+        messages = self.context.build_messages(user_input)
         browser_mode = self.context.resolve_browser_mode(user_input)
-        reply, trace = await self.run_traced(
+        return await self.run_traced(
             user_input,
             messages,
             browser_mode,
             session_key=session_key,
         )
-        session.messages.append(
-            {
-                "role": "user",
-                "content": user_input,
-                "timestamp": datetime.now().isoformat(),
-            }
-        )
-        session.messages.append(
-            {
-                "role": "assistant",
-                "content": reply,
-                "timestamp": datetime.now().isoformat(),
-            }
-        )
-        self.sessions.save(session)
-        return reply, trace
 
     async def run_traced(
         self,
@@ -297,12 +270,8 @@ class AgentLoop:
         *,
         user_input: str = "",
         session_key: str = "",
-        loaded_skills: set[str] | None = None,
         browser_initialized: bool = False,
     ) -> tuple[str, str, str | None]:
-        task_loaded_skills = (
-            loaded_skills if loaded_skills is not None else set()
-        )
         final_parts: list[str] = []
         react_step_limit = self._effective_react_steps()
         empty_response_count = 0
@@ -410,7 +379,6 @@ class AgentLoop:
                 session_key=session_key,
                 browser_mode=browser_mode,
                 browser_snapshot="",
-                loaded_skills=task_loaded_skills,
                 browser_initialized=browser_initialized,
             )
             await self._execute_tool_batch(

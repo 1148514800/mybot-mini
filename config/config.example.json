@@ -6,7 +6,6 @@
     "rate_limit_retries": 2,
     "max_react_steps": 10,
     "max_context_chars": 60000,
-    "max_recent_messages": 12,
     "max_tool_result_chars": 8000,
     "providers": {
       "siliconflow": {
