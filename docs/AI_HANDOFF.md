@@ -4,8 +4,13 @@
 
 Phase 11 收尾：大型非 Browser 文本 ToolResult 已外置为受控 Artifact；模型只收到 preview 与 artifact_id，使用受限 artifact_read 按需读取。关闭配置、失败 bounded fallback、large error/metadata 和 checkpoint/browser 回归已补齐。Browser result 不外置，ToolExecutionPipeline 安全语义保持不变。
 
+仓库已做一次瘦身：删除全部可再生运行数据（browser profile、缓存、__pycache__、playwright 控制台日志、session jsonl），未改动任何受版本管理的代码。
+
 ## 已完成内容与修改文件
 
+- 仓库瘦身：删除可再生运行期数据 workspace/browser_profiles/（284 MB）、.uv-cache/、.playwright-cli/、.pytest_cache/、全部 __pycache__/、workspace/sessions/cli_direct.jsonl。仓库由约 400 MB 降至约 114 MB，227 个受跟踪文件零改动，git status 保持干净。uv 真实缓存在 F:\software\uv\uv_cache，仓库内 .uv-cache 为陈旧残留。
+- 未删除任何代码模块：80 个模块全部被入口或测试引用，无死代码；evals / mcp / browser / tracing / skills 均仍在核心链路中被引用，未做功能裁剪。
+- 移除第三方 skills 内与运行无关的开发基建：xiaohongshu-skills 的 .github/、docs/superpowers/、tests/、CLAUDE.md、publish_test.png；self-improving-agent 的 assets/、hooks/。保留其 SKILL.md、scripts/、references/、pyproject.toml、uv.lock 与被 SKILL.md 明确引用的 .learnings/，5 个 skill 仍可被 SkillsLoader 正常加载。
 - `mybot/storage/checkpoints/models.py`：真实定义 schema version、默认 Recent Task TTL 和 RecoveredActiveCheckpoint，不依赖 store。
 - `mybot/storage/checkpoints/sanitizer.py`：真实实现 tool arguments、messages、tool calls、browser state、敏感文本、approval snapshot 与 policy metadata 脱敏；不依赖 Store。
 - `mybot/storage/checkpoints/serialization.py`：Approval / Clarification / RecentBrowserTask 的 payload 编码与恢复转换，以及 recent recovery payload 归一化。
@@ -90,6 +95,8 @@ Phase 11 收尾：大型非 Browser 文本 ToolResult 已外置为受控 Artifac
 - Phase 11 已实现；后续可在稳定 provider/Browser 条件下运行完整 live suite。
 
 ## 不要重复进行的工作
+
+- 不要把 workspace/browser_profiles/、.uv-cache/、.playwright-cli/、__pycache__/、workspace/sessions/*.jsonl 等运行期可再生数据提交进版本库；它们已由 .gitignore 覆盖，用时自动重建。
 
 - 不要继续为达到行数目标拆分 AgentLoop；不要把 SQLite、payload 转换、脱敏或 Browser 核心移回 AgentLoop / Store。
 - 不要通过 Store 私有方法暴露 sanitizer，或让 models / sanitizer 反向依赖 Store。
