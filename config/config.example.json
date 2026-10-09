@@ -3,7 +3,6 @@
     "provider": "siliconflow",
     "max_completion_tokens": 20000,
     "request_timeout_seconds": 60,
-    "rate_limit_retries": 2,
     "max_react_steps": 10,
     "providers": {
       "siliconflow": {
@@ -20,39 +19,5 @@
   },
   "workspace": {
     "path": "./workspace"
-  },
-  "tracing": {
-    "trace_dir": null
-  },
-  "mcp": {
-    "enabled": false,
-    "servers": {
-      "local_demo": {
-        "enabled": false,
-        "transport": "stdio",
-        "command": "python",
-        "args": ["-m", "demo_mcp_server"],
-        "env": {
-          "DEMO_API_KEY": "${DEMO_API_KEY}"
-        },
-        "required": false,
-        "tool_timeout_seconds": 30,
-        "max_output_chars": 12000
-      },
-      "remote_demo": {
-        "enabled": false,
-        "transport": "streamable_http",
-        "url": "http://127.0.0.1:8000/mcp",
-        "headers": {
-          "Authorization": "Bearer ${DEMO_MCP_TOKEN}"
-        },
-        "required": false,
-        "tool_timeout_seconds": 30,
-        "max_output_chars": 12000
-      }
-    }
-  },
-  "debug": {
-    "show_internal_process": true
   }
 }

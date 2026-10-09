@@ -1,30 +1,9 @@
 """
-                       User
-                         │
-                        CLI
-                         │
-                         ↓
-                    AgentLoop ────── Tracer
-                         │
-             ┌───────────┴───────────┐
-             │                       │
-        ContextBuilder              LLM
-             │                       │
-      Instructions                   │
-                                      ↓
-                                 Tool Calling
-                                      │
-                               ToolRegistry
-                                      │
-                  ┌──────────────────┴──────────────────┐
-                   ↓                                     ↓
-              Native Tools                          MCP Tools
-                   │                                     │
-          File / Exec / Browser                       MCPTool
-                                                         │
-                                                   MCPManager
-                                                        │
-                                             stdio / Streamable HTTP
+User → CLI → AgentLoop → LLM
+                    ↓
+               ToolRegistry
+                    ↓
+             read_file / write_file
 """
 
 

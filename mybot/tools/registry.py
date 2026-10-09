@@ -3,22 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from .base import Tool, ToolResult
-from .browser import (
-    BrowserAttachTool,
-    BrowserClickTool,
-    BrowserCloseTool,
-    BrowserEvalTool,
-    BrowserGotoTool,
-    BrowserInspectTool,
-    BrowserLinksTool,
-    BrowserOpenTool,
-    BrowserPressTool,
-    BrowserSnapshotTool,
-    BrowserTabTool,
-    BrowserTypeTool,
-    BrowserVerifyTool,
-)
-from .exec import ExecTool
 from .file import ReadFileTool, WriteFileTool
 
 
@@ -57,22 +41,8 @@ class ToolRegistry:
 def build_default_tool_registry(workspace: Path) -> ToolRegistry:
     registry = ToolRegistry()
     for tool in (
-        ExecTool(workspace),
         ReadFileTool(workspace),
         WriteFileTool(workspace),
-        BrowserAttachTool(),
-        BrowserOpenTool(workspace),
-        BrowserGotoTool(),
-        BrowserTabTool(),
-        BrowserCloseTool(),
-        BrowserSnapshotTool(),
-        BrowserClickTool(),
-        BrowserTypeTool(),
-        BrowserPressTool(),
-        BrowserLinksTool(),
-        BrowserInspectTool(),
-        BrowserVerifyTool(),
-        BrowserEvalTool(),
     ):
         registry.register(tool)
     return registry

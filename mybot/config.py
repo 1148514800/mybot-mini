@@ -7,7 +7,6 @@ from pathlib import Path
 
 from openai import AsyncOpenAI
 
-from .mcp import MCPConfig
 
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -31,8 +30,6 @@ def _section(name: str) -> dict:
 
 _CONFIG = _load_json_config()
 _LLM = _section("llm")
-_DEBUG = _section("debug")
-_TRACING = _section("tracing")
 
 _PROVIDER = str(_LLM.get("provider", "")).strip()
 _PROVIDERS = _LLM.get("providers", {})
@@ -51,36 +48,18 @@ def _resolve_path(raw_value) -> Path:
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
 
 
-def _resolve_optional_path(raw_value) -> Path | None:
-    return None if raw_value is None else _resolve_path(raw_value)
-
-
-def _as_bool(value, default: bool = False) -> bool:
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in {"1", "true", "yes", "on"}
-
-
 @dataclass
 class GatewayConfig:
     provider: str = _PROVIDER
     model: str = field(default_factory=lambda: _PROVIDER_CONFIG.get("model", "gpt-4.1-mini"))
     api_key: str | None = _PROVIDER_CONFIG.get("api_key")
     base_url: str | None = _PROVIDER_CONFIG.get("base_url")
-    rate_limit_retries: int = field(default_factory=lambda: int(_llm_value("rate_limit_retries", 2)))
     max_react_steps: int = field(default_factory=lambda: int(_llm_value("max_react_steps", 10)))
     max_completion_tokens: int = field(default_factory=lambda: int(_llm_value("max_completion_tokens", 2000)))
     request_timeout_seconds: float = field(default_factory=lambda: float(_llm_value("request_timeout_seconds", 60)))
     workspace: Path = field(
         default_factory=lambda: _resolve_path(_section("workspace").get("path", PROJECT_DIR / "workspace"))
     )
-    trace_dir: Path | None = field(
-        default_factory=lambda: _resolve_optional_path(_TRACING.get("trace_dir"))
-    )
-    show_internal_process: bool = field(
-        default_factory=lambda: _as_bool(_DEBUG.get("show_internal_process"), False)
-    )
-    mcp: MCPConfig = field(default_factory=lambda: MCPConfig.from_dict(_section("mcp")))
 
     def __post_init__(self) -> None:
         self.request_timeout_seconds = float(self.request_timeout_seconds)

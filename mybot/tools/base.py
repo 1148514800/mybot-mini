@@ -34,36 +34,6 @@ class ToolResult:
         )
 
 
-@dataclass(slots=True)
-class BrowserResult(ToolResult):
-    """Tool result enriched with browser action and session context."""
-
-    action: str = ""
-    session: str = ""
-    url: str | None = None
-    title: str | None = None
-
-    def to_text(self) -> str:
-        details = ["success" if self.success else "error"]
-        for label, value in (
-            ("action", self.action),
-            ("session", self.session),
-            ("url", self.url),
-            ("title", self.title),
-        ):
-            if value:
-                details.append(f"{label}={value}")
-
-        parts = [f"[browser {' '.join(details)}]"]
-        if self.error:
-            parts.append(f"Error: {self.error}")
-        if self.output:
-            parts.append(self.output)
-        if self.metadata:
-            parts.append(_metadata_text(self.metadata))
-        return "\n\n".join(parts)
-
-
 class Tool(ABC):
     @property
     @abstractmethod
