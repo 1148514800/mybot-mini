@@ -54,3 +54,17 @@ uv run python -m mybot.main
 ```
 
 将 `config/config.json` 顶层的 `debug` 设置为 `true` 开启调试日志，设置为 `false` 关闭，默认关闭。修改后重启程序生效。日志包含模型耗时、token 数、工具参数及执行结果摘要；写入参数 `content` 仅显示字符数。调试开关统一由配置文件控制，不再读取 `MYBOT_DEBUG` 环境变量。
+
+
+## Phase 学习归档
+
+学习索引与独立运行方法见 [docs/phases/README.md](docs/phases/README.md)。完成阶段、验证并提交相关文件后，在干净工作区执行：
+
+```bash
+bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
+bash scripts/restore_phase.sh 1
+```
+
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 02 目前仍未提交、未归档，不能直接保存。
+
+归档设施验证命令：`uv run python -m scripts.test_phase_archives`。

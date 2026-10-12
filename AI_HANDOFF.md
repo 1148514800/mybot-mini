@@ -1,37 +1,32 @@
 # AI Handoff
 
-## 当前状态
+## 当前目标与状态
 
-项目已收敛为本地 CLI AI 助手，保留 OpenAI 兼容模型调用、ReAct 工具循环，以及工作区内文件读写。浏览器、MCP、Tracing 和 shell 执行已移除。
+已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），补齐学习文档并准备唯一 phase-01 Tag/ZIP。Phase 02 的 list_files 仅存在于工作区，未验证、未提交、未归档。本任务不进入 Phase 03。
 
-当前目标已完成：为 Agent 添加默认关闭的调试日志。配置文件顶层设置 `"debug": true` 并重启后输出每步模型耗时、token 数、工具调用数，以及工具参数和执行结果摘要；参数中的 `content` 仅显示字符数。修改文件：`mybot/config.py`、`mybot/agent/loop.py`、配置模板、README 和本交接文档；沿用现有工具循环，无架构变更。
+## 实现与决策
 
-## 磁盘元数据约定
-
-用户要求避免生成 `._*` 文件。项目所在 `/Volumes/move-disk` 为 ExFAT；macOS 会将扩展属性保存成 AppleDouble 伴随文件。已清理仓库内确认具有 AppleDouble 文件头的伴随文件；`.gitignore` 已忽略 `._*`。复制操作尽量使用 `COPYFILE_DISABLE=1` 或 `cp -X`，不主动复制扩展属性；这不能阻止系统或其他应用继续生成。彻底避免需将工作目录迁移到 APFS，尚未迁移。
-
-## 核心结构
-
-环境管理约定：使用 `uv` 管理依赖和运行环境；后续运行与验证优先使用 `uv run`，不要使用系统 Python。CLI 启动命令：`uv run python -m mybot.main`。调试日志仅由 `config/config.json` 顶层布尔字段 `debug` 控制，默认 `false`；不再读取 `MYBOT_DEBUG`。本地配置已补齐该字段，真实配置不提交。
-
-- `mybot/main.py`：程序入口
-- `mybot/app.py`：应用组装和资源关闭
-- `mybot/config.py`：读取配置并创建模型客户端
-- `mybot/agent/`：提示词和 Agent 循环
-- `mybot/tools/`：工具接口、注册表和文件读写
-- `mybot/workspace.py`：初始化工作区说明文件
+- docs/phases/：索引、Phase 01 十项完整教程、Phase 02 真实状态草稿。
+- scripts/save_phase.sh、restore_phase.sh：干净已提交版本保存、独立目录还原、防覆盖；共用参数、ZIP 校验及离线回归辅助脚本。
+- AGENTS.md：永久 Phase 工作流，默认本地 commit/tag/ZIP，不 push。
+- git archive 仅导出已跟踪版本；ZIP 在同级 mybot-mini-snapshots，学习目录在同级 mybot-mini-learning，不提交真实配置。
+- 保存先独立解压、uv sync --frozen、compileall、离线测试，再发布 ZIP/Tag；archive-ready 标记是开发者验证声明，阶段专用测试仍必须运行。
 
 ## 验证
 
-- `uv run python -m compileall -q -x '/\._' mybot`：通过（排除磁盘元数据文件）。
-- 虚拟环境内模拟模型/工具调用：默认关闭、开启日志、正文隐藏、缺少 usage 和执行参数保持原样均通过；非法 JSON 日志处理沿用已验证实现。
-- `config/config.example.json` JSON 解析：通过。
-- 模块导入与默认工具注册：通过；只注册 `read_file`、`write_file`。
-- `git diff --check`：通过。
-- 真实模型调用未验证；本地存在 `config/config.json`，未输出凭证。
-- `uv run` 配置及模拟日志验证通过：缺省关闭、布尔开关、环境变量不覆盖、正文隐藏、原始工具参数保持不变。
-- 系统 Python 缺少 `openai`；验证使用 `uv run`。工作区有既存 `mybot/app.py` 未提交修改，本任务未改动或提交该文件。
+- bash -n：通过。
+- 临时仓库集成测试：保存、Tag 还原、ZIP 单独还原、拒绝脏工作区/重复 Tag/重复 ZIP/已有学习目录/非法编号/缺失版本/恶意路径均通过；当前 HEAD 不受还原影响。
+- 独立源码目录 uv sync --frozen、compileall、离线模型和文件工具回归：通过。
+- 真实模型 API 未验证；需要用户凭证，不以模拟结果宣称线上成功。
 
-## 下一步
+## 环境与已知问题
 
-按需将配置的 `debug` 设为 `true`，重启并验证真实模型调用；无需重复实现调试日志。
+使用 macOS/zsh、Python 3.12+、uv；启动 uv run python mybot/main.py。debug 在 config/config.json 顶层，默认 false，修改后重启；不读取 MYBOT_DEBUG。
+
+ExFAT 会生成 ._* AppleDouble，复制尽量 COPYFILE_DISABLE=1 或 cp -X，不能保证系统不再生成；归档排除这些文件，独立验证使用 APFS 临时目录。
+
+保留用户原有未提交修改：mybot/app.py、mybot/agent/context.py、mybot/tools/registry.py、mybot/tools/list_files.py。本任务未纳入提交或 Phase 01。敏感配置不输出、不提交；ZIP 文件名和常见凭证检查不能替代人工审查所有秘密。
+
+## 下一步与不要重复
+
+完成并验证 Phase 02 后重写 phase-02.md，更新索引/交接，提交，再运行 bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"。不要给未提交代码打 Tag，不要覆盖 phase-01，不必重建归档架构。历史学习内容放 docs/phases 和 Git，本文件只保留当前状态。

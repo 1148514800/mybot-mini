@@ -6,7 +6,7 @@
 
 代码仓库、Git 历史以及项目文档是项目状态的事实来源。
 
-GitHub 仓库：`mybot_desktop`（`https://github.com/1148514800/mybot_desktop.git`）。
+GitHub 仓库：`mybot-mini`（`https://github.com/1148514800/mybot-mini`）。
 
 ---
 
@@ -198,3 +198,24 @@ rm -rf
 - 不记录详细开发过程
 - 历史修改通过 Git 查询
 - 尽量保持文件简短，只保留下一位 Agent 继续工作所需的信息
+
+
+---
+
+## Phase 学习归档规范
+
+此规范适用于以后每个 Phase，会话无需用户重复说明。环境使用 macOS/zsh、Python 3.12+、uv；运行和测试优先使用 `uv run`，CLI 命令为 `uv run python mybot/main.py`。
+
+1. 开始阶段时检查 `git status`、`git log -5 --oneline`、`git tag -l`，以代码和 Git 为事实来源，不假设讨论过的功能已经完成。
+2. 完成代码及阶段相关测试，不能将未完成或测试失败的 Phase 标记为完成，不擅自进入下一 Phase。
+3. 自动更新 `docs/phases/phase-XX.md`，完整说明学习目标、Agent 概念、架构流程、核心文件、关键函数原理和调用关系、新增修改、macOS+uv 安装运行测试命令、实际案例与结果、常见问题、与上阶段变化。不能只写修改记录，不删除其他 Phase 学习资料。
+4. 更新 `docs/phases/README.md` 索引、主题、真实状态和 Tag；验证完成后在阶段文档添加独立一行 `archive-ready: true`。
+5. 更新 `AI_HANDOFF.md` 当前状态，历史学习记录只放 docs/phases 和 Git。检查 diff/status，仅提交本阶段相关文件，创建清晰 commit；当前提交应包含本阶段文档。其他未完成改动保留，不混入提交。
+6. 从干净的已提交版本运行 `bash scripts/save_phase.sh XX "阶段名称"`，创建唯一 annotated Tag `phase-XX`，通过 git archive 导出同级 `../mybot-mini-snapshots/phase-XX.zip`，不把 ZIP 提交到 Git。工作区有其他未提交任务时可在干净独立 worktree 或临时克隆中归档该确切提交，不修改用户现有文件。
+7. Tag 或 ZIP 已存在时先检查历史并报告冲突，禁止强制覆盖或移动 Tag。禁止归档未提交的代码。历史阶段无法准确还原时只报告事实与补全方案，不对最新代码冒充旧阶段，不改写历史。
+8. 检查全部已跟踪文件，禁止包含密钥、Token、密码、真实 config/config.json、.env、.venv、缓存、临时文件及不必要大文件。脚本检查只是辅助，不能替代提交前内容审查。
+9. 验证 ZIP 可独立解压，至少包含完整 mybot、pyproject.toml、uv.lock、配置模板、对应阶段文档。独立目录执行 `uv sync --frozen`、`uv run python -m compileall -q mybot` 和阶段测试。真实 API 缺少凭证时明确标注未验证，不能伪造成功。
+10. 通过 `bash scripts/restore_phase.sh XX` 还原到独立学习目录，禁止改变当前开发分支，默认禁止覆盖已有目录。
+11. 完成标准包括学习文档、索引、验证、交接、Commit、唯一 Tag、完整 ZIP 及独立还原验证；默认仅本地操作，不执行 git push。
+
+用户要求尽量避免 `._*`：ExFAT 上 macOS 可能自动生成 AppleDouble；复制时使用 `COPYFILE_DISABLE=1` 或 `cp -X` 减少元数据，不承诺完全阻止。归档不包含这些文件，优先在 APFS 临时目录验证。
