@@ -2,35 +2,31 @@
 
 ## 当前目标与状态
 
-已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），已补齐学习文档，创建唯一 phase-01 Tag（368429f）及同级 mybot-mini-snapshots/phase-01.zip。Phase 02 的 list_files 已完成验证和归档：phase-02 Tag 指向 0cf243c，同级 mybot-mini-snapshots/phase-02.zip 已保存；完整教程见 docs/phases/phase-02.md。本任务不进入 Phase 03。
+Phase 03 Session 已实现并通过离线测试，待本次提交、phase-03 Tag 与 ZIP 独立归档。Phase 01/02 已完成且 Tag/ZIP 保持不变。不进入 Phase 04。
 
-## 实现与决策
+## 实现与修改文件
 
-- docs/phases/：索引、Phase 01 十项完整教程、Phase 02 完整教程。
-- scripts/save_phase.sh、restore_phase.sh：干净已提交版本保存、独立目录还原、防覆盖；共用参数、ZIP 校验及离线回归辅助脚本。
-- AGENTS.md：永久 Phase 工作流，默认本地 commit/tag/ZIP，不 push。
-- git archive 仅导出已跟踪版本；ZIP 在同级 mybot-mini-snapshots，学习目录在同级 mybot-mini-learning，不提交真实配置。
-- 保存先独立解压、uv sync --frozen、compileall、离线测试，再发布 ZIP/Tag；archive-ready 标记是开发者验证声明，阶段专用测试仍必须运行。
+- mybot/agent/session.py：deque 保存最近 6 个完整轮次，深拷贝读写，clear。
+- mybot/agent/loop.py：独立 Session，结束时提交当前轮次，/clear；超时/异常丢弃当前轮，上限在完整工具结果后保存结束提示。
+- mybot/agent/context.py、__init__.py：System→历史→当前 User，导出 Session。
+- scripts/check_session.py、check_phase.py：10 项模拟 LLM 测试加入通用归档检查。
+- docs/phases/phase-03.md、索引、README：完整教程与运行说明。
+- 工具协议和路径权限不变，无新依赖、数据库或持久化；历史按整轮裁剪，不按 token 裁剪。
 
 ## 验证
 
-- bash -n：通过。
-- 临时仓库集成测试：保存、Tag 还原、ZIP 单独还原、拒绝脏工作区/重复 Tag/重复 ZIP/已有学习目录/非法编号/缺失版本/恶意路径/敏感配置/缓存/损坏 ZIP 均通过；当前 HEAD 不受还原影响。
-- 独立源码目录 uv sync --frozen、compileall、离线模型和文件工具回归：通过。
-- 实际 phase-01 Tag/ZIP 已独立还原，安装、编译及离线回归通过；归档不包含 list_files、真实配置或 AppleDouble。
-- 真实模型 API 未验证；需要用户凭证，不以模拟结果宣称线上成功。
+- Session 10 项测试通过：首轮/次轮、多工具 id 配对、6 轮淘汰、CLI clear、ReAct 上限、API/asyncio 超时、工具错误、异常回退、深拷贝与隔离。
+- Phase 01/02 通用工具及日志回归通过；开发源码编译通过（排除 AppleDouble）。
+- 真实 LLM 手工记忆验证未执行，模拟测试仅证明请求包含历史。
 
 ## 环境与已知问题
 
-使用 macOS/zsh、Python 3.12+、uv；启动 uv run python mybot/main.py。debug 在 config/config.json 顶层，默认 false，修改后重启；不读取 MYBOT_DEBUG。
+macOS/zsh、Python 3.12+、uv；运行 uv run python mybot/main.py。debug 在 config/config.json 顶层，默认 false，修改后重启。
 
-ExFAT 会生成 ._* AppleDouble，复制尽量 COPYFILE_DISABLE=1 或 cp -X，不能保证系统不再生成；归档排除这些文件，独立验证使用 APFS 临时目录。
+超时或异常不提交当前轮历史，但工具文件副作用不回滚。6 轮不保证符合模型 token 上限；不支持并发调用同一 Session，退出后记忆消失。
 
-Phase 02 提交包含 list_files.py、registry.py、context.py、阶段专用测试及文档；仅 mybot/app.py 原有注释修改保留未提交，不混入阶段。敏感配置不输出、不提交；ZIP 文件名和常见凭证检查不能替代人工审查所有秘密。
-
-- 实际 phase-02 已独立还原，uv sync --frozen、完整源码编译、阶段专用测试及通用回归均通过；ZIP 不含真实配置或 AppleDouble。
-- Phase 02 离线验证：工具注册/Schema、排序分类、空目录、105→100 条截断、错误参数、路径与符号链接边界、模拟模型循环及 Phase 01 回归均通过。
+mybot/app.py 原有注释修改保留未提交。敏感配置不输出、不提交。ExFAT 可能生成 ._*；复制使用 COPYFILE_DISABLE=1，归档排除元数据，独立验证在 APFS 临时目录。
 
 ## 下一步与不要重复
 
-Phase 02 已完成；后续阶段由用户指定，不自动进入 Phase 03。不要覆盖已有 Phase Tag/ZIP，不必重建 list_files 或归档架构。历史学习内容放 docs/phases 和 Git，本文件只保留当前状态。
+完成本次 Phase 03 归档；后续目标由用户指定。不要覆盖已有 Phase Tag/ZIP，不重复实现 Session，不进入 Phase 04。历史原理放 docs/phases，本文件只保留当前状态。

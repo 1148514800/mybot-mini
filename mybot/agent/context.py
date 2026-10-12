@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 
 SYSTEM_RULES = (
@@ -16,7 +17,8 @@ class ContextBuilder:
         self.workspace = workspace
         self.instructions_dir = workspace / "instructions"
 
-    def build_messages(self, user_message: str) -> list[dict[str, str]]:
+    def build_messages(self, user_message: str,
+                       history: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
         instructions = [f"# Mini Agent\n\n{SYSTEM_RULES}\n\n工作区：{self.workspace}"]
         for filename in self.bootstrap_files:
             path = self.instructions_dir / filename
@@ -24,5 +26,6 @@ class ContextBuilder:
                 instructions.append(f"## {filename}\n\n{path.read_text(encoding='utf-8')}")
         return [
             {"role": "system", "content": "\n\n---\n\n".join(instructions)},
+            *(history or []),
             {"role": "user", "content": user_message},
         ]

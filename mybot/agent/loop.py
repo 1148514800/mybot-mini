@@ -10,17 +10,19 @@ from openai import APITimeoutError, AsyncOpenAI
 from ..config import GatewayConfig
 from ..tools import ToolRegistry, ToolResult
 from .context import ContextBuilder
+from .session import Session
 
 
 class AgentLoop:
     """Run a simple tool-calling loop for one CLI conversation."""
 
     def __init__(self, client: AsyncOpenAI, config: GatewayConfig, tools: ToolRegistry,
-                 context: ContextBuilder):
+                 context: ContextBuilder, session: Session | None = None):
         self.client = client
         self.config = config
         self.tools = tools
         self.context = context
+        self.session = session if session is not None else Session()
 
     async def run(self) -> None:
         while True:
@@ -42,7 +44,11 @@ class AgentLoop:
             print(f"\nBot: {reply}\n")
 
     async def handle_message(self, user_input: str) -> str:
-        messages = self.context.build_messages(user_input)
+        if user_input.strip() == "/clear":
+            self.session.clear()
+            return "当前会话已清空。"
+        messages = self.context.build_messages(user_input, self.session.history())
+        turn_start = len(messages) - 1
         limit = max(1, min(self.config.max_react_steps, 30))
         debug = self.config.debug
         for step in range(1, limit + 1):
@@ -69,7 +75,8 @@ class AgentLoop:
                     f"tool_calls={len(message.tool_calls or [])}"
                 )
             if not message.tool_calls:
-                return (message.content or "").strip() or "模型没有返回文本。"
+                reply = (message.content or "").strip() or "模型没有返回文本。"
+                return self._finish_turn(messages, turn_start, reply)
 
             messages.append({
                 "role": "assistant",
@@ -101,7 +108,12 @@ class AgentLoop:
                     "role": "tool", "tool_call_id": call.id, "content": result.to_text(),
                 })
 
-        return f"已达到单次任务的 {limit} 步上限。"
+        return self._finish_turn(messages, turn_start, f"已达到单次任务的 {limit} 步上限。")
+
+    def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: str) -> str:
+        messages.append({"role": "assistant", "content": reply})
+        self.session.add_turn(messages[turn_start:])
+        return reply
 
     async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
         try:

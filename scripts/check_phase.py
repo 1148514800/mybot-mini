@@ -42,4 +42,7 @@ async def main():
         from scripts.check_list_files import check_list_files
         await check_list_files()
 asyncio.run(main())
+if Path(__file__).with_name("check_session.py").exists() and (Path(__file__).resolve().parent.parent / "mybot/agent/session.py").exists():
+    from scripts.check_session import check_session
+    check_session()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

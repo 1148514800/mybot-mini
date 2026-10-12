@@ -6,6 +6,7 @@
 | --- | --- | --- | --- | --- |
 | 01 | Agent Tool Calling 可观测化 | 已验证，归档本次补齐文档的提交 | `phase-01` | [phase-01.md](phase-01.md) |
 | 02 | 自定义工具 `list_files` | 已验证，独立归档 | `phase-02` | [phase-02.md](phase-02.md) |
+| 03 | Session 多轮对话 | 已验证，独立归档 | `phase-03` | [phase-03.md](phase-03.md) |
 
 ## 保存一个新阶段
 
