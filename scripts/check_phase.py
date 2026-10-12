@@ -38,5 +38,8 @@ async def check(debug):
 async def main():
     await check(False)
     await check(True)
+    if Path(__file__).with_name("check_list_files.py").exists() and build_default_tool_registry(Path.cwd()).has_tool("list_files"):
+        from scripts.check_list_files import check_list_files
+        await check_list_files()
 asyncio.run(main())
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

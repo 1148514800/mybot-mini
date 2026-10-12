@@ -2,11 +2,11 @@
 
 ## 当前目标与状态
 
-已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），已补齐学习文档，创建唯一 phase-01 Tag（368429f）及同级 mybot-mini-snapshots/phase-01.zip。Phase 02 的 list_files 仅存在于工作区，未验证、未提交、未归档。本任务不进入 Phase 03。
+已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），已补齐学习文档，创建唯一 phase-01 Tag（368429f）及同级 mybot-mini-snapshots/phase-01.zip。Phase 02 的 list_files 已完成离线验证，补齐完整教程，待本次提交及创建 phase-02 Tag/ZIP。本任务不进入 Phase 03。
 
 ## 实现与决策
 
-- docs/phases/：索引、Phase 01 十项完整教程、Phase 02 真实状态草稿。
+- docs/phases/：索引、Phase 01 十项完整教程、Phase 02 完整教程。
 - scripts/save_phase.sh、restore_phase.sh：干净已提交版本保存、独立目录还原、防覆盖；共用参数、ZIP 校验及离线回归辅助脚本。
 - AGENTS.md：永久 Phase 工作流，默认本地 commit/tag/ZIP，不 push。
 - git archive 仅导出已跟踪版本；ZIP 在同级 mybot-mini-snapshots，学习目录在同级 mybot-mini-learning，不提交真实配置。
@@ -26,8 +26,10 @@
 
 ExFAT 会生成 ._* AppleDouble，复制尽量 COPYFILE_DISABLE=1 或 cp -X，不能保证系统不再生成；归档排除这些文件，独立验证使用 APFS 临时目录。
 
-保留用户原有未提交修改：mybot/app.py、mybot/agent/context.py、mybot/tools/registry.py、mybot/tools/list_files.py。本任务未纳入提交或 Phase 01。敏感配置不输出、不提交；ZIP 文件名和常见凭证检查不能替代人工审查所有秘密。
+Phase 02 提交包含 list_files.py、registry.py、context.py、阶段专用测试及文档；仅 mybot/app.py 原有注释修改保留未提交，不混入阶段。敏感配置不输出、不提交；ZIP 文件名和常见凭证检查不能替代人工审查所有秘密。
+
+- Phase 02 离线验证：工具注册/Schema、排序分类、空目录、105→100 条截断、错误参数、路径与符号链接边界、模拟模型循环及 Phase 01 回归均通过。
 
 ## 下一步与不要重复
 
-完成并验证 Phase 02 后重写 phase-02.md，更新索引/交接，提交，再运行 bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"。不要给未提交代码打 Tag，不要覆盖 phase-01，不必重建归档架构。历史学习内容放 docs/phases 和 Git，本文件只保留当前状态。
+完成本次 Phase 02 提交与独立归档验证；后续阶段由用户指定，不自动进入 Phase 03。不要覆盖已有 Phase Tag/ZIP，不必重建 list_files 或归档架构。历史学习内容放 docs/phases 和 Git，本文件只保留当前状态。

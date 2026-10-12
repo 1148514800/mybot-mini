@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .base import Tool, ToolResult
 from .file import ReadFileTool, WriteFileTool
+from .list_files import ListFilesTool
 
 
 class ToolRegistry:
@@ -43,6 +44,7 @@ def build_default_tool_registry(workspace: Path) -> ToolRegistry:
     for tool in (
         ReadFileTool(workspace),
         WriteFileTool(workspace),
+        ListFilesTool(workspace),
     ):
         registry.register(tool)
     return registry
