@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），已补齐学习文档，创建唯一 phase-01 Tag（368429f）及同级 mybot-mini-snapshots/phase-01.zip。Phase 02 的 list_files 已完成离线验证，补齐完整教程，待本次提交及创建 phase-02 Tag/ZIP。本任务不进入 Phase 03。
+已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），已补齐学习文档，创建唯一 phase-01 Tag（368429f）及同级 mybot-mini-snapshots/phase-01.zip。Phase 02 的 list_files 已完成验证和归档：phase-02 Tag 指向 0cf243c，同级 mybot-mini-snapshots/phase-02.zip 已保存；完整教程见 docs/phases/phase-02.md。本任务不进入 Phase 03。
 
 ## 实现与决策
 
@@ -28,8 +28,9 @@ ExFAT 会生成 ._* AppleDouble，复制尽量 COPYFILE_DISABLE=1 或 cp -X，�
 
 Phase 02 提交包含 list_files.py、registry.py、context.py、阶段专用测试及文档；仅 mybot/app.py 原有注释修改保留未提交，不混入阶段。敏感配置不输出、不提交；ZIP 文件名和常见凭证检查不能替代人工审查所有秘密。
 
+- 实际 phase-02 已独立还原，uv sync --frozen、完整源码编译、阶段专用测试及通用回归均通过；ZIP 不含真实配置或 AppleDouble。
 - Phase 02 离线验证：工具注册/Schema、排序分类、空目录、105→100 条截断、错误参数、路径与符号链接边界、模拟模型循环及 Phase 01 回归均通过。
 
 ## 下一步与不要重复
 
-完成本次 Phase 02 提交与独立归档验证；后续阶段由用户指定，不自动进入 Phase 03。不要覆盖已有 Phase Tag/ZIP，不必重建 list_files 或归档架构。历史学习内容放 docs/phases 和 Git，本文件只保留当前状态。
+Phase 02 已完成；后续阶段由用户指定，不自动进入 Phase 03。不要覆盖已有 Phase Tag/ZIP，不必重建 list_files 或归档架构。历史学习内容放 docs/phases 和 Git，本文件只保留当前状态。
