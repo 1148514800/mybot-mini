@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import time
 from typing import Any
 
 from openai import APITimeoutError, AsyncOpenAI
@@ -43,7 +45,9 @@ class AgentLoop:
     async def handle_message(self, user_input: str) -> str:
         messages = self.context.build_messages(user_input)
         limit = max(1, min(self.config.max_react_steps, 30))
-        for _ in range(limit):
+        debug = os.getenv("MYBOT_DEBUG") == "1"
+        for step in range(1, limit + 1):
+            start = time.perf_counter()
             try:
                 response = await asyncio.wait_for(
                     self.client.chat.completions.create(
@@ -59,6 +63,12 @@ class AgentLoop:
                 return f"模型请求超时（{self.config.request_timeout_seconds:g} 秒）。"
 
             message = response.choices[0].message
+            if debug:
+                print(
+                    f"[LLM {step}] time={time.perf_counter() - start:.2f}s "
+                    f"tokens={response.usage.total_tokens if response.usage else '?'} "
+                    f"tool_calls={len(message.tool_calls or [])}"
+                )
             if not message.tool_calls:
                 return (message.content or "").strip() or "模型没有返回文本。"
 
@@ -74,7 +84,20 @@ class AgentLoop:
                 ],
             })
             for call in message.tool_calls:
+                if debug:
+                    try:
+                        args = json.loads(call.function.arguments or "{}")
+                    except json.JSONDecodeError:
+                        args = "<invalid JSON>"
+                    if isinstance(args, dict) and "content" in args:
+                        args["content"] = f"<{len(str(args['content']))} chars>"
+                    print(f"[CALL] {call.function.name}: {args}")
                 result = await self._execute(call.function.name, call.function.arguments)
+                if debug:
+                    print(
+                        f"[RESULT] success={result.success} "
+                        f"chars={len(result.output)} error={result.error}"
+                    )
                 messages.append({
                     "role": "tool", "tool_call_id": call.id, "content": result.to_text(),
                 })
