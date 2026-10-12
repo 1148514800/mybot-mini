@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 03 Session 已实现并通过离线测试，待本次提交、phase-03 Tag 与 ZIP 独立归档。Phase 01/02 已完成且 Tag/ZIP 保持不变。不进入 Phase 04。
+Phase 03 Session 已完成：phase-03 Tag 指向 f962e71，同级 mybot-mini-snapshots/phase-03.zip 已保存并独立还原验证。Phase 01/02 已完成且 Tag/ZIP 保持不变。不进入 Phase 04。
 
 ## 实现与修改文件
 
@@ -17,6 +17,7 @@ Phase 03 Session 已实现并通过离线测试，待本次提交、phase-03 Tag
 
 - Session 10 项测试通过：首轮/次轮、多工具 id 配对、6 轮淘汰、CLI clear、ReAct 上限、API/asyncio 超时、工具错误、异常回退、深拷贝与隔离。
 - Phase 01/02 通用工具及日志回归通过；开发源码编译通过（排除 AppleDouble）。
+- 实际 ZIP 独立还原后 uv sync --frozen、完整源码编译、Session 10 项及 Phase 01/02 统一回归均通过；不含真实配置或 AppleDouble。
 - 真实 LLM 手工记忆验证未执行，模拟测试仅证明请求包含历史。
 
 ## 环境与已知问题
@@ -29,4 +30,4 @@ mybot/app.py 原有注释修改保留未提交。敏感配置不输出、不提�
 
 ## 下一步与不要重复
 
-完成本次 Phase 03 归档；后续目标由用户指定。不要覆盖已有 Phase Tag/ZIP，不重复实现 Session，不进入 Phase 04。历史原理放 docs/phases，本文件只保留当前状态。
+Phase 03 已完成；后续目标由用户指定。不要覆盖已有 Phase Tag/ZIP，不重复实现 Session，不进入 Phase 04。历史原理放 docs/phases，本文件只保留当前状态。
