@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），补齐学习文档并准备唯一 phase-01 Tag/ZIP。Phase 02 的 list_files 仅存在于工作区，未验证、未提交、未归档。本任务不进入 Phase 03。
+已建立 Phase 学习归档体系；Phase 01 为已提交的 Tool Calling 可观测化（配置布尔字段 debug 控制），已补齐学习文档，创建唯一 phase-01 Tag（368429f）及同级 mybot-mini-snapshots/phase-01.zip。Phase 02 的 list_files 仅存在于工作区，未验证、未提交、未归档。本任务不进入 Phase 03。
 
 ## 实现与决策
 
@@ -15,8 +15,9 @@
 ## 验证
 
 - bash -n：通过。
-- 临时仓库集成测试：保存、Tag 还原、ZIP 单独还原、拒绝脏工作区/重复 Tag/重复 ZIP/已有学习目录/非法编号/缺失版本/恶意路径均通过；当前 HEAD 不受还原影响。
+- 临时仓库集成测试：保存、Tag 还原、ZIP 单独还原、拒绝脏工作区/重复 Tag/重复 ZIP/已有学习目录/非法编号/缺失版本/恶意路径/敏感配置/缓存/损坏 ZIP 均通过；当前 HEAD 不受还原影响。
 - 独立源码目录 uv sync --frozen、compileall、离线模型和文件工具回归：通过。
+- 实际 phase-01 Tag/ZIP 已独立还原，安装、编译及离线回归通过；归档不包含 list_files、真实配置或 AppleDouble。
 - 真实模型 API 未验证；需要用户凭证，不以模拟结果宣称线上成功。
 
 ## 环境与已知问题
