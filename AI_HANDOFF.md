@@ -6,6 +6,10 @@
 
 当前目标已完成：为 Agent 添加默认关闭的调试日志。配置文件顶层设置 `"debug": true` 并重启后输出每步模型耗时、token 数、工具调用数，以及工具参数和执行结果摘要；参数中的 `content` 仅显示字符数。修改文件：`mybot/config.py`、`mybot/agent/loop.py`、配置模板、README 和本交接文档；沿用现有工具循环，无架构变更。
 
+## 磁盘元数据约定
+
+用户要求避免生成 `._*` 文件。项目所在 `/Volumes/move-disk` 为 ExFAT；macOS 会将扩展属性保存成 AppleDouble 伴随文件。已清理仓库内确认具有 AppleDouble 文件头的伴随文件；`.gitignore` 已忽略 `._*`。复制操作尽量使用 `COPYFILE_DISABLE=1` 或 `cp -X`，不主动复制扩展属性；这不能阻止系统或其他应用继续生成。彻底避免需将工作目录迁移到 APFS，尚未迁移。
+
 ## 核心结构
 
 环境管理约定：使用 `uv` 管理依赖和运行环境；后续运行与验证优先使用 `uv run`，不要使用系统 Python。CLI 启动命令：`uv run python -m mybot.main`。调试日志仅由 `config/config.json` 顶层布尔字段 `debug` 控制，默认 `false`；不再读取 `MYBOT_DEBUG`。本地配置已补齐该字段，真实配置不提交。
