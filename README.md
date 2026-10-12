@@ -10,9 +10,7 @@ MyBot 是一个简洁的本地命令行 AI 助手，通过 OpenAI 兼容接口�
 ## 安装与配置
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
+uv sync
 cp config/config.example.json config/config.json
 ```
 
@@ -21,16 +19,14 @@ cp config/config.example.json config/config.json
 Windows PowerShell 可使用：
 
 ```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
+uv sync
 Copy-Item config\config.example.json config\config.json
 ```
 
 ## 启动
 
 ```bash
-python mybot/main.py
+uv run python -m mybot.main
 ```
 
 输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出。每条消息独立处理，不保存历史对话。Agent 可以调用 `read_file` 和 `write_file`，文件操作限制在配置的 `workspace.path` 目录内。
@@ -39,6 +35,7 @@ python mybot/main.py
 
 ```json
 {
+  "debug": false,
   "llm": {
     "provider": "siliconflow",
     "max_completion_tokens": 2000,
@@ -56,4 +53,4 @@ python mybot/main.py
 }
 ```
 
-环境变量 `OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `MYBOT_MODEL` 可用于覆盖对应配置值。
+将 `config/config.json` 顶层的 `debug` 设置为 `true` 开启调试日志，设置为 `false` 关闭，默认关闭。修改后重启程序生效。日志包含模型耗时、token 数、工具参数及执行结果摘要；写入参数 `content` 仅显示字符数。调试开关统一由配置文件控制，不再读取 `MYBOT_DEBUG` 环境变量。

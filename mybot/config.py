@@ -50,6 +50,7 @@ def _resolve_path(raw_value) -> Path:
 
 @dataclass
 class GatewayConfig:
+    debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
     provider: str = _PROVIDER
     model: str = field(default_factory=lambda: _PROVIDER_CONFIG.get("model", "gpt-4.1-mini"))
     api_key: str | None = _PROVIDER_CONFIG.get("api_key")

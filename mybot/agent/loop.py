@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import time
 from typing import Any
 
@@ -45,7 +44,7 @@ class AgentLoop:
     async def handle_message(self, user_input: str) -> str:
         messages = self.context.build_messages(user_input)
         limit = max(1, min(self.config.max_react_steps, 30))
-        debug = os.getenv("MYBOT_DEBUG") == "1"
+        debug = self.config.debug
         for step in range(1, limit + 1):
             start = time.perf_counter()
             try:

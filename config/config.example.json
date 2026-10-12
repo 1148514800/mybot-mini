@@ -1,4 +1,5 @@
 {
+  "debug": false,
   "llm": {
     "provider": "siliconflow",
     "max_completion_tokens": 20000,
