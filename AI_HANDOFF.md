@@ -8,6 +8,8 @@
 
 ## 核心结构
 
+环境管理约定：使用 `uv` 管理依赖和运行环境；后续运行与验证优先使用 `uv run`，不要使用系统 Python。CLI 启动命令：`uv run python -m mybot.main`。临时开启日志：`MYBOT_DEBUG=1 uv run python -m mybot.main`。
+
 - `mybot/main.py`：程序入口
 - `mybot/app.py`：应用组装和资源关闭
 - `mybot/config.py`：读取配置并创建模型客户端
