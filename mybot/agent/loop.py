@@ -22,7 +22,7 @@ class AgentLoop:
         self.config = config
         self.tools = tools
         self.context = context
-        self.session = session if session is not None else Session()
+        self.session = session if session is not None else Session(config.session_max_turns)
 
     async def run(self) -> None:
         while True:

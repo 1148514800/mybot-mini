@@ -142,3 +142,8 @@ ExFAT 开发目录若出现 AppleDouble，可使用 `uv run python -m compileall
 ## 10. Phase 02 → Phase 03
 
 Phase 02 为每条用户输入独立构建消息，只有同一 ReAct 循环内的工具上下文。Phase 03 在原架构上增加独立 Session 和结束提交边界，实现跨输入的完整轮次记忆、6 轮窗口和 /clear。工具协议、权限、模型配置和调试日志保留。Phase 01/02 Tag、ZIP 和学习文档保持不变；原有 app.py 注释修改未混入本阶段。
+
+
+## 归档后的补充：配置历史轮数
+
+当前开发版增加 `config/config.json` 中的 `session.max_turns`（正整数，默认 6）。GatewayConfig 读取并校验，然后 AgentLoop 用该值创建 Session，修改后重启生效。单次工具循环上限仍由 llm.max_react_steps 控制。新增测试验证缺省值、非法值与设置为 2 后的整轮裁剪，Session 测试现为 12 项。此补充在原 phase-03 Tag 之后提交；既有 Tag/ZIP 不移动，归档版仍使用固定默认 6 轮。

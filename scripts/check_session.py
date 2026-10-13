@@ -13,6 +13,7 @@ from unittest.mock import patch
 import httpx
 from openai import APITimeoutError
 from mybot.agent import AgentLoop, ContextBuilder, Session
+import mybot.config as config_module
 from mybot.config import GatewayConfig
 from mybot.tools import build_default_tool_registry
 
@@ -50,7 +51,28 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(debug=False, workspace=self.workspace), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(debug=False, workspace=self.workspace, session_max_turns=6), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+
+    async def test_configured_history_window(self):
+        with patch.object(config_module, "_CONFIG", {"session": {"max_turns": 2}}):
+            config = GatewayConfig(debug=False, workspace=self.workspace)
+        self.assertEqual(config.session_max_turns, 2)
+        self.agent = AgentLoop(self.agent.client, config, self.agent.tools, self.agent.context)
+        for number in range(3):
+            self.effects.extend([response(calls=[call(f"configured-{number}")]), response(f"answer-{number}")])
+            await self.agent.handle_message(f"user-{number}")
+        history = self.agent.session.history()
+        self.assertEqual([m["content"] for m in history if m["role"] == "user"], ["user-1", "user-2"])
+        self.assertEqual(len(history), 8)
+        assert_pairs(self, history)
+
+    async def test_config_default_and_invalid_values(self):
+        with patch.object(config_module, "_CONFIG", {}):
+            self.assertEqual(GatewayConfig().session_max_turns, 6)
+        for value in (0, -1, True, "6", 2.5, None):
+            with self.subTest(value=value), patch.object(config_module, "_CONFIG", {"session": {"max_turns": value}}):
+                with self.assertRaisesRegex(ValueError, "session.max_turns"):
+                    GatewayConfig()
 
     async def test_first_and_second_turn(self):
         self.effects.extend([response("记住了"), response("Python")])

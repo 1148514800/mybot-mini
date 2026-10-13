@@ -51,6 +51,7 @@ def _resolve_path(raw_value) -> Path:
 @dataclass
 class GatewayConfig:
     debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
+    session_max_turns: int = field(default_factory=lambda: _section("session").get("max_turns", 6))
     provider: str = _PROVIDER
     model: str = field(default_factory=lambda: _PROVIDER_CONFIG.get("model", "gpt-4.1-mini"))
     api_key: str | None = _PROVIDER_CONFIG.get("api_key")
@@ -63,6 +64,8 @@ class GatewayConfig:
     )
 
     def __post_init__(self) -> None:
+        if type(self.session_max_turns) is not int or self.session_max_turns < 1:
+            raise ValueError("session.max_turns must be a positive integer")
         self.request_timeout_seconds = float(self.request_timeout_seconds)
         self.workspace = Path(self.workspace)
 

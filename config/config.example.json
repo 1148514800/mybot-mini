@@ -1,5 +1,8 @@
 {
   "debug": false,
+  "session": {
+    "max_turns": 6
+  },
   "llm": {
     "provider": "siliconflow",
     "max_completion_tokens": 20000,

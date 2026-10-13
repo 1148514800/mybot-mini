@@ -29,13 +29,14 @@ Copy-Item config\config.example.json config\config.json
 uv run python -m mybot.main
 ```
 
-输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内保留最近 6 个完整用户轮次（含工具请求和结果），退出后不保存历史。Agent 可以调用 `read_file` 和 `write_file`，文件操作限制在配置的 `workspace.path` 目录内。
+输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内默认保留最近 6 个完整用户轮次（含工具请求和结果），退出后不保存历史。Agent 可以调用 `read_file` 和 `write_file`，文件操作限制在配置的 `workspace.path` 目录内。
 
 ## 配置
 
 ```json
 {
   "debug": false,
+  "session": {"max_turns": 6},
   "llm": {
     "provider": "siliconflow",
     "max_completion_tokens": 2000,
@@ -68,3 +69,5 @@ bash scripts/restore_phase.sh 1
 保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01、Phase 02、Phase 03 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
+
+对话历史轮数通过 `config/config.json` 的 `session.max_turns` 调整，默认 `6`，必须是正整数。修改后重启生效；这是保留历史的轮数，不是单次任务工具循环的 `llm.max_react_steps`。
