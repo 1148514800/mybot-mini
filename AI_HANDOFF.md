@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase 05 Session JSON 持久化已实现并离线验证，待本次提交、phase-05 Tag/ZIP 与独立还原。Phase 01–04 Tag/ZIP 保持不变，不进入 Phase 06。持久化默认关闭，本地配置及模板已补齐 session.persist/path。
+Phase 05 Session JSON 持久化已完成：phase-05 Tag 指向 cb34266，同级 mybot-mini-snapshots/phase-05.zip 已保存并独立还原验证。Phase 01–04 Tag/ZIP 保持不变，不进入 Phase 06。持久化默认关闭，本地配置及模板已补齐 session.persist/path。
 
 ## 实现与修改
 
@@ -16,7 +16,7 @@ Phase 05 Session JSON 持久化已实现并离线验证，待本次提交、phas
 
 ## 验证
 
-Persistence 16 项测试通过：保存/重启、多工具配对、整轮淘汰、clear 一致性、超时/异常不写、上限收尾、replace/fsync 故障、损坏/版本/角色/ID 拒绝、关闭行为、Plan 不恢复、工作区权限边界、配置、深拷贝/权限。Session 12 项、Planning 12 项及原有工具日志回归通过，开发源码编译通过（排除 AppleDouble）。真实 LLM 手工验证未执行。
+Persistence 16 项测试通过：保存/重启、多工具配对、整轮淘汰、clear 一致性、超时/异常不写、上限收尾、replace/fsync 故障、损坏/版本/角色/ID 拒绝、关闭行为、Plan 不恢复、工作区权限边界、配置、深拷贝/权限。Session 12 项、Planning 12 项及原有工具日志回归通过，开发源码编译通过（排除 AppleDouble）。归档安全测试通过（含默认目录/自定义名称 Session JSON 拒绝）。实际 ZIP 独立还原后 uv sync --frozen、完整源码编译和 Phase 01–05 统一回归均通过，不含真实配置、Session 或用户未提交文件。真实 LLM 手工验证未执行。
 
 ## 决策与局限
 
@@ -30,4 +30,4 @@ app.py、workspace/instructions/USER.md 原有修改与未跟踪 workspace/summa
 
 ## 下一步
 
-完成 Phase 05 独立归档，之后由用户指定任务。不覆盖旧 Tag/ZIP，不重复实现 SessionStore，不进入 Phase 06。历史原理放 docs/phases，交接只保存当前状态。
+Phase 05 已完成，后续由用户指定任务。不覆盖旧 Tag/ZIP，不重复实现 SessionStore，不进入 Phase 06。历史原理放 docs/phases，交接只保存当前状态。
