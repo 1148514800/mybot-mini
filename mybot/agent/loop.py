@@ -11,6 +11,7 @@ from ..config import GatewayConfig
 from ..tools import ToolRegistry, ToolResult
 from .context import ContextBuilder
 from .session import Session
+from .planning import Plan, PlanningTool
 
 
 class AgentLoop:
@@ -23,6 +24,9 @@ class AgentLoop:
         self.tools = tools
         self.context = context
         self.session = session if session is not None else Session(config.session_max_turns)
+        self.plan = Plan()
+        for name in ("create_plan", "update_plan"):
+            self.tools.register(PlanningTool(self.plan, name))
 
     async def run(self) -> None:
         while True:
@@ -44,8 +48,19 @@ class AgentLoop:
             print(f"\nBot: {reply}\n")
 
     async def handle_message(self, user_input: str) -> str:
+        self.plan.reset(user_input)
+        try:
+            return await self._handle_message(user_input)
+        except BaseException:
+            report = self.plan.close("任务异常或中断")
+            if report:
+                print(report)
+            raise
+
+    async def _handle_message(self, user_input: str) -> str:
         if user_input.strip() == "/clear":
             self.session.clear()
+            self.plan.reset()
             return "当前会话已清空。"
         messages = self.context.build_messages(user_input, self.session.history())
         turn_start = len(messages) - 1
@@ -65,7 +80,8 @@ class AgentLoop:
                     timeout=max(1.0, self.config.request_timeout_seconds),
                 )
             except (TimeoutError, APITimeoutError):
-                return f"模型请求超时（{self.config.request_timeout_seconds:g} 秒）。"
+                report = self.plan.close("模型请求超时")
+                return f"模型请求超时（{self.config.request_timeout_seconds:g} 秒）。" + (f"\n{report}" if report else "")
 
             message = response.choices[0].message
             if debug:
@@ -108,14 +124,28 @@ class AgentLoop:
                     "role": "tool", "tool_call_id": call.id, "content": result.to_text(),
                 })
 
-        return self._finish_turn(messages, turn_start, f"已达到单次任务的 {limit} 步上限。")
+        return self._finish_turn(messages, turn_start, f"已达到单次任务的 {limit} 步上限。", "达到 ReAct 上限")
 
-    def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: str) -> str:
+    def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: str,
+                     reason: str = "") -> str:
+        report = self.plan.close(reason)
+        if report:
+            reply = f"{reply}\n{report}" if reason else report
         messages.append({"role": "assistant", "content": reply})
         self.session.add_turn(messages[turn_start:])
         return reply
 
     async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
+        if name in ("create_plan", "update_plan"):
+            return await self._execute_tool(name, raw_arguments)
+        error = self.plan.execution_error()
+        if error:
+            return ToolResult(success=False, error=error)
+        result = await self._execute_tool(name, raw_arguments)
+        self.plan.observe(name, result)
+        return result
+
+    async def _execute_tool(self, name: str, raw_arguments: Any) -> ToolResult:
         try:
             arguments = json.loads(raw_arguments or "{}") if isinstance(raw_arguments, str) else raw_arguments
         except json.JSONDecodeError as exc:
