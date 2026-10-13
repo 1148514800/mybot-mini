@@ -16,6 +16,7 @@ wheels/
 config/config.json
 
 # Runtime data
+.mybot_state/
 workspace/browser_profiles/
 workspace/runs/
 runs/

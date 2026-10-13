@@ -16,6 +16,16 @@ class Session:
     def history(self) -> list[dict[str, Any]]:
         return deepcopy([message for turn in self._turns for message in turn])
 
+    @property
+    def max_turns(self) -> int:
+        return self._turns.maxlen
+
+    def export_turns(self) -> list[list[dict[str, Any]]]:
+        return deepcopy(list(self._turns))
+
+    def restore(self, turns: list[list[dict[str, Any]]]) -> None:
+        self._turns = deque(deepcopy(turns), maxlen=self.max_turns)
+
     def add_turn(self, messages: list[dict[str, Any]]) -> None:
         self._turns.append(deepcopy(messages))
 

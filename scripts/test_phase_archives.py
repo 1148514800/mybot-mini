@@ -16,8 +16,8 @@ with tempfile.TemporaryDirectory(prefix="mybot-phase-tests-") as folder:
     data = subprocess.check_output(["git", "archive", "--format=zip", "HEAD"], cwd=root)
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         archive.extractall(repo)
-    for name in ("scripts", "docs"):
-        shutil.copytree(root / name, repo / name, dirs_exist_ok=True, copy_function=shutil.copyfile)
+    for name in ("mybot", "scripts", "docs"):
+        shutil.copytree(root / name, repo / name, dirs_exist_ok=True, copy_function=shutil.copyfile, ignore=shutil.ignore_patterns("__pycache__", "._*"))
     def run(args, ok=True):
         result = subprocess.run(args, cwd=repo, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert (result.returncode == 0) == ok, result.stdout
@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix="mybot-phase-tests-") as folder:
         dst.writestr("../escape", "bad")
     run(["uv", "run", "--no-project", "python", "scripts/phase_zip.py", str(malicious), "phase-01", str(base / "bad-output")], False)
     assert not (base / "escape").exists()
-    for name, payload in (("config/config.json", b'{"api_key":"secret"}'), (".venv/private.txt", b"cache")):
+    for name, payload in (("config/config.json", b'{"api_key":"secret"}'), (".venv/private.txt", b"cache"), (".mybot_state/session.json", b'{"version":1,"turns":[]}'), ("private-history.dat", b'{"version":1,"turns":[]}')):
         with zipfile.ZipFile(base / "mybot-mini-snapshots" / "phase-01.zip") as src, zipfile.ZipFile(malicious, "w") as dst:
             for entry in src.infolist():
                 dst.writestr(entry, src.read(entry))

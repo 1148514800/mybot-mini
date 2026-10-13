@@ -51,7 +51,7 @@ async def check_list_files():
                 assert kwargs["messages"][-1]["tool_call_id"] == "list-1"
                 assert "(empty directory)" in kwargs["messages"][-1]["content"]
             return next(responses)
-        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(debug=True, workspace=workspace), tools, ContextBuilder(workspace))
+        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(session_persist=False, debug=True, workspace=workspace), tools, ContextBuilder(workspace))
         for arguments in ('{}', '{"path":12}', '{', '[]'):
             assert not (await agent._execute("list_files", arguments)).success
         output = io.StringIO()

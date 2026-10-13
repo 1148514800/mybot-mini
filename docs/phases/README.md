@@ -8,6 +8,7 @@
 | 02 | 自定义工具 `list_files` | 已验证，独立归档 | `phase-02` | [phase-02.md](phase-02.md) |
 | 03 | Session 多轮对话 | 已验证，独立归档 | `phase-03` | [phase-03.md](phase-03.md) |
 | 04 | 可选任务规划 DIRECT / PLANNED | 已验证，独立归档 | `phase-04` | [phase-04.md](phase-04.md) |
+| 05 | Session JSON 持久化与恢复 | 已验证，独立归档 | `phase-05` | [phase-05.md](phase-05.md) |
 
 ## 保存一个新阶段
 

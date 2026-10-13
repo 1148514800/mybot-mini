@@ -213,7 +213,7 @@ rm -rf
 5. 更新 `AI_HANDOFF.md` 当前状态，历史学习记录只放 docs/phases 和 Git。检查 diff/status，仅提交本阶段相关文件，创建清晰 commit；当前提交应包含本阶段文档。其他未完成改动保留，不混入提交。
 6. 从干净的已提交版本运行 `bash scripts/save_phase.sh XX "阶段名称"`，创建唯一 annotated Tag `phase-XX`，通过 git archive 导出同级 `../mybot-mini-snapshots/phase-XX.zip`，不把 ZIP 提交到 Git。工作区有其他未提交任务时可在干净独立 worktree 或临时克隆中归档该确切提交，不修改用户现有文件。
 7. Tag 或 ZIP 已存在时先检查历史并报告冲突，禁止强制覆盖或移动 Tag。禁止归档未提交的代码。历史阶段无法准确还原时只报告事实与补全方案，不对最新代码冒充旧阶段，不改写历史。
-8. 检查全部已跟踪文件，禁止包含密钥、Token、密码、真实 config/config.json、.env、.venv、缓存、临时文件及不必要大文件。脚本检查只是辅助，不能替代提交前内容审查。
+8. 检查全部已跟踪文件，禁止包含密钥、Token、密码、真实 config/config.json、.env、.venv、实际 Session 历史（含 .mybot_state 和自定义存储路径）、缓存、临时文件及不必要大文件。脚本检查只是辅助，不能替代提交前内容审查。
 9. 验证 ZIP 可独立解压，至少包含完整 mybot、pyproject.toml、uv.lock、配置模板、对应阶段文档。独立目录执行 `uv sync --frozen`、`uv run python -m compileall -q mybot` 和阶段测试。真实 API 缺少凭证时明确标注未验证，不能伪造成功。
 10. 通过 `bash scripts/restore_phase.sh XX` 还原到独立学习目录，禁止改变当前开发分支，默认禁止覆盖已有目录。
 11. 完成标准包括学习文档、索引、验证、交接、Commit、唯一 Tag、完整 ZIP 及独立还原验证；默认仅本地操作，不执行 git push。

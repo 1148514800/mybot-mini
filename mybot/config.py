@@ -43,6 +43,13 @@ def _llm_value(key: str, default):
     return (_LLM or _PROVIDER_CONFIG).get(key, default)
 
 
+def _session_value(key: str, default):
+    section = _CONFIG.get("session", {})
+    if not isinstance(section, dict):
+        raise ValueError("session must be a JSON object")
+    return section.get(key, default)
+
+
 def _resolve_path(raw_value) -> Path:
     path = Path(raw_value).expanduser()
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
@@ -51,7 +58,9 @@ def _resolve_path(raw_value) -> Path:
 @dataclass
 class GatewayConfig:
     debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
-    session_max_turns: int = field(default_factory=lambda: _section("session").get("max_turns", 6))
+    session_max_turns: int = field(default_factory=lambda: _session_value("max_turns", 6))
+    session_persist: bool = field(default_factory=lambda: _session_value("persist", False))
+    session_path: Path | str = field(default_factory=lambda: _session_value("path", "./.mybot_state/session.json"))
     provider: str = _PROVIDER
     model: str = field(default_factory=lambda: _PROVIDER_CONFIG.get("model", "gpt-4.1-mini"))
     api_key: str | None = _PROVIDER_CONFIG.get("api_key")
@@ -66,8 +75,15 @@ class GatewayConfig:
     def __post_init__(self) -> None:
         if type(self.session_max_turns) is not int or self.session_max_turns < 1:
             raise ValueError("session.max_turns must be a positive integer")
+        if type(self.session_persist) is not bool:
+            raise ValueError("session.persist must be a boolean")
+        if not isinstance(self.session_path, (str, Path)) or not str(self.session_path).strip():
+            raise ValueError("session.path must be a non-empty path string")
+        self.session_path = _resolve_path(self.session_path)
         self.request_timeout_seconds = float(self.request_timeout_seconds)
-        self.workspace = Path(self.workspace)
+        self.workspace = _resolve_path(self.workspace)
+        if self.session_persist and self.session_path.is_relative_to(self.workspace):
+            raise ValueError("session.path must be outside workspace.path")
 
 
 def build_client(config: GatewayConfig) -> AsyncOpenAI:

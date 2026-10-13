@@ -9,6 +9,7 @@ from openai import APITimeoutError, AsyncOpenAI
 
 from ..config import GatewayConfig
 from ..tools import ToolRegistry, ToolResult
+from ..storage.session_store import SessionStore
 from .context import ContextBuilder
 from .session import Session
 from .planning import Plan, PlanningTool
@@ -24,6 +25,9 @@ class AgentLoop:
         self.tools = tools
         self.context = context
         self.session = session if session is not None else Session(config.session_max_turns)
+        self.store = SessionStore(config.session_path, config.workspace) if config.session_persist else None
+        if self.store is not None:
+            self.session.restore(self.store.load())
         self.plan = Plan()
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
@@ -59,6 +63,8 @@ class AgentLoop:
 
     async def _handle_message(self, user_input: str) -> str:
         if user_input.strip() == "/clear":
+            if self.store is not None:
+                self.store.clear()
             self.session.clear()
             self.plan.reset()
             return "当前会话已清空。"
@@ -132,6 +138,9 @@ class AgentLoop:
         if report:
             reply = f"{reply}\n{report}" if reason else report
         messages.append({"role": "assistant", "content": reply})
+        if self.store is not None:
+            turns = self.session.export_turns() + [messages[turn_start:]]
+            self.store.save(turns[-self.session.max_turns:])
         self.session.add_turn(messages[turn_start:])
         return reply
 

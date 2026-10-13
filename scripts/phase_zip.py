@@ -17,12 +17,17 @@ with ZipFile(zip_path) as archive:
         path = PurePosixPath(entry.filename)
         assert not path.is_absolute() and ".." not in path.parts and "\\" not in entry.filename, "Unsafe ZIP path"
         assert not stat.S_ISLNK(entry.external_attr >> 16), "Symlinks are not allowed"
-        assert not any(p in {".git", ".venv", "__pycache__", "node_modules"} or p.startswith("._") or p == ".env" or p.startswith(".env.") for p in path.parts), "Forbidden archive entry"
+        assert not any(p in {".git", ".venv", ".mybot_state", "__pycache__", "node_modules"} or p.startswith("._") or p == ".env" or p.startswith(".env.") for p in path.parts), "Forbidden archive entry"
         assert entry.filename != "config/config.json", "Local credentials are forbidden"
         assert path.suffix not in {".pyc", ".pem", ".key", ".p12", ".zip"}, "Private key/cache/archive entry"
     for name in names:
         if not name.endswith("/"):
             data = archive.read(name)
+            try:
+                document = json.loads(data)
+            except (ValueError, UnicodeError):
+                document = None
+            assert not (isinstance(document, dict) and {"version", "turns"} <= document.keys()), f"Session data is forbidden: {name}"
             assert not re.search(rb"(?:sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)", data), f"Possible credential in {name}"
     assert archive.testzip() is None, "ZIP CRC error"
     template = json.loads(archive.read("config/config.example.json"))

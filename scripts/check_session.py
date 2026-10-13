@@ -51,11 +51,11 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(debug=False, workspace=self.workspace, session_max_turns=6), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(session_persist=False, debug=False, workspace=self.workspace, session_max_turns=6), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_configured_history_window(self):
         with patch.object(config_module, "_CONFIG", {"session": {"max_turns": 2}}):
-            config = GatewayConfig(debug=False, workspace=self.workspace)
+            config = GatewayConfig(session_persist=False, debug=False, workspace=self.workspace)
         self.assertEqual(config.session_max_turns, 2)
         self.agent = AgentLoop(self.agent.client, config, self.agent.tools, self.agent.context)
         for number in range(3):
