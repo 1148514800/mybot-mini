@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase 04 可选 Planning 已实现并验证，待本次提交及 phase-04 Tag/ZIP 独立归档。Phase 01–03 Tag/ZIP 保持不变，当前保留 session.max_turns 配置。不进入 Phase 05。
+Phase 04 可选 Planning 已完成：phase-04 Tag 指向 9a5c980，同级 mybot-mini-snapshots/phase-04.zip 已保存并独立还原验证。Phase 01–03 Tag/ZIP 保持不变，当前保留 session.max_turns 配置。不进入 Phase 05。
 
 ## 实现与修改
 
@@ -14,7 +14,7 @@ Phase 04 可选 Planning 已实现并验证，待本次提交及 phase-04 Tag/ZI
 
 ## 测试
 
-Planning 12 项测试通过：DIRECT 请求次数、结构化计划/配对、合法状态、非法参数/转换、失败阻断、无证据拒绝完成、超时/异常/上限、Session/clear。Phase 01/02 工具和日志回归、Session 12 项均通过；源码编译通过（排除 ExFAT 元数据）。真实模型手工验证未执行。
+Planning 12 项测试通过：DIRECT 请求次数、结构化计划/配对、合法状态、非法参数/转换、失败阻断、无证据拒绝完成、超时/异常/上限、Session/clear。Phase 01/02 工具和日志回归、Session 12 项均通过；源码编译通过（排除 ExFAT 元数据）。实际 ZIP 独立还原后 uv sync --frozen、完整源码编译和 Phase 01–04 统一回归均通过，不含真实配置或 AppleDouble。真实模型手工验证未执行。
 
 ## 决策与局限
 
@@ -26,4 +26,4 @@ macOS/zsh、Python 3.12+、uv；运行 uv run python mybot/main.py。debug、ses
 
 ## 下一步
 
-完成 Phase 04 归档，之后由用户指定任务。不要覆盖旧 Tag/ZIP，不重复实现 Planning，不进入 Phase 05。历史学习原理见 docs/phases，交接只保存当前状态。
+Phase 04 已完成，后续由用户指定任务。不要覆盖旧 Tag/ZIP，不重复实现 Planning，不进入 Phase 05。历史学习原理见 docs/phases，交接只保存当前状态。
