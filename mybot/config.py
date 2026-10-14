@@ -50,6 +50,13 @@ def _session_value(key: str, default):
     return section.get(key, default)
 
 
+def _context_value(key: str, default):
+    section = _CONFIG.get("context", {})
+    if not isinstance(section, dict):
+        raise ValueError("context must be a JSON object")
+    return section.get(key, default)
+
+
 def _resolve_path(raw_value) -> Path:
     path = Path(raw_value).expanduser()
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
@@ -57,6 +64,11 @@ def _resolve_path(raw_value) -> Path:
 
 @dataclass
 class GatewayConfig:
+    context_enabled: bool = field(default_factory=lambda: _context_value("enabled", False))
+    context_max_chars: int = field(default_factory=lambda: _context_value("max_chars", 40000))
+    context_recent_turns: int = field(default_factory=lambda: _context_value("recent_turns", 2))
+    context_summary_max_chars: int = field(default_factory=lambda: _context_value("summary_max_chars", 1500))
+    context_tool_result_max_chars: int = field(default_factory=lambda: _context_value("tool_result_max_chars", 4000))
     debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
     session_max_turns: int = field(default_factory=lambda: _session_value("max_turns", 6))
     session_persist: bool = field(default_factory=lambda: _session_value("persist", False))
@@ -73,6 +85,12 @@ class GatewayConfig:
     )
 
     def __post_init__(self) -> None:
+        if type(self.context_enabled) is not bool:
+            raise ValueError("context.enabled must be a boolean")
+        for name, minimum in (("max_chars", 1), ("recent_turns", 0), ("summary_max_chars", 128), ("tool_result_max_chars", 128)):
+            value = getattr(self, "context_" + name)
+            if type(value) is not int or value < minimum:
+                raise ValueError(f"context.{name} must be an integer >= {minimum}")
         if type(self.session_max_turns) is not int or self.session_max_turns < 1:
             raise ValueError("session.max_turns must be a positive integer")
         if type(self.session_persist) is not bool:

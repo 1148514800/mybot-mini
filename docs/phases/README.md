@@ -9,6 +9,7 @@
 | 03 | Session 多轮对话 | 已验证，独立归档 | `phase-03` | [phase-03.md](phase-03.md) |
 | 04 | 可选任务规划 DIRECT / PLANNED | 已验证，独立归档 | `phase-04` | [phase-04.md](phase-04.md) |
 | 05 | Session JSON 持久化与恢复 | 已验证，独立归档 | `phase-05` | [phase-05.md](phase-05.md) |
+| 06 | Context 字符预算与请求压缩 | 已验证，独立归档 | `phase-06` | [phase-06.md](phase-06.md) |
 
 ## 保存一个新阶段
 

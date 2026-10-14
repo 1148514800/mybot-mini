@@ -41,7 +41,7 @@ class PersistenceChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception): raise item
             return item
         from mybot.tools import build_default_tool_registry
-        config = GatewayConfig(debug=False, workspace=self.workspace, session_persist=persist,
+        config = GatewayConfig(context_enabled=False, debug=False, workspace=self.workspace, session_persist=persist,
                                session_path=self.path, session_max_turns=max_turns)
         return AgentLoop(N(chat=N(completions=N(create=create))), config,
                          build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
@@ -230,14 +230,14 @@ class PersistenceChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_config_types_and_project_relative_path(self):
         with patch.object(config_module, "PROJECT_DIR", self.root), patch.object(config_module, "_CONFIG", {"session":{"persist":True,"path":"./state.json"}}):
-            config = GatewayConfig(workspace=self.workspace)
+            config = GatewayConfig(context_enabled=False, workspace=self.workspace)
             self.assertEqual(config.session_path, (self.root / "state.json").resolve())
             self.assertTrue(config.session_persist)
         for section in ([], {"persist":"true"}, {"persist":1}, {"path":12}, {"path":False}, {"path":""}, {"path":None}):
             with patch.object(config_module, "_CONFIG", {"session":section}), self.assertRaisesRegex(ValueError, "session"):
-                GatewayConfig(workspace=self.workspace)
+                GatewayConfig(context_enabled=False, workspace=self.workspace)
         with self.assertRaisesRegex(ValueError, "outside"):
-            GatewayConfig(workspace=self.workspace, session_persist=True, session_path=self.workspace / "history.json")
+            GatewayConfig(context_enabled=False, workspace=self.workspace, session_persist=True, session_path=self.workspace / "history.json")
 
     async def test_deepcopy_roundtrip_and_permissions(self):
         session = Session(max_turns=1)

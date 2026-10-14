@@ -25,5 +25,12 @@
   },
   "workspace": {
     "path": "./workspace"
+  },
+  "context": {
+    "enabled": false,
+    "max_chars": 40000,
+    "recent_turns": 2,
+    "summary_max_chars": 1500,
+    "tool_result_max_chars": 4000
   }
 }

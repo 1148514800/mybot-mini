@@ -13,6 +13,7 @@ from ..storage.session_store import SessionStore
 from .context import ContextBuilder
 from .session import Session
 from .planning import Plan, PlanningTool
+from .context_manager import ContextManager, ContextBudgetError
 
 
 class AgentLoop:
@@ -24,6 +25,7 @@ class AgentLoop:
         self.config = config
         self.tools = tools
         self.context = context
+        self.context_manager = ContextManager(config)
         self.session = session if session is not None else Session(config.session_max_turns)
         self.store = SessionStore(config.session_path, config.workspace) if config.session_persist else None
         if self.store is not None:
@@ -53,10 +55,17 @@ class AgentLoop:
 
     async def handle_message(self, user_input: str) -> str:
         self.plan.reset(user_input)
+        self.context_clipped = False
+        self.context_history_omitted = False
         try:
-            return await self._handle_message(user_input)
-        except BaseException:
-            report = self.plan.close("任务异常或中断")
+            reply = await self._handle_message(user_input)
+            if self.context_clipped:
+                reply = "[CONTEXT] 本轮部分工具结果仅提供节选，未验证全文阅读或分析。以下模型回复不能视为完整任务结论：\n" + reply
+            if self.context_history_omitted:
+                reply = "[CONTEXT] 部分历史已省略，预算不足以提供其摘要。\n" + reply
+            return reply
+        except BaseException as exc:
+            report = self.plan.close("上下文预算不足" if isinstance(exc, ContextBudgetError) else "任务异常或中断")
             if report:
                 print(report)
             raise
@@ -69,17 +78,24 @@ class AgentLoop:
             self.plan.reset()
             return "当前会话已清空。"
         messages = self.context.build_messages(user_input, self.session.history())
+        turns = self.session.export_turns()
         turn_start = len(messages) - 1
         limit = max(1, min(self.config.max_react_steps, 30))
         debug = self.config.debug
         for step in range(1, limit + 1):
+            definitions = self.tools.get_definitions() or None
+            llm_messages, stats = self.context_manager.prepare(messages, definitions, turns, self.plan)
+            self.context_clipped = self.context_clipped or stats["current_clipped"]
+            self.context_history_omitted = self.context_history_omitted or stats.get("history_omitted", False)
+            if debug and self.config.context_enabled:
+                print(f"[CONTEXT] chars={stats['before']}->{stats['after']} max={self.config.context_max_chars}")
             start = time.perf_counter()
             try:
                 response = await asyncio.wait_for(
                     self.client.chat.completions.create(
                         model=self.config.model,
-                        messages=messages,
-                        tools=self.tools.get_definitions() or None,
+                        messages=llm_messages,
+                        tools=definitions,
                         temperature=0.1,
                         max_tokens=self.config.max_completion_tokens,
                     ),
