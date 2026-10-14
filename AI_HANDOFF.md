@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase 08 Evaluation 已实现并离线验证，待本次 Commit/phase-08/ZIP 独立归档。Phase 01–07 Tag/ZIP 不变，不进入 Phase 09，默认不 Push。没有执行真实 Live API。
+Phase 08 Evaluation 已完成并独立归档；phase-08 指向 8897e71af3884e7eec1597b8cf4417159a15c1cb。ZIP：../mybot-mini-snapshots/phase-08.zip。Phase 01–07 Tag/ZIP 不变，不进入 Phase 09，默认不 Push。没有执行真实 Live API。
 
 ## 实现
 
@@ -13,7 +13,7 @@ Phase 08 Evaluation 已实现并离线验证，待本次 Commit/phase-08/ZIP 独
 
 ## 验证
 
-Offline A/B 各10/10（机制验证非能力成绩）：A工具16/请求26，B工具18/请求28；两技能被模拟加载，Token=null。18 项评测测试通过；Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16 全部回归通过，编译通过。归档安全检查通过；待独立快照验证。
+Offline A/B 各10/10（机制验证非能力成绩）：A工具16/请求26，B工具18/请求28；两技能被模拟加载，Token=null。18 项评测测试通过；Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16 全部回归通过，编译通过。归档安全检查通过；干净工作树 ZIP 冻结安装、编译及全部离线回归通过，restore_phase.sh 8 独立还原后再次验证及 Offline CLI 通过。ZIP 83 条目含评测代码/合成案例/示例技能/文档/锁文件，无配置密钥、真实Session或评测日志。
 
 ## 决策与局限
 
@@ -27,4 +27,4 @@ macOS/zsh、Python3.12+、uv。运行 uv run python -m scripts.eval_agent；开�
 
 ## 下一步
 
-完成 Phase08 本地归档并记录真实 SHA/验证结果，之后由用户指定。不重新实现旧阶段，不进入 Phase09；学习原理见 docs/phases/phase-08.md。
+Phase08 已结束，之后由用户指定。不重新实现旧阶段，不进入 Phase09；学习原理见 docs/phases/phase-08.md。
