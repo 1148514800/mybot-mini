@@ -1,0 +1,356 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "greeting",
+      "prompt": "你好，请简短问候。",
+      "fixtures": {},
+      "offline": {
+        "actions": [],
+        "reply": "你好！"
+      },
+      "expect": {
+        "contains": [
+          "你好"
+        ],
+        "direct": true
+      }
+    },
+    {
+      "id": "list-files",
+      "prompt": "列出工作区根目录的文件。",
+      "fixtures": {
+        "alpha.txt": "A",
+        "beta.txt": "B"
+      },
+      "offline": {
+        "actions": [
+          {
+            "tool": "list_files",
+            "args": {
+              "path": "."
+            }
+          }
+        ],
+        "reply": "alpha.txt beta.txt"
+      },
+      "expect": {
+        "contains": [
+          "alpha.txt",
+          "beta.txt"
+        ],
+        "tools": [
+          "list_files"
+        ],
+        "direct": true
+      }
+    },
+    {
+      "id": "read-fact",
+      "prompt": "读取 fact.txt，回答其中的校验码。",
+      "fixtures": {
+        "fact.txt": "Verification code: ORION-42\n"
+      },
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "fact.txt"
+            }
+          }
+        ],
+        "reply": "ORION-42"
+      },
+      "expect": {
+        "contains": [
+          "ORION-42"
+        ],
+        "tools": [
+          "read_file"
+        ],
+        "direct": true,
+        "read_paths": [
+          "fact.txt"
+        ]
+      }
+    },
+    {
+      "id": "multi-step",
+      "prompt": "先列出文件，再读取 notes.txt，最后将项目名、语言、截止日和负责人写入 result.txt；请显示计划并执行。",
+      "fixtures": {
+        "notes.txt": "Project Orion uses Python. Deadline: Friday. Owner: Ada.\n"
+      },
+      "offline": {
+        "actions": [
+          {
+            "tool": "create_plan",
+            "args": {
+              "steps": [
+                "List and read source",
+                "Write verified summary"
+              ]
+            }
+          },
+          {
+            "tool": "update_plan",
+            "args": {
+              "step": 1,
+              "status": "in_progress"
+            }
+          },
+          {
+            "tool": "list_files",
+            "args": {
+              "path": "."
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "notes.txt"
+            }
+          },
+          {
+            "tool": "update_plan",
+            "args": {
+              "step": 1,
+              "status": "completed"
+            }
+          },
+          {
+            "tool": "update_plan",
+            "args": {
+              "step": 2,
+              "status": "in_progress"
+            }
+          },
+          {
+            "tool": "write_file",
+            "args": {
+              "path": "result.txt",
+              "content": "Orion | Python | Friday | Ada\n"
+            }
+          },
+          {
+            "tool": "update_plan",
+            "args": {
+              "step": 2,
+              "status": "completed"
+            }
+          }
+        ],
+        "reply": "Created result.txt"
+      },
+      "expect": {
+        "tools": [
+          "list_files",
+          "read_file",
+          "write_file"
+        ],
+        "files": {
+          "result.txt": {
+            "contains": [
+              "Orion",
+              "Python",
+              "Friday",
+              "Ada"
+            ]
+          }
+        },
+        "planned": true,
+        "read_paths": [
+          "notes.txt"
+        ]
+      }
+    },
+    {
+      "id": "file-summary",
+      "prompt": "请阅读 notes.txt 并总结项目名、编程语言、截止日期和负责人，保存到 summary.txt。",
+      "fixtures": {
+        "notes.txt": "Project Orion uses Python. Deadline: Friday. Owner: Ada.\n"
+      },
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "notes.txt"
+            }
+          },
+          {
+            "tool": "write_file",
+            "args": {
+              "path": "summary.txt",
+              "content": "Orion | Python | Friday | Ada\n"
+            }
+          }
+        ],
+        "reply": "Summary saved."
+      },
+      "expect": {
+        "tools": [
+          "read_file",
+          "write_file"
+        ],
+        "files": {
+          "summary.txt": {
+            "contains": [
+              "Orion",
+              "Python",
+              "Friday",
+              "Ada"
+            ]
+          }
+        },
+        "read_paths": [
+          "notes.txt"
+        ]
+      },
+      "expected_skill": "file-summary"
+    },
+    {
+      "id": "code-review",
+      "prompt": "静态审查 review.py。明确报告真实缺陷：每个缺陷单独输出 DEFECT: EMPTY_INPUT 或 DEFECT: DIV_ZERO；只有代码确实存在时才输出。不报告正确的 greeting 函数。",
+      "fixtures": {
+        "review.py": "def first(items):\n    return items[0]\n\ndef ratio(n, d):\n    return n / d\n\ndef greeting(name):\n    return \"Hello \" + name\n"
+      },
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "review.py"
+            }
+          }
+        ],
+        "reply": "DEFECT: EMPTY_INPUT\nDEFECT: DIV_ZERO"
+      },
+      "expect": {
+        "tools": [
+          "read_file"
+        ],
+        "defects": [
+          "EMPTY_INPUT",
+          "DIV_ZERO"
+        ],
+        "manual_review": true,
+        "read_paths": [
+          "review.py"
+        ]
+      },
+      "expected_skill": "code-review"
+    },
+    {
+      "id": "irrelevant",
+      "prompt": "2 加 2 等于几？只回复数字。",
+      "fixtures": {},
+      "offline": {
+        "actions": [],
+        "reply": "4"
+      },
+      "expect": {
+        "contains": [
+          "4"
+        ],
+        "direct": true
+      }
+    },
+    {
+      "id": "missing-file",
+      "prompt": "读取 missing.txt。若不存在，请明确回复 NOT_FOUND，不要创建它或声称读取成功。",
+      "fixtures": {},
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "missing.txt"
+            }
+          }
+        ],
+        "reply": "NOT_FOUND"
+      },
+      "expect": {
+        "failed_tools": [
+          "read_file"
+        ],
+        "allowed_failures": [
+          "read_file"
+        ],
+        "contains": [
+          "NOT_FOUND"
+        ],
+        "forbidden": [
+          "读取成功"
+        ]
+      }
+    },
+    {
+      "id": "long-context",
+      "prompt": "读取 long.txt。只报告文件开头的 START_MARK 和结尾的 END_MARK；若结果裁剪，不得声称已完整分析全文。",
+      "fixtures": {
+        "long.txt": {
+          "repeat": "Synthetic filler line.\n",
+          "count": 2000,
+          "prefix": "START_MARK\n",
+          "suffix": "END_MARK\n"
+        }
+      },
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "long.txt"
+            }
+          }
+        ],
+        "reply": "START_MARK END_MARK; excerpt only."
+      },
+      "expect": {
+        "tools": [
+          "read_file"
+        ],
+        "contains": [
+          "START_MARK",
+          "END_MARK"
+        ],
+        "forbidden": [
+          "已完整分析全文"
+        ],
+        "clipped": true,
+        "read_paths": [
+          "long.txt"
+        ]
+      }
+    },
+    {
+      "id": "write-content",
+      "prompt": "创建 hello.txt，内容严格为一行 Hello, evaluation! 加一个换行。",
+      "fixtures": {},
+      "offline": {
+        "actions": [
+          {
+            "tool": "write_file",
+            "args": {
+              "path": "hello.txt",
+              "content": "Hello, evaluation!\n"
+            }
+          }
+        ],
+        "reply": "Created hello.txt"
+      },
+      "expect": {
+        "tools": [
+          "write_file"
+        ],
+        "files": {
+          "hello.txt": {
+            "exact": "Hello, evaluation!\n"
+          }
+        }
+      }
+    }
+  ]
+}

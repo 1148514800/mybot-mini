@@ -2,30 +2,29 @@
 
 ## 当前状态
 
-Phase 07 Skills 已完成并独立归档；phase-07 指向功能提交 0baee7af9d74236a8846e242c14cf4e5efb3835b。ZIP：../mybot-mini-snapshots/phase-07.zip。Phase 01–06 保持不变，不进入 Phase 08。skills.enabled 默认 false，本地配置和模板已补齐。
+Phase 08 Evaluation 已实现并离线验证，待本次 Commit/phase-08/ZIP 独立归档。Phase 01–07 Tag/ZIP 不变，不进入 Phase 09，默认不 Push。没有执行真实 Live API。
 
-## 实现与修改
+## 实现
 
-- mybot/skills/registry.py、__init__.py：确定扫描、元数据专读、PyYAML SafeLoader/重复键检查；32 技能/64 KiB 文件/8 KiB frontmatter，严格元数据/路径/文本验证，拒绝符号链接。
-- tools/skill.py：load_skill/read_skill_reference，复用 ToolRegistry/ToolResult，只读 SKILL.md 与 references 下 .md/.txt/.rst。
-- agent/loop.py、context.py：初始化注册工具与元数据索引，原 ReAct 选择加载；读取不进入 Plan.observe，无活跃技能缓存。
-- agent/context_manager.py：根据调用名/ID 完整保护技能读取结果，放不下就失败，旧整轮历史可摘录，不改 Session/JSON。
-- config.py、模板、pyproject.toml、uv.lock：skills 开关/根路径，新增轻量 PyYAML 6.0.3 解析真实 YAML。
-- scripts/check_skills.py、check_phase.py、旧回归与归档测试：16 技能测试；旧测试显式 skills=false；临时归档夹具同步源码/依赖/示例。
-- skills/file-summary、code-review：两份可用说明与参考清单；docs/phases/phase-07.md、索引、README 完整教程。
+- mybot/evaluation/runner.py、trace.py、grader.py：复用 AgentLoop，临时工作区/独立 Session/ToolRegistry，固定 Offline 脚本和显式 Live；真实结果观察、确定性文件/事实/缺陷/Plan 评分。
+- evals/cases.json：10 个合成可复现案例，技能自然任务描述，A/B 独立运行；scripts/eval_agent.py 提供次数/全局请求/整例超时/重复/输出目录。
+- Trace 只存名称、白名单合成路径、成功/长度/耗时与裁剪统计；最终回复仅长度/哈希，API Key/正文/原始错误不保存；usage 缺失为 null。报告在忽略的 runs/evals。
+- scripts/check_evaluation.py 18 项测试，check_phase.py 集成，test_phase_archives.py 夹具含 evals；教程/索引/README 更新。没有新依赖或修改正常 Agent 执行语义。
 
 ## 验证
 
-Skills 16 项通过：关闭、发现/元数据渐进读取、模型加载/参考/文件链、YAML和重复名称、路径/链接/文本/大小限制、脚本不执行、消息配对、Planning 不伪造证据、完整文本预算、恢复/clear。Phase 01/02 回归、Session12、Planning12、Persistence16、Context18 均通过；归档安全测试通过。已从干净工作树导出 ZIP，独立安装 uv sync --frozen、编译和全部回归通过；restore_phase.sh 07 独立还原后再次验证通过，ZIP 73 条目含两份技能与参考资料，不含真实配置/Session/用户未提交文件。真实模型手工测试未执行。
+Offline A/B 各10/10（机制验证非能力成绩）：A工具16/请求26，B工具18/请求28；两技能被模拟加载，Token=null。18 项评测测试通过；Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16 全部回归通过，编译通过。归档安全检查通过；待独立快照验证。
 
-## 局限与决策
+## 决策与局限
 
-只支持可信本地技能；不执行 scripts、不下载远程、不授予 allowed-tools 权限。技能正文为普通 Tool Result，索引仅 name/description；不是系统规则。Context 关闭时仅文件大小限制，开启时完整正文预算失败不裁剪。恢复只还原消息，不执行旧技能/Plan；没有技能激活状态或正文缓存。元数据变更需重启；无恶意并发文件系统/硬链接/签名防护或语义效果保证。
+评测默认 Context 开启40000字符/工具1000，上限16 ReAct，A/B相同；Provider/Model沿配置。Persistence/debug强制关闭，不使用真实workspace/历史。Live须显式 --live，SDK重试关闭，max_requests为全运行总限额，timeout为整例。预期缺失文件允许特定失败，其他工具失败/未完成Plan/上限均不能成功。
+
+Offline脚本知道答案，不能证明自动发现或模型能力；字面规则有限，审查解释需人工；无成本估算、全文Trace、产物保留、并行或LLM Judge。真实Live未运行。只读可信技能，运行时不要修改其内容。
 
 ## 环境与用户修改
 
-macOS/zsh、Python3.12+、uv，运行 uv run python mybot/main.py。skills.path 项目根相对，默认 ./skills，开关修改重启。app.py 与 USER.md 用户修改不提交；真实 Session/配置不输出、不归档。ExFAT ._* 尽量 COPYFILE_DISABLE=1 减少，归档排除，独立验证使用 APFS。
+macOS/zsh、Python3.12+、uv。运行 uv run python -m scripts.eval_agent；开发及归档只 Offline。app.py/USER.md 用户改动保留，不提交；配置/真实Session不输出归档。ExFAT ._* 尽量 COPYFILE_DISABLE=1，归档排除，独立验证APFS。
 
 ## 下一步
 
-Phase 07 已结束，后续由用户指定。不覆盖旧 Tag/ZIP，不重复实现 SkillRegistry，不进入 Phase 08；历史原理见 docs/phases。
+完成 Phase08 本地归档并记录真实 SHA/验证结果，之后由用户指定。不重新实现旧阶段，不进入 Phase09；学习原理见 docs/phases/phase-08.md。

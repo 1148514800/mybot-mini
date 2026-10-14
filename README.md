@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–07 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–08 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -79,3 +79,12 @@ Session 持久化默认关闭。配置 `session.persist=true` 并重启后，完
 Context Management 默认关闭。配置 `context.enabled=true` 并重启后，每次请求检查消息及工具 Schema 的字符预算。默认 max_chars=40000、recent_turns=2、summary_max_chars=1500、tool_result_max_chars=4000。只压缩请求副本，Session/磁盘仍保存原文；无法满足预算时停止并报错。字符数不是精确 Token 数，需为 max_completion_tokens 预留模型窗口。详见 [Phase 06](docs/phases/phase-06.md)。
 
 Skills 默认关闭。设置 `skills.enabled=true`（path 默认 ./skills）并重启后，模型获得 name/description 索引，可通过 load_skill/read_skill_reference 按需读取说明和参考资料，再使用原有文件工具。示例为 file-summary 与 code-review。没有脚本执行或额外模型分类调用；Context 开启时技能正文不裁剪、超预算明确失败。详见 [Phase 07](docs/phases/phase-07.md)。
+
+## Agent Evaluation
+
+```bash
+uv run python -m scripts.eval_agent
+uv run python -m scripts.check_evaluation
+```
+
+默认 Offline 使用固定模拟响应与隔离合成文件，仅验证评测机制，不能当作模型能力成绩。A/B 对比 Skills 关闭/开启，报告保存到忽略的 runs/evals/。显式 --live 才调用当前配置的真实模型，可能收费；使用 --max-cases、--max-requests、--timeout、--repeats 控制运行。详情见 [Phase 08 学习文档](docs/phases/phase-08.md)。
