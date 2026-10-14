@@ -57,6 +57,13 @@ def _context_value(key: str, default):
     return section.get(key, default)
 
 
+def _skills_value(key: str, default):
+    section = _CONFIG.get("skills", {})
+    if not isinstance(section, dict):
+        raise ValueError("skills must be a JSON object")
+    return section.get(key, default)
+
+
 def _resolve_path(raw_value) -> Path:
     path = Path(raw_value).expanduser()
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
@@ -64,6 +71,8 @@ def _resolve_path(raw_value) -> Path:
 
 @dataclass
 class GatewayConfig:
+    skills_enabled: bool = field(default_factory=lambda: _skills_value("enabled", False))
+    skills_path: Path | str = field(default_factory=lambda: _skills_value("path", "./skills"))
     context_enabled: bool = field(default_factory=lambda: _context_value("enabled", False))
     context_max_chars: int = field(default_factory=lambda: _context_value("max_chars", 40000))
     context_recent_turns: int = field(default_factory=lambda: _context_value("recent_turns", 2))
@@ -85,6 +94,15 @@ class GatewayConfig:
     )
 
     def __post_init__(self) -> None:
+        if type(self.skills_enabled) is not bool:
+            raise ValueError("skills.enabled must be a boolean")
+        if not isinstance(self.skills_path, (str, Path)) or not str(self.skills_path).strip():
+            raise ValueError("skills.path must be a non-empty path string")
+        raw = Path(self.skills_path).expanduser()
+        raw = raw if raw.is_absolute() else PROJECT_DIR / raw
+        if self.skills_enabled and raw.is_symlink():
+            raise ValueError("skills.path cannot be a symlink")
+        self.skills_path = raw.resolve()
         if type(self.context_enabled) is not bool:
             raise ValueError("context.enabled must be a boolean")
         for name, minimum in (("max_chars", 1), ("recent_turns", 0), ("summary_max_chars", 128), ("tool_result_max_chars", 128)):

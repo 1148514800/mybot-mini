@@ -32,7 +32,7 @@ class ContextChecks(unittest.IsolatedAsyncioTestCase):
         self.workspace = self.root / "workspace"
         self.workspace.mkdir()
         self.path = self.root / "state/session.json"
-        self.config = GatewayConfig(context_enabled=True, context_max_chars=8000,
+        self.config = GatewayConfig(skills_enabled=False, context_enabled=True, context_max_chars=8000,
                                     context_recent_turns=2, context_summary_max_chars=512,
                                     context_tool_result_max_chars=256, session_persist=False,
                                     session_max_turns=12, session_path=self.path, workspace=self.workspace, debug=False)
@@ -246,7 +246,7 @@ class ContextChecks(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_config_and_invalid_protocol(self):
         for section in ([],{"enabled":1},{"max_chars":0},{"max_chars":True},{"recent_turns":-1},{"recent_turns":"2"},{"summary_max_chars":127},{"tool_result_max_chars":0}):
             with patch.object(config_module,"_CONFIG",{"context":section}),self.assertRaisesRegex(ValueError,"context"):
-                GatewayConfig(session_persist=False)
+                GatewayConfig(skills_enabled=False, session_persist=False)
         self.config.context_max_chars=1
         with self.assertRaises(ContextBudgetError): await self.agent.handle_message("tiny")
         self.assertEqual(self.requests,[])

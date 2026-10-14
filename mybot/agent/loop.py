@@ -14,6 +14,8 @@ from .context import ContextBuilder
 from .session import Session
 from .planning import Plan, PlanningTool
 from .context_manager import ContextManager, ContextBudgetError
+from ..skills.registry import SkillRegistry
+from ..tools.skill import SkillTool
 
 
 class AgentLoop:
@@ -25,6 +27,11 @@ class AgentLoop:
         self.config = config
         self.tools = tools
         self.context = context
+        self.skills = SkillRegistry(config.skills_path) if config.skills_enabled else None
+        self.context.skill_index = self.skills.index() if self.skills is not None else []
+        if self.skills is not None:
+            for name in ("load_skill", "read_skill_reference"):
+                self.tools.register(SkillTool(self.skills, name))
         self.context_manager = ContextManager(config)
         self.session = session if session is not None else Session(config.session_max_turns)
         self.store = SessionStore(config.session_path, config.workspace) if config.session_persist else None
@@ -161,7 +168,7 @@ class AgentLoop:
         return reply
 
     async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
-        if name in ("create_plan", "update_plan"):
+        if name in ("create_plan", "update_plan") or (self.skills is not None and name in ("load_skill", "read_skill_reference")):
             return await self._execute_tool(name, raw_arguments)
         error = self.plan.execution_error()
         if error:

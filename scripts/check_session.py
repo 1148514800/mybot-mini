@@ -51,11 +51,11 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(context_enabled=False, session_persist=False, debug=False, workspace=self.workspace, session_max_turns=6), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace, session_max_turns=6), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_configured_history_window(self):
         with patch.object(config_module, "_CONFIG", {"session": {"max_turns": 2}}):
-            config = GatewayConfig(context_enabled=False, session_persist=False, debug=False, workspace=self.workspace)
+            config = GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace)
         self.assertEqual(config.session_max_turns, 2)
         self.agent = AgentLoop(self.agent.client, config, self.agent.tools, self.agent.context)
         for number in range(3):
@@ -68,11 +68,11 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_config_default_and_invalid_values(self):
         with patch.object(config_module, "_CONFIG", {}):
-            self.assertEqual(GatewayConfig(context_enabled=False, ).session_max_turns, 6)
+            self.assertEqual(GatewayConfig(skills_enabled=False, context_enabled=False, ).session_max_turns, 6)
         for value in (0, -1, True, "6", 2.5, None):
             with self.subTest(value=value), patch.object(config_module, "_CONFIG", {"session": {"max_turns": value}}):
                 with self.assertRaisesRegex(ValueError, "session.max_turns"):
-                    GatewayConfig(context_enabled=False, )
+                    GatewayConfig(skills_enabled=False, context_enabled=False, )
 
     async def test_first_and_second_turn(self):
         self.effects.extend([response("记住了"), response("Python")])

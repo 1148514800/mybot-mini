@@ -43,7 +43,7 @@ class PlanningChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(context_enabled=False, session_persist=False, debug=False, workspace=self.workspace), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_greeting_direct_without_extra_request(self):
         self.effects.append(response("你好"))

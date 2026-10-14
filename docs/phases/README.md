@@ -10,6 +10,7 @@
 | 04 | 可选任务规划 DIRECT / PLANNED | 已验证，独立归档 | `phase-04` | [phase-04.md](phase-04.md) |
 | 05 | Session JSON 持久化与恢复 | 已验证，独立归档 | `phase-05` | [phase-05.md](phase-05.md) |
 | 06 | Context 字符预算与请求压缩 | 已验证，独立归档 | `phase-06` | [phase-06.md](phase-06.md) |
+| 07 | 本地 Agent Skills 渐进加载 | 已验证，独立归档 | `phase-07` | [phase-07.md](phase-07.md) |
 
 ## 保存一个新阶段
 

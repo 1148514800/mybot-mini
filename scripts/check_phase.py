@@ -19,7 +19,7 @@ async def check(debug):
             if len(kwargs["messages"]) > 2:
                 assert kwargs["messages"][-1]["role"] == "tool"
             return next(responses)
-        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(context_enabled=False, session_persist=False, debug=debug, workspace=workspace), tools, ContextBuilder(workspace))
+        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=debug, workspace=workspace), tools, ContextBuilder(workspace))
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             assert await agent.handle_message("write a note") == "done"
@@ -54,4 +54,7 @@ if Path(__file__).with_name("check_persistence.py").exists() and (Path(__file__)
 if Path(__file__).with_name("check_context.py").exists() and (Path(__file__).resolve().parent.parent / "mybot/agent/context_manager.py").exists():
     from scripts.check_context import check_context
     check_context()
+if Path(__file__).with_name("check_skills.py").exists() and (Path(__file__).resolve().parent.parent / "mybot/skills/registry.py").exists():
+    from scripts.check_skills import check_skills
+    check_skills()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

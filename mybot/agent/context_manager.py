@@ -33,9 +33,13 @@ class ContextManager:
 
     def clip(self, messages, limit: int) -> int:
         clipped = 0
+        protected = set()
         for message in messages:
+            for call in message.get("tool_calls") or []:
+                if call["function"]["name"] in ("load_skill", "read_skill_reference"):
+                    protected.add(call["id"])
             text = message.get("content")
-            if message["role"] == "tool" and len(text) > limit:
+            if message["role"] == "tool" and message["tool_call_id"] not in protected and len(text) > limit:
                 room = limit - len(self.marker)
                 head = room * 2 // 3
                 message["content"] = text[:head] + self.marker + text[-(room - head):]

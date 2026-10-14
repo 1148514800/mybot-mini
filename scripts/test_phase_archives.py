@@ -16,8 +16,10 @@ with tempfile.TemporaryDirectory(prefix="mybot-phase-tests-") as folder:
     data = subprocess.check_output(["git", "archive", "--format=zip", "HEAD"], cwd=root)
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         archive.extractall(repo)
-    for name in ("mybot", "scripts", "docs"):
+    for name in ("mybot", "scripts", "docs", "skills"):
         shutil.copytree(root / name, repo / name, dirs_exist_ok=True, copy_function=shutil.copyfile, ignore=shutil.ignore_patterns("__pycache__", "._*"))
+    for name in ("pyproject.toml", "uv.lock", "config/config.example.json"):
+        shutil.copyfile(root / name, repo / name)
     def run(args, ok=True):
         result = subprocess.run(args, cwd=repo, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert (result.returncode == 0) == ok, result.stdout
