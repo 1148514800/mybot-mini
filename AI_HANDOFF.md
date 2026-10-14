@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase 06 Context Management 已实现并离线验证，待本次提交及 phase-06 Tag/ZIP 独立归档。Phase 01–05 保持不变，不进入 Phase 07。context.enabled 默认 false，本地配置及模板已补齐。
+Phase 06 Context Management 已完成：phase-06 Tag 指向 ccd6872，同级 mybot-mini-snapshots/phase-06.zip 已保存并独立还原验证。Phase 01–05 保持不变，不进入 Phase 07。context.enabled 默认 false，本地配置及模板已补齐。
 
 ## 实现与修改
 
@@ -15,7 +15,7 @@ Phase 06 Context Management 已实现并离线验证，待本次提交及 phase-
 
 ## 测试
 
-Context 18 项通过；合成请求计量 13431→6428，预算8000，保留近期2轮。覆盖消息配对、原文/JSON/重启、System/User/Plan 保护、Schema、每次 ReAct、超预算不发送、工具节选和实际证据、clear、配置/异常。Phase 01/02 回归、Session 12 项、Planning 12 项、Persistence 16 项通过；开发源码编译通过（排除 AppleDouble）。真实 API 手工测试未执行。
+Context 18 项通过；合成请求计量 13431→6428，预算8000，保留近期2轮。覆盖消息配对、原文/JSON/重启、System/User/Plan 保护、Schema、每次 ReAct、超预算不发送、工具节选和实际证据、clear、配置/异常。Phase 01/02 回归、Session 12 项、Planning 12 项、Persistence 16 项通过；开发源码编译通过（排除 AppleDouble）。归档安全测试通过，实际 ZIP 独立还原后 uv sync --frozen、完整源码编译和 Phase 01–06 统一回归均通过，不含真实 Session/配置或用户未提交文件。真实 API 手工测试未执行。
 
 ## 决策与局限
 
@@ -27,4 +27,4 @@ macOS/zsh、Python3.12+、uv，运行 uv run python mybot/main.py。context 开�
 
 ## 下一步
 
-完成 Phase 06 独立归档，之后由用户指定任务。不覆盖旧 Tag/ZIP、不重复实现 ContextManager、不进入 Phase 07；历史原理见 docs/phases。
+Phase 06 已完成，后续由用户指定任务。不覆盖旧 Tag/ZIP、不重复实现 ContextManager、不进入 Phase 07；历史原理见 docs/phases。
