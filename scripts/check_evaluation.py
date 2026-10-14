@@ -34,7 +34,7 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(report['ability_score'])
         self.assertEqual(len(report['results']),20)
         self.assertTrue(all(r['task_success'] for r in report['results']))
-        self.assertEqual(report['overall']['skills_off']['successes'],10)
+        self.assertEqual(report['overall']['off']['task_success_count'],10)
 
     async def test_workspace_registry_session_isolation(self):
         paths, registries, sessions = [], [], []
@@ -50,14 +50,14 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse((agent.config.workspace/'hello.txt').exists())
                 self.assertEqual(agent.session.history(),[])
         with patch('mybot.evaluation.runner.TracedAgent',Capture):
-            await self.run_cases([self.cases[-1]],repeats=2)
+            await self.run_cases([self.cases[9]],repeats=2)
         self.assertEqual(len(set(paths)),4)
         self.assertEqual(len({id(r) for r in registries}),4)
         self.assertEqual(len({id(r) for r in sessions}),4)
         self.assertTrue(all(not p.exists() for p in paths))
 
     async def test_tool_trace_real_results(self):
-        report = await self.run_cases([self.cases[-1]],groups=(False,))
+        report = await self.run_cases([self.cases[9]],groups=(False,))
         r = report['results'][0]
         self.assertEqual(r['tool_calls'],1)
         self.assertEqual(r['tool_failures'],0)
@@ -72,7 +72,7 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         r = report['results'][0]
         self.assertEqual(r['tool_failures'],1)
         self.assertFalse(r['task_success'])
-        self.assertFalse(r['checks']['tool_results'])
+        self.assertFalse(r['process_checks']['tool_results'])
 
     async def test_expected_missing_file(self):
         r = (await self.run_cases([self.cases[7]],groups=(False,)))['results'][0]
@@ -81,13 +81,13 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(r['checks']['failure:read_file'])
 
     async def test_self_claim_without_artifact_fails(self):
-        case = deepcopy(self.cases[-1]); case['offline']['actions']=[]
+        case = deepcopy(self.cases[9]); case['offline']['actions']=[]
         r = (await self.run_cases([case],groups=(False,)))['results'][0]
         self.assertFalse(r['task_success'])
         self.assertFalse(r['checks']['artifact:hello.txt'])
 
     async def test_wrong_file_contents_fails(self):
-        case = deepcopy(self.cases[-1]); case['offline']['actions'][0]['args']['content']='wrong'
+        case = deepcopy(self.cases[9]); case['offline']['actions'][0]['args']['content']='wrong'
         r = (await self.run_cases([case],groups=(False,)))['results'][0]
         self.assertFalse(r['task_success'])
         self.assertFalse(r['checks']['artifact:hello.txt'])
@@ -96,11 +96,12 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         report = await self.run_cases([self.cases[4]])
         a,b = report['results']
         self.assertEqual(a['skill_selected'],[])
-        self.assertEqual(b['skill_selected'],['file-summary'])
+        self.assertEqual(b['skill_selected'],[])
+        self.assertTrue(b['task_success'])
         case=deepcopy(self.cases[6]);case['offline']['actions']=[{'tool':'load_skill','args':{'name':'file-summary'}}]
         r=(await self.run_cases([case],groups=(True,)))['results'][0]
-        self.assertFalse(r['checks']['skill_selection'])
-        self.assertFalse(r['task_success'])
+        self.assertEqual(r['skill_usage']['unexpected_skills'],['file-summary'])
+        self.assertTrue(r['task_success'])
 
     async def test_global_request_limit_stops_calls(self):
         r=await self.run_cases(max_requests=1)
@@ -140,13 +141,13 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
     async def test_missing_usage_null_and_usage_totals(self):
         report=await self.run_cases([self.cases[0]])
         self.assertIsNone(report['results'][0]['input_tokens'])
-        self.assertIsNone(report['overall']['skills_on']['output_tokens'])
+        self.assertIsNone(report['overall']['auto']['output_tokens'])
         class Usage(OfflineClient):
             async def create(client,**kwargs):
                 r=await super(Usage,client).create(**kwargs)
                 r.usage=N(prompt_tokens=11,completion_tokens=7)
                 return r
-        report=await self.run_cases([self.cases[-1]],groups=(False,),client_factory=lambda cfg,c:Usage(c,False))
+        report=await self.run_cases([self.cases[9]],groups=(False,),client_factory=lambda cfg,c:Usage(c,False))
         self.assertEqual(report['results'][0]['input_tokens'],22)
         self.assertEqual(report['results'][0]['output_tokens'],14)
 
@@ -156,14 +157,14 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(r['planning_completed'])
         self.assertFalse(r['task_success'])
         self.config.max_react_steps=1
-        r=(await self.run_cases([self.cases[-1]],groups=(False,)))['results'][0]
+        r=(await self.run_cases([self.cases[9]],groups=(False,)))['results'][0]
         self.assertEqual(r['error'],'react_limit')
         self.assertFalse(r['task_success'])
 
     async def test_review_real_hits_and_false_positive(self):
         case=deepcopy(self.cases[5]);case['offline']['reply']='DEFECT: DIV_ZERO\nDEFECT: FALSE_LOOP'
         r=(await self.run_cases([case],groups=(False,)))['results'][0]
-        self.assertEqual(r['review_findings'],{'true_positives':1,'false_positives':1,'missed':1})
+        self.assertEqual(r['review_findings'],{'true_positives':1,'false_positives':1,'false_negatives':1,'precision':0.5,'recall':0.5})
         self.assertFalse(r['task_success'])
         self.assertTrue(r['manual_review_required'])
 
@@ -203,7 +204,7 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError): await self.run_cases(**args)
         case=deepcopy(self.cases[0]);case['fixtures']={'../escape':'bad'}
         with self.assertRaises(ValueError): await self.run_cases([case])
-        self.assertEqual(len(self.cases),10)
+        self.assertEqual(len(self.cases),12)
         self.assertFalse(any('load_skill' in c['prompt'] for c in self.cases))
 
 

@@ -23,15 +23,17 @@ from .trace import Trace, TracedAgent, TracedClient
 
 
 def safe_path(path):
+    if not isinstance(path,str) or not path:
+        raise ValueError("Invalid fixture/artifact path")
     p = PurePosixPath(path)
-    if not isinstance(path, str) or not path or p.is_absolute() or '..' in p.parts or '\\' in path or p.as_posix() != path:
+    if p.is_absolute() or '..' in p.parts or '\\' in path or p.as_posix() != path:
         raise ValueError('Invalid fixture/artifact path')
     return path
 
 
 def load_cases(path=PROJECT_DIR / 'evals/cases.json'):
     document = json.loads(Path(path).read_text(encoding='utf-8'))
-    if document.get('version') != 1 or not isinstance(document.get('cases'), list) or not 1 <= len(document['cases']) <= 100:
+    if not isinstance(document,dict) or document.get('version') not in (1,2) or not isinstance(document.get('cases'), list) or not 1 <= len(document['cases']) <= 100:
         raise ValueError('Invalid evaluation case format/version')
     seen = set()
     for case in document['cases']:
@@ -45,6 +47,8 @@ def load_cases(path=PROJECT_DIR / 'evals/cases.json'):
         for path, value in case['fixtures'].items():
             safe_path(path)
             fixture_text(value)
+        if 'document' in case['expect']:
+            safe_path(case['expect']['document']['path'])
         for path in case['expect'].get('files', {}):
             safe_path(path)
     return document['cases']
@@ -63,10 +67,10 @@ def fixture_text(value):
 
 class OfflineClient:
     """A fixed benchmark script, never a simulation of real model competence."""
-    def __init__(self, case, enabled):
-        self.actions = list(case['offline']['actions'])
-        if enabled and case.get('expected_skill'):
-            self.actions.insert(0, {'tool': 'load_skill', 'args': {'name': case['expected_skill']}})
+    def __init__(self, case, group):
+        # Explicit scripts only; auto does not manufacture expected skill selection.
+        group = normalize_group(group)
+        self.actions = list(case['offline'].get(group+'_actions',case['offline']['actions']))
         self.reply, self.step = case['offline']['reply'], 0
         self.chat = N(completions=N(create=self.create))
 
@@ -79,17 +83,43 @@ class OfflineClient:
         return N(choices=[N(message=N(content=None if calls else self.reply, tool_calls=calls))], usage=None)
 
 
+def normalize_group(group):
+    if type(group) is bool:  # compatibility for Phase 8 Python callers
+        return 'auto' if group else 'off'
+    if group not in ('off','auto','guided'):
+        raise ValueError('Unknown evaluation group; use off,auto,guided')
+    return group
+
+
+def select_cases(cases, case_ids, maximum):
+    if case_ids is not None:
+        ids = case_ids.split(',') if isinstance(case_ids,str) else list(case_ids)
+        if not ids or len(ids)!=len(set(ids)) or any(not isinstance(i,str) or not i for i in ids):
+            raise ValueError('Invalid/duplicate case IDs')
+        by_id = {c['id']:c for c in cases}
+        if any(i not in by_id for i in ids):
+            raise ValueError('Unknown case ID')
+        cases = [by_id[i] for i in ids]
+    return cases[:maximum]
+
+
+def task_prompt(case, group):
+    return case['prompt'] + ('\n请先读取 '+case['expected_skill']+' Skill，再按其说明完成上述任务。' if group=='guided' else '')
+
+
 async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_requests=200,
-                   timeout=30.0, base_config=None, client_factory=None, groups=(False, True)):
+                   timeout=30.0, base_config=None, client_factory=None, groups=('off','auto'), case_ids=None):
     if type(live) is not bool or type(repeats) is not int or not 1 <= repeats <= 20:
         raise ValueError('live must be boolean; repeats must be 1-20')
     if type(max_cases) is not int or not 1 <= max_cases <= 100 or type(max_requests) is not int or not 1 <= max_requests <= 10000:
         raise ValueError('Invalid case/model request limit')
     if type(timeout) not in (float, int) or not math.isfinite(timeout) or not 0 < timeout <= 600:
         raise ValueError('timeout must be finite and in (0, 600]')
-    if not groups or any(type(v) is not bool for v in groups) or len(set(groups)) != len(groups):
-        raise ValueError('Invalid comparison groups')
-    cases = (load_cases() if cases is None else cases)[:max_cases]
+    groups = groups.split(',') if isinstance(groups,str) else list(groups)
+    groups = [normalize_group(g) for g in groups]
+    if not groups or len(set(groups))!=len(groups):
+        raise ValueError('Invalid/duplicate comparison groups')
+    cases = select_cases(load_cases() if cases is None else cases,case_ids,max_cases)
     base = base_config or GatewayConfig(session_persist=False, skills_enabled=False, context_enabled=True,
                                        context_max_chars=40000, context_tool_result_max_chars=1000,
                                        debug=False, max_react_steps=16)
@@ -103,9 +133,15 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
     try:
         for repeat in range(1, repeats + 1):
             for case in cases:
-                for enabled in groups:
+                for group in groups:
+                    if group=='guided' and not case.get('expected_skill'):
+                        continue
+                    enabled = group!='off'
+                    prompt = task_prompt(case,group)
                     trace = Trace()
                     trace.paths = set(case['fixtures']) | set(case['expect'].get('files', {})) | {'.'}
+                    if 'document' in case['expect']:
+                        trace.paths.add(case['expect']['document']['path'])
                     started = time.perf_counter()
                     with tempfile.TemporaryDirectory(prefix='mybot-eval-') as folder:
                         workspace = Path(folder).resolve() / 'workspace'
@@ -121,12 +157,12 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
                             trace.error = 'model_request_limit'
                         else:
                             try:
-                                raw_client = client if live else (client_factory(config, case) if client_factory else OfflineClient(case, enabled))
+                                raw_client = client if live else (client_factory(config, case) if client_factory else OfflineClient(case, group))
                                 agent = TracedAgent(TracedClient(raw_client, trace, budget), config,
                                                     build_default_tool_registry(workspace), ContextBuilder(workspace), trace=trace)
                                 # Plan output may contain task-derived text: never write it to terminal/report.
                                 with contextlib.redirect_stdout(io.StringIO()):
-                                    reply = await asyncio.wait_for(agent.handle_message(case['prompt']), timeout)
+                                    reply = await asyncio.wait_for(agent.handle_message(prompt), timeout)
                             except asyncio.TimeoutError:
                                 trace.error = 'case_timeout'
                             except Exception:
@@ -135,17 +171,21 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
                         if trace.finish_reason == 'react_limit':
                             trace.error = trace.error or 'react_limit'
                         try:
-                            score = grade(case, reply, workspace, trace, plan, enabled)
+                            score = grade(case, reply, workspace, trace, plan, group)
                         except Exception:
                             trace.error = trace.error or 'grading_error'
-                            score = {'task_success':False, 'checks':{}, 'grading_reasons':['grading_error'],
+                            score = {'task_success':False,'process_clean':False,'instruction_followed':False,'strict_pass':False, 'checks':{}, 'grading_reasons':['grading_error'],
                                      'review_findings':None, 'manual_review_required':True}
-                        if case['expect'].get('clipped'):
-                            score['checks']['context_clipped'] = any(e.get('tool_result_clipped') for e in trace.events)
-                            score['task_success'] = all(score['checks'].values())
-                            score['grading_reasons'] = [k for k,v in score['checks'].items() if not v]
-                        results.append({'case_id':case['id'], 'repeat':repeat, 'skills_enabled':enabled,
-                                        'expected_skill':case.get('expected_skill'), **trace.metrics(), **score,
+                        metrics = trace.metrics()
+                        metrics['skill_usage'].update(expected_skill=case.get('expected_skill'),
+                            expected_loaded=case.get('expected_skill') in trace.skills if case.get('expected_skill') else None,
+                            unexpected_skills=[n for n in dict.fromkeys(trace.skills) if n!=case.get('expected_skill')])
+                        results.append({'case_id':case['id'], 'repeat':repeat, 'skills_enabled':enabled,'group':group,
+                                        'prompt_variant':'guided' if group=='guided' else 'original',
+                                        'response_source':'live_client' if live else 'fixed_offline_script',
+                                        'offline_script_label':case['offline'].get('guided_script_label') if not live and group=='guided' else ('fixed task script, no automatic skill selection' if not live else None),
+                                        'prompt_sha256':hashlib.sha256(prompt.encode()).hexdigest(),
+                                        'expected_skill':case.get('expected_skill'), **metrics, **score,
                                         'planning_completed':all(s.status=='completed' for s in plan.steps) if plan.steps else None,
                                         'plan_states':[s.status for s in plan.steps], 'mode':plan.mode,
                                         'duration_seconds':time.perf_counter()-started, 'error':trace.error,
@@ -155,7 +195,7 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
         if live and client is not None and hasattr(client, 'close'):
             await client.close()
     commit = subprocess.run(['git','rev-parse','HEAD'],cwd=PROJECT_DIR,text=True,capture_output=True).stdout.strip() or None
-    return {'version':1,'mode':'live' if live else 'offline',
+    return {'version':2,'scoring_semantics':'outcome/process/instruction independent; auto skill use optional','mode':'live' if live else 'offline',
             'ability_score':live, 'git_commit':commit,
             'benchmark_sha256':hashlib.sha256(json.dumps(cases,sort_keys=True,ensure_ascii=False).encode()).hexdigest(),
             'model':common.model if live else 'offline-script', 'provider':common.provider if live else 'offline',

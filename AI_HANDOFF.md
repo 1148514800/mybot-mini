@@ -2,29 +2,28 @@
 
 ## 当前状态
 
-Phase 08 Evaluation 已完成并独立归档；phase-08 指向 8897e71af3884e7eec1597b8cf4417159a15c1cb。ZIP：../mybot-mini-snapshots/phase-08.zip。Phase 01–07 Tag/ZIP 不变，不进入 Phase 09，默认不 Push。没有执行真实 Live API。
+Phase09 Evaluation2.0 已实现并离线验证，待 Commit/phase-09/ZIP独立归档。Phase01–08 Tag/ZIP不变，不进入Phase10，不自动Push。未执行新增Live API。
 
 ## 实现
 
-- mybot/evaluation/runner.py、trace.py、grader.py：复用 AgentLoop，临时工作区/独立 Session/ToolRegistry，固定 Offline 脚本和显式 Live；真实结果观察、确定性文件/事实/缺陷/Plan 评分。
-- evals/cases.json：10 个合成可复现案例，技能自然任务描述，A/B 独立运行；scripts/eval_agent.py 提供次数/全局请求/整例超时/重复/输出目录。
-- Trace 只存名称、白名单合成路径、成功/长度/耗时与裁剪统计；最终回复仅长度/哈希，API Key/正文/原始错误不保存；usage 缺失为 null。报告在忽略的 runs/evals。
-- scripts/check_evaluation.py 18 项测试，check_phase.py 集成，test_phase_archives.py 夹具含 evals；教程/索引/README 更新。没有新依赖或修改正常 Agent 执行语义。
+- evaluation/grader.py：task_success只看正常结束与实际结果；process_clean区分非预期失败/Plan未完成；instruction_followed验证明确Plan/Skill要求；strict_pass合取。Auto无强制技能。复杂审查按文件+函数+证据评分，文档整合核对最新/过期/约束/无来源信息，人工审查另标。
+- trace.py：固定真实Planning错误安全分类、规划失败/前置文件工具/归一重复读取、技能加载/参考/带技能请求用量；边际成本unknown/null。观察不改Phase4状态机或Tool执行。
+- runner.py、CLI：JSONv2、Off/Auto/Guided、case-ids选择，全局限额共享。Off/Auto提示一致；Guided显式先加载、无相关技能跳过，独立工作区/历史/工具。Offline不再自动假装Auto选Skill，Guided固定脚本明确标记。
+- history.py：v1报告只读重解释，缺失Planning原因unknown，无原文产物不能完整重新评分。evals/cases.json增加四文件代码审查和四文档整合，共12例。
+- check_evaluation.py原18项更新评分语义；check_evaluation_v2.py新15项；统一回归接入；教程/索引/README更新。无新依赖或Agent功能。
 
 ## 验证
 
-Offline A/B 各10/10（机制验证非能力成绩）：A工具16/请求26，B工具18/请求28；两技能被模拟加载，Token=null。18 项评测测试通过；Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16 全部回归通过，编译通过。归档安全检查通过；干净工作树 ZIP 冻结安装、编译及全部离线回归通过，restore_phase.sh 8 独立还原后再次验证及 Offline CLI 通过。ZIP 83 条目含评测代码/合成案例/示例技能/文档/锁文件，无配置密钥、真实Session或评测日志。
+33项评测测试与Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16均通过，编译通过。完整Offline：Off12/12、Auto12/12（各25工具/37请求、无Skill）；Guided4/4（20工具/24请求、4脚本加载），Token=null，不是模型能力成绩。用户旧报告只读重算Off任务6/6/clean6/6/strict6/6，Auto任务6/6/clean5/6/strict5/6，Planning unknown2；原SHA256未变。归档安全检查通过；待独立快照验证。
 
-## 决策与局限
+## 局限
 
-评测默认 Context 开启40000字符/工具1000，上限16 ReAct，A/B相同；Provider/Model沿配置。Persistence/debug强制关闭，不使用真实workspace/历史。Live须显式 --live，SDK重试关闭，max_requests为全运行总限额，timeout为整例。预期缺失文件允许特定失败，其他工具失败/未完成Plan/上限均不能成功。
-
-Offline脚本知道答案，不能证明自动发现或模型能力；字面规则有限，审查解释需人工；无成本估算、全文Trace、产物保留、并行或LLM Judge。真实Live未运行。只读可信技能，运行时不要修改其内容。
+严格JSON/证据片段可误拒合理改写，解释/建议需人工；非通用语义Judge。Guided提示不同，收益不能单因果归给Skill。未新增真实Live，精确技能净增请求/Token未知。历史报告无原产物/回复/错误，不能补猜。重复读取只是效率统计；不保存完整正文/错误/产物。v1/v2分数不能直接比较。
 
 ## 环境与用户修改
 
-macOS/zsh、Python3.12+、uv。运行 uv run python -m scripts.eval_agent；开发及归档只 Offline。app.py/USER.md 用户改动保留，不提交；配置/真实Session不输出归档。ExFAT ._* 尽量 COPYFILE_DISABLE=1，归档排除，独立验证APFS。
+macOS、Python3.12+、uv。CLI uv run python -m scripts.eval_agent；--live须用户显式运行。默认Off/Auto前10例，复杂任务用case-ids或max-cases12。Session持久化/debug关闭，独立临时workspace，真实配置/Session与runs不归档。app.py/USER.md改动保留不提交。APFS独立验证，ExFAT ._* 尽量减少/排除。
 
 ## 下一步
 
-Phase08 已结束，之后由用户指定。不重新实现旧阶段，不进入 Phase09；学习原理见 docs/phases/phase-08.md。
+完成Phase09归档并记录真实SHA/验证，之后由用户指定。不要改旧Phase或旧报告，不进入Phase10；学习见docs/phases/phase-09.md。

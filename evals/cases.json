@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "cases": [
     {
       "id": "greeting",
@@ -186,7 +186,36 @@
             }
           }
         ],
-        "reply": "Summary saved."
+        "reply": "Summary saved.",
+        "guided_actions": [
+          {
+            "tool": "load_skill",
+            "args": {
+              "name": "file-summary"
+            }
+          },
+          {
+            "tool": "read_skill_reference",
+            "args": {
+              "name": "file-summary",
+              "path": "references/checklist.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "notes.txt"
+            }
+          },
+          {
+            "tool": "write_file",
+            "args": {
+              "path": "summary.txt",
+              "content": "Orion | Python | Friday | Ada\n"
+            }
+          }
+        ],
+        "guided_script_label": "fixed synthetic skill-loading smoke test, not model discovery"
       },
       "expect": {
         "tools": [
@@ -224,7 +253,29 @@
             }
           }
         ],
-        "reply": "DEFECT: EMPTY_INPUT\nDEFECT: DIV_ZERO"
+        "reply": "DEFECT: EMPTY_INPUT\nDEFECT: DIV_ZERO",
+        "guided_actions": [
+          {
+            "tool": "load_skill",
+            "args": {
+              "name": "code-review"
+            }
+          },
+          {
+            "tool": "read_skill_reference",
+            "args": {
+              "name": "code-review",
+              "path": "references/checklist.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "review.py"
+            }
+          }
+        ],
+        "guided_script_label": "fixed synthetic skill-loading smoke test, not model discovery"
       },
       "expect": {
         "tools": [
@@ -350,6 +401,314 @@
             "exact": "Hello, evaluation!\n"
           }
         }
+      }
+    },
+    {
+      "id": "complex-code-review",
+      "prompt": "请完整静态审查工作区内相互关联的 Python 模块。只报告有代码依据的问题，不运行代码。每项说明文件、函数、代码证据、触发条件、影响及修复建议；不要把正确函数当成缺陷。最终只输出 JSON 对象，格式为 {\"findings\":[{\"file\":\"文件相对路径\",\"function\":\"函数名\",\"evidence\":\"具体代码片段和问题机制\",\"trigger\":\"触发条件\",\"impact\":\"影响\",\"fix\":\"修复建议\"}]}。",
+      "fixtures": {
+        "storage.py": "from pathlib import Path\n\ndef save(root, filename, payload):\n    target = Path(root) / filename\n    target.write_text(payload, encoding=\"utf-8\")\n    return target\n",
+        "limits.py": "def batch(items, limit):\n    if limit < 0:\n        raise ValueError(\"negative limit\")\n    return items[:limit + 1]\n",
+        "service.py": "from storage import save\n\ndef submit(root, filename, payload):\n    if not payload:\n        return {\"ok\": False}\n    try:\n        save(root, filename, payload)\n    except OSError:\n        return {\"ok\": True}\n    return {\"ok\": True}\n\ndef accept(root, filename, payload):\n    return bool(submit(root, filename, payload))\n",
+        "utils.py": "def greeting(name):\n    return \"Hello \" + name\n\ndef is_positive(value):\n    return value > 0\n"
+      },
+      "expected_skill": "code-review",
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "storage.py"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "limits.py"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "service.py"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "utils.py"
+            }
+          }
+        ],
+        "reply": "{\"findings\": [{\"file\": \"storage.py\", \"function\": \"save\", \"evidence\": \"Path(root) / filename allows ../ or absolute filename to escape outside root.\", \"trigger\": \"Caller supplies ../outside.txt or an absolute filename.\", \"impact\": \"Writes outside intended directory.\", \"fix\": \"Resolve and require target containment within root.\"}, {\"file\": \"limits.py\", \"function\": \"batch\", \"evidence\": \"items[:limit + 1] returns one extra item.\", \"trigger\": \"There are more items than the nonnegative limit.\", \"impact\": \"Batch exceeds the configured maximum.\", \"fix\": \"Use items[:limit].\"}, {\"file\": \"service.py\", \"function\": \"submit\", \"evidence\": \"except OSError returns ok: True even when save failed.\", \"trigger\": \"save raises OSError.\", \"impact\": \"Caller receives incorrect successful state.\", \"fix\": \"Return ok: False or propagate the exception.\"}, {\"file\": \"service.py\", \"function\": \"accept\", \"evidence\": \"bool(submit(...)) treats a non-empty dict with ok: False as True.\", \"trigger\": \"Empty payload gives a failure dict.\", \"impact\": \"accept reports acceptance of a rejected submission.\", \"fix\": \"Inspect result[\\\"ok\\\"] explicitly.\"}]}",
+        "guided_actions": [
+          {
+            "tool": "load_skill",
+            "args": {
+              "name": "code-review"
+            }
+          },
+          {
+            "tool": "read_skill_reference",
+            "args": {
+              "name": "code-review",
+              "path": "references/checklist.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "storage.py"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "limits.py"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "service.py"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "utils.py"
+            }
+          }
+        ],
+        "guided_script_label": "fixed synthetic skill-loading smoke test, not model discovery"
+      },
+      "expect": {
+        "tools": [
+          "read_file"
+        ],
+        "read_paths": [
+          "storage.py",
+          "limits.py",
+          "service.py",
+          "utils.py"
+        ],
+        "review_annotations": [
+          {
+            "id": "path-escape",
+            "file": "storage.py",
+            "function": "save",
+            "evidence": [
+              [
+                "Path(root) / filename",
+                "root / filename",
+                "root/filename"
+              ],
+              [
+                "..",
+                "absolute",
+                "绝对"
+              ],
+              [
+                "outside",
+                "越界",
+                "目录外",
+                "escape"
+              ]
+            ]
+          },
+          {
+            "id": "batch-boundary",
+            "file": "limits.py",
+            "function": "batch",
+            "evidence": [
+              [
+                "limit + 1",
+                "limit+1"
+              ],
+              [
+                "extra",
+                "多",
+                "off-by-one",
+                "超过"
+              ]
+            ]
+          },
+          {
+            "id": "false-success",
+            "file": "service.py",
+            "function": "submit",
+            "evidence": [
+              [
+                "OSError"
+              ],
+              [
+                "ok",
+                "成功",
+                "success"
+              ],
+              [
+                "True",
+                "true",
+                "失败",
+                "failed"
+              ]
+            ]
+          },
+          {
+            "id": "dict-state",
+            "file": "service.py",
+            "function": "accept",
+            "evidence": [
+              [
+                "bool(",
+                "bool ("
+              ],
+              [
+                "dict",
+                "字典",
+                "non-empty",
+                "非空"
+              ],
+              [
+                "False",
+                "false",
+                "失败"
+              ]
+            ]
+          }
+        ],
+        "manual_review": true
+      }
+    },
+    {
+      "id": "complex-document-summary",
+      "prompt": "读取 requirements.md、meeting-notes.md、changelog.md、decisions.md，整合当前有效的项目方案，区分正式确认与过期/取消的提案，不添加无来源的决定。将结果写入 project-summary.json；使用这些键：project、release_date、language、deployment、telemetry、owner、budget_usd（数字）、constraints（字符串数组）、superseded（字符串数组）。值使用来源文档中的英文表述；superseded 项统一写为日期加 release、语言名、部署类型、telemetry enabled 或姓名加 owner。最终简短报告文件已生成。",
+      "fixtures": {
+        "requirements.md": "# Requirements — 2026-09-01\nProject: Harbor. Proposed release: September 30. Proposed language: JavaScript. Proposed deployment: public cloud. Status: initial draft; later decisions may supersede.\nConstraint: do not upload personal data. Acceptance: export to CSV must remain available.\n",
+        "meeting-notes.md": "# Meeting — 2026-09-10\nThe committee discussed replacing JavaScript with Python. Proposed release: October 10. Proposed telemetry: enabled. These proposals require confirmation. Owner candidate: Leo.\n",
+        "changelog.md": "# Change log — 2026-09-20\nCSV export implemented and retained. Public cloud rollout was canceled. September 30 and October 10 release dates are obsolete. Telemetry proposal withdrawn. Final decision approval is recorded in decisions.md.\n",
+        "decisions.md": "# Approved decisions — 2026-09-22\nFinal release: October 20. Final language: Python. Deployment: local-only. Telemetry: disabled. Owner: Mira. No personal data uploads; CSV export required. Budget: 500 USD. Meeting owner candidate Leo is superseded. No other milestones or storage providers were approved.\n"
+      },
+      "expected_skill": "file-summary",
+      "offline": {
+        "actions": [
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "requirements.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "meeting-notes.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "changelog.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "decisions.md"
+            }
+          },
+          {
+            "tool": "write_file",
+            "args": {
+              "path": "project-summary.json",
+              "content": "{\n  \"project\": \"Harbor\",\n  \"release_date\": \"October 20\",\n  \"language\": \"Python\",\n  \"deployment\": \"local-only\",\n  \"telemetry\": \"disabled\",\n  \"owner\": \"Mira\",\n  \"budget_usd\": 500,\n  \"constraints\": [\n    \"no personal data uploads\",\n    \"CSV export required\"\n  ],\n  \"superseded\": [\n    \"September 30 release\",\n    \"October 10 release\",\n    \"JavaScript\",\n    \"public cloud\",\n    \"telemetry enabled\",\n    \"Leo owner\"\n  ]\n}\n"
+            }
+          }
+        ],
+        "reply": "Created project-summary.json",
+        "guided_actions": [
+          {
+            "tool": "load_skill",
+            "args": {
+              "name": "file-summary"
+            }
+          },
+          {
+            "tool": "read_skill_reference",
+            "args": {
+              "name": "file-summary",
+              "path": "references/checklist.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "requirements.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "meeting-notes.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "changelog.md"
+            }
+          },
+          {
+            "tool": "read_file",
+            "args": {
+              "path": "decisions.md"
+            }
+          },
+          {
+            "tool": "write_file",
+            "args": {
+              "path": "project-summary.json",
+              "content": "{\n  \"project\": \"Harbor\",\n  \"release_date\": \"October 20\",\n  \"language\": \"Python\",\n  \"deployment\": \"local-only\",\n  \"telemetry\": \"disabled\",\n  \"owner\": \"Mira\",\n  \"budget_usd\": 500,\n  \"constraints\": [\n    \"no personal data uploads\",\n    \"CSV export required\"\n  ],\n  \"superseded\": [\n    \"September 30 release\",\n    \"October 10 release\",\n    \"JavaScript\",\n    \"public cloud\",\n    \"telemetry enabled\",\n    \"Leo owner\"\n  ]\n}\n"
+            }
+          }
+        ],
+        "guided_script_label": "fixed synthetic skill-loading smoke test, not model discovery"
+      },
+      "expect": {
+        "tools": [
+          "read_file",
+          "write_file"
+        ],
+        "read_paths": [
+          "requirements.md",
+          "meeting-notes.md",
+          "changelog.md",
+          "decisions.md"
+        ],
+        "document": {
+          "path": "project-summary.json",
+          "values": {
+            "project": "Harbor",
+            "release_date": "October 20",
+            "language": "Python",
+            "deployment": "local-only",
+            "telemetry": "disabled",
+            "owner": "Mira",
+            "budget_usd": 500,
+            "constraints": [
+              "no personal data uploads",
+              "CSV export required"
+            ],
+            "superseded": [
+              "September 30 release",
+              "October 10 release",
+              "JavaScript",
+              "public cloud",
+              "telemetry enabled",
+              "Leo owner"
+            ]
+          }
+        },
+        "manual_review": true
       }
     }
   ]

@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–08 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–09 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -88,3 +88,5 @@ uv run python -m scripts.check_evaluation
 ```
 
 默认 Offline 使用固定模拟响应与隔离合成文件，仅验证评测机制，不能当作模型能力成绩。A/B 对比 Skills 关闭/开启，报告保存到忽略的 runs/evals/。显式 --live 才调用当前配置的真实模型，可能收费；使用 --max-cases、--max-requests、--timeout、--repeats 控制运行。详情见 [Phase 08 学习文档](docs/phases/phase-08.md)。
+
+Evaluation 2.0 使用 JSON v2，分别报告 task_success、process_clean、instruction_followed 和 strict_pass；Auto 不加载 Skill 也可通过。使用 --case-ids 选择任务、--groups off,auto,guided 选择实验组。Guided 追加显式技能要求，不能直接当作纯技能收益。--analyze-report 可只读重算旧报告，缺失原因保留 unknown。详见 [Phase 09](docs/phases/phase-09.md)。

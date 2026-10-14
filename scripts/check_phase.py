@@ -60,4 +60,7 @@ if Path(__file__).with_name("check_skills.py").exists() and (Path(__file__).reso
 if Path(__file__).with_name("check_evaluation.py").exists() and (Path(__file__).resolve().parent.parent / "mybot/evaluation/runner.py").exists():
     from scripts.check_evaluation import check_evaluation
     check_evaluation()
+if Path(__file__).with_name("check_evaluation_v2.py").exists():
+    from scripts.check_evaluation_v2 import check_evaluation_v2
+    check_evaluation_v2()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")
