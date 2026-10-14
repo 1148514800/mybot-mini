@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase09 Evaluation2.0 已实现并离线验证，待 Commit/phase-09/ZIP独立归档。Phase01–08 Tag/ZIP不变，不进入Phase10，不自动Push。未执行新增Live API。
+Phase09 Evaluation2.0 已完成并独立归档；phase-09指向1ea3b6d77b50f6af2c3a82ad64bae42cebaeef0f，ZIP：../mybot-mini-snapshots/phase-09.zip。Phase01–08 Tag/ZIP不变，不进入Phase10，不自动Push。未执行新增Live API。
 
 ## 实现
 
@@ -14,7 +14,7 @@ Phase09 Evaluation2.0 已实现并离线验证，待 Commit/phase-09/ZIP独立�
 
 ## 验证
 
-33项评测测试与Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16均通过，编译通过。完整Offline：Off12/12、Auto12/12（各25工具/37请求、无Skill）；Guided4/4（20工具/24请求、4脚本加载），Token=null，不是模型能力成绩。用户旧报告只读重算Off任务6/6/clean6/6/strict6/6，Auto任务6/6/clean5/6/strict5/6，Planning unknown2；原SHA256未变。归档安全检查通过；待独立快照验证。
+33项评测测试与Phase01/02、Session12、Planning12、Persistence16、Context18、Skills16均通过，编译通过。完整Offline：Off12/12、Auto12/12（各25工具/37请求、无Skill）；Guided4/4（20工具/24请求、4脚本加载），Token=null，不是模型能力成绩。用户旧报告只读重算Off任务6/6/clean6/6/strict6/6，Auto任务6/6/clean5/6/strict5/6，Planning unknown2；原SHA256未变。归档安全检查通过；干净工作树ZIP冻结安装、编译和Phase1–9回归通过，restore_phase.sh 9还原后再次回归及三组Offline CLI通过。ZIP86条目包含复杂合成案例、代码、教程、技能、配置模板及锁文件，不含runs/真实配置/Session/用户未提交文件。
 
 ## 局限
 
@@ -26,4 +26,4 @@ macOS、Python3.12+、uv。CLI uv run python -m scripts.eval_agent；--live须�
 
 ## 下一步
 
-完成Phase09归档并记录真实SHA/验证，之后由用户指定。不要改旧Phase或旧报告，不进入Phase10；学习见docs/phases/phase-09.md。
+Phase09已结束，之后由用户指定。不要改旧Phase或旧报告，不进入Phase10；学习见docs/phases/phase-09.md。
