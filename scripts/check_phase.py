@@ -63,4 +63,7 @@ if Path(__file__).with_name("check_evaluation.py").exists() and (Path(__file__).
 if Path(__file__).with_name("check_evaluation_v2.py").exists():
     from scripts.check_evaluation_v2 import check_evaluation_v2
     check_evaluation_v2()
+if Path(__file__).with_name("check_diagnostics.py").exists():
+    from scripts.check_diagnostics import check_diagnostics
+    check_diagnostics()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

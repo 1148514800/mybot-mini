@@ -139,8 +139,11 @@ class TracedClient:
             self.trace.events.append({"event": "llm_error", "duration_seconds": time.perf_counter() - start})
             raise
         self.trace.usage.append(getattr(response, "usage", None))
-        message = response.choices[0].message
-        self.trace.events.append({"event": "llm_response", "output_chars": len(message.content or ""),
+        choice = response.choices[0]
+        finish = getattr(choice,'finish_reason',None)
+        finish = finish if finish in ('stop','tool_calls','length','content_filter','function_call') else 'unknown'
+        message = choice.message
+        self.trace.events.append({"event": "llm_response", "finish_reason":finish,"output_chars": len(message.content or ""),
                                  "tool_calls": len(message.tool_calls or []),
                                  "load_skill_calls":sum(c.function.name=="load_skill" for c in message.tool_calls or []),
                                  "skill_calls":sum(c.function.name in ("load_skill","read_skill_reference") for c in message.tool_calls or []), "duration_seconds": time.perf_counter() - start})

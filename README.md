@@ -90,3 +90,5 @@ uv run python -m scripts.check_evaluation
 默认 Offline 使用固定模拟响应与隔离合成文件，仅验证评测机制，不能当作模型能力成绩。A/B 对比 Skills 关闭/开启，报告保存到忽略的 runs/evals/。显式 --live 才调用当前配置的真实模型，可能收费；使用 --max-cases、--max-requests、--timeout、--repeats 控制运行。详情见 [Phase 08 学习文档](docs/phases/phase-08.md)。
 
 Evaluation 2.0 使用 JSON v2，分别报告 task_success、process_clean、instruction_followed 和 strict_pass；Auto 不加载 Skill 也可通过。使用 --case-ids 选择任务、--groups off,auto,guided 选择实验组。Guided 追加显式技能要求，不能直接当作纯技能收益。--analyze-report 可只读重算旧报告，缺失原因保留 unknown。详见 [Phase 09](docs/phases/phase-09.md)。
+
+评测诊断会区分 JSON/字段格式失败、证据未匹配与产物差异。可用 --retain-artifacts runs/evals-artifacts 显式保留内置合成任务输出（默认不保存正文）。格式不合法的审查不计作真实漏报，任务评分仍严格。见 [诊断说明](docs/evaluation-diagnostics.md)。

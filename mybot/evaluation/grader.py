@@ -4,6 +4,8 @@ import json
 import re
 from pathlib import Path
 
+from .diagnostics import json_diagnostic, review_diagnostic, document_diagnostic
+
 
 def review_score(findings, annotations):
     """Match file AND function AND evidence, never one standalone keyword."""
@@ -58,6 +60,7 @@ def grade(case, reply, workspace: Path, trace, plan, group):
         text = target.read_text(encoding='utf-8') if valid else ''
         task['artifact:'+path] = valid and (text==expected['exact'] if 'exact' in expected else all(s in text for s in expected['contains']))
     review = None
+    diagnostics = {}
     if 'defects' in rules:
         found, expected = set(re.findall(r'DEFECT:\s*([A-Z_]+)',reply)), set(rules['defects'])
         tp, fp, fn = len(found&expected), len(found-expected), len(expected-found)
@@ -65,22 +68,21 @@ def grade(case, reply, workspace: Path, trace, plan, group):
                   'precision':tp/(tp+fp) if tp+fp else None,'recall':tp/(tp+fn) if tp+fn else None}
         task['defect_hits'], task['no_false_defects'] = not fn, not fp
     if 'review_annotations' in rules:
-        try:
-            document = json.loads(reply)
-            findings = document['findings']
-            valid = isinstance(findings,list) and all(isinstance(f,dict) and all(isinstance(f.get(k),str) and f[k].strip() for k in ('file','function','evidence','trigger','impact','fix')) for f in findings)
-        except (ValueError,KeyError,TypeError):
-            findings, valid = [], False
-        review = review_score(findings if isinstance(findings,list) else [],rules['review_annotations'])
-        task.update(review_format=valid,defect_hits=review['false_negatives']==0,no_false_defects=review['false_positives']==0)
+        document, detail = json_diagnostic(reply)
+        valid, findings, diagnostics['review'] = review_diagnostic(document,detail,rules['review_annotations'])
+        review = review_score(findings,rules['review_annotations']) if valid else None
+        task['review_format'] = valid
+        if valid:
+            task.update(defect_hits=review['false_negatives']==0,no_false_defects=review['false_positives']==0)
     if 'document' in rules:
         expected = rules['document']
         target = (workspace/expected['path']).resolve()
         valid = target.is_relative_to(workspace.resolve()) and target.is_file() and target.stat().st_size<=100000
         try:
-            artifact = json.loads(target.read_text(encoding='utf-8')) if valid else None
-        except (ValueError,UnicodeError):
-            artifact = None
+            artifact, detail = json_diagnostic(target.read_text(encoding='utf-8')) if valid else (None,{'status':'missing_or_unsafe_artifact'})
+        except UnicodeError:
+            artifact, detail = None, {'status':'invalid_utf8'}
+        diagnostics['document'] = document_diagnostic(artifact,detail,expected['values'])
         task['document_format'] = isinstance(artifact,dict)
         for key,value in expected['values'].items():
             actual = artifact.get(key) if isinstance(artifact,dict) else None
@@ -92,7 +94,7 @@ def grade(case, reply, workspace: Path, trace, plan, group):
     return {'task_success':outcome,'process_clean':clean,'instruction_followed':followed,'strict_pass':outcome and clean and followed,
             'checks':task,'task_checks':task,'process_checks':process,'instruction_checks':instruction,
             'grading_reasons':[prefix+key for prefix,checks in (('task:',task),('process:',process),('instruction:',instruction)) for key,value in checks.items() if not value],
-            'review_findings':review,'manual_review_required':rules.get('manual_review',False)}
+            'diagnostics':diagnostics,'review_findings':review,'manual_review_required':rules.get('manual_review',False)}
 
 
 def summarize(results):
@@ -110,12 +112,13 @@ def summarize(results):
         stats.update({key:sum(r.get(key,0) for r in items) for key in ('tool_calls','tool_failures','llm_requests','duration_seconds','duplicate_reads')})
         stats.update({key:sum(r[key] for r in items) if all(r.get(key) is not None for r in items) else None for key in ('input_tokens','output_tokens')})
         stats['skill_selections'] = sum(bool(r['skill_selected']) for r in items)
+        stats['review_unscorable_cases'] = sum(r.get('diagnostics',{}).get('review',{}).get('scorable') is False for r in items)
         reviews = [r['review_findings'] for r in items if r.get('review_findings') is not None]
         if reviews:
             tp = sum(r['true_positives'] for r in reviews)
             fp = sum(r['false_positives'] for r in reviews)
             fn = sum(r.get('false_negatives',r.get('missed',0)) for r in reviews)
-            stats['review_quality'] = {'true_positives':tp,'false_positives':fp,'false_negatives':fn,
+            stats['review_quality'] = {'scored_cases':len(reviews),'true_positives':tp,'false_positives':fp,'false_negatives':fn,
                                        'precision':tp/(tp+fp) if tp+fp else None,'recall':tp/(tp+fn) if tp+fn else None}
         stats['planning_tool_failures'] = sum(r.get('planning_tool_failures',0) for r in items)
         stats['manual_review_cases'] = sum(r.get('manual_review_required',False) for r in items)

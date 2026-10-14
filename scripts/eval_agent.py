@@ -12,6 +12,7 @@ def parser():
     p.add_argument('--case-ids',help='Comma-separated unique case IDs; selects in the given order.')
     p.add_argument('--groups',default='off,auto',help='Comma-separated unique groups: off,auto,guided.')
     p.add_argument('--analyze-report',type=Path,help='Read-only reinterpretation of a Phase 8/9 JSON report; no API.')
+    p.add_argument('--retain-artifacts',type=Path,help='Opt in to bounded synthetic outputs in this directory; may contain model-generated text.')
     p.add_argument('--live',action='store_true',help='Explicitly call the configured real API; may incur charges.')
     p.add_argument('--max-cases',type=int,default=10,help='Maximum distinct tasks (each tested in both groups).')
     p.add_argument('--max-requests',type=int,default=200,help='Global API/model request budget across all cases/groups/repeats.')
@@ -32,13 +33,19 @@ def main():
     try:
         report = analyze_report(args.analyze_report) if args.analyze_report else asyncio.run(
             evaluate(live=args.live,max_cases=args.max_cases,max_requests=args.max_requests,
-                     timeout=args.timeout,repeats=args.repeats,case_ids=args.case_ids,groups=args.groups))
+                     timeout=args.timeout,repeats=args.repeats,case_ids=args.case_ids,groups=args.groups,retain_artifacts=args.retain_artifacts))
         path = (save_report(report,args.output) if args.output else None) if args.analyze_report else (save_report(report,args.output) if args.output else save_report(report))
     except (ValueError, RuntimeError) as exc:
         # Config/provider errors may include private data; show type only.
         raise SystemExit(f'Evaluation setup failed ({type(exc).__name__}); check configuration and limits.') from None
     for name, stats in report['overall'].items():
         print(f"{name}: tasks={stats['task_success_count']}/{stats['cases']}; clean={stats['process_clean_count']}/{stats['cases']}; instructions={stats['instruction_followed_count']}/{stats['cases']}; strict={stats['strict_pass_count']}/{stats['cases']}; skills={stats['skill_selections']}; tools={stats['tool_calls']}; requests={stats['llm_requests']}")
+    for result in report['results']:
+        if not result['task_success']:
+            diag=result.get('diagnostics',{})
+            review=diag.get('review',{})
+            fields={k:v['status'] for k,v in diag.get('document',{}).get('fields',{}).items() if v['status']!='matched'}
+            print(f"  {result['case_id']} / {result['group']} / repeat {result['repeat']}: runtime={result.get('error')}; review={review.get('status','n/a')}; fields={fields}")
     print(f'Report: {path}' if path else 'Read-only analysis; original report unchanged.')
 
 
