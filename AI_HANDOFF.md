@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase 12 stdio / Streamable HTTP 双传输功能和离线验证完成；待本阶段提交后在干净 APFS 工作树归档 phase-12 并独立还原验证，再补记确切 Commit/ZIP。Phase 1–11 Tag/ZIP 不变。不自动 Push，不调用真实 LLM API，不进入 Phase 13。
+Phase 12 stdio / Streamable HTTP 双传输已完成并独立归档；annotated phase-12 指向10b7f198c514f370e65be10ff23d1240583143b5，ZIP：../mybot-mini-snapshots/phase-12.zip。Phase 1–11 Tag/ZIP 不变。不自动 Push，不调用真实 LLM API，不进入 Phase 13。
 
 ## 实现与架构
 
@@ -14,7 +14,7 @@ Phase 12 stdio / Streamable HTTP 双传输功能和离线验证完成；待本�
 
 ## 验证
 
-28项真实HTTP专项通过：真实CLI启动/初始化/list/add/echo、stateful DELETE/资源释放/Server存活、SSE/stateless、双传输命名隔离/注册失败原子清理、URL及配置、审批真实笔记状态/无调用拒绝/冻结参数、Plan成功与失败证据/配对/clear、Schema预算和原文保护、isError、HTTP401/403/404/500/503、连接失败/错误Endpoint/损坏初始化/list失败、超时副作用未知且无写入重试、中途断连、取消/owner、禁代理/netrc/隐式凭证、debug与审计隐私、Host/Origin、无网络GET重连。全量Phase1–12共184项unittest及Phase1/2断言检查通过；归档安全集成检查通过。最后强化的HTTP Plan/Schema计量断言另有2项定向测试通过。未访问第三方MCP或真实模型。
+28项真实HTTP专项通过：真实CLI启动/初始化/list/add/echo、stateful DELETE/资源释放/Server存活、SSE/stateless、双传输命名隔离/注册失败原子清理、URL及配置、审批真实笔记状态/无调用拒绝/冻结参数、Plan成功与失败证据/配对/clear、Schema预算和原文保护、isError、HTTP401/403/404/500/503、连接失败/错误Endpoint/损坏初始化/list失败、超时副作用未知且无写入重试、中途断连、取消/owner、禁代理/netrc/隐式凭证、debug与审计隐私、Host/Origin、无网络GET重连。全量Phase1–12共184项unittest及Phase1/2断言检查通过；归档安全集成检查通过。最后强化的HTTP Plan/Schema计量断言另有2项定向测试通过。未访问第三方MCP或真实模型。干净APFS工作树执行save_phase.sh 12成功；ZIP105条目，冻结安装/编译/184项回归及Phase1/2断言通过。restore_phase.sh 12独立还原后再次冻结安装、编译及全部回归通过。ZIP的Commit注释与Tag一致，不含真实配置/Session/runs、用户未提交app注释或USER修改，已发布到实际同级快照目录。
 
 ## 局限与安全
 
@@ -26,4 +26,4 @@ macOS+Python3.12+/uv；保留app.py原三处注释与USER.md未提交修改，Ph
 
 ## 下一步
 
-提交本阶段并执行save_phase.sh 12、restore_phase.sh 12冻结安装/编译/全部回归验证，再补记结果。之后停止，等待用户指定；不修改旧归档、不进入Phase13。
+Phase12已结束，等待用户指定下一项任务；不重复创建phase-12或覆盖ZIP，不修改旧归档、不进入Phase13。
