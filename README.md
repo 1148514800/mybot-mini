@@ -99,3 +99,6 @@ mcp.enabled 默认 false。显式开启后，通过配置的可信stdio Server�
 
 
 Phase 11 增加本地 `tool_policies`：`allow` 直接执行、`confirm` 每次确认、`deny` 隐藏并拒绝执行。缺少策略默认 confirm；旧配置仍有效，但自动执行需显式 allow。模板中 add/echo/read_note 为 allow，save_note/delete_note 为 confirm。CLI 只接受本次小写 yes，非交互/缺少提供者/无法安全完整展示参数均拒绝；拒绝后停止本轮后续调用并维护 Session 配对。审计只保留限量内存元数据，Session 仍可能持久化原始参数。测试：`uv run python -m scripts.check_approval`。详见 [Phase 11](docs/phases/phase-11.md)。
+
+
+Phase 12 增加 `transport="streamable_http"` 与本地配置的 `url`；未写 transport 仍为 stdio。两种连接共用工具发现、Schema、Phase 11 审批、审计和原执行循环。HTTP 仅允许字面量回环 HTTP 或用户显式配置的可信 HTTPS，禁用环境代理/隐式认证，拒绝全部重定向，不自动重连或重试工具。先在另一终端运行 `uv run python -m scripts.mcp_http_demo_server --port 8765`；退出 mybot 不会终止该 Server。模板保留 MCP 关闭，同时示例两种 Server；启用后所有配置的 Server 都须可达，不用的条目应移除。测试：`uv run python -m scripts.check_mcp_http`。详见 [Phase 12](docs/phases/phase-12.md)。

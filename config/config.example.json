@@ -62,7 +62,27 @@
           "save_note": "confirm",
           "read_note": "allow",
           "delete_note": "confirm"
-        }
+        },
+        "transport": "stdio"
+      },
+      "demo-http": {
+        "transport": "streamable_http",
+        "url": "http://127.0.0.1:8765/mcp",
+        "allowed_tools": [
+          "add",
+          "echo",
+          "save_note",
+          "read_note",
+          "delete_note"
+        ],
+        "tool_policies": {
+          "add": "allow",
+          "echo": "allow",
+          "save_note": "confirm",
+          "read_note": "allow",
+          "delete_note": "confirm"
+        },
+        "timeout_seconds": 10
       }
     }
   }

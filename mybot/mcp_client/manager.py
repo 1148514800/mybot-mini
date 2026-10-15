@@ -8,20 +8,23 @@ from collections import deque
 from contextlib import AsyncExitStack
 
 from mcp import Client
-from mcp.client.stdio import StdioServerParameters, stdio_client
+import httpx2
 from mcp.shared.exceptions import MCPError
 
-from ..config import PROJECT_DIR
 from ..tools import ToolResult
 from .adapter import MCPToolAdapter, DefinitionError
 from .config import validate_mcp
 from .approval import authorize
+from .transport import connect_transport, HTTPTransportError
 
 
 def failure_kind(exc):
     if isinstance(exc,BaseExceptionGroup):
         kinds = [failure_kind(e) for e in exc.exceptions]
         return next((k for k in kinds if k!='protocol_or_connection_error'),kinds[0])
+    if isinstance(exc,HTTPTransportError):return exc.kind
+    if isinstance(exc,httpx2.TimeoutException):return 'timeout'
+    if isinstance(exc,httpx2.RequestError):return 'http_connection_error'
     if isinstance(exc,FileNotFoundError):return 'executable_not_found'
     if isinstance(exc,TimeoutError) or (isinstance(exc,MCPError) and exc.code==-32001):return 'timeout'
     if isinstance(exc,ValueError):return 'invalid_configuration_or_definition'
@@ -61,8 +64,7 @@ class MCPClientManager:
                 stage = 'connect/initialize'
                 # SDK only inherits its small default environment; stderr is not stdout.
                 errlog = self.stack.enter_context(open(os.devnull,'w'))
-                parameters = StdioServerParameters(command=config['command'],args=config.get('args',[]),cwd=PROJECT_DIR)
-                transport = stdio_client(parameters,errlog=errlog)
+                transport = connect_transport(config,errlog=errlog)
                 client = Client(transport,mode='legacy',read_timeout_seconds=config.get('timeout_seconds',10),cache=None)
                 # No wait_for around __aenter__: SDK cancel scopes must stay in this task.
                 await self.stack.enter_async_context(client)
@@ -97,10 +99,9 @@ class MCPClientManager:
                     self.registry.register(adapter)
             return self
         except BaseException as exc:
-            await self.stack.aclose()
-            self.clients.clear()
-            self.closed = True
-            if isinstance(exc,asyncio.CancelledError):raise
+            cleanup_error = await self._close()
+            if cleanup_error is not None:exc = cleanup_error
+            if isinstance(exc,asyncio.CancelledError):raise exc
             # Never expose external error text, command arguments, stderr or credentials.
             reason = str(exc) if isinstance(exc,DefinitionError) else failure_kind(exc)
             raise MCPStartupError(f"MCP server '{name}': {stage} failed ({reason}); check trusted server configuration") from None
@@ -149,18 +150,17 @@ class MCPClientManager:
                 result = MCPToolAdapter.result(result)
                 event.update(success=result.success,error=None if result.success else 'remote_result_rejected')
                 return result
-            except asyncio.CancelledError:
-                raise
-            except Exception as exc:
-                kind = failure_kind(exc)
+            except BaseException as exc:
+                # SDK worker errors may first cancel the owner; aclose reveals
+                # the underlying ExceptionGroup in this SAME task.
+                cleanup_error = await self._close()
+                if isinstance(exc,asyncio.CancelledError) and cleanup_error is None:
+                    raise
+                if not isinstance(exc,(Exception,asyncio.CancelledError)):
+                    raise
+                kind = failure_kind(cleanup_error or exc)
                 event['error'] = kind
-                # SDK context teardown stays in the owner task, never wait_for.
-                self.closed = True
-                try:
-                    await self.stack.aclose()
-                finally:
-                    self.clients.clear()
-                return ToolResult(success=False,error=f'MCP call failed ({kind}); MCP connections closed, restart gateway',metadata={'mcp_failure':kind})
+                return ToolResult(success=False,error=f'MCP call failed ({kind}); remote effects may be unknown; no retry; connections closed, restart gateway',metadata={'mcp_failure':kind})
         except asyncio.CancelledError:
             event['error'] = 'cancelled'
             raise
@@ -168,11 +168,18 @@ class MCPClientManager:
             event['duration_seconds'] = round(time.perf_counter()-started,6)
             self._audit.append(event)
 
+    async def _close(self):
+        self.closed = True
+        try:
+            if self.stack is not None:await self.stack.aclose()
+        except Exception as exc:
+            return exc
+        finally:
+            self.clients.clear()
+
     async def __aexit__(self,*exc):
         if asyncio.current_task() is not self.owner:
             raise RuntimeError('MCP contexts must close in their owning gateway task')
-        try:
-            if self.stack is not None:await self.stack.aclose()
-        finally:
-            self.closed = True
-            self.clients.clear()
+        error = await self._close()
+        if error is not None:
+            raise RuntimeError(f'MCP connection cleanup failed ({failure_kind(error)})') from None

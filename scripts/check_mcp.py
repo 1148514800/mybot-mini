@@ -82,7 +82,7 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         with patch('mybot.config._CONFIG',{}):
             cfg=GatewayConfig(session_persist=False)
         self.assertFalse(cfg.mcp_enabled);self.assertEqual(cfg.mcp_servers,{})
-        with patch('mybot.mcp_client.manager.stdio_client',side_effect=AssertionError('must not spawn')):
+        with patch('mybot.mcp_client.transport.stdio_client',side_effect=AssertionError('must not spawn')):
             async with MCPClientManager(self.config,self.tools) as manager:
                 self.assertEqual(manager.clients,{})
         self.assertEqual(len(self.tools.get_definitions()),3)
@@ -265,9 +265,9 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(self.tools.has_tool('load_skill'));self.assertTrue(self.tools.has_tool('mcp__test__long'))
 
     async def test_config_template_uv_command_and_explicit_cwd(self):
-        from mybot.mcp_client import manager as module
+        from mybot.mcp_client import transport as module
         template=json.loads((PROJECT_DIR/'config/config.example.json').read_text())
-        cfg=replace(self.config,mcp_enabled=True,mcp_servers=template['mcp']['servers'])
+        cfg=replace(self.config,mcp_enabled=True,mcp_servers={n:s for n,s in template['mcp']['servers'].items() if s.get('transport','stdio')=='stdio'})
         original=module.stdio_client
         with patch.object(module,'stdio_client',wraps=original) as observed:
             async with MCPClientManager(cfg,self.tools):

@@ -15,6 +15,7 @@
 | 09 | Evaluation 2.0 独立指标与 Off/Auto/Guided | 已验证，独立归档 | `phase-09` | [phase-09.md](phase-09.md) |
 | 10 | 本地 stdio MCP Client 与外部工具 | 已验证，独立归档 | `phase-10` | [phase-10.md](phase-10.md) |
 | 11 | MCP 工具权限与 Human-in-the-Loop | 已验证，独立归档 | `phase-11` | [phase-11.md](phase-11.md) |
+| 12 | MCP Streamable HTTP 与多传输管理 | 已验证，归档由本阶段提交执行 | `phase-12` | [phase-12.md](phase-12.md) |
 
 ## 保存一个新阶段
 

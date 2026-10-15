@@ -2,28 +2,28 @@
 
 ## 当前状态
 
-Phase 11 MCP Tool Permissions / Human-in-the-Loop 已完成并独立归档。phase-11（annotated）指向47391d3d286709d19db3a16eb852fe95c5c92656；ZIP：../mybot-mini-snapshots/phase-11.zip。Phase 1–10 Tag/ZIP 不变。未调用真实 LLM API，不自动 Push，不进入 Phase 12。
+Phase 12 stdio / Streamable HTTP 双传输功能和离线验证完成；待本阶段提交后在干净 APFS 工作树归档 phase-12 并独立还原验证，再补记确切 Commit/ZIP。Phase 1–11 Tag/ZIP 不变。不自动 Push，不调用真实 LLM API，不进入 Phase 13。
 
-## 实现与决策
+## 实现与架构
 
-- mcp_client/config.py、config.py：严格本地 tool_policies（allow/confirm/deny），键仅允许 allowed_tools；缺省 confirm；未知 mcp/Server 字段拒绝。模板 add/echo/read_note allow，save_note/delete_note confirm，MCP 仍默认关闭。不改用户真实配置。
-- approval.py：冻结 ApprovalRequest、枚举批准、可注入 async provider；CLI 要求 stdin/stdout TTY，只接受本次 yes。参数 JSON 转义控制字符，完整展示上限4000；敏感遮蔽或超限则拒绝，EOF/异常/无提供者 fail-closed，不缓存批准。
-- manager.py：隐藏 deny 工具，直接 Adapter/Manager 调用同样受控；owner Task、allowlist/策略快照、Schema 校验、冻结参数、批准之后才调用 SDK。沿用 SDK 2.3.0 连接生命周期；不在子 Task 进入/退出 Client。最近256条内存审计只记录元数据，不持久化正文/原始异常。
-- loop.py：拒绝后不再请求模型重试；本批剩余调用全部补失败结果但不执行，配对完整，正确关闭 Plan 和持久化轮次。原生工具语义未改，/clear 不改变策略、不清空远端笔记、不复用授权。
-- demo_server：内存 save_note/read_note/delete_note，key 1–100、content≤2000、≤100条，无文件/网络/Shell；重启清空。scripts/check_approval.py 与 check_phase 集成，Phase10测试夹具显式 allow，教程/索引/README/配置模板同步更新。
+- mcp_client/config.py：transport 缺省 stdio，按传输拒绝不匹配字段；HTTP 只接受字面量回环 HTTP 或用户本地明确配置的 HTTPS，拒绝凭证/query/fragment/控制字符/非法URL。沿用 allowlist/策略/timeout。为旧配置保留 args 缺省[]；localhost明文拒绝，使用127.0.0.1。
+- transport.py：小型SDK传输工厂；stdio沿用PROJECT_DIR cwd与stderr隔离；HTTP用官方streamable_http_client+显式AsyncClient，trust_env=False、无认证/环境代理/重试，发送前移除隐式凭证。Endpoint固定，全部重定向拒绝；首次GET后禁止网络GET重连/resumption。HTTP期间抑制SDK/network正文日志，退出恢复。
+- manager.py：共用原 Client(mode=legacy)/发现/原子注册/Adapter/Schema/Phase11审批/审计。owner Task进入、调用、清理不变。SDK后台HTTP错误可能先取消owner，再在aclose抛ExceptionGroup；_close收集后安全分类，不能漏出原始HTTP错误。故障关闭所有MCP，不自动重连/重试；提示远端副作用可能未知。
+- scripts/mcp_http_demo_server.py：独立官方SDK HTTP Server，127.0.0.1、/mcp、精确Host/Origin防护。复用Phase11五个内存工具；默认stateful+JSON，客户端退出DELETE会话但不终止Server或清笔记。测试另外覆盖SSE与stateless JSON。
+- 示例同时含stdio/http（整体仍off）；启用会连接所有配置Server，不用的条目移除。pyproject/uv.lock仅声明已有httpx2 2.13.1、uvicorn0.54直接依赖，仍41包，MCP/mcp-types锁定2.3.0未升级。AgentLoop/Approval/Adapter/Session/Context未改。
 
 ## 验证
 
-新增25项真实stdio协议+注入审批+模拟LLM测试通过，包括四种保存/删除批准与拒绝的真实远端状态、无提供者/非TTY/非法输入/EOF、deny直接调用、参数偷换、跨任务、批量停止/ID配对/磁盘轮次、Plan无成功证据、clear/重启、审计隐私、取消及PID释放、Demo边界。全量Phase1–11共156项unittest及Phase1/2断言检查通过；compileall通过；scripts.test_phase_archives归档安全集成检查通过。没有真实API请求，未进行真实模型审批流程手工验证。干净APFS工作树运行save_phase.sh 11成功：ZIP101条目，冻结安装/编译/156项回归及Phase1/2断言通过；发布到真实同级快照目录。restore_phase.sh 11独立还原后再次冻结安装、编译及全部回归通过。ZIP与Tag的Commit SHA一致，不含真实配置/Session/runs或用户未提交app注释/USER修改。
+28项真实HTTP专项通过：真实CLI启动/初始化/list/add/echo、stateful DELETE/资源释放/Server存活、SSE/stateless、双传输命名隔离/注册失败原子清理、URL及配置、审批真实笔记状态/无调用拒绝/冻结参数、Plan成功与失败证据/配对/clear、Schema预算和原文保护、isError、HTTP401/403/404/500/503、连接失败/错误Endpoint/损坏初始化/list失败、超时副作用未知且无写入重试、中途断连、取消/owner、禁代理/netrc/隐式凭证、debug与审计隐私、Host/Origin、无网络GET重连。全量Phase1–12共184项unittest及Phase1/2断言检查通过；归档安全集成检查通过。最后强化的HTTP Plan/Schema计量断言另有2项定向测试通过。未访问第三方MCP或真实模型。
 
-## 局限与隐私
+## 局限与安全
 
-审批不是OS沙箱，可信Server启动/初始化已有用户权限。Server自身异常行为不能由客户端隔离；已发送调用超时不能证明无副作用。输入线程取消后可能仍需输入/EOF退出，SDK仍由owner清理。审计不包含参数，但Session/SessionStore仍可能保存原始参数与结果（包括拒绝的请求），没有宣称全存储脱敏。敏感字段识别有限；完整关键参数无法展示则拒绝批准。无授权缓存/远程/OAuth/审计持久化/回滚。
+HTTPS仅基础无认证/证书校验路径，未访问实际远程TLS服务器；无OAuth/Bearer/任意Header/旧SSE/重连/回滚。HTTP仅字面量回环、所有重定向拒绝是更保守限制。SDK内部可能尝试GET恢复，但hook阻止后续网络请求；无tools/call POST重发。已发送工具超时/取消不能证明无副作用，实测写入可成功但响应超时。Server独立且跨HTTP Client共享进程笔记，非多租户、非OS沙箱；Session仍可能明文记录参数/结果。12000是适配文本上限，不是HTTP JSON内存防护；SSE用SDK默认1MiB事件上限。日志抑制为进程级临时设置，只支持当前单网关串行模式。
 
 ## 用户修改与环境
 
-macOS+Python3.12+/uv。app.py三处用户注释与USER.md修改保留、不提交；只暂存本阶段app注入。实际配置/Session/runs不归档。ExFAT生成的._*仅识别AppleDouble头后清理，不删除其他同名文件；快照排除并在APFS临时目录验证。
+macOS+Python3.12+/uv；保留app.py原三处注释与USER.md未提交修改，Phase12不改app.py，也不改真实config/Session/runs。ExFAT的._*只在确认AppleDouble头后清理，快照排除，APFS独立验证。学习见docs/phases/phase-12.md。
 
 ## 下一步
 
-Phase11结束，等待用户指定后续任务。不重复创建phase-11或覆盖ZIP，不改旧归档、不进入Phase12。学习见docs/phases/phase-11.md。
+提交本阶段并执行save_phase.sh 12、restore_phase.sh 12冻结安装/编译/全部回归验证，再补记结果。之后停止，等待用户指定；不修改旧归档、不进入Phase13。

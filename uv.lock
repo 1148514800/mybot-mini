@@ -448,18 +448,22 @@ name = "mybot"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "httpx2" },
     { name = "jsonschema" },
     { name = "mcp" },
     { name = "openai" },
     { name = "pyyaml" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx2", specifier = ">=2.13,<3" },
     { name = "jsonschema", specifier = ">=4.26,<5" },
     { name = "mcp", specifier = ">=2.3,<3" },
     { name = "openai", specifier = ">=2.32.0" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "uvicorn", specifier = ">=0.54,<1" },
 ]
 
 [[package]]
