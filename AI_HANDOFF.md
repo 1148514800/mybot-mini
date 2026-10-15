@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase 11 MCP Tool Permissions / Human-in-the-Loop 功能与离线验证完成，阶段提交后在干净独立工作树执行 phase-11 归档及独立还原验证；结果由后续交接提交补记。Phase 1–10 Tag/ZIP 不变。未调用真实 LLM API，不自动 Push，不进入 Phase 12。
+Phase 11 MCP Tool Permissions / Human-in-the-Loop 已完成并独立归档。phase-11（annotated）指向47391d3d286709d19db3a16eb852fe95c5c92656；ZIP：../mybot-mini-snapshots/phase-11.zip。Phase 1–10 Tag/ZIP 不变。未调用真实 LLM API，不自动 Push，不进入 Phase 12。
 
 ## 实现与决策
 
@@ -14,7 +14,7 @@ Phase 11 MCP Tool Permissions / Human-in-the-Loop 功能与离线验证完成，
 
 ## 验证
 
-新增25项真实stdio协议+注入审批+模拟LLM测试通过，包括四种保存/删除批准与拒绝的真实远端状态、无提供者/非TTY/非法输入/EOF、deny直接调用、参数偷换、跨任务、批量停止/ID配对/磁盘轮次、Plan无成功证据、clear/重启、审计隐私、取消及PID释放、Demo边界。全量Phase1–11共156项unittest及Phase1/2断言检查通过；compileall通过；scripts.test_phase_archives归档安全集成检查通过。没有真实API请求，未进行真实模型审批流程手工验证。
+新增25项真实stdio协议+注入审批+模拟LLM测试通过，包括四种保存/删除批准与拒绝的真实远端状态、无提供者/非TTY/非法输入/EOF、deny直接调用、参数偷换、跨任务、批量停止/ID配对/磁盘轮次、Plan无成功证据、clear/重启、审计隐私、取消及PID释放、Demo边界。全量Phase1–11共156项unittest及Phase1/2断言检查通过；compileall通过；scripts.test_phase_archives归档安全集成检查通过。没有真实API请求，未进行真实模型审批流程手工验证。干净APFS工作树运行save_phase.sh 11成功：ZIP101条目，冻结安装/编译/156项回归及Phase1/2断言通过；发布到真实同级快照目录。restore_phase.sh 11独立还原后再次冻结安装、编译及全部回归通过。ZIP与Tag的Commit SHA一致，不含真实配置/Session/runs或用户未提交app注释/USER修改。
 
 ## 局限与隐私
 
@@ -26,4 +26,4 @@ macOS+Python3.12+/uv。app.py三处用户注释与USER.md修改保留、不提�
 
 ## 下一步
 
-完成此阶段提交的save_phase.sh 11与restore_phase.sh 11验证，再补记真实Commit/ZIP；不改旧归档、不进入Phase12。学习见docs/phases/phase-11.md。
+Phase11结束，等待用户指定后续任务。不重复创建phase-11或覆盖ZIP，不改旧归档、不进入Phase12。学习见docs/phases/phase-11.md。
