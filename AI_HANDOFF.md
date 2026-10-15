@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Phase10本地stdio MCP Tools已实现并专项验证，待提交/phase-10/ZIP独立归档。诊断补充ac9f823已独立提交，Phase1–9 Tag/ZIP不变。本阶段未调用真实LLM API，不进入Phase11，不自动Push。
+Phase10本地stdio MCP Tools已完成并独立归档；phase-10指向5bce74d791120c3dfe761338b038321d506f69d2，ZIP：../mybot-mini-snapshots/phase-10.zip。诊断补充ac9f823已独立提交，Phase1–9 Tag/ZIP不变。本阶段未调用真实LLM API，不进入Phase11，不自动Push。
 
 ## 实现
 
@@ -14,7 +14,7 @@ Phase10本地stdio MCP Tools已实现并专项验证，待提交/phase-10/ZIP独
 
 ## 验证
 
-17项真实stdio子进程+模拟LLM测试通过：默认/配置/握手/list/allowlist/Schema/多个服务器/原生冲突/参数/文本结构化媒体长结果/isError/启动失败/握手与工具超时/断连/正常异常取消释放/owner Task/Gateway/Session配对/clear/Planning/Skills/Context/debug。全量回归与编译、归档安全检查通过；独立ZIP待完成。无真实LLM调用，无第三方Server安装。
+17项真实stdio子进程+模拟LLM测试通过：默认/配置/握手/list/allowlist/Schema/多个服务器/原生冲突/参数/文本结构化媒体长结果/isError/启动失败/握手与工具超时/断连/正常异常取消释放/owner Task/Gateway/Session配对/clear/Planning/Skills/Context/debug。全量回归与编译、归档安全检查通过。干净独立工作树导出ZIP、冻结安装/编译/Phase1–10回归通过；restore_phase.sh 10独立还原后再次通过全部回归。ZIP98条目含Demo/测试/模板/锁文件，不含真实配置/Session/runs或用户未提交app注释/USER改动。无真实LLM调用，无第三方Server安装。
 
 ## 决策与局限
 
@@ -26,4 +26,4 @@ macOS、Python3.12+、uv。app.py三处用户注释保留，仅暂存MCP变更�
 
 ## 下一步
 
-完成Phase10本地Commit/Tag/ZIP及独立还原验证，记录SHA；之后由用户指定。不要修改旧归档、不进入Phase11；学习见docs/phases/phase-10.md。
+Phase10已结束，之后由用户指定。不要修改旧归档、不进入Phase11；学习见docs/phases/phase-10.md。
