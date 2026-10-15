@@ -142,6 +142,8 @@ class AgentLoop:
                         args = "<invalid JSON>"
                     if isinstance(args, dict) and "content" in args:
                         args["content"] = f"<{len(str(args['content']))} chars>"
+                    if call.function.name.startswith("mcp__"):
+                        args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
                 result = await self._execute(call.function.name, call.function.arguments)
                 if debug:

@@ -5,6 +5,7 @@ from .agent import AgentLoop, ContextBuilder
 from .config import GatewayConfig, build_client
 from .tools import build_default_tool_registry
 from .workspace import init_workspace
+from .mcp_client.manager import MCPClientManager
 
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
@@ -14,16 +15,17 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     tools = build_default_tool_registry(config.workspace)
     llm_client = None
     try:
-        llm_client = build_client(config)
-        agent = AgentLoop(
-            client=llm_client,
-            config=config,
-            tools=tools,
-            context=ContextBuilder(config.workspace),
-        )
+        async with MCPClientManager(config, tools):
+            llm_client = build_client(config)
+            agent = AgentLoop(
+                client=llm_client,
+                config=config,
+                tools=tools,
+                context=ContextBuilder(config.workspace),
+            )
 
-        print("Gateway started. Channel: cli\n")
-        await agent.run()
+            print("Gateway started. Channel: cli\n")
+            await agent.run()
     finally:
         if llm_client is not None:
             await llm_client.close()

@@ -64,6 +64,13 @@ def _skills_value(key: str, default):
     return section.get(key, default)
 
 
+def _mcp_value(key: str, default):
+    section = _CONFIG.get("mcp", {})
+    if not isinstance(section, dict):
+        raise ValueError("mcp must be a JSON object")
+    return section.get(key, default)
+
+
 def _resolve_path(raw_value) -> Path:
     path = Path(raw_value).expanduser()
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
@@ -71,6 +78,8 @@ def _resolve_path(raw_value) -> Path:
 
 @dataclass
 class GatewayConfig:
+    mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
+    mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
     skills_enabled: bool = field(default_factory=lambda: _skills_value("enabled", False))
     skills_path: Path | str = field(default_factory=lambda: _skills_value("path", "./skills"))
     context_enabled: bool = field(default_factory=lambda: _context_value("enabled", False))
@@ -94,6 +103,8 @@ class GatewayConfig:
     )
 
     def __post_init__(self) -> None:
+        from .mcp_client.config import validate_mcp
+        self.mcp_servers = validate_mcp(self.mcp_enabled,self.mcp_servers)
         if type(self.skills_enabled) is not bool:
             raise ValueError("skills.enabled must be a boolean")
         if not isinstance(self.skills_path, (str, Path)) or not str(self.skills_path).strip():

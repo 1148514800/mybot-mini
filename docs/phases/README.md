@@ -13,6 +13,7 @@
 | 07 | 本地 Agent Skills 渐进加载 | 已验证，独立归档 | `phase-07` | [phase-07.md](phase-07.md) |
 | 08 | 隔离 Agent Evaluation 与 Skills A/B | 已验证，独立归档 | `phase-08` | [phase-08.md](phase-08.md) |
 | 09 | Evaluation 2.0 独立指标与 Off/Auto/Guided | 已验证，独立归档 | `phase-09` | [phase-09.md](phase-09.md) |
+| 10 | 本地 stdio MCP Client 与外部工具 | 已验证，独立归档 | `phase-10` | [phase-10.md](phase-10.md) |
 
 ## 保存一个新阶段
 

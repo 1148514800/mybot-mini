@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–09 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–10 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -92,3 +92,7 @@ uv run python -m scripts.check_evaluation
 Evaluation 2.0 使用 JSON v2，分别报告 task_success、process_clean、instruction_followed 和 strict_pass；Auto 不加载 Skill 也可通过。使用 --case-ids 选择任务、--groups off,auto,guided 选择实验组。Guided 追加显式技能要求，不能直接当作纯技能收益。--analyze-report 可只读重算旧报告，缺失原因保留 unknown。详见 [Phase 09](docs/phases/phase-09.md)。
 
 评测诊断会区分 JSON/字段格式失败、证据未匹配与产物差异。可用 --retain-artifacts runs/evals-artifacts 显式保留内置合成任务输出（默认不保存正文）。格式不合法的审查不计作真实漏报，任务评分仍严格。见 [诊断说明](docs/evaluation-diagnostics.md)。
+
+## 本地 MCP Tools
+
+mcp.enabled 默认 false。显式开启后，通过配置的可信stdio Server发现allowed_tools，并注册为mcp__demo__add等命名空间工具。command/args分别配置，cwd固定项目根，使用官方mcp2.3.0 SDK。启动程序具有用户权限，不继承内置文件工具的workspace隔离；本阶段仅验证无副作用add/echo。配置错误或调用异常会清理连接，断连后需重启，/clear只清会话。运行测试：uv run python -m scripts.check_mcp。详见 [Phase 10](docs/phases/phase-10.md)。

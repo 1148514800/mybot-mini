@@ -2,29 +2,28 @@
 
 ## 当前状态
 
-Phase09归档保持不变：phase-09→1ea3b6d77b50f6af2c3a82ad64bae42cebaeef0f，../mybot-mini-snapshots/phase-09.zip。本次完成评测诊断补充，非Phase10；不移动旧Tag/ZIP，不自动Push。用户明确授权真实API，本次仅做有界4任务复核。
+Phase10本地stdio MCP Tools已实现并专项验证，待提交/phase-10/ZIP独立归档。诊断补充ac9f823已独立提交，Phase1–9 Tag/ZIP不变。本阶段未调用真实LLM API，不进入Phase11，不自动Push。
 
-## 修改
+## 实现
 
-- evaluation/diagnostics.py：区分空输出/坏JSON/代码围栏/额外说明/结构或字段错误；证据按位置与缺失组诊断；文档字段/数组差异和大小写空白诊断。默认不保存实际值、原文、错误全文。
-- grader.py：格式失败review_findings=null，不伪装成真实漏报；汇总不可评分数量与有效评分分母，严格task_success未放宽。
-- artifacts.py、runner.py、CLI：显式--retain-artifacts目录才保存当前内置合成案例的最终回复与评分指定产物，单文件100KB、拒绝越界/符号链接/自定义案例，屏蔽配置Key/常见凭证；唯一目录+哈希，留存失败单独记录。runs继续忽略，默认不留正文。
-- trace.py记录安全finish_reason；runtime诊断显示整例75秒/模型请求60秒/ReAct16及输出上限信号。check_diagnostics.py新7项，统一回归接入；README与docs/evaluation-diagnostics.md说明。
+- mcp_client/config.py：默认off，明确command/args/allowlist/timeout，服务器数量/名称/类型校验，深复制配置；config.py与模板/本地补齐mcp段。
+- manager.py：官方SDK2.3.0 Client+stdio_client，mode=legacy握手2025-11-25，固定PROJECT_DIR cwd、stderr抑制，分页发现/过滤/全部验证后注册，owner Task持有AsyncExitStack。调用异常/超时/断连关闭全部MCP，重启恢复；正常/异常/取消清理，原生工具不覆盖。
+- adapter.py：mcp__server__tool唯一名称，保守Schema子集原样保留、jsonschema4.26完整参数验证；文本/structured_content/isError转换、媒体拒绝、12000字符显式截断。
+- app.py在Gateway同Task建立/释放连接；loop.py只增加MCP debug参数遮蔽。原ReAct/Planning/Session/Skills协议不变。demo_server用MCPServer提供无副作用add/echo。
+- pyproject/uv.lock锁定mcp/mcp-types2.3.0与jsonschema4.26；scripts/check_mcp.py、统一回归、教程/索引/README更新。
 
 ## 验证
 
-新7项、原33项评测及全部Agent回归通过，编译与归档安全测试通过。真实API复核：auto/guided×两复杂任务×1，15/40请求，无超时，29564总Token；报告runs/evals/live-20261014T160909-832f9c2c.json，opt-in产物runs/evals-artifacts/，均不提交。
+17项真实stdio子进程+模拟LLM测试通过：默认/配置/握手/list/allowlist/Schema/多个服务器/原生冲突/参数/文本结构化媒体长结果/isError/启动失败/握手与工具超时/断连/正常异常取消释放/owner Task/Gateway/Session配对/clear/Planning/Skills/Context/debug。全量回归与编译、归档安全检查通过；独立ZIP待完成。无真实LLM调用，无第三方Server安装。
 
-两组task0/2/clean2/2：Auto审查最终输出含分析文字而非纯JSON（留存复核为json_with_surrounding_text）；Guided命中全部4项标注，额外报告utils.greeting类型校验问题。Auto文档额外把未批准Python提案列为过期；Guided文档主要是“do not upload personal data”等同义改写与严格值不匹配。真实结果未伪造，不因此放宽评分。
+## 决策与局限
 
-## 局限
+可信程序有用户权限，不受workspace沙箱；只stdio/Tools/串行，无远程/自动重连/任意env/多轮输入。$ref/$defs/oneOf/pattern等未测试Schema明确拒绝，不静默删约束；未声称所有Provider支持。SDK接收端无本项目字节级内存沙箱，12000是适配器文本上限。外部错误正文/stderr为隐私不转发，安全诊断较粗。MCP启动失败阻止CLI启动但不改原生registry；调用失败关闭MCP后原生工具仍在。不要在wait_for子任务进入SDK上下文。
 
-诊断不是语义Judge，未标注位置/证据未匹配仍需人工确认。旧报告无原文/产物不能补恢复。仅Opt-in合成输出留存，凭证屏蔽不是通用隐私识别，不用于私人基准。报告version2加diagnostic_version1，格式失败不进入质量分母，旧分母不可直接混比。用户Live复核在提交前执行，报告git_commit为当时基线422831c。
+## 用户修改与环境
 
-## 环境与用户修改
-
-macOS、Python3.12+、uv。默认Offline；Live必须显式。app.py/USER.md改动保留不提交；不输出真实配置/Session，不保存工具转录/Skill正文。COPYFILE_DISABLE=1减少AppleDouble，归档排除。
+macOS、Python3.12+、uv。app.py三处用户注释保留，仅暂存MCP变更；USER.md改动不提交；真实配置/Session/runs不归档。ExFAT ._*尽量COPYFILE_DISABLE=1，归档排除，APFS独立验证。
 
 ## 下一步
 
-本次诊断补充完成；下一步由用户指定。不进入Phase10，不覆盖旧报告/Tag/ZIP。使用docs/evaluation-diagnostics.md中的可选留存命令复核后续结果。
+完成Phase10本地Commit/Tag/ZIP及独立还原验证，记录SHA；之后由用户指定。不要修改旧归档、不进入Phase11；学习见docs/phases/phase-10.md。

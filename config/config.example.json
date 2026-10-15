@@ -36,5 +36,24 @@
   "skills": {
     "enabled": false,
     "path": "./skills"
+  },
+  "mcp": {
+    "enabled": false,
+    "servers": {
+      "demo": {
+        "command": "uv",
+        "args": [
+          "run",
+          "python",
+          "-m",
+          "scripts.mcp_demo_server"
+        ],
+        "allowed_tools": [
+          "add",
+          "echo"
+        ],
+        "timeout_seconds": 10
+      }
+    }
   }
 }
