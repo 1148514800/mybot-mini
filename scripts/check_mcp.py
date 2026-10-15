@@ -68,10 +68,10 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         self.tools=build_default_tool_registry(self.workspace)
 
     def demo(self,allowed=('add','echo'),**overrides):
-        return dict(command=sys.executable,args=['-m','scripts.mcp_demo_server'],allowed_tools=list(allowed),timeout_seconds=5,**overrides)
+        return dict(command=sys.executable,args=['-m','scripts.mcp_demo_server'],allowed_tools=list(allowed),tool_policies={n:'allow' for n in allowed},timeout_seconds=5,**overrides)
 
     def fixture_config(self,allowed,mode='normal',timeout=3):
-        return replace(self.config,mcp_enabled=True,mcp_servers={'test':{'command':sys.executable,'args':[str(self.fixture),str(self.pid),mode],'allowed_tools':list(allowed),'timeout_seconds':timeout}})
+        return replace(self.config,mcp_enabled=True,mcp_servers={'test':{'command':sys.executable,'args':[str(self.fixture),str(self.pid),mode],'allowed_tools':list(allowed),'tool_policies':{n:'allow' for n in allowed},'timeout_seconds':timeout}})
 
     def alive(self):
         if not self.pid.exists():return False

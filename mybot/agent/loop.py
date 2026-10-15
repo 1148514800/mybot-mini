@@ -134,6 +134,7 @@ class AgentLoop:
                     for call in message.tool_calls
                 ],
             })
+            permission_denied = False
             for call in message.tool_calls:
                 if debug:
                     try:
@@ -145,7 +146,9 @@ class AgentLoop:
                     if call.function.name.startswith("mcp__"):
                         args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
-                result = await self._execute(call.function.name, call.function.arguments)
+                result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
+                          if permission_denied else await self._execute(call.function.name, call.function.arguments))
+                permission_denied = permission_denied or result.metadata.get("permission_denied",False)
                 if debug:
                     print(
                         f"[RESULT] success={result.success} "
@@ -154,6 +157,10 @@ class AgentLoop:
                 messages.append({
                     "role": "tool", "tool_call_id": call.id, "content": result.to_text(),
                 })
+
+            if permission_denied:
+                return self._finish_turn(messages, turn_start,
+                    "MCP 操作未获批准，本轮任务已停止；后续工具未执行。已执行的操作不会自动回滚。", "工具审批拒绝")
 
         return self._finish_turn(messages, turn_start, f"已达到单次任务的 {limit} 步上限。", "达到 ReAct 上限")
 

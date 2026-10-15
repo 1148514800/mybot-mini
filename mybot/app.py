@@ -6,6 +6,7 @@ from .config import GatewayConfig, build_client
 from .tools import build_default_tool_registry
 from .workspace import init_workspace
 from .mcp_client.manager import MCPClientManager
+from .mcp_client.approval import cli_approval
 
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
@@ -15,7 +16,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     tools = build_default_tool_registry(config.workspace)
     llm_client = None
     try:
-        async with MCPClientManager(config, tools):
+        async with MCPClientManager(config, tools, approval_provider=cli_approval):
             llm_client = build_client(config)
             agent = AgentLoop(
                 client=llm_client,

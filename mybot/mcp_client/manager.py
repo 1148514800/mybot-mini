@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+import json
+import time
+from collections import deque
 from contextlib import AsyncExitStack
 
 from mcp import Client
@@ -12,6 +15,7 @@ from ..config import PROJECT_DIR
 from ..tools import ToolResult
 from .adapter import MCPToolAdapter, DefinitionError
 from .config import validate_mcp
+from .approval import authorize
 
 
 def failure_kind(exc):
@@ -30,7 +34,7 @@ class MCPStartupError(RuntimeError):
 
 class MCPClientManager:
     """Own SDK contexts in the gateway task; adapters only issue tools/call."""
-    def __init__(self,config,registry):
+    def __init__(self,config,registry,approval_provider=None):
         self.enabled = config.mcp_enabled
         self.servers = validate_mcp(self.enabled,config.mcp_servers)
         self.registry = registry
@@ -38,6 +42,11 @@ class MCPClientManager:
         self.stack = None
         self.closed = False
         self.owner = None
+        self.approval_provider = approval_provider
+        self._adapters = {}
+        self._audit = deque(maxlen=256)
+        self._policies = {(server,name): value.get("tool_policies",{}).get(name,"confirm")
+                          for server,value in self.servers.items() for name in value["allowed_tools"]}
 
     async def __aenter__(self):
         if self.stack is not None or self.closed:
@@ -81,7 +90,11 @@ class MCPClientManager:
                 missing = set(config['allowed_tools'])-{a.remote_name for a in adapters.values() if a.server==name}
                 if missing:
                     raise ValueError('An allowed MCP tool is not advertised by the server')
-            for key in sorted(adapters):self.registry.register(adapters[key])
+            self._adapters = {(a.server,a.remote_name):a for a in adapters.values()}
+            for key in sorted(adapters):
+                adapter = adapters[key]
+                if self._policies[adapter.server,adapter.remote_name] != 'deny':
+                    self.registry.register(adapter)
             return self
         except BaseException as exc:
             await self.stack.aclose()
@@ -92,25 +105,68 @@ class MCPClientManager:
             reason = str(exc) if isinstance(exc,DefinitionError) else failure_kind(exc)
             raise MCPStartupError(f"MCP server '{name}': {stage} failed ({reason}); check trusted server configuration") from None
 
+    @property
+    def audit(self):
+        return [dict(event) for event in self._audit]
+
     async def call(self,server,name,arguments):
-        if asyncio.current_task() is not self.owner:
-            return ToolResult(success=False,error='MCP calls must run in the owning gateway task')
-        if self.closed or server not in self.clients or name not in self.servers[server]['allowed_tools']:
-            return ToolResult(success=False,error='MCP tool is unavailable or not allowed; restart gateway if disconnected')
+        started = time.perf_counter()
+        policy = self._policies.get((server,name),'deny')
+        event = dict(server=server if server in self.servers else '<unknown>',
+                     tool=name if (server,name) in self._policies else '<unknown>',
+                     policy=policy,decision='not_requested',executed=False,success=False,error=None)
         try:
-            result = await self.clients[server].call_tool(name,arguments,read_timeout_seconds=self.servers[server].get('timeout_seconds',10))
-            return MCPToolAdapter.result(result)
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
-            kind = failure_kind(exc)
-            # SDK context teardown must stay in the owner task, not a wait_for child.
-            self.closed = True
+            if asyncio.current_task() is not self.owner:
+                event['error'] = 'wrong_task'
+                return ToolResult(success=False,error='MCP calls must run in the owning gateway task')
+            if policy == 'deny':
+                event.update(decision='denied',error='policy_denied')
+                return ToolResult(success=False,error='policy_denied',metadata={'permission_denied':True})
+            if self.closed or server not in self.clients:
+                event['error'] = 'unavailable'
+                return ToolResult(success=False,error='MCP tool is unavailable; restart gateway if disconnected')
+            # Freeze the exact schema-validated payload BEFORE yielding to a provider.
             try:
-                await self.stack.aclose()
-            finally:
-                self.clients.clear()
-            return ToolResult(success=False,error=f'MCP call failed ({kind}); MCP connections closed, restart gateway',metadata={'mcp_failure':kind})
+                payload = json.dumps(arguments,allow_nan=False)
+                snapshot = json.loads(payload)
+                valid = isinstance(snapshot,dict) and self._adapters[server,name].validator.is_valid(snapshot)
+            except (ValueError,TypeError,KeyError,RecursionError):
+                valid = False
+            if not valid:
+                event['error'] = 'invalid_arguments'
+                return ToolResult(success=False,error='Invalid MCP arguments')
+            if policy == 'confirm':
+                approved,reason = await authorize(self.approval_provider,server,name,snapshot)
+                event['decision'] = 'approved' if approved else 'denied'
+                if not approved:
+                    event['error'] = reason
+                    return ToolResult(success=False,error=reason,metadata={'permission_denied':True})
+            else:
+                event['decision'] = 'allowed'
+            event['executed'] = True
+            try:
+                result = await self.clients[server].call_tool(name,json.loads(payload),read_timeout_seconds=self.servers[server].get('timeout_seconds',10))
+                result = MCPToolAdapter.result(result)
+                event.update(success=result.success,error=None if result.success else 'remote_result_rejected')
+                return result
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                kind = failure_kind(exc)
+                event['error'] = kind
+                # SDK context teardown stays in the owner task, never wait_for.
+                self.closed = True
+                try:
+                    await self.stack.aclose()
+                finally:
+                    self.clients.clear()
+                return ToolResult(success=False,error=f'MCP call failed ({kind}); MCP connections closed, restart gateway',metadata={'mcp_failure':kind})
+        except asyncio.CancelledError:
+            event['error'] = 'cancelled'
+            raise
+        finally:
+            event['duration_seconds'] = round(time.perf_counter()-started,6)
+            self._audit.append(event)
 
     async def __aexit__(self,*exc):
         if asyncio.current_task() is not self.owner:

@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–10 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–11 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -95,4 +95,7 @@ Evaluation 2.0 使用 JSON v2，分别报告 task_success、process_clean、inst
 
 ## 本地 MCP Tools
 
-mcp.enabled 默认 false。显式开启后，通过配置的可信stdio Server发现allowed_tools，并注册为mcp__demo__add等命名空间工具。command/args分别配置，cwd固定项目根，使用官方mcp2.3.0 SDK。启动程序具有用户权限，不继承内置文件工具的workspace隔离；本阶段仅验证无副作用add/echo。配置错误或调用异常会清理连接，断连后需重启，/clear只清会话。运行测试：uv run python -m scripts.check_mcp。详见 [Phase 10](docs/phases/phase-10.md)。
+mcp.enabled 默认 false。显式开启后，通过配置的可信stdio Server发现allowed_tools，并注册为mcp__demo__add等命名空间工具。command/args分别配置，cwd固定项目根，使用官方mcp2.3.0 SDK。启动程序具有用户权限，不继承内置文件工具的workspace隔离；Demo提供add/echo及仅进程内保存的save_note/read_note/delete_note。配置错误或调用异常会清理连接，断连后需重启，/clear只清会话。运行测试：uv run python -m scripts.check_mcp。详见 [Phase 10](docs/phases/phase-10.md)。
+
+
+Phase 11 增加本地 `tool_policies`：`allow` 直接执行、`confirm` 每次确认、`deny` 隐藏并拒绝执行。缺少策略默认 confirm；旧配置仍有效，但自动执行需显式 allow。模板中 add/echo/read_note 为 allow，save_note/delete_note 为 confirm。CLI 只接受本次小写 yes，非交互/缺少提供者/无法安全完整展示参数均拒绝；拒绝后停止本轮后续调用并维护 Session 配对。审计只保留限量内存元数据，Session 仍可能持久化原始参数。测试：`uv run python -m scripts.check_approval`。详见 [Phase 11](docs/phases/phase-11.md)。

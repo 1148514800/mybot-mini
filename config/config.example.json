@@ -50,9 +50,19 @@
         ],
         "allowed_tools": [
           "add",
-          "echo"
+          "echo",
+          "save_note",
+          "read_note",
+          "delete_note"
         ],
-        "timeout_seconds": 10
+        "timeout_seconds": 10,
+        "tool_policies": {
+          "add": "allow",
+          "echo": "allow",
+          "save_note": "confirm",
+          "read_note": "allow",
+          "delete_note": "confirm"
+        }
       }
     }
   }

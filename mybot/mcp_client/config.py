@@ -15,7 +15,7 @@ def validate_mcp(enabled, servers):
     for name, server in servers.items():
         if not isinstance(name,str) or len(name)>20 or not SERVER_NAME.fullmatch(name):
             raise ValueError('MCP server names: 1-20 lowercase letters/digits with single hyphens; start with a letter')
-        if not isinstance(server,dict) or set(server)-{'command','args','allowed_tools','timeout_seconds'}:
+        if not isinstance(server,dict) or set(server)-{'command','args','allowed_tools','timeout_seconds','tool_policies'}:
             raise ValueError('Invalid MCP server configuration fields')
         command = server.get('command')
         if not isinstance(command,str) or not command.strip() or '\x00' in command or len(command)>4096:
@@ -26,6 +26,10 @@ def validate_mcp(enabled, servers):
         allowed = server.get('allowed_tools')
         if not isinstance(allowed,list) or len(allowed)>64 or any(not isinstance(t,str) or not TOOL_NAME.fullmatch(t) for t in allowed) or len(set(allowed))!=len(allowed):
             raise ValueError('MCP allowed_tools must explicitly list unique valid tool names (maximum 64)')
+        policies = server.get('tool_policies',{})
+        if (not isinstance(policies,dict) or set(policies)-set(allowed)
+                or any(not isinstance(v,str) or v not in ('allow','confirm','deny') for v in policies.values())):
+            raise ValueError('MCP tool_policies must map allowed_tools names to allow, confirm or deny')
         timeout = server.get('timeout_seconds',10)
         if type(timeout) not in (int,float) or not math.isfinite(timeout) or not 0<timeout<=120:
             raise ValueError('MCP timeout_seconds must be finite, greater than 0 and at most 120')

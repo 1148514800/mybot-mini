@@ -68,6 +68,8 @@ def _mcp_value(key: str, default):
     section = _CONFIG.get("mcp", {})
     if not isinstance(section, dict):
         raise ValueError("mcp must be a JSON object")
+    if set(section) - {"enabled", "servers"}:
+        raise ValueError("Unknown mcp configuration fields")
     return section.get(key, default)
 
 
