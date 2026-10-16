@@ -68,7 +68,7 @@ def _mcp_value(key: str, default):
     section = _CONFIG.get("mcp", {})
     if not isinstance(section, dict):
         raise ValueError("mcp must be a JSON object")
-    if set(section) - {"enabled", "servers"}:
+    if set(section) - {"enabled", "servers", "discovery"}:
         raise ValueError("Unknown mcp configuration fields")
     return section.get(key, default)
 
@@ -82,6 +82,7 @@ def _resolve_path(raw_value) -> Path:
 class GatewayConfig:
     mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
     mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
+    mcp_discovery: dict = field(default_factory=lambda: _mcp_value("discovery", {}))
     skills_enabled: bool = field(default_factory=lambda: _skills_value("enabled", False))
     skills_path: Path | str = field(default_factory=lambda: _skills_value("path", "./skills"))
     context_enabled: bool = field(default_factory=lambda: _context_value("enabled", False))
@@ -107,6 +108,8 @@ class GatewayConfig:
     def __post_init__(self) -> None:
         from .mcp_client.config import validate_mcp
         self.mcp_servers = validate_mcp(self.mcp_enabled,self.mcp_servers)
+        from .mcp_client.discovery import validate_discovery
+        self.mcp_discovery = validate_discovery(self.mcp_discovery)
         if type(self.skills_enabled) is not bool:
             raise ValueError("skills.enabled must be a boolean")
         if not isinstance(self.skills_path, (str, Path)) or not str(self.skills_path).strip():

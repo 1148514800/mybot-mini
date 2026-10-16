@@ -102,6 +102,8 @@ class Plan:
 class PlanningTool(Tool):
     """Expose plan operations through the existing Tool/ToolRegistry protocol."""
 
+    provides_execution_evidence = False
+
     def __init__(self, plan: Plan, name: str):
         self.plan = plan
         self._name = name

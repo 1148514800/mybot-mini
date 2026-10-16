@@ -35,6 +35,8 @@ class ToolResult:
 
 
 class Tool(ABC):
+    provides_execution_evidence = True
+
     @property
     @abstractmethod
     def name(self) -> str: ...

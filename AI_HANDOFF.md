@@ -2,30 +2,32 @@
 
 ## 当前目标与状态
 
-Phase 14已完成、提交、独立归档与还原验证。annotated phase-14指向748e6c127cca87e05877f119be5685a01c879b9d；ZIP：../mybot-mini-snapshots/phase-14.zip（117条目）；学习还原：../mybot-mini-learning/phase-14。不进入Phase15。Phase13已在此前用户授权后Push，Phase14默认仅本地。保留用户mybot/app.py三处注释与workspace/instructions/USER.md未提交修改，不改真实config/Session，不访问真实LLM或第三方OAuth Provider。旧Phase1–13 Tag/ZIP不变。
+Phase15工具发现/渐进披露已实现，39项专项和编译通过，全量313项及归档安全检查通过，等待独立ZIP/还原验证；不进入Phase16。Phase14已按此前用户要求Push，Phase15默认仅本地。不改真实config/Session，不调用真实LLM/第三方服务，保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改。旧Phase1–14 Tag/ZIP不变。
 
 ## 实现与架构
 
-- credentials.validate_auth分派oauth_pkce到oauth_config.py；严格Issuer/Client/Scope/固定127.0.0.1 Callback，拒绝凭证和未知字段、stdio auth；none/bearer兼容。
-- oauth.py：MemoryTokenStorage预置issuer绑定公共Client，内存Token验证/引用释放；GuardedOAuth组合官方OAuthClientProvider.async_auth_flow，不自写PKCE/state/iss/兑换/刷新。OAuthBoundary分别白名单资源、PRM/AS发现及验证后同Issuer Origin端点；资源精确匹配，发现不带凭证。授权/兑换/刷新均检查resource，Scope须符合本地集合，不注册/不扩大。
-- 初始initialize仅允许一次401认证与一次重发；工具401/403在response hook到达SDK前失败，阻断重新授权/Step-Up/重放。失效Token先由SDK刷新；刷新失败/Scope扩大/无Refresh Token安全失败，不发送匿名工具。仅storage验收的当前Token可上网，防止SDK先赋context再验证的副作用。
-- SDK OAuth锁跨越响应等待，SDK退出先DELETE再取消POST；仅锁占用时的清理DELETE使用当前有效已验收快照直接发送一次，避免取消被拖至超时；不改Manager/owner Task，不自写刷新协议。
-- oauth_callback.py：先绑定再CLI确认/browser，单次结构化回调，SDK验证state/iss；重复/非法参数、路径/Host/编码/大小拒绝。120秒等待，监听关闭先取消处理Task再wait_closed（Python3.12）；安全页面无敏感值。
-- Phase13 ResponseLimitTransport不改，继续保护OAuth元数据/Token；拒绝它们伪装SSE及压缩，合法MCP SSE仍用SDK事件限制。SDK敏感异常统一安全类别，进程级quiet日志机制延续。
-- Demo为两个本机HTTP服务，预注册公共Client、显式同意、S256、Code一次性、受众/Scope/过期、Refresh轮换；内存五工具不写私人文件。Uvicorn显式ASGI3以正确处理绑定方法。
+- GatewayConfig新增严格mcp_discovery（默认off）；数量1–64、完整MCP Schema字符256–200000、搜索结果1–20。主模板默认关闭，config/mcp.discovery.example.json是35只读工具的MCP片段，需用户自行合入配置。
+- discovery.py：Catalog只索引已注册、allowlist且非deny的原Adapter；本地冻结目录/引用，无额外tools/list、tools/call、审批或模型请求。query1–256可打印字符，描述240字符，Unicode字面关键词按名称6/Server3/描述1计分，同分全名排序；返回有界元数据，无Schema或认证配置。
+- activate原子替换并去重；未知/原生/deny/数量/完整Schema超限保留旧集合。Schema长度按ensure_ascii=False的MCP定义数组计算，空0。激活不是审批，不执行业务。
+- 同一Registry新增可选visible_names投影，默认原注册顺序/全部定义不变，无删除重注册。Agent每次请求重算Schema并冻结名称frozenset，同批先激活后调用不可绕过，旧已暴露者即使同批被替换仍按原快照允许；下一请求才见新Schema。任务起始/finally、clear、异常/取消/上限均重置。
+- Tool提供显式provides_execution_evidence角色；Planning/Skill/Discovery标False，纯元操作绕过Plan门禁且不observe；真实业务沿原证据/审批。ContextManager不改，统计当次messages+tools、保留裁剪/预算失败/canonical Session。旧Evaluation显式禁MCP/Discovery隔离，评分器未改。
+- 35工具真实SDK stdio Demo覆盖项目/文档/代码/日程/数据，仅合成只读内存结果。compare_tool_discovery.py用固定LLM脚本+真实SDK验证三任务六组，默认仅stdout统计，不保存提示词/运行日志。
+- Manager/Adapter/Approval/传输/Bearer/OAuth/响应限制均未改，SDK/锁文件不变；没有第二个Registry、Agent循环、热更新或向量检索。
 
 ## 修改文件
 
-新增mcp_client/{oauth,oauth_config,oauth_callback}.py、scripts/{mcp_oauth_demo_server,check_mcp_oauth}.py、config/mcp.oauth.example.json、docs/phases/phase-14.md；修改credentials.py、transport.py、check_phase.py、README、阶段索引和本交接。Manager/Adapter/Approval/AgentLoop/Session/Planning/ResponseLimitTransport及依赖锁文件未改，MCP仍2.3.0。
+新增mcp_client/discovery.py、scripts/{mcp_catalog_demo_server,compare_tool_discovery,check_tool_discovery}.py、config/mcp.discovery.example.json、docs/phases/phase-15.md；修改GatewayConfig、Tool base/registry/skill、Agent loop/planning角色、Evaluation runner隔离、check_phase、主配置模板、README、阶段索引和本交接。app.py/USER.md修改不纳入提交。
 
-## 验证
+## 验证与测量
 
-52项专项（48 HTTP/SDK/Agent、4 Callback）通过。实际本地HTTP+官方Provider完成授权/刷新，浏览器仅替换UI入口，用HTTP真实同意/Callback；没有固定Provider返回值。state/iss/S256/Code复用/错误verifier/Resource受众、刷新轮换旧值失效、工具副作用后401/403仅发一次、审批真实状态、Plan/配对/clear、隐私、两Server隔离、三传输共存、接收限制/SSE/取消/内存释放/CLI均验证。Phase1–14全量274项unittest及Phase1/2原断言通过，mybot与scripts编译通过，归档安全集成检查通过。干净APFS独立worktree运行save_phase.sh 14成功，ZIP独立冻结安装/编译/274项回归及Phase1/2断言通过；从实际同级学习目录restore_phase.sh 14还原后再次uv sync --frozen、mybot/scripts编译及全部回归通过。还原目录仅清理文件头确认的118个AppleDouble元数据文件，ZIP无._*。ZIP Commit注释与Tag一致，SHA256：51eb5964e013c8f4d8dc8aa4aaf74ebda9170c5e3a8c0727e87f9d4e2d56c861。旧13个Tag对象和全部旧ZIP SHA256均验证不变；临时worktree已移除。
+39项专项通过（34项目录/Agent/Context/Evaluation/比较、5项HTTP/Bearer/OAuth/审批）；原Planning12项另行通过，mybot/scripts编译通过。包含35工具真实发现、目录过滤/排序/边界、激活原子性、精确字符边界、同批快照/下一轮真实调用、生命周期、Plan证据、Skills/DIRECT、Context计量/失败/请求裁剪与原文、审批真实状态及配对、三种HTTP认证兼容、旧Evaluation隔离和debug隐藏query。Phase1–15全量313项unittest及Phase1/2原断言通过；归档安全集成检查通过。独立ZIP/还原最终结果待更新。
+
+离线对比（Catalog35工具；eager初轮40/58457字符，progressive初轮7/2520字符）：项目任务eager2请求/累积116914，progressive4请求/13280；文档查询2/116914 vs4/13320；两类别3/175371 vs7/25680。全部合成任务成功，真实业务调用1/1/2一致；额外请求+2/+2/+4。平均Schema字符等细表见phase-15学习文档。实际Token/费用/缓存/真实模型能力未知，没有调用真实LLM。
 
 ## 限制
 
-预注册公共Client/内存Token；无动态注册/CIMD/Client Credentials/跨重启恢复/撤销/Secret Vault。严格同Issuer Origin、固定发现和精确resource拒绝部分合法跨域部署；SDK选Scope与本地集合不符就失败，包括自动offline_access。要求正expires_in；无公网TLS实测。回调仅当前macOS循环验证。SDK敏感Token/context对象不能打印；项目对象repr不含秘密、认证不注入模型/Session，但用户自行提供或Server反射的正文仍可能含秘密。TLS/OAuth不代表服务端行为可信；超时/认证失败可能已有副作用；失效凭证时清理DELETE不保证服务端Session删除。进程级日志抑制仍只支持当前单Gateway模式。Demo非生产身份服务。
+词法搜索无中英文同义词/语义能力；描述是不可信元数据，长度/控制字符处理不是通用秘密脱敏或提示注入沙箱。仍启动所有配置Server并完整发现，本地Schema内存不减少；无list_changed/懒启动/重连。只限制模型可见性，可信本地Registry/Manager调用仍沿原权限执行，不是新沙箱。Session可保存查询/激活调用记录，但不恢复active状态。静态Adapter定义/单Agent串行任务，运行中修改Schema不受支持。探索消耗原ReAct预算；专用Schema预算通过仍可能超过总Context预算。离线字符节省不等于真实费用/能力提升。
 
 ## 下一步与不要重复
 
-Phase14结束，等待用户下一项任务；不重复创建phase-14或覆盖ZIP，不改旧归档，不混入用户app.py/USER.md修改，不Push、不进入Phase15。学习见docs/phases/phase-14.md，历史通过Git查询。
+开发验证/离线对比/归档安全检查完成，已补archive-ready；提交阶段相关文件，在干净APFS worktree运行save_phase.sh 15，发布同级ZIP并restore_phase.sh 15后冻结安装/编译/全量回归及对比，更新本快照。不得改旧归档、混入用户修改、Push或进入Phase16。学习历史仅在docs/phases和Git。

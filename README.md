@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–14 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–15 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -108,3 +108,6 @@ Phase 13 增加可选 `auth={"type":"bearer_env","token_env":"MYBOT_MCP_TOKEN"}`
 
 
 Phase 14 增加预注册公共Client的 `oauth_pkce`：复用MCP SDK的发现、PKCE S256、state/iss验证、授权码交换及内存Token刷新/轮换。浏览器打开前先绑定固定回环Callback并要求CLI确认；工具401/403不重新授权或重放，Phase 11审批仍有效。MCP与OAuth端点分别白名单校验，保留Phase 13响应限制。教学环境：`uv run python -m scripts.mcp_oauth_demo_server`；本地配置片段为 `config/mcp.oauth.example.json`（仅mcp块，需合入真实配置）。专项：`uv run python -m scripts.check_mcp_oauth`。没有动态注册、CIMD或跨重启Token存储，重启需要重新授权。见 [Phase 14](docs/phases/phase-14.md)。
+
+
+Phase 15 增加可选 `mcp.discovery`（默认关闭）：本地Catalog复用已验证MCP定义，通过 `search_mcp_tools` 搜索、`activate_mcp_tools` 原子替换当前任务可见工具；完整Schema从下一次模型请求起暴露。同批激活不能立即调用新工具，审批权限不变；任务结束和/clear清空激活。35工具示例片段见 `config/mcp.discovery.example.json`，需自行合入本地配置。测试：`uv run python -m scripts.check_tool_discovery`；离线对比：`uv run python -m scripts.compare_tool_discovery`。Schema字符减少伴随额外模型轮次，未测真实Token/费用或模型能力，见 [Phase 15](docs/phases/phase-15.md)。

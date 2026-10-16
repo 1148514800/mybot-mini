@@ -125,7 +125,8 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
     base = base_config or GatewayConfig(session_persist=False, skills_enabled=False, context_enabled=True,
                                        context_max_chars=40000, context_tool_result_max_chars=1000,
                                        debug=False, max_react_steps=16)
-    common = replace(base, session_persist=False, debug=False)
+    common = replace(base, session_persist=False, debug=False, mcp_enabled=False, mcp_servers={},
+                     mcp_discovery={"enabled":False})
     budget = {'used': 0, 'maximum': max_requests}
     results = []
     client = None

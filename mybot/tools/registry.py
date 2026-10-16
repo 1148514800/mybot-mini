@@ -23,8 +23,20 @@ class ToolRegistry:
         tool = self._tools.get(name)
         return dict(tool.parameters) if tool else {}
 
-    def get_definitions(self) -> list[dict]:
-        return [tool.to_schema() for tool in self._tools.values()]
+    def get_tool(self, name: str) -> Tool | None:
+        return self._tools.get(name)
+
+    def iter_tools(self) -> tuple[Tool, ...]:
+        return tuple(self._tools.values())
+
+    def is_metadata(self, name: str) -> bool:
+        tool = self.get_tool(name)
+        return tool is not None and not getattr(tool, 'provides_execution_evidence', True)
+
+    def get_definitions(self, visible_names=None) -> list[dict]:
+        visible = None if visible_names is None else frozenset(visible_names)
+        return [tool.to_schema() for tool in self._tools.values()
+                if visible is None or tool.name in visible]
 
     async def execute(self, name: str, params: dict) -> ToolResult:
         tool = self._tools.get(name)

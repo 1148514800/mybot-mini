@@ -16,6 +16,7 @@ from .planning import Plan, PlanningTool
 from .context_manager import ContextManager, ContextBudgetError
 from ..skills.registry import SkillRegistry
 from ..tools.skill import SkillTool
+from ..mcp_client.discovery import MCPToolCatalog, DiscoveryTool
 
 
 class AgentLoop:
@@ -40,6 +41,13 @@ class AgentLoop:
         self.plan = Plan()
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
+        self.discovery = MCPToolCatalog(tools, config.mcp_discovery) if config.mcp_discovery['enabled'] else None
+        self._request_visible_names = frozenset()
+        if self.discovery is not None:
+            if any(self.tools.has_tool(name) for name in self.discovery.tool_names):
+                raise ValueError('MCP discovery tool name collision')
+            for name in sorted(self.discovery.tool_names):
+                self.tools.register(DiscoveryTool(self.discovery,name))
 
     async def run(self) -> None:
         while True:
@@ -61,6 +69,8 @@ class AgentLoop:
             print(f"\nBot: {reply}\n")
 
     async def handle_message(self, user_input: str) -> str:
+        if self.discovery is not None:self.discovery.reset()
+        self._request_visible_names = frozenset()
         self.plan.reset(user_input)
         self.context_clipped = False
         self.context_history_omitted = False
@@ -76,6 +86,9 @@ class AgentLoop:
             if report:
                 print(report)
             raise
+        finally:
+            if self.discovery is not None:self.discovery.reset()
+            self._request_visible_names = frozenset()
 
     async def _handle_message(self, user_input: str) -> str:
         if user_input.strip() == "/clear":
@@ -90,7 +103,10 @@ class AgentLoop:
         limit = max(1, min(self.config.max_react_steps, 30))
         debug = self.config.debug
         for step in range(1, limit + 1):
-            definitions = self.tools.get_definitions() or None
+            visible = self.discovery.visible_names() if self.discovery is not None else None
+            definitions = self.tools.get_definitions(visible) or None
+            # Freeze what THIS response may execute; activation cannot change it mid-batch.
+            self._request_visible_names = frozenset(item['function']['name'] for item in definitions or [])
             llm_messages, stats = self.context_manager.prepare(messages, definitions, turns, self.plan)
             self.context_clipped = self.context_clipped or stats["current_clipped"]
             self.context_history_omitted = self.context_history_omitted or stats.get("history_omitted", False)
@@ -143,7 +159,7 @@ class AgentLoop:
                         args = "<invalid JSON>"
                     if isinstance(args, dict) and "content" in args:
                         args["content"] = f"<{len(str(args['content']))} chars>"
-                    if call.function.name.startswith("mcp__"):
+                    if call.function.name.startswith("mcp__") or (self.discovery is not None and call.function.name in self.discovery.tool_names):
                         args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
@@ -177,12 +193,15 @@ class AgentLoop:
         return reply
 
     async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
-        if name in ("create_plan", "update_plan") or (self.skills is not None and name in ("load_skill", "read_skill_reference")):
+        if self.tools.is_metadata(name):
             return await self._execute_tool(name, raw_arguments)
         error = self.plan.execution_error()
         if error:
             return ToolResult(success=False, error=error)
-        result = await self._execute_tool(name, raw_arguments)
+        if self.discovery is not None and self.discovery.is_mcp(name) and name not in self._request_visible_names:
+            result = ToolResult(success=False,error='mcp_tool_not_visible_in_request; search and activate it, then wait for the next model request')
+        else:
+            result = await self._execute_tool(name, raw_arguments)
         self.plan.observe(name, result)
         return result
 

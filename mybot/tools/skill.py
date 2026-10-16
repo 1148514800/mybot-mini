@@ -5,6 +5,8 @@ from ..skills.registry import SkillRegistry
 
 
 class SkillTool(Tool):
+    provides_execution_evidence = False
+
     def __init__(self, registry: SkillRegistry, name: str):
         self.registry = registry
         self._name = name
