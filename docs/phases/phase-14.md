@@ -1,4 +1,4 @@
-# Phase 14：MCP OAuth Authorization Code + PKCE
+# Phase 14：MCP OAuth 2.1 Authorization Code + PKCE
 
 ## 1. 学习目标与前置阶段
 
@@ -7,6 +7,8 @@
 环境为macOS/zsh、Python 3.12+、uv。以uv.lock和本地SDK源码为事实来源：mcp/mcp-types仍为2.3.0，httpx2仍为2.13.1，没有升级依赖或MCP协议。本阶段不实现动态注册、CIMD、Client Credentials、磁盘Token持久化、跨重启恢复、自动Scope扩展，也不新增Agent执行框架。
 
 前置阅读：Phase 10的Manager/Adapter、Phase 11审批、Phase 12 owner Task/HTTPBoundary、Phase 13静态Bearer/ResponseLimitTransport。参考[MCP 2025-11-25授权规范](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)、[RFC 7636 PKCE](https://www.rfc-editor.org/rfc/rfc7636)、[RFC 8707 Resource Indicators](https://www.rfc-editor.org/rfc/rfc8707)。这里实现的是受本地信任策略限制的OAuth授权码+PKCE子集，不宣称完整通用OAuth/OIDC Client兼容性。
+
+这里采用MCP 2025-11-25所引用的OAuth 2.1授权约束：公共Client使用授权码+PKCE，不实现Implicit或密码授权。本文按项目实际支持的子集说明，不将选定规范版本解释为所有OAuth Provider的兼容性保证。
 
 ## 2. 四个角色、认证和授权
 
@@ -259,5 +261,7 @@ uv run python -m scripts.check_phase
 ```
 
 Tag为annotated phase-14，ZIP为../mybot-mini-snapshots/phase-14.zip，完整源码/锁文件/示例/学习资料/离线测试均包含。主工作区用户app.py、USER.md修改不纳入归档，真实config、Session、Callback数据和Token不提交。不移动旧Tag、不覆盖旧ZIP，不自动Push。归档和还原最终结果以AI_HANDOFF.md及Git记录为准。
+
+最终归档验证：annotated `phase-14` 指向 `748e6c127cca87e05877f119be5685a01c879b9d`，ZIP共117条目。APFS独立ZIP解压与实际学习目录还原均通过冻结安装、编译和274项回归（另含Phase1/2断言）；还原时确认并清理118个AppleDouble元数据文件，ZIP本身无此类条目。旧13个Tag对象及ZIP SHA256不变。
 
 archive-ready: true

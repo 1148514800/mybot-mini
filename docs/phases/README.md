@@ -17,7 +17,7 @@
 | 11 | MCP 工具权限与 Human-in-the-Loop | 已验证，独立归档 | `phase-11` | [phase-11.md](phase-11.md) |
 | 12 | MCP Streamable HTTP 与多传输管理 | 已验证，独立归档 | `phase-12` | [phase-12.md](phase-12.md) |
 | 13 | MCP Bearer认证与HTTP响应接收安全 | 已验证，独立归档 | `phase-13` | [phase-13.md](phase-13.md) |
-| 14 | MCP OAuth授权码与PKCE、内存刷新 | 已验证 | `phase-14` | [phase-14.md](phase-14.md) |
+| 14 | MCP OAuth授权码与PKCE、内存刷新 | 已验证，独立归档 | `phase-14` | [phase-14.md](phase-14.md) |
 
 ## 保存一个新阶段
 
