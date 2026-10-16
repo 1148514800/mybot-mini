@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–12 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–13 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -102,3 +102,6 @@ Phase 11 增加本地 `tool_policies`：`allow` 直接执行、`confirm` 每次�
 
 
 Phase 12 增加 `transport="streamable_http"` 与本地配置的 `url`；未写 transport 仍为 stdio。两种连接共用工具发现、Schema、Phase 11 审批、审计和原执行循环。HTTP 仅允许字面量回环 HTTP 或用户显式配置的可信 HTTPS，禁用环境代理/隐式认证，拒绝全部重定向，不自动重连或重试工具。先在另一终端运行 `uv run python -m scripts.mcp_http_demo_server --port 8765`；退出 mybot 不会终止该 Server。模板保留 MCP 关闭，同时示例两种 Server；启用后所有配置的 Server 都须可达，不用的条目应移除。测试：`uv run python -m scripts.check_mcp_http`。详见 [Phase 12](docs/phases/phase-12.md)。
+
+
+Phase 13 增加可选 `auth={"type":"bearer_env","token_env":"MYBOT_MCP_TOKEN"}`（仅HTTP；省略或none仍匿名）。只从显式环境变量读取连接快照，Token不写配置/工具参数；认证不会绕过Phase 11审批。HTTP非SSE响应在解码前限制为2MiB实际字节，不依赖Content-Length；拒绝压缩响应，SSE保留SDK单事件限制。教学认证Server：`MYBOT_MCP_DEMO_TOKEN=test-local-token uv run python -m scripts.mcp_http_demo_server --port 8765 --require-token-env MYBOT_MCP_DEMO_TOKEN`，仅用合成Token进行本地明文测试。专项：`uv run python -m scripts.check_mcp_auth`；完整说明、配置与限制见 [Phase 13](docs/phases/phase-13.md)。

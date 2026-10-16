@@ -4,6 +4,8 @@ from urllib.parse import urlsplit
 import re
 from copy import deepcopy
 
+from .credentials import validate_auth
+
 
 SERVER_NAME = re.compile(r'[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z')
 TOOL_NAME = re.compile(r'[A-Za-z0-9_-]{1,64}\Z')
@@ -23,7 +25,7 @@ def validate_mcp(enabled, servers):
         if transport not in ('stdio','streamable_http'):
             raise ValueError('MCP transport must be stdio or streamable_http')
         fields = {'transport','allowed_tools','timeout_seconds','tool_policies'}
-        fields |= {'command','args'} if transport == 'stdio' else {'url'}
+        fields |= {'command','args'} if transport == 'stdio' else {'url','auth'}
         if set(server)-fields:
             raise ValueError('Invalid MCP fields for selected transport')
         if transport == 'stdio':
@@ -35,6 +37,7 @@ def validate_mcp(enabled, servers):
                 raise ValueError('MCP args must be a list of bounded strings without NUL')
         else:
             validate_http_url(server.get('url'))
+            validate_auth(server.get('auth', {'type':'none'}))
         allowed = server.get('allowed_tools')
         if not isinstance(allowed,list) or len(allowed)>64 or any(not isinstance(t,str) or not TOOL_NAME.fullmatch(t) for t in allowed) or len(set(allowed))!=len(allowed):
             raise ValueError('MCP allowed_tools must explicitly list unique valid tool names (maximum 64)')

@@ -7,12 +7,9 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 from mcp.client.streamable_http import streamable_http_client
 
 from ..config import PROJECT_DIR
-
-
-class HTTPTransportError(RuntimeError):
-    def __init__(self, kind):
-        self.kind = kind
-        super().__init__(kind)
+from .credentials import load_credential
+from .errors import HTTPTransportError
+from .response_limit import ResponseLimitTransport
 
 
 @contextmanager
@@ -30,9 +27,10 @@ def quiet_wire_logs():
 
 
 class HTTPBoundary:
-    def __init__(self, url):
+    def __init__(self, url, credential=None):
         self.endpoint = httpx2.URL(url)
         self.get_started = False
+        self.credential = credential
 
     async def request(self, request):
         if request.url != self.endpoint:
@@ -44,11 +42,14 @@ class HTTPBoundary:
             self.get_started = True
         for key in ('authorization','proxy-authorization','cookie'):
             request.headers.pop(key,None)
+        request.headers['Accept-Encoding'] = 'identity'
+        if self.credential is not None:
+            self.credential.apply(request.headers)
 
     async def response(self, response):
         if 300 <= response.status_code < 400:
             raise HTTPTransportError('http_redirect_refused')
-        if response.status_code >= 400 and response.request.method == 'POST':
+        if response.status_code in (401,403) or (response.status_code >= 400 and response.request.method == 'POST'):
             raise HTTPTransportError(f'http_{response.status_code}' if response.status_code in (401,403,404,405) else 'http_server_error' if response.status_code >= 500 else 'http_request_rejected')
 
 
@@ -59,10 +60,11 @@ async def connect_transport(config, *, errlog):
         async with stdio_client(parameters,errlog=errlog) as streams:
             yield streams
         return
-    boundary = HTTPBoundary(config['url'])
+    credential = load_credential(config.get('auth', {'type':'none'}))
+    boundary = HTTPBoundary(config['url'],credential)
     timeout = config.get('timeout_seconds',10)
     http = httpx2.AsyncClient(trust_env=False,auth=None,follow_redirects=False,
-            timeout=httpx2.Timeout(timeout),transport=httpx2.AsyncHTTPTransport(trust_env=False,retries=0),
+            timeout=httpx2.Timeout(timeout),transport=ResponseLimitTransport(httpx2.AsyncHTTPTransport(trust_env=False,retries=0)),
             event_hooks={'request':[boundary.request],'response':[boundary.response]})
     with quiet_wire_logs():
         async with http:
