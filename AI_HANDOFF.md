@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase 13 实现与开发验证完成，等待当前提交的独立归档/还原验证；不要进入 Phase 14。Phase 1–12 旧 Tag/ZIP 不变。保留用户未提交的 mybot/app.py 三处注释与 workspace/instructions/USER.md 修改，不 Push、不调用真实 LLM API。
+Phase 13 已完成并独立归档/还原验证；不要进入 Phase 14。annotated phase-13 指向 4d335b909f8e82be56760a14d0e148b635c8e35a；实现提交 e67ad61，SSE验证强化提交4d335b9。ZIP：../mybot-mini-snapshots/phase-13.zip（110条目）。Phase 1–12 旧 Tag/ZIP 不变。保留用户未提交的 mybot/app.py 三处注释与 workspace/instructions/USER.md 修改，不 Push、不调用真实 LLM API。
 
 ## 已完成与架构
 
@@ -18,7 +18,7 @@ Phase 13 实现与开发验证完成，等待当前提交的独立归档/还原�
 
 ## 验证结果
 
-38项Phase13专项通过（32项HTTP认证/权限集成、6项接收流测试）。全量Phase1–13共222项unittest及Phase1/2断言通过；Phase12原28项真实HTTP回归也独立通过。增强故障响应使正文含合成Token后的401/403定向2项通过；超大SSE使用合法JSON-RPC结果，定向验证通过。编译通过（先只清理文件头确认的AppleDouble ._*）。归档安全集成检查通过，归档/还原最终结果随后更新。
+38项Phase13专项通过（32项HTTP认证/权限集成、6项接收流测试）。全量Phase1–13共222项unittest及Phase1/2断言通过；Phase12原28项真实HTTP回归也独立通过。增强故障响应使正文含合成Token后的401/403定向2项通过；超大SSE使用合法JSON-RPC结果，定向验证通过。编译通过（先只清理文件头确认的AppleDouble ._*）。归档安全集成检查通过；APFS干净独立worktree执行save_phase.sh 13成功，ZIP独立冻结安装/编译/222项回归及Phase1/2断言通过。restore_phase.sh 13还原到../mybot-mini-learning/phase-13后再次uv sync --frozen/编译/全部回归通过。ExFAT还原生成的AppleDouble使首次编译失败，确认文件头后清理155个元数据文件，再次编译与回归成功；ZIP本身不含._*。ZIP SHA256：b07790e0d9e342b5375ea906413fad0cbe6741cd65d86c765d6a5408dc540023；Commit注释与Tag一致，已核对旧12个Tag对象/ZIP SHA256未变。临时worktree已移除。
 
 测试覆盖实际SDK初始化/list/call、认证POST/GET/DELETE与快照、双Server凭证隔离、无配置/错误/缺失凭证、字段/Header安全、权限真实副作用、代理/netrc和DEBUG/审计/Schema/模型请求/持久化Session不注入Token、401/403/重定向不重试、超限启动/发现原子清理、字节边界/未知长度chunked/伪造长度/压缩拒绝、SSE正常及超大单事件、取消和Client释放、混合传输/前序stdio进程退出。伪造长度在底层合成Transport注入，真实HTTP framing无法合法传递虚报的小长度。无公网/第三方MCP/真实LLM调用。
 
@@ -28,4 +28,4 @@ Phase 13 实现与开发验证完成，等待当前提交的独立归档/还原�
 
 ## 下一步与不要重复
 
-完成本阶段提交后，从干净APFS独立worktree运行save_phase.sh 13，发布同级ZIP并执行restore_phase.sh 13及冻结安装/编译/全量回归；更新本快照记录确切Tag/Commit/路径。不要改用户修改、旧归档或真实配置/历史；不要覆盖已存在Tag/ZIP，不进入Phase14。学习资料仅见docs/phases/phase-13.md，历史通过Git查询。
+Phase13结束，等待用户指定下一项任务。不重复创建phase-13或覆盖ZIP，不改旧归档、用户修改、真实配置/历史，不进入Phase14，不Push。完整学习资料见docs/phases/phase-13.md，历史通过Git查询。

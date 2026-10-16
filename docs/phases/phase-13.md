@@ -180,4 +180,6 @@ uv run python -m scripts.check_phase
 
 Tag为唯一annotated phase-13，ZIP为 ../mybot-mini-snapshots/phase-13.zip。主工作区有用户未提交修改时，在APFS干净独立worktree归档确切提交；ZIP仅含已提交完整源码，不包含用户修改、真实config、Session、日志或凭证。旧Phase 1–12归档保持不变；不自动push。
 
+最终归档验证：annotated `phase-13` 指向 `4d335b909f8e82be56760a14d0e148b635c8e35a`，ZIP共110条目。APFS独立ZIP解压与实际同级学习目录还原均完成冻结安装、编译及222项回归（另含Phase1/2断言）；ExFAT还原首次编译受AppleDouble干扰，识别并清理元数据后通过。旧12个Tag对象及ZIP的SHA256保持不变。
+
 archive-ready: true
