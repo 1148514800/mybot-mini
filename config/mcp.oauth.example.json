@@ -1,0 +1,27 @@
+{
+  "mcp": {
+    "enabled": false,
+    "servers": {
+      "oauth-demo": {
+        "transport": "streamable_http",
+        "url": "http://127.0.0.1:8765/mcp",
+        "auth": {
+          "type": "oauth_pkce",
+          "issuer": "http://127.0.0.1:8766",
+          "client_id": "mybot-mini-local",
+          "scope": "notes:read notes:write",
+          "redirect_uri": "http://127.0.0.1:43117/oauth/callback"
+        },
+        "allowed_tools": ["add", "echo", "save_note", "read_note", "delete_note"],
+        "tool_policies": {
+          "add": "allow",
+          "echo": "allow",
+          "save_note": "confirm",
+          "read_note": "allow",
+          "delete_note": "confirm"
+        },
+        "timeout_seconds": 10
+      }
+    }
+  }
+}

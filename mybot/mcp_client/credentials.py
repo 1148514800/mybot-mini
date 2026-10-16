@@ -14,12 +14,16 @@ def validate_auth(auth):
     if not isinstance(auth, dict):
         raise ValueError('Invalid MCP auth configuration')
     kind = auth.get('type')
+    if kind == 'oauth_pkce':
+        from .oauth_config import validate_oauth
+        validate_oauth(auth)
+        return
     if kind == 'none' and set(auth) == {'type'}:
         return
     if (kind == 'bearer_env' and set(auth) == {'type', 'token_env'}
             and isinstance(auth['token_env'], str) and ENV_NAME.fullmatch(auth['token_env'])):
         return
-    raise ValueError('MCP auth requires none or bearer_env with a valid environment reference')
+    raise ValueError('MCP auth requires none, bearer_env or oauth_pkce with explicit local references')
 
 
 @dataclass(frozen=True)
@@ -34,6 +38,8 @@ def load_credential(auth):
     validate_auth(auth)
     if auth['type'] == 'none':
         return None
+    if auth['type'] != 'bearer_env':
+        raise HTTPTransportError('credential_provider_mismatch')
     token = os.environ.get(auth['token_env'])
     if token is None:
         raise HTTPTransportError('credential_missing')

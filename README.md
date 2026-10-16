@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–13 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–14 已分别归档；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
@@ -105,3 +105,6 @@ Phase 12 增加 `transport="streamable_http"` 与本地配置的 `url`；未写 
 
 
 Phase 13 增加可选 `auth={"type":"bearer_env","token_env":"MYBOT_MCP_TOKEN"}`（仅HTTP；省略或none仍匿名）。只从显式环境变量读取连接快照，Token不写配置/工具参数；认证不会绕过Phase 11审批。HTTP非SSE响应在解码前限制为2MiB实际字节，不依赖Content-Length；拒绝压缩响应，SSE保留SDK单事件限制。教学认证Server：`MYBOT_MCP_DEMO_TOKEN=test-local-token uv run python -m scripts.mcp_http_demo_server --port 8765 --require-token-env MYBOT_MCP_DEMO_TOKEN`，仅用合成Token进行本地明文测试。专项：`uv run python -m scripts.check_mcp_auth`；完整说明、配置与限制见 [Phase 13](docs/phases/phase-13.md)。
+
+
+Phase 14 增加预注册公共Client的 `oauth_pkce`：复用MCP SDK的发现、PKCE S256、state/iss验证、授权码交换及内存Token刷新/轮换。浏览器打开前先绑定固定回环Callback并要求CLI确认；工具401/403不重新授权或重放，Phase 11审批仍有效。MCP与OAuth端点分别白名单校验，保留Phase 13响应限制。教学环境：`uv run python -m scripts.mcp_oauth_demo_server`；本地配置片段为 `config/mcp.oauth.example.json`（仅mcp块，需合入真实配置）。专项：`uv run python -m scripts.check_mcp_oauth`。没有动态注册、CIMD或跨重启Token存储，重启需要重新授权。见 [Phase 14](docs/phases/phase-14.md)。

@@ -78,4 +78,7 @@ if Path(__file__).with_name("check_mcp_http.py").exists():
 if Path(__file__).with_name("check_mcp_auth.py").exists():
     from scripts.check_mcp_auth import check_mcp_auth
     check_mcp_auth()
+if Path(__file__).with_name("check_mcp_oauth.py").exists():
+    from scripts.check_mcp_oauth import check_mcp_oauth
+    check_mcp_oauth()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

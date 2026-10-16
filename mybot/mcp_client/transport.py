@@ -60,13 +60,24 @@ async def connect_transport(config, *, errlog):
         async with stdio_client(parameters,errlog=errlog) as streams:
             yield streams
         return
-    credential = load_credential(config.get('auth', {'type':'none'}))
-    boundary = HTTPBoundary(config['url'],credential)
+    auth_config = config.get('auth', {'type':'none'})
+    oauth = None
+    if auth_config['type'] == 'oauth_pkce':
+        from .oauth import OAuthBoundary, GuardedOAuth
+        boundary = OAuthBoundary(config['url'], auth_config)
+        oauth = GuardedOAuth(boundary)
+    else:
+        credential = load_credential(auth_config)
+        boundary = HTTPBoundary(config['url'],credential)
     timeout = config.get('timeout_seconds',10)
-    http = httpx2.AsyncClient(trust_env=False,auth=None,follow_redirects=False,
+    http = httpx2.AsyncClient(trust_env=False,auth=oauth,follow_redirects=False,
             timeout=httpx2.Timeout(timeout),transport=ResponseLimitTransport(httpx2.AsyncHTTPTransport(trust_env=False,retries=0)),
             event_hooks={'request':[boundary.request],'response':[boundary.response]})
-    with quiet_wire_logs():
-        async with http:
-            async with streamable_http_client(config['url'],http_client=http,terminate_on_close=True) as streams:
-                yield streams
+    try:
+        with quiet_wire_logs():
+            async with http:
+                async with streamable_http_client(config['url'],http_client=http,terminate_on_close=True) as streams:
+                    yield streams
+    finally:
+        if oauth is not None:
+            await boundary.close()
