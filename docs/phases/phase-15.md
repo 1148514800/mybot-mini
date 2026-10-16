@@ -245,4 +245,6 @@ uv run python -m scripts.compare_tool_discovery
 
 Tag为唯一annotated phase-15，ZIP位于../mybot-mini-snapshots/phase-15.zip，含完整源码、uv.lock、配置模板、35工具Demo和离线测试/学习资料；不含真实config、Session、Token、评测运行日志或用户未提交的app.py/USER.md。旧Phase1–14归档不变，不自动Push，不进入Phase16。
 
+实际归档验证：annotated `phase-15` 指向实现提交 `79b1d55d8c1ca31cc059402d8d971df6750201ab`；ZIP共123条目，SHA256为 `995431ec477bfd42b1a9fc3e0e2b7405d688d087f7931578296a254c00f3ef62`。干净APFS worktree通过save_phase.sh，ZIP独立解压后冻结安装、mybot编译、313项全量测试及Phase1/2原断言通过。restore_phase.sh 15还原到独立学习目录后，再次冻结安装、mybot/scripts编译、313项回归及六组离线对比均通过，所有统计与上表一致。ExFAT学习目录编译前只清理124个经文件头确认的AppleDouble；ZIP无此元数据。CRC、ZIP提交SHA、必要文件与用户文件已提交版本核对通过；旧14个Tag对象及ZIP哈希不变，临时worktree已移除。最终验证记录单独提交，不移动阶段Tag。
+
 archive-ready: true

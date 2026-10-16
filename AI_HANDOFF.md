@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase15工具发现/渐进披露已实现，39项专项和编译通过，全量313项及归档安全检查通过，等待独立ZIP/还原验证；不进入Phase16。Phase14已按此前用户要求Push，Phase15默认仅本地。不改真实config/Session，不调用真实LLM/第三方服务，保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改。旧Phase1–14 Tag/ZIP不变。
+Phase15工具发现/渐进披露已完成，39项专项、编译、全量313项及归档安全检查通过，独立ZIP安装/回归与还原验证通过；不进入Phase16。Phase14已按此前用户要求Push，Phase15默认仅本地。不改真实config/Session，不调用真实LLM/第三方服务，保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改。旧Phase1–14 Tag/ZIP不变。
 
 ## 实现与架构
 
@@ -20,7 +20,7 @@ Phase15工具发现/渐进披露已实现，39项专项和编译通过，全量3
 
 ## 验证与测量
 
-39项专项通过（34项目录/Agent/Context/Evaluation/比较、5项HTTP/Bearer/OAuth/审批）；原Planning12项另行通过，mybot/scripts编译通过。包含35工具真实发现、目录过滤/排序/边界、激活原子性、精确字符边界、同批快照/下一轮真实调用、生命周期、Plan证据、Skills/DIRECT、Context计量/失败/请求裁剪与原文、审批真实状态及配对、三种HTTP认证兼容、旧Evaluation隔离和debug隐藏query。Phase1–15全量313项unittest及Phase1/2原断言通过；归档安全集成检查通过。独立ZIP/还原最终结果待更新。
+39项专项通过（34项目录/Agent/Context/Evaluation/比较、5项HTTP/Bearer/OAuth/审批）；原Planning12项另行通过，mybot/scripts编译通过。包含35工具真实发现、目录过滤/排序/边界、激活原子性、精确字符边界、同批快照/下一轮真实调用、生命周期、Plan证据、Skills/DIRECT、Context计量/失败/请求裁剪与原文、审批真实状态及配对、三种HTTP认证兼容、旧Evaluation隔离和debug隐藏query。Phase1–15全量313项unittest及Phase1/2原断言通过；归档安全集成检查通过。干净APFS worktree保存的ZIP和独立学习目录均完成uv sync --frozen、编译及全量313项/Phase1–2原断言；还原目录另编译scripts并重跑六组对比，统计完全一致。ExFAT还原目录编译前清理124个经文件头确认的AppleDouble文件。
 
 离线对比（Catalog35工具；eager初轮40/58457字符，progressive初轮7/2520字符）：项目任务eager2请求/累积116914，progressive4请求/13280；文档查询2/116914 vs4/13320；两类别3/175371 vs7/25680。全部合成任务成功，真实业务调用1/1/2一致；额外请求+2/+2/+4。平均Schema字符等细表见phase-15学习文档。实际Token/费用/缓存/真实模型能力未知，没有调用真实LLM。
 
@@ -30,4 +30,6 @@ Phase15工具发现/渐进披露已实现，39项专项和编译通过，全量3
 
 ## 下一步与不要重复
 
-开发验证/离线对比/归档安全检查完成，已补archive-ready；提交阶段相关文件，在干净APFS worktree运行save_phase.sh 15，发布同级ZIP并restore_phase.sh 15后冻结安装/编译/全量回归及对比，更新本快照。不得改旧归档、混入用户修改、Push或进入Phase16。学习历史仅在docs/phases和Git。
+Phase15完成，等待用户下一项任务。不得改旧归档、混入用户修改、自动Push或进入Phase16。学习历史仅在docs/phases和Git。
+
+实现提交79b1d55d8c1ca31cc059402d8d971df6750201ab；唯一annotated phase-15指向该提交。../mybot-mini-snapshots/phase-15.zip共123条目，SHA256：995431ec477bfd42b1a9fc3e0e2b7405d688d087f7931578296a254c00f3ef62。CRC/提交SHA/必要文件/无AppleDouble检查通过；旧14个Tag对象及ZIP哈希完全不变。restore_phase.sh 15还原到../mybot-mini-learning/phase-15，临时APFS worktree已移除。主工作区仅保留用户app.py与USER.md未提交修改。最终验证记录另作文档提交，不移动阶段Tag。
