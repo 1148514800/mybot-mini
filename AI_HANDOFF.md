@@ -18,7 +18,7 @@ Phase 13 实现与开发验证完成，等待当前提交的独立归档/还原�
 
 ## 验证结果
 
-38项Phase13专项通过（32项HTTP认证/权限集成、6项接收流测试）。全量Phase1–13共222项unittest及Phase1/2断言通过；Phase12原28项真实HTTP回归也独立通过。增强故障响应使正文含合成Token后的401/403定向2项通过。编译通过（先只清理文件头确认的AppleDouble ._*）。归档安全集成检查通过，归档/还原最终结果随后更新。
+38项Phase13专项通过（32项HTTP认证/权限集成、6项接收流测试）。全量Phase1–13共222项unittest及Phase1/2断言通过；Phase12原28项真实HTTP回归也独立通过。增强故障响应使正文含合成Token后的401/403定向2项通过；超大SSE使用合法JSON-RPC结果，定向验证通过。编译通过（先只清理文件头确认的AppleDouble ._*）。归档安全集成检查通过，归档/还原最终结果随后更新。
 
 测试覆盖实际SDK初始化/list/call、认证POST/GET/DELETE与快照、双Server凭证隔离、无配置/错误/缺失凭证、字段/Header安全、权限真实副作用、代理/netrc和DEBUG/审计/Schema/模型请求/持久化Session不注入Token、401/403/重定向不重试、超限启动/发现原子清理、字节边界/未知长度chunked/伪造长度/压缩拒绝、SSE正常及超大单事件、取消和Client释放、混合传输/前序stdio进程退出。伪造长度在底层合成Transport注入，真实HTTP framing无法合法传递虚报的小长度。无公网/第三方MCP/真实LLM调用。
 

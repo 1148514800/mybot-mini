@@ -145,7 +145,7 @@ uv run python -m compileall -q mybot
 - 正确合成凭证完成 initialize/list/add/echo；追踪证实 POST/GET/DELETE 均认证且使用 identity，正文不含凭证。错误/无凭证401，initialize只发送一次。
 - 认证后拒绝 save_note，追踪无写调用，read_note 无笔记；批准后 read_note 读到实际内容；deny 不注册且 Manager 也拒绝。
 - tools/call 注入401/403，各只发一次，报告安全类别及副作用未知，AsyncClient.is_closed 为真。初始化/发现超限同样无半注册。
-- 有声明大长度、无 Content-Length 的真实 chunked JSON 均被拒绝；真实gzip在解压前拒绝。小型 JSON 正常、未压缩 SSE 正常，SDK超大事件继续失败。
+- 有声明大长度、无 Content-Length 的真实 chunked JSON 均被拒绝；真实gzip在解压前拒绝。小型 JSON 正常、未压缩 SSE 正常，包含合法JSON-RPC结果的SDK超大事件继续因单事件保护而失败。
 - 伪造 Content-Length 通过合成 AsyncBaseTransport 注入：底层 HTTP/1.1 栈会按 framing 处理较小声明或拒绝额外字节，因此不能要求 Uvicorn 发送一个违反长度声明的合法响应来证明计数。独立注入证明 wrapper 不相信长度：64KiB块只交付32块，第33块报错，第34块起不读，stream立即关闭。没有把协议 framing 拒绝冒充接收上限成功。
 - 两个真实 Server 同时连接，有认证者得到显式凭证，无认证者没有 Authorization。保留 stdio/HTTP 混合管理；后一个 Server 缺凭证时前一个 stdio进程已退出。
 - DEBUG日志、审计、模型请求、工具Schema、内存Session和临时持久化Session均未注入凭证；环境代理/netrc不改变请求认证。HTTP故障正文和重定向均不回显凭证。

@@ -38,7 +38,9 @@ FAULT = '''
         if mode=='compressed':
             headers.append((b'content-encoding',b'gzip'));data=gzip.compress(data)
         if mode=='sse-large':
-            headers=[(b'content-type',b'text/event-stream')];data=b'event: message\\ndata: '+data+b'\\n\\n'
+            headers=[(b'content-type',b'text/event-stream')]
+            data=json.dumps({'jsonrpc':'2.0','id':parsed['id'],'result':{'content':[{'type':'text','text':'X'*(3*1024*1024)}]}}).encode()
+            data=b'event: message\\ndata: '+data+b'\\n\\n'
         await send({'type':'http.response.start','status':200,'headers':headers})
         for offset in range(0,len(data),16384):
             await send({'type':'http.response.body','body':data[offset:offset+16384],'more_body':True})
