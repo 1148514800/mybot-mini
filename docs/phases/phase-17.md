@@ -228,7 +228,7 @@ uv run python -m scripts.evaluate_tool_agent --modes eager,progressive_hybrid,ad
 
 ## 16. 测试与限制
 
-新增30项专项覆盖配置边界、small_eager门槛/Schema/Context、排名跳过、中文/混合/多工具、空目录/零命中/超长输入、权限/原子性/迟注册、canonical历史和Plan不变、首轮完整Schema及直接调用、同批快照/手动替换一次路由、任务/clear/异常/超时/取消/ReAct清理、真实审批/真实状态、计划证据、真实MCP取消后子进程清理、三模式指标、Gold Spy、强制fallback、隔离和Live控制回归。原39 Discovery、17 Retrieval和24 Harness专项继续通过；最终Phase1–17全量384项unittest、Phase1/2原断言、归档安全检查、mybot/scripts编译均通过，另有中断预算定向1项通过；独立归档结果完成后补记。
+新增30项专项覆盖配置边界、small_eager门槛/Schema/Context、排名跳过、中文/混合/多工具、空目录/零命中/超长输入、权限/原子性/迟注册、canonical历史和Plan不变、首轮完整Schema及直接调用、同批快照/手动替换一次路由、任务/clear/异常/超时/取消/ReAct清理、真实审批/真实状态、计划证据、真实MCP取消后子进程清理、三模式指标、Gold Spy、强制fallback、隔离和Live控制回归。原39 Discovery、17 Retrieval和24 Harness专项继续通过；最终Phase1–17全量384项unittest、Phase1/2原断言、归档安全检查、mybot/scripts编译均通过，另有中断预算定向1项通过；独立归档与还原均通过，详见末节。
 
 限制：词法/小词典对措辞和领域敏感，初选覆盖不保证一般任务正确；未匹配任务也可能选到有共同词的无关工具。贪心不保证全局最优组合，也不会按未来结果重选；后续手动激活仍可能触发总Context预算失败。仍启动/发现所有配置Server，没减少本地Schema缓存。固定模拟器不是自主模型，当前合成集很小，最终ID/数值rubric不是通用事实校验。真实Token、缓存、费用、延迟和模型选择表现未知。
 
@@ -251,5 +251,7 @@ uv run python -m scripts.compare_adaptive_routing
 ```
 
 完整源码、uv.lock、模板、案例、学习资料进入ZIP；真实配置、凭证、Session和报告不进入。旧Phase1–16 Tag/ZIP保持不变，不Push、不运行Live、不进入Phase18。ExFAT可能产生AppleDouble，只清理经文件头确认的._*，COPYFILE_DISABLE=1减少元数据但不承诺杜绝；归档不包含它们。
+
+实际归档验证：唯一annotated `phase-17` 指向实现提交 `531bdc1b634e40a4057f40ffe03e2344e2858c3f`；ZIP位于`../mybot-mini-snapshots/phase-17.zip`，共139条目，SHA256为 `0544447c5990589731fa99a13c271cb6a7c45937437e3abb4644c84e84e133f8`。干净APFS worktree保存时独立冻结安装、mybot编译、384项及Phase1/2原断言通过；restore_phase.sh 17还原到独立学习目录后，再次冻结安装、mybot/scripts编译、384项及原断言通过。旧排名、旧Agent默认模式、新三模式报告除本地计时与Git元数据外所有字段完全一致。还原编译前清理140个经文件头确认的AppleDouble。CRC/ZIP提交SHA/必要文件/无元数据及用户文件的已提交版本均已核对；旧16个Tag对象与ZIP哈希不变，临时worktree已移除。最终记录另作文档提交，不移动阶段Tag。未Push、未运行Live或第三方MCP/OAuth、未进入Phase18。
 
 archive-ready: true

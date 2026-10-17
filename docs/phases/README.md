@@ -20,7 +20,7 @@
 | 14 | MCP OAuth授权码与PKCE、内存刷新 | 已验证，独立归档 | `phase-14` | [phase-14.md](phase-14.md) |
 | 15 | MCP工具目录、检索与渐进披露 | 已验证，独立归档 | `phase-15` | [phase-15.md](phase-15.md) |
 | 16 | BM25/双语检索与独立Agent评测Harness | 已验证，独立归档 | `phase-16` | [phase-16.md](phase-16.md) |
-| 17 | 首轮自适应工具路由、两层预算与隔离评测 | 已验证，待独立归档 | `phase-17`（待创建） | [phase-17.md](phase-17.md) |
+| 17 | 首轮自适应工具路由、两层预算与隔离评测 | 已验证，独立归档 | `phase-17` | [phase-17.md](phase-17.md) |
 
 ## 保存一个新阶段
 

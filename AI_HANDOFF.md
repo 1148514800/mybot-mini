@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase17 Adaptive Tool Routing已实现，30项专项、原39 Discovery/17 Retrieval/24 Harness通过；全量最终384项、Phase1/2原断言及归档安全检查通过，尚未创建phase-17 Tag/ZIP。不运行Live、不Push、不进入Phase18。Phase16已按用户要求Push（main f5e7fad/phase-16）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改；旧16阶段Tag/ZIP身份已保存供核对。
+Phase17 Adaptive Tool Routing已实现，30项专项、原39 Discovery/17 Retrieval/24 Harness通过；全量最终384项、Phase1/2原断言及归档安全检查通过，phase-17 Tag/ZIP及独立还原验证完成。不运行Live、不Push、不进入Phase18。Phase16已按用户要求Push（main f5e7fad/phase-16）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改；旧16阶段Tag对象/ZIP哈希已核对不变。
 
 ## 实现与架构
 
@@ -23,6 +23,10 @@ Phase17 Adaptive Tool Routing已实现，30项专项、原39 Discovery/17 Retrie
 
 本轮同代码12例三模式全部12成功、36完整样本、12配对：eager25请求/1461425 Schema字符，progressive_hybrid51/175363，adaptive_hybrid25/176425；业务调用均13。Adaptive自动预选合计31，10个正例Hit/Recall均1，Direct13，模型探索0，Router初始fallback1。无匹配agent-11误选1个无关候选但无业务执行；简单问答agent-10空集合fallback但模型不探索。Adaptive比Progressive多1062 Schema字符，不能宣称各指标都赢。旧检索报告逐项一致，旧默认Agent统计重新运行仍25/49/51请求、成功12/11/12。Token/费用/Live能力未知；无真实LLM或第三方MCP。计时和全部分组见phase-17文档。
 
+## 归档与还原
+
+实现提交531bdc1b634e40a4057f40ffe03e2344e2858c3f，唯一annotated phase-17指向该提交；../mybot-mini-snapshots/phase-17.zip共139条目，SHA256 0544447c5990589731fa99a13c271cb6a7c45937437e3abb4644c84e84e133f8。APFS独立ZIP与../mybot-mini-learning/phase-17还原目录均通过冻结安装/编译/384项及原断言；还原另编译scripts并重跑旧检索、旧默认Agent及新三模式。除计时/Git元数据外全部报告字段一致；清理140个确认AppleDouble。CRC/提交SHA/必要文件/无元数据/用户文件已提交版本核对通过；旧16个Tag/ZIP不变，临时worktree已移除。最终记录另作文档提交，不移动Tag。
+
 ## 限制与下一步
 
-贪心/词法/小词典不是语义置信度，普通措辞可漏选多工具、无匹配任务可误选；固定脚本不是真实模型，ID评分不通用。预算预检查只保证首轮，后续仍可能超总Context；静态目录/全Server启动不变。Manager旧审计窗口256，饱和时Direct保守null。开发验证和内容审查已完成，补archive-ready并提交阶段文件；干净APFS worktree保存17，发布ZIP/核对旧16归档，独立restore冻结安装/编译/全量及旧新三种对比后补最终文档记录。不覆盖用户修改/旧Tag ZIP、不Push、不进入Phase18。
+贪心/词法/小词典不是语义置信度，普通措辞可漏选多工具、无匹配任务可误选；固定脚本不是真实模型，ID评分不通用。预算预检查只保证首轮，后续仍可能超总Context；静态目录/全Server启动不变。Manager旧审计窗口256，饱和时Direct保守null。阶段完成，等待用户下一项任务；主工作区仅保留用户app.py/USER.md未提交修改。学习历史只在docs/phases和Git。不覆盖用户修改/旧Tag ZIP、不Push、不进入Phase18。
