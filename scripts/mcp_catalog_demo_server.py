@@ -72,6 +72,12 @@ async def calling(ctx, params):
         result={'project':arguments['project'],'tasks':records}
     elif params.name == 'search_documents':
         result={'query':arguments['query'],'documents':[{'id':'DOC-1','title':'Architecture handbook'}]}
+    elif params.name == 'list_code_modules':
+        result={'module':arguments['module'],'modules':[{'id':'CODE-1','name':'core'}]}
+    elif params.name == 'list_calendar_events':
+        result={'day':arguments['day'],'events':[{'id':'EVENT-1','title':'Synthetic review'}]}
+    elif params.name == 'get_dataset_stats':
+        result={'dataset':arguments['dataset'],'id':'DATA-1','rows':42}
     else:
         result={'tool':params.name,'synthetic':True,'records':[{'id':'SYNTHETIC-1','title':'Teaching record'}]}
     return types.CallToolResult(content=[types.TextContent(text=json.dumps(result))])

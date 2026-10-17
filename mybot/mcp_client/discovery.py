@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 from ..tools import Tool, ToolResult
 from .adapter import MCPToolAdapter
+from .retrieval import BM25Index
 
 DEFAULT_DISCOVERY = {'enabled':False, 'max_active_tools':4,
                      'max_active_schema_chars':12000, 'search_limit':5}
@@ -13,9 +14,11 @@ MAX_DESCRIPTION_CHARS = 240
 
 
 def validate_discovery(value):
-    if not isinstance(value, dict) or set(value) - set(DEFAULT_DISCOVERY):
+    if not isinstance(value, dict) or set(value) - (set(DEFAULT_DISCOVERY) | {"retrieval_mode"}):
         raise ValueError('Invalid mcp.discovery fields')
     config = DEFAULT_DISCOVERY | value
+    if not isinstance(config.get("retrieval_mode", "literal"), str) or config.get("retrieval_mode", "literal") not in ("literal", "bm25", "hybrid"):
+        raise ValueError("mcp.discovery.retrieval_mode must be literal, bm25 or hybrid")
     if type(config['enabled']) is not bool:
         raise ValueError('mcp.discovery.enabled must be a boolean')
     for key, lower, upper in (('max_active_tools',1,64), ('max_active_schema_chars',256,200000), ('search_limit',1,20)):
@@ -61,6 +64,7 @@ class MCPToolCatalog:
             self.entries[tool.name] = CatalogEntry(tool.name, tool.server, description, tool,
                 len(json.dumps(tool.to_schema(), ensure_ascii=False)), terms(tool.name), terms(tool.server), terms(description))
         self.entries = dict(sorted(self.entries.items()))
+        self.index = BM25Index({name:(entry.name,entry.server,entry.description) for name,entry in self.entries.items()})
 
     def reset(self):self.active = frozenset()
 
@@ -86,8 +90,11 @@ class MCPToolCatalog:
             score = (6*len(keywords & entry.name_terms) + 3*len(keywords & entry.server_terms)
                      + len(keywords & entry.description_terms))
             if score:ranked.append((-score,entry.name,entry))
+        mode = self.config.get("retrieval_mode", "literal")
+        names = ([name for _,name,_ in sorted(ranked)] if mode == "literal"
+                 else self.index.rank(query, hybrid=mode == "hybrid"))
         matches = [{'name':entry.name,'server':entry.server,'description':entry.description}
-                   for _,_,entry in sorted(ranked)[:self.config['search_limit']]]
+                   for entry in (self.entries[name] for name in names[:self.config['search_limit']])]
         result = {'matches':matches}
         if not matches:result['message'] = 'No matching MCP tools.'
         return ToolResult(success=True,output=json.dumps(result,ensure_ascii=False))

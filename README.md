@@ -111,3 +111,16 @@ Phase 14 增加预注册公共Client的 `oauth_pkce`：复用MCP SDK的发现、
 
 
 Phase 15 增加可选 `mcp.discovery`（默认关闭）：本地Catalog复用已验证MCP定义，通过 `search_mcp_tools` 搜索、`activate_mcp_tools` 原子替换当前任务可见工具；完整Schema从下一次模型请求起暴露。同批激活不能立即调用新工具，审批权限不变；任务结束和/clear清空激活。35工具示例片段见 `config/mcp.discovery.example.json`，需自行合入本地配置。测试：`uv run python -m scripts.check_tool_discovery`；离线对比：`uv run python -m scripts.compare_tool_discovery`。Schema字符减少伴随额外模型轮次，未测真实Token/费用或模型能力，见 [Phase 15](docs/phases/phase-15.md)。
+
+## 工具检索与合成 Agent 评测（Phase 16）
+
+`mcp.discovery.retrieval_mode` 可选 `literal`（默认，兼容 Phase 15）、`bm25`、`hybrid`。Hybrid 是固定双语词典加 BM25，不使用 Embedding、模型翻译或额外网络请求；不会改变工具权限和审批。
+
+```bash
+uv run python -m scripts.compare_tool_retrieval
+uv run python -m scripts.evaluate_tool_agent
+uv run python -m scripts.check_tool_retrieval
+uv run python -m scripts.check_tool_agent_eval
+```
+
+以上默认离线，排名指标与 Agent 任务成功率独立报告。新 Harness 的 Live 必须同时显式指定 `--live --confirm-api-cost`，只连接内置合成 stdio Demo，关闭 Session 持久化、Skills、DEBUG和SDK重试；受请求数、案例数、重复次数、输出Token及总时长限制。开发验证未运行真实 LLM API。完整算法、实测结果、预算参数、Usage/缓存/估价限制见 [Phase 16](docs/phases/phase-16.md)。

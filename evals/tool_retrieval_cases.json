@@ -1,0 +1,465 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "case_id": "retrieval-01",
+      "query": "list pending project tasks",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "category": "direct",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-02",
+      "query": "architecture documents search",
+      "relevant_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "category": "direct",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-03",
+      "query": "list code modules",
+      "relevant_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "category": "direct",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-04",
+      "query": "get code symbol",
+      "relevant_tools": [
+        "mcp__catalog__get_code_symbol"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_code_symbol"
+      ],
+      "category": "similar_names",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-05",
+      "query": "get dataset stats",
+      "relevant_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "category": "direct",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-06",
+      "query": "list calendar events",
+      "relevant_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "category": "direct",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-07",
+      "query": "get document outline",
+      "relevant_tools": [
+        "mcp__catalog__get_document_outline"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_document_outline"
+      ],
+      "category": "similar_names",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-08",
+      "query": "get project task",
+      "relevant_tools": [
+        "mcp__catalog__get_project_task"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_project_task"
+      ],
+      "category": "similar_names",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-09",
+      "query": "list project tasks and search documents",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "category": "multi",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-10",
+      "query": "inspect code imports",
+      "relevant_tools": [
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "category": "direct",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-11",
+      "query": "查询项目未完成任务",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "category": "bilingual",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-12",
+      "query": "搜索架构文档",
+      "relevant_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "category": "bilingual",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-13",
+      "query": "代码模块",
+      "relevant_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "category": "bilingual",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-14",
+      "query": "查询日程",
+      "relevant_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "category": "bilingual",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-15",
+      "query": "数据统计",
+      "relevant_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "category": "bilingual",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-16",
+      "query": "查找项目待办",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_project_tasks"
+      ],
+      "category": "multi",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-17",
+      "query": "项目任务和文档搜索",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "category": "multi",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-18",
+      "query": "project 未完成 tasks",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "category": "mixed",
+      "language": "mixed",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-19",
+      "query": "搜索 architecture documents",
+      "relevant_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "category": "mixed",
+      "language": "mixed",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-20",
+      "query": "code 模块 list",
+      "relevant_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "category": "mixed",
+      "language": "mixed",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-21",
+      "query": "calendar 日程 events",
+      "relevant_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "category": "mixed",
+      "language": "mixed",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-22",
+      "query": "dataset 统计",
+      "relevant_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "category": "mixed",
+      "language": "mixed",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-23",
+      "query": "unfinished project task",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "category": "synonym",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-24",
+      "query": "lookup document",
+      "relevant_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "category": "synonym",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-25",
+      "query": "agenda events",
+      "relevant_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "category": "synonym",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-26",
+      "query": "quantum teleportation",
+      "relevant_tools": [],
+      "acceptable_tools": [],
+      "category": "no_tool",
+      "language": "en",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-27",
+      "query": "购买机票",
+      "relevant_tools": [],
+      "acceptable_tools": [],
+      "category": "no_tool",
+      "language": "zh",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-28",
+      "query": "天气 forecast",
+      "relevant_tools": [],
+      "acceptable_tools": [],
+      "category": "no_tool",
+      "language": "mixed",
+      "split": "design"
+    },
+    {
+      "case_id": "retrieval-29",
+      "query": "help",
+      "relevant_tools": [],
+      "acceptable_tools": [],
+      "category": "ambiguous",
+      "language": "en",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-30",
+      "query": "尚未结束的工作事项",
+      "relevant_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "category": "paraphrase",
+      "language": "zh",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-31",
+      "query": "bibliographic handbook lookup",
+      "relevant_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "category": "paraphrase",
+      "language": "en",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-32",
+      "query": "imports dependency inventory",
+      "relevant_tools": [
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "category": "paraphrase",
+      "language": "en",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-33",
+      "query": "找一下模块有哪些",
+      "relevant_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "category": "paraphrase",
+      "language": "zh",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-34",
+      "query": "每日安排",
+      "relevant_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "category": "paraphrase",
+      "language": "zh",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-35",
+      "query": "schema columns",
+      "relevant_tools": [
+        "mcp__catalog__describe_dataset_schema",
+        "mcp__catalog__list_dataset_columns"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__describe_dataset_schema",
+        "mcp__catalog__list_dataset_columns"
+      ],
+      "category": "multi",
+      "language": "en",
+      "split": "heldout"
+    },
+    {
+      "case_id": "retrieval-36",
+      "query": "paper repository",
+      "relevant_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "category": "ambiguous",
+      "language": "en",
+      "split": "heldout"
+    }
+  ]
+}

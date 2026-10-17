@@ -2,34 +2,28 @@
 
 ## 当前目标与状态
 
-Phase15工具发现/渐进披露已完成，39项专项、编译、全量313项及归档安全检查通过，独立ZIP安装/回归与还原验证通过；不进入Phase16。Phase14已按此前用户要求Push，Phase15默认仅本地。不改真实config/Session，不调用真实LLM/第三方服务，保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改。旧Phase1–14 Tag/ZIP不变。
+Phase16检索与合成Agent Harness已实现：17项检索专项、24项Harness专项及编译通过，Phase15原39项通过；全量354项与Phase1/2原断言、归档安全检查通过，尚未创建phase-16 Tag/ZIP。不运行Live、不Push、不进入Phase17。Phase15已按用户要求推送（main 05c4310/phase-15）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改，不混入阶段提交。
 
 ## 实现与架构
 
-- GatewayConfig新增严格mcp_discovery（默认off）；数量1–64、完整MCP Schema字符256–200000、搜索结果1–20。主模板默认关闭，config/mcp.discovery.example.json是35只读工具的MCP片段，需用户自行合入配置。
-- discovery.py：Catalog只索引已注册、allowlist且非deny的原Adapter；本地冻结目录/引用，无额外tools/list、tools/call、审批或模型请求。query1–256可打印字符，描述240字符，Unicode字面关键词按名称6/Server3/描述1计分，同分全名排序；返回有界元数据，无Schema或认证配置。
-- activate原子替换并去重；未知/原生/deny/数量/完整Schema超限保留旧集合。Schema长度按ensure_ascii=False的MCP定义数组计算，空0。激活不是审批，不执行业务。
-- 同一Registry新增可选visible_names投影，默认原注册顺序/全部定义不变，无删除重注册。Agent每次请求重算Schema并冻结名称frozenset，同批先激活后调用不可绕过，旧已暴露者即使同批被替换仍按原快照允许；下一请求才见新Schema。任务起始/finally、clear、异常/取消/上限均重置。
-- Tool提供显式provides_execution_evidence角色；Planning/Skill/Discovery标False，纯元操作绕过Plan门禁且不observe；真实业务沿原证据/审批。ContextManager不改，统计当次messages+tools、保留裁剪/预算失败/canonical Session。旧Evaluation显式禁MCP/Discovery隔离，评分器未改。
-- 35工具真实SDK stdio Demo覆盖项目/文档/代码/日程/数据，仅合成只读内存结果。compare_tool_discovery.py用固定LLM脚本+真实SDK验证三任务六组，默认仅stdout统计，不保存提示词/运行日志。
-- Manager/Adapter/Approval/传输/Bearer/OAuth/响应限制均未改，SDK/锁文件不变；没有第二个Registry、Agent循环、热更新或向量检索。
+- discovery.retrieval_mode可选literal/bm25/hybrid；缺省literal且旧默认对象不新增键。Literal原6/3/1不变；Catalog权限过滤、240字符描述、query/结果限制、激活原子性、请求快照不变。
+- retrieval.py纯Python加权字段BM25：k1=1.2、b=.75、IDF log1p((N-df+.5)/(df+.5))、字段6/3/1；英文casefold/标点分词，中文单字/双字。别名字典独立、最长匹配、最多16次/32扩展词，hybrid=原始BM25+.35别名BM25，不是Embedding语义搜索。索引只取Catalog，不读真实文件/Schema/Gold。
+- 独立tool_retrieval评测36例（32正/4负、8条保留表达），Hit/Recall/MRR/NDCG@1/3/5和语言/类别/分母；与Phase9评分和Agent成功率分开。
+- tool_agent.py复用原AgentLoop/Manager/Context/Registry；MeasuredAgent只观测执行/收尾，无新循环。12内置合成任务、三模式，每次临时空Workspace/新Agent/Session，关闭持久化/Skills/DEBUG，强制只用本地35工具Demo，不连接用户MCP。Gold仅评分，Live用户Prompt不注入Gold。
+- Live必须双开关；SDK retry=0，共享请求预算，固定输出/案例/重复/ReAct/Context/请求/任务/总时间限制；顺序seed仅洗牌，不是模型seed。asyncio.timeout围住MCP进入/调用/退出同owner Task，取消正确清理，不wait_for整个Agent。
+- Usage真实字段优先，缺失/缓存未知为null，不字符估Token；显式价格且必要Usage完整才estimated_cost，不是账单/硬费用上限。报告不存Prompt/回复/参数/异常/URL/密钥；记录Commit/dirty/case哈希/配置摘要，--save独占写忽略runs/evals。
+- Demo仅扩三个固定结果CODE-1/EVENT-1/DATA-1与42行，35工具Schema/原TASK-DOC行为不变。原AgentLoop、Registry、Planning、Session、Manager/Adapter/认证响应边界、Phase9评分、依赖锁文件均未改。
 
 ## 修改文件
 
-新增mcp_client/discovery.py、scripts/{mcp_catalog_demo_server,compare_tool_discovery,check_tool_discovery}.py、config/mcp.discovery.example.json、docs/phases/phase-15.md；修改GatewayConfig、Tool base/registry/skill、Agent loop/planning角色、Evaluation runner隔离、check_phase、主配置模板、README、阶段索引和本交接。app.py/USER.md修改不纳入提交。
+新增retrieval.py/retrieval_aliases.py、evaluation/tool_retrieval.py/tool_agent.py、两个evals案例集、三个evaluate/compare入口和两个check脚本、phase-16学习文档；修改discovery排序/验证、两配置模板、Demo返回值、check_phase、README/索引/本交接。仅提交本阶段文件。
 
-## 验证与测量
+## 测试与实测
 
-39项专项通过（34项目录/Agent/Context/Evaluation/比较、5项HTTP/Bearer/OAuth/审批）；原Planning12项另行通过，mybot/scripts编译通过。包含35工具真实发现、目录过滤/排序/边界、激活原子性、精确字符边界、同批快照/下一轮真实调用、生命周期、Plan证据、Skills/DIRECT、Context计量/失败/请求裁剪与原文、审批真实状态及配对、三种HTTP认证兼容、旧Evaluation隔离和debug隐藏query。Phase1–15全量313项unittest及Phase1/2原断言通过；归档安全集成检查通过。干净APFS worktree保存的ZIP和独立学习目录均完成uv sync --frozen、编译及全量313项/Phase1–2原断言；还原目录另编译scripts并重跑六组对比，统计完全一致。ExFAT还原目录编译前清理124个经文件头确认的AppleDouble文件。
+检索17项、Harness24项及Phase15原39项通过；编译mybot/scripts通过（先清理35个经文件头确认的AppleDouble）。覆盖公式/分词/词典边界/权限、指标多目标与负例分母、默认不建真实Client、Live开关/预算/retry/Usage/估价/隐私、真实stdio三组流程/配对/同批快照、错误参数/自报完成不算成功、恢复错误、超时与取消清理、Phase15比较不变。
 
-离线对比（Catalog35工具；eager初轮40/58457字符，progressive初轮7/2520字符）：项目任务eager2请求/累积116914，progressive4请求/13280；文档查询2/116914 vs4/13320；两类别3/175371 vs7/25680。全部合成任务成功，真实业务调用1/1/2一致；额外请求+2/+2/+4。平均Schema字符等细表见phase-15学习文档。实际Token/费用/缓存/真实模型能力未知，没有调用真实LLM。
+36例Hit@5 literal .59375 / bm25 .625 / hybrid .875；负例空结果率均1。Agent固定脚本12例/模式：eager12成功25请求、literal11成功49请求、hybrid12成功51请求；累计Schema1461425/167123/175363。Literal中文agent-08检索失败明确保留。全部Token/费用/Live成功率未知；真实LLM与真实第三方MCP均未调用。详表/本地计时在phase-16学习文档。
 
-## 限制
+## 限制与下一步
 
-词法搜索无中英文同义词/语义能力；描述是不可信元数据，长度/控制字符处理不是通用秘密脱敏或提示注入沙箱。仍启动所有配置Server并完整发现，本地Schema内存不减少；无list_changed/懒启动/重连。只限制模型可见性，可信本地Registry/Manager调用仍沿原权限执行，不是新沙箱。Session可保存查询/激活调用记录，但不恢复active状态。静态Adapter定义/单Agent串行任务，运行中修改Schema不受支持。探索消耗原ReAct预算；专用Schema预算通过仍可能超过总Context预算。离线字符节省不等于真实费用/能力提升。
-
-## 下一步与不要重复
-
-Phase15完成，等待用户下一项任务。不得改旧归档、混入用户修改、自动Push或进入Phase16。学习历史仅在docs/phases和Git。
-
-实现提交79b1d55d8c1ca31cc059402d8d971df6750201ab；唯一annotated phase-15指向该提交。../mybot-mini-snapshots/phase-15.zip共123条目，SHA256：995431ec477bfd42b1a9fc3e0e2b7405d688d087f7931578296a254c00f3ef62。CRC/提交SHA/必要文件/无AppleDouble检查通过；旧14个Tag对象及ZIP哈希完全不变。restore_phase.sh 15还原到../mybot-mini-learning/phase-15，临时APFS worktree已移除。主工作区仅保留用户app.py与USER.md未提交修改。最终验证记录另作文档提交，不移动阶段Tag。
+小内部合成集与受限词典不能泛化；ID/数值最终答案rubric不是自然语言语义验证。Live API/模型选择能力/费用未实测，Usage仅兼容标准字段；静默忽略tools的Provider不能自动证明不兼容。无Embedding/动态启动/list_changed/新权限。全量354项、原断言和归档安全检查通过，已审查待提交源码/合成数据/文档及跟踪文件边界，补archive-ready并commit；使用干净APFS worktree save16，核对旧15 Tag/ZIP后独立restore/冻结安装/全源码编译/全量及两组对比，补最终验证记录。不得覆盖用户改动、旧归档、Push或进入Phase17。

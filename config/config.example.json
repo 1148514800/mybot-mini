@@ -41,6 +41,7 @@
     "enabled": false,
     "discovery": {
       "enabled": false,
+      "retrieval_mode": "literal",
       "max_active_tools": 4,
       "max_active_schema_chars": 12000,
       "search_limit": 5

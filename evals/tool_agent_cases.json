@@ -1,0 +1,525 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "case_id": "agent-01",
+      "prompt": "Query pending tasks for project mini. Return task IDs.",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_tasks",
+          "arguments": {
+            "project": "mini",
+            "status": "pending"
+          },
+          "facts": [
+            "TASK-1",
+            "TASK-2"
+          ]
+        }
+      ],
+      "final_required": [
+        "TASK-1",
+        "TASK-2"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_tasks",
+            "arguments": {
+              "project": "mini",
+              "status": "pending"
+            },
+            "facts": [
+              "TASK-1",
+              "TASK-2"
+            ],
+            "query": "project pending tasks"
+          }
+        ],
+        "reply": "TASK-1 TASK-2"
+      }
+    },
+    {
+      "case_id": "agent-02",
+      "prompt": "Search architecture documents. Return document IDs.",
+      "required": [
+        {
+          "tool": "mcp__catalog__search_documents",
+          "arguments": {
+            "query": "architecture"
+          },
+          "facts": [
+            "DOC-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "DOC-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__search_documents",
+            "arguments": {
+              "query": "architecture"
+            },
+            "facts": [
+              "DOC-1"
+            ],
+            "query": "architecture documents search"
+          }
+        ],
+        "reply": "DOC-1"
+      }
+    },
+    {
+      "case_id": "agent-03",
+      "prompt": "List synthetic modules for module core. Return module IDs.",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_code_modules",
+          "arguments": {
+            "module": "core"
+          },
+          "facts": [
+            "CODE-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "CODE-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_code_modules",
+            "arguments": {
+              "module": "core"
+            },
+            "facts": [
+              "CODE-1"
+            ],
+            "query": "list code modules"
+          }
+        ],
+        "reply": "CODE-1"
+      }
+    },
+    {
+      "case_id": "agent-04",
+      "prompt": "List events for day 2026-01-01. Return event IDs.",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_calendar_events",
+          "arguments": {
+            "day": "2026-01-01"
+          },
+          "facts": [
+            "EVENT-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "EVENT-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_calendar_events",
+            "arguments": {
+              "day": "2026-01-01"
+            },
+            "facts": [
+              "EVENT-1"
+            ],
+            "query": "list calendar events"
+          }
+        ],
+        "reply": "EVENT-1"
+      }
+    },
+    {
+      "case_id": "agent-05",
+      "prompt": "Get statistics for dataset teaching. Return dataset ID and row count.",
+      "required": [
+        {
+          "tool": "mcp__catalog__get_dataset_stats",
+          "arguments": {
+            "dataset": "teaching"
+          },
+          "facts": [
+            "DATA-1",
+            "42"
+          ]
+        }
+      ],
+      "final_required": [
+        "DATA-1",
+        "42"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__get_dataset_stats",
+            "arguments": {
+              "dataset": "teaching"
+            },
+            "facts": [
+              "DATA-1",
+              "42"
+            ],
+            "query": "get dataset stats"
+          }
+        ],
+        "reply": "DATA-1 42"
+      }
+    },
+    {
+      "case_id": "agent-06",
+      "prompt": "Query pending tasks for project mini and search architecture documents. Return all IDs.",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_tasks",
+          "arguments": {
+            "project": "mini",
+            "status": "pending"
+          },
+          "facts": [
+            "TASK-1",
+            "TASK-2"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__search_documents",
+          "arguments": {
+            "query": "architecture"
+          },
+          "facts": [
+            "DOC-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "TASK-1",
+        "TASK-2",
+        "DOC-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_tasks",
+            "arguments": {
+              "project": "mini",
+              "status": "pending"
+            },
+            "facts": [
+              "TASK-1",
+              "TASK-2"
+            ],
+            "query": "project pending tasks"
+          },
+          {
+            "tool": "mcp__catalog__search_documents",
+            "arguments": {
+              "query": "architecture"
+            },
+            "facts": [
+              "DOC-1"
+            ],
+            "query": "architecture documents search"
+          }
+        ],
+        "reply": "TASK-1 TASK-2 DOC-1"
+      }
+    },
+    {
+      "case_id": "agent-07",
+      "prompt": "List modules for core and events for 2026-01-01. Return all IDs.",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_code_modules",
+          "arguments": {
+            "module": "core"
+          },
+          "facts": [
+            "CODE-1"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__list_calendar_events",
+          "arguments": {
+            "day": "2026-01-01"
+          },
+          "facts": [
+            "EVENT-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "CODE-1",
+        "EVENT-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_code_modules",
+            "arguments": {
+              "module": "core"
+            },
+            "facts": [
+              "CODE-1"
+            ],
+            "query": "list code modules"
+          },
+          {
+            "tool": "mcp__catalog__list_calendar_events",
+            "arguments": {
+              "day": "2026-01-01"
+            },
+            "facts": [
+              "EVENT-1"
+            ],
+            "query": "list calendar events"
+          }
+        ],
+        "reply": "CODE-1 EVENT-1"
+      }
+    },
+    {
+      "case_id": "agent-08",
+      "prompt": "查询项目mini的未完成任务，返回任务编号。",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_tasks",
+          "arguments": {
+            "project": "mini",
+            "status": "pending"
+          },
+          "facts": [
+            "TASK-1",
+            "TASK-2"
+          ]
+        }
+      ],
+      "final_required": [
+        "TASK-1",
+        "TASK-2"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_tasks",
+            "arguments": {
+              "project": "mini",
+              "status": "pending"
+            },
+            "facts": [
+              "TASK-1",
+              "TASK-2"
+            ],
+            "query": "查询项目未完成任务"
+          }
+        ],
+        "reply": "TASK-1 TASK-2"
+      }
+    },
+    {
+      "case_id": "agent-09",
+      "prompt": "搜索architecture文档，返回文档编号。",
+      "required": [
+        {
+          "tool": "mcp__catalog__search_documents",
+          "arguments": {
+            "query": "architecture"
+          },
+          "facts": [
+            "DOC-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "DOC-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__search_documents",
+            "arguments": {
+              "query": "architecture"
+            },
+            "facts": [
+              "DOC-1"
+            ],
+            "query": "搜索 architecture 文档"
+          }
+        ],
+        "reply": "DOC-1"
+      }
+    },
+    {
+      "case_id": "agent-10",
+      "prompt": "What is 2+2? Reply with just 4.",
+      "required": [],
+      "final_required": [
+        "4"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [],
+        "reply": "4"
+      },
+      "final_exact": "4"
+    },
+    {
+      "case_id": "agent-11",
+      "prompt": "Can you teleport a quantum object? If no matching tool is available, reply unavailable.",
+      "required": [],
+      "final_required": [
+        "unavailable"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [],
+        "reply": "unavailable"
+      }
+    },
+    {
+      "case_id": "agent-12",
+      "prompt": "For dataset teaching return statistics, then list core modules. Include IDs and row count.",
+      "required": [
+        {
+          "tool": "mcp__catalog__get_dataset_stats",
+          "arguments": {
+            "dataset": "teaching"
+          },
+          "facts": [
+            "DATA-1",
+            "42"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__list_code_modules",
+          "arguments": {
+            "module": "core"
+          },
+          "facts": [
+            "CODE-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "DATA-1",
+        "42",
+        "CODE-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__get_dataset_stats",
+            "arguments": {
+              "dataset": "teaching"
+            },
+            "facts": [
+              "DATA-1",
+              "42"
+            ],
+            "query": "get dataset stats"
+          },
+          {
+            "tool": "mcp__catalog__list_code_modules",
+            "arguments": {
+              "module": "core"
+            },
+            "facts": [
+              "CODE-1"
+            ],
+            "query": "list code modules"
+          }
+        ],
+        "reply": "DATA-1 42 CODE-1"
+      }
+    }
+  ]
+}
