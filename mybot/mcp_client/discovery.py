@@ -14,7 +14,7 @@ MAX_DESCRIPTION_CHARS = 240
 
 
 def validate_discovery(value):
-    if not isinstance(value, dict) or set(value) - (set(DEFAULT_DISCOVERY) | {"retrieval_mode", "routing_mode", "eager_tool_threshold", "preselect_limit"}):
+    if not isinstance(value, dict) or set(value) - (set(DEFAULT_DISCOVERY) | {"retrieval_mode", "routing_mode", "eager_tool_threshold", "preselect_limit", "selection_policy"}):
         raise ValueError('Invalid mcp.discovery fields')
     config = DEFAULT_DISCOVERY | value
     if not isinstance(config.get("retrieval_mode", "literal"), str) or config.get("retrieval_mode", "literal") not in ("literal", "bm25", "hybrid"):
@@ -29,6 +29,11 @@ def validate_discovery(value):
         raise ValueError('mcp.discovery.routing_mode must be manual or adaptive')
     if mode == 'adaptive' and value.get('enabled') is not True:
         raise ValueError('adaptive routing requires explicit discovery.enabled=true')
+    policy = config.get('selection_policy','legacy')
+    if not isinstance(policy,str) or policy not in ('legacy','selective'):
+        raise ValueError('selection_policy must be legacy or selective')
+    if policy == 'selective' and (mode != 'adaptive' or value.get('enabled') is not True):
+        raise ValueError('selective requires adaptive and explicit discovery.enabled=true')
     if 'eager_tool_threshold' in config and (type(config['eager_tool_threshold']) is not int or not 0<=config['eager_tool_threshold']<=64):
         raise ValueError('eager_tool_threshold must be an integer in 0..64')
     if 'preselect_limit' in config and (type(config['preselect_limit']) is not int or not 1<=config['preselect_limit']<=config['max_active_tools']):

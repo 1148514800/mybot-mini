@@ -28,8 +28,12 @@ from .runner import save_report
 from scripts.compare_tool_discovery import demo_server
 
 MODES = ('eager','progressive_literal','progressive_hybrid')
-ADAPTIVE_MODES = ('adaptive_hybrid','adaptive_bm25')
+ADAPTIVE_MODES = ('adaptive_hybrid','adaptive_bm25','adaptive_selective_hybrid')
+MODE_RETRIEVAL = {'eager':'literal','progressive_literal':'literal','progressive_hybrid':'hybrid',
+                  'progressive_bm25':'bm25','adaptive_hybrid':'hybrid','adaptive_bm25':'bm25',
+                  'adaptive_selective_hybrid':'hybrid'}
 ADAPTIVE_ROUTING = {'routing_mode':'adaptive','eager_tool_threshold':4,'preselect_limit':3}
+BUILTIN_EVAL_TOOLS = frozenset({'read_file','write_file','list_files'})
 TOKEN_KEYS = ('prompt_tokens','completion_tokens','total_tokens','cached_input_tokens')
 INCOMPLETE = {'request_budget_exceeded','total_time_exceeded'}
 
@@ -62,8 +66,10 @@ class Limits:
                 raise ValueError('Invalid evaluation time limit: '+key)
 
 
-def load_cases():
-    doc=json.loads((PROJECT_DIR/'evals/tool_agent_cases.json').read_text())
+def load_cases(case_set='core'):
+    if case_set not in ('core','routing'): raise ValueError('Invalid case set')
+    path = PROJECT_DIR/('evals/tool_agent_cases.json' if case_set=='core' else 'evals/tool_agent_routing_cases.json')
+    doc=json.loads(path.read_text())
     if doc['version']!=1 or len({c['case_id'] for c in doc['cases']})!=len(doc['cases']):
         raise ValueError('Invalid synthetic cases')
     return doc['cases']
@@ -236,7 +242,7 @@ class FixedClient:
         self.adaptive=adaptive
         self.actions=[]; self.reply=script['reply'];self.index=0;self.last=None
         for step in script['steps']:
-            if progressive:
+            if progressive and step['tool'].startswith('mcp__'):
                 self.actions.extend([('search_mcp_tools',{'query':step['query']},step['tool']),
                                      ('activate_mcp_tools',{'names':[step['tool']]},None)])
             self.actions.append((step['tool'],step['arguments'],step['facts']))
@@ -272,12 +278,12 @@ def contains_fact(text, fact):
 
 
 def grade(obs,reply,progressive,audit,*,adaptive=False):
-    required={r['tool'] for r in obs.case['required']}
+    required={r['tool'] for r in obs.case['required'] if r['tool'] not in BUILTIN_EVAL_TOOLS}
     final=all(contains_fact(reply,f) for f in obs.case['final_required']) and not any(contains_fact(reply,f) for f in obs.case['final_forbidden'])
     if 'final_exact' in obs.case: final = final and reply.strip()==obs.case['final_exact']
     actual=sum(e['executed'] for e in audit)
-    calls=(len(obs.correct)==len(obs.case['required']) and actual==len(obs.case['required']))
-    if not required: calls=actual==0 and not obs.events
+    calls=(len(obs.correct)==len(obs.case['required']) and actual==sum(r['tool'] not in BUILTIN_EVAL_TOOLS for r in obs.case['required']))
+    if not obs.case['required']: calls=actual==0 and not obs.events
     task=bool(final and calls and obs.finished and obs.terminal is None and obs.paired and not obs.plan_incomplete)
     retrieval=required<=obs.retrieved if progressive and required else None
     activation=required<=obs.activated if progressive and required else None
@@ -330,6 +336,10 @@ def summarize(results,live,prices):
                     manual_fallback_count=sum(r.get('manual_fallback_count',0) for r in rows),
                     initial_manual_fallback_count=sum(r['routing_strategy']=='manual_fallback' for r in routed),
                     routing_overhead_ms=sum(r['routing_overhead_ms'] for r in routed) if routed else None)
+        from .tool_routing import summarize as summarize_selection
+        selection_rows=[r for r in completed if 'positive' in r]
+        item['selection_quality']=summarize_selection(selection_rows)
+        item['recovered_by_manual_discovery']=sum(r.get('recovered_by_manual_discovery',False) for r in completed)
         item['task_success_count']=sum(r['task_success'] for r in completed)
         summary[mode]=item
     return summary
@@ -345,13 +355,13 @@ def safe_label(value):
     return value if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_./-]{1,128}',value) else '<unavailable>'
 
 
-async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,prices=None,base_config=None,client_factory=None):
+async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,prices=None,base_config=None,client_factory=None,case_set='core'):
     if type(live) is not bool or type(confirm_api_cost) is not bool or live!=confirm_api_cost:
         raise ValueError('Live requires both --live and --confirm-api-cost')
     limits=limits or Limits(); prices=validate_prices(prices)
     modes=tuple(modes)
     if not modes or len(set(modes))!=len(modes) or any(m not in (*MODES,'progressive_bm25',*ADAPTIVE_MODES) for m in modes):raise ValueError('Invalid agent modes')
-    cases=load_cases()[:limits.max_cases]
+    cases=(load_cases() if case_set=='core' else load_cases(case_set))[:limits.max_cases]
     neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},session_persist=False,skills_enabled=False,debug=False)
     base=base_config or GatewayConfig(**neutral,**({} if live else dict(provider='offline',model='fixed-script',api_key=None,base_url=None)))
     common=replace(base,**neutral,context_enabled=True,context_max_chars=limits.context_max_chars,
@@ -379,8 +389,9 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                             progressive=mode!='eager'
                             config=replace(common,workspace=workspace,session_path=Path(folder)/'state.json',
                                 mcp_enabled=True,mcp_servers={'catalog':demo_server()},
-                                mcp_discovery={'enabled':progressive,'retrieval_mode':mode.split('_',1)[1] if progressive else 'literal',
-                                               **(ADAPTIVE_ROUTING if mode in ADAPTIVE_MODES else {})})
+                                mcp_discovery={'enabled':progressive,'retrieval_mode':MODE_RETRIEVAL[mode],
+                                               **(ADAPTIVE_ROUTING if mode in ADAPTIVE_MODES else {}),
+                                               **({'selection_policy':'selective'} if mode=='adaptive_selective_hybrid' else {})})
                             tools=build_default_tool_registry(workspace)
                             # timeout surrounds the whole connection lifecycle in THIS owner task.
                             remaining=budget['deadline']-time.monotonic()
@@ -404,7 +415,7 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                     if obs.terminal in INCOMPLETE:stop=obs.terminal
                     tokens=token_totals(obs.usages,obs.requests) if live else dict.fromkeys(TOKEN_KEYS)
                     score=grade(obs,reply,mode!='eager',audit,adaptive=mode in ADAPTIVE_MODES)
-                    required_names={req['tool'] for req in case['required']}
+                    required_names={req['tool'] for req in case['required'] if req['tool'] not in BUILTIN_EVAL_TOOLS}
                     adaptive=mode in ADAPTIVE_MODES
                     routing_metrics={
                         'routing_strategy':obs.routing['routing_strategy'] if obs.routing else None,
@@ -414,6 +425,15 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                         'preselection_recall':len(required_names & obs.preselected)/len(required_names) if required_names and obs.preselected is not None else None,
                         'direct_mcp_calls':obs.direct_mcp_calls,'manual_fallback_count':obs.manual_fallback_count,
                         'routing_overhead_ms':obs.routing['routing_overhead_ms'] if obs.routing else None}
+                    from .tool_routing import selection_metrics
+                    if obs.routing:
+                        routing_metrics.update(selection_metrics(obs.preselected,required_names,required_names))
+                        routing_metrics.update(selected_schema_chars=obs.routing['preselected_schema_chars'],
+                            evidence_level=obs.routing['evidence_level'],
+                            abstention_count=int(not obs.preselected),
+                            coverage_gain=obs.routing['covered_query_concepts_count'],
+                            rejected_weak_candidates=obs.routing['rejected_weak_count'],
+                            recovered_by_manual_discovery=bool(score['task_success'] and required_names - obs.preselected and obs.manual_started))
                     incomplete=obs.terminal in INCOMPLETE
                     if incomplete:
                         for key in ('task_success','tool_call_success','final_answer_correct','retrieval_success','activation_success'):score[key]=None
@@ -441,7 +461,7 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
             differences[mode]={'pairs':len(pairs),'task_success_delta':sum(int(p[mode]['task_success'])-int(p['eager']['task_success']) for p in pairs)/len(pairs) if pairs else None,
                                'mean_requests_delta':sum(p[mode]['llm_requests']-p['eager']['llm_requests'] for p in pairs)/len(pairs) if pairs else None}
     summary=summarize(results,live,prices)
-    case_version=hashlib.sha256((PROJECT_DIR/'evals/tool_agent_cases.json').read_bytes()).hexdigest()
+    case_version=hashlib.sha256((PROJECT_DIR/('evals/tool_agent_cases.json' if case_set=='core' else 'evals/tool_agent_routing_cases.json')).read_bytes()).hexdigest()
     try:commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT_DIR,text=True,stderr=subprocess.DEVNULL).strip()
     except (OSError,subprocess.CalledProcessError):commit=None
     try: dirty=bool(subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],cwd=PROJECT_DIR,stderr=subprocess.DEVNULL).strip())
@@ -449,7 +469,7 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
     return {'mode':'live' if live else 'offline','actual_tokens':{k:sum(r[k] for r in results) if all(r[k] is not None for r in results) else None for k in TOKEN_KEYS} if live else None,
             'actual_cost':None,'live_task_success_rate':{m:s['task_success_rate'] for m,s in summary.items()} if live else None,
             'provider':safe_label(common.provider) if live else 'offline','model':safe_label(common.model) if live else 'fixed-script',
-            'git_commit':commit,'worktree_dirty':dirty,'case_sha256':case_version,'configuration':{**limits.__dict__,'modes':list(modes),'adaptive_routing':ADAPTIVE_ROUTING if any(m in ADAPTIVE_MODES for m in modes) else None,'temperature':0.1,'sdk_max_retries':0,'prices':prices},
+            'git_commit':commit,'worktree_dirty':dirty,'case_sha256':case_version,'configuration':{**limits.__dict__,'case_set':case_set,'modes':list(modes),'adaptive_routing':ADAPTIVE_ROUTING if any(m in ADAPTIVE_MODES for m in modes) else None,'temperature':0.1,'sdk_max_retries':0,'prices':prices},
             'sample_count':len(results),'incomplete_count':sum(r['status']=='incomplete' for r in results),
             'complete_paired_cases':len(paired),'paired_differences':differences,'overall':summary,'by_task_category':summarize_categories(results,live,prices),'results':results,
             'limitations':['Fixed scripts validate harness only; no model ability claim.' if not live else 'Provider randomness remains; order seed is not a model seed.',

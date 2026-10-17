@@ -137,3 +137,17 @@ uv run python -m scripts.check_adaptive_routing
 ```
 
 新对比入口默认 Eager / Progressive Hybrid / Adaptive Hybrid，使用相同12条合成任务、固定模型和真实本地 stdio；自动预选指标与显式搜索/激活分开，未知 Token/费用保留 null。算法、两层预算、Gold 隔离、实际对比与限制见 [Phase 17](docs/phases/phase-17.md)。开发验证不运行 Live。
+
+
+## Tool Routing Confidence（Phase 18）
+
+显式 `selection_policy="selective"`（同时启用 discovery 与 adaptive）才使用证据门控、安全弃选及覆盖感知预选；缺省 `legacy` 保留 Phase 17。只有 Strong 证据允许自动暴露完整 MCP Schema；弃选后原 search/activate 继续可用，权限与审批不变。
+
+```bash
+uv run python -m scripts.compare_selective_routing
+uv run python -m scripts.evaluate_tool_routing
+uv run python -m scripts.evaluate_tool_agent --case-set routing --modes adaptive_hybrid,adaptive_selective_hybrid
+uv run python -m scripts.check_routing_confidence
+```
+
+独立60例路由集与10例Agent挑战集分别报告；保留原12例核心基准。Selective减少无关预选，但会漏掉有用工具并增加手动探索请求，不宣称全面优于Legacy。规则、分母、完整实测及限制见 [Phase 18](docs/phases/phase-18.md)。本阶段完全离线。

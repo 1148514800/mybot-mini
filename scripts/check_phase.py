@@ -93,4 +93,7 @@ if Path(__file__).with_name("check_tool_agent_eval.py").exists():
 if Path(__file__).with_name("check_adaptive_routing.py").exists():
     from scripts.check_adaptive_routing import check_adaptive_routing
     check_adaptive_routing()
+if Path(__file__).with_name("check_routing_confidence.py").exists():
+    from scripts.check_routing_confidence import check_routing_confidence
+    check_routing_confidence()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

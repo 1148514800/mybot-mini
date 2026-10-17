@@ -43,6 +43,7 @@
       "enabled": false,
       "retrieval_mode": "literal",
       "routing_mode": "manual",
+      "selection_policy": "legacy",
       "eager_tool_threshold": 4,
       "preselect_limit": 3,
       "max_active_tools": 4,

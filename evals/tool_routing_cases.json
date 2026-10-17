@@ -1,0 +1,714 @@
+{
+  "version": 1,
+  "policy_freeze": "lexical-evidence-v1; rules frozen before heldout run; no heldout tuning",
+  "cases": [
+    {
+      "case_id": "route-single-01",
+      "query": "List pending project tasks",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-02",
+      "query": "查询项目未完成任务",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "language": "zh",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-03",
+      "query": "Search architecture documents",
+      "required_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-04",
+      "query": "搜索架构文档",
+      "required_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "language": "zh",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-05",
+      "query": "List code modules",
+      "required_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-06",
+      "query": "查询代码模块",
+      "required_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules"
+      ],
+      "language": "zh",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-07",
+      "query": "List calendar events",
+      "required_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-08",
+      "query": "查询日程",
+      "required_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_events"
+      ],
+      "language": "zh",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-09",
+      "query": "Get dataset stats",
+      "required_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-10",
+      "query": "统计数据",
+      "required_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats"
+      ],
+      "language": "zh",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-11",
+      "query": "List document versions",
+      "required_tools": [
+        "mcp__catalog__list_document_versions"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_document_versions"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-12",
+      "query": "Inspect code imports",
+      "required_tools": [
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-single-13",
+      "query": "Please list project milestones",
+      "required_tools": [
+        "mcp__catalog__list_project_milestones"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_milestones"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-14",
+      "query": "Get project status",
+      "required_tools": [
+        "mcp__catalog__get_project_status"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_project_status"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-15",
+      "query": "Find document links",
+      "required_tools": [
+        "mcp__catalog__find_document_links"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__find_document_links"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-16",
+      "query": "List document sections",
+      "required_tools": [
+        "mcp__catalog__list_document_sections"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_document_sections"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-17",
+      "query": "Get code symbol",
+      "required_tools": [
+        "mcp__catalog__get_code_symbol"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_code_symbol"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-18",
+      "query": "Search code references",
+      "required_tools": [
+        "mcp__catalog__search_code_references"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_code_references"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-19",
+      "query": "Find calendar slots",
+      "required_tools": [
+        "mcp__catalog__find_calendar_slots"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__find_calendar_slots"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-20",
+      "query": "List calendar labels",
+      "required_tools": [
+        "mcp__catalog__list_calendar_labels"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_labels"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-21",
+      "query": "List dataset columns",
+      "required_tools": [
+        "mcp__catalog__list_dataset_columns"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_dataset_columns"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-22",
+      "query": "Filter dataset rows",
+      "required_tools": [
+        "mcp__catalog__filter_dataset_rows"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__filter_dataset_rows"
+      ],
+      "language": "en",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-23",
+      "query": "查询 project pending tasks",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks"
+      ],
+      "language": "mixed",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-single-24",
+      "query": "Search 架构 documents",
+      "required_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_documents"
+      ],
+      "language": "mixed",
+      "category": "single_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-multi-01",
+      "query": "List pending project tasks and search architecture documents",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-multi-02",
+      "query": "查询项目未完成任务并搜索架构文档",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "language": "zh",
+      "category": "multi_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-multi-03",
+      "query": "List code modules and calendar events",
+      "required_tools": [
+        "mcp__catalog__list_code_modules",
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules",
+        "mcp__catalog__list_calendar_events"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-multi-04",
+      "query": "查询代码模块和日程",
+      "required_tools": [
+        "mcp__catalog__list_code_modules",
+        "mcp__catalog__list_calendar_events"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_code_modules",
+        "mcp__catalog__list_calendar_events"
+      ],
+      "language": "zh",
+      "category": "multi_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-multi-05",
+      "query": "Get dataset stats and search architecture documents",
+      "required_tools": [
+        "mcp__catalog__get_dataset_stats",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats",
+        "mcp__catalog__search_documents"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-multi-06",
+      "query": "统计数据并搜索文档",
+      "required_tools": [
+        "mcp__catalog__get_dataset_stats",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__get_dataset_stats",
+        "mcp__catalog__search_documents"
+      ],
+      "language": "zh",
+      "category": "multi_tool",
+      "split": "design"
+    },
+    {
+      "case_id": "route-multi-07",
+      "query": "List project milestones and document versions",
+      "required_tools": [
+        "mcp__catalog__list_project_milestones",
+        "mcp__catalog__list_document_versions"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_milestones",
+        "mcp__catalog__list_document_versions"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-multi-08",
+      "query": "Search code references and find calendar slots",
+      "required_tools": [
+        "mcp__catalog__search_code_references",
+        "mcp__catalog__find_calendar_slots"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__search_code_references",
+        "mcp__catalog__find_calendar_slots"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-multi-09",
+      "query": "查询 project tasks 并 search documents architecture",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "language": "mixed",
+      "category": "multi_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-multi-10",
+      "query": "List dataset columns and document sections",
+      "required_tools": [
+        "mcp__catalog__list_dataset_columns",
+        "mcp__catalog__list_document_sections"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_dataset_columns",
+        "mcp__catalog__list_document_sections"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-multi-11",
+      "query": "Please help me with the following work. I need to list pending project tasks, and afterwards search architecture documents. Do not change records.",
+      "required_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_project_tasks",
+        "mcp__catalog__search_documents"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-multi-12",
+      "query": "List calendar labels and inspect code imports",
+      "required_tools": [
+        "mcp__catalog__list_calendar_labels",
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "acceptable_tools": [
+        "mcp__catalog__list_calendar_labels",
+        "mcp__catalog__inspect_code_imports"
+      ],
+      "language": "en",
+      "category": "multi_tool",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-01",
+      "query": "Hello there",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "chat",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-02",
+      "query": "你好",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "zh",
+      "category": "chat",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-03",
+      "query": "What is two plus two?",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "chat",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-04",
+      "query": "讲个笑话",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "zh",
+      "category": "chat",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-05",
+      "query": "help me please",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-06",
+      "query": "What tools are available?",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-07",
+      "query": "Explain synthetic teaching tools",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-08",
+      "query": "catalog available help",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-09",
+      "query": "Find a quantum teleportation tool",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-10",
+      "query": "查找量子传送工具",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "zh",
+      "category": "no_match",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-11",
+      "query": "Book an ocean cruise",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-12",
+      "query": "Predict tomorrow weather",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "design"
+    },
+    {
+      "case_id": "route-negative-13",
+      "query": "Tell me a bedtime story",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "chat",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-14",
+      "query": "谢谢，再见",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "zh",
+      "category": "chat",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-15",
+      "query": "Explain photosynthesis",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-16",
+      "query": "Translate bonjour into English",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-17",
+      "query": "I need help using a tool",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-18",
+      "query": "Is this synthetic catalog read only?",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-19",
+      "query": "Available tool information please",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-20",
+      "query": "工具 help available",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "mixed",
+      "category": "generic",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-21",
+      "query": "How do I bake bread?",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-22",
+      "query": "购买火星往返票",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "zh",
+      "category": "no_match",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-23",
+      "query": "Find an available quantum teleportation tool in the synthetic catalog",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "no_match",
+      "split": "heldout"
+    },
+    {
+      "case_id": "route-negative-24",
+      "query": "Please help: synthetic tools are available, but I only want a greeting.",
+      "required_tools": [],
+      "acceptable_tools": [],
+      "language": "en",
+      "category": "generic",
+      "split": "heldout"
+    }
+  ]
+}

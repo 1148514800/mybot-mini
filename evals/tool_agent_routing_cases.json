@@ -1,0 +1,420 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "case_id": "challenge-1",
+      "prompt": "List pending project tasks",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_tasks",
+          "arguments": {
+            "project": "mini",
+            "status": "pending"
+          },
+          "facts": [
+            "TASK-1",
+            "TASK-2"
+          ]
+        }
+      ],
+      "final_required": [
+        "TASK-1",
+        "TASK-2"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_tasks",
+            "arguments": {
+              "project": "mini",
+              "status": "pending"
+            },
+            "facts": [
+              "TASK-1",
+              "TASK-2"
+            ],
+            "query": "project pending tasks"
+          }
+        ],
+        "reply": "TASK-1 TASK-2"
+      },
+      "category": "single_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-2",
+      "prompt": "查询项目未完成任务并搜索架构文档",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_tasks",
+          "arguments": {
+            "project": "mini",
+            "status": "pending"
+          },
+          "facts": [
+            "TASK-1",
+            "TASK-2"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__search_documents",
+          "arguments": {
+            "query": "architecture"
+          },
+          "facts": [
+            "DOC-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "TASK-1",
+        "TASK-2",
+        "DOC-1"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_tasks",
+            "arguments": {
+              "project": "mini",
+              "status": "pending"
+            },
+            "facts": [
+              "TASK-1",
+              "TASK-2"
+            ],
+            "query": "project pending tasks"
+          },
+          {
+            "tool": "mcp__catalog__search_documents",
+            "arguments": {
+              "query": "architecture"
+            },
+            "facts": [
+              "DOC-1"
+            ],
+            "query": "architecture documents search"
+          }
+        ],
+        "reply": "TASK-1 TASK-2 DOC-1"
+      },
+      "category": "two_tool",
+      "language": "zh"
+    },
+    {
+      "case_id": "challenge-3",
+      "prompt": "Hello! What is two plus two?",
+      "required": [],
+      "final_required": [
+        "4"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [],
+        "reply": "4"
+      },
+      "final_exact": "4",
+      "category": "no_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-4",
+      "prompt": "Find an available quantum teleportation tool in the synthetic catalog",
+      "required": [],
+      "final_required": [
+        "unavailable"
+      ],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [],
+        "reply": "unavailable"
+      },
+      "category": "no_match",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-5",
+      "prompt": "List pending project tasks and search architecture documents",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_tasks",
+          "arguments": {
+            "project": "mini"
+          },
+          "facts": [
+            "TASK-1"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__search_documents",
+          "arguments": {
+            "query": "architecture"
+          },
+          "facts": [
+            "DOC-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "TASK-1",
+        "DOC-1"
+      ],
+      "final_forbidden": [],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_tasks",
+            "arguments": {
+              "project": "mini"
+            },
+            "facts": [
+              "TASK-1"
+            ],
+            "query": "project tasks"
+          },
+          {
+            "tool": "mcp__catalog__search_documents",
+            "arguments": {
+              "query": "architecture"
+            },
+            "facts": [
+              "DOC-1"
+            ],
+            "query": "documents architecture"
+          }
+        ],
+        "reply": "TASK-1 DOC-1"
+      },
+      "category": "two_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-6",
+      "prompt": "List code modules and calendar events",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_code_modules",
+          "arguments": {
+            "module": "core"
+          },
+          "facts": [
+            "CODE-1"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__list_calendar_events",
+          "arguments": {
+            "day": "today"
+          },
+          "facts": [
+            "EVENT-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "CODE-1",
+        "EVENT-1"
+      ],
+      "final_forbidden": [],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_code_modules",
+            "arguments": {
+              "module": "core"
+            },
+            "facts": [
+              "CODE-1"
+            ],
+            "query": "code modules"
+          },
+          {
+            "tool": "mcp__catalog__list_calendar_events",
+            "arguments": {
+              "day": "today"
+            },
+            "facts": [
+              "EVENT-1"
+            ],
+            "query": "calendar events"
+          }
+        ],
+        "reply": "CODE-1 EVENT-1"
+      },
+      "category": "two_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-7",
+      "prompt": "Search architecture documents and get dataset stats",
+      "required": [
+        {
+          "tool": "mcp__catalog__search_documents",
+          "arguments": {
+            "query": "architecture"
+          },
+          "facts": [
+            "DOC-1"
+          ]
+        },
+        {
+          "tool": "mcp__catalog__get_dataset_stats",
+          "arguments": {
+            "dataset": "demo"
+          },
+          "facts": [
+            "DATA-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "DOC-1",
+        "DATA-1"
+      ],
+      "final_forbidden": [],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__search_documents",
+            "arguments": {
+              "query": "architecture"
+            },
+            "facts": [
+              "DOC-1"
+            ],
+            "query": "documents architecture"
+          },
+          {
+            "tool": "mcp__catalog__get_dataset_stats",
+            "arguments": {
+              "dataset": "demo"
+            },
+            "facts": [
+              "DATA-1"
+            ],
+            "query": "dataset stats"
+          }
+        ],
+        "reply": "DOC-1 DATA-1"
+      },
+      "category": "two_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-8",
+      "prompt": "Please list project milestones, whose descriptions look similar to other project tools",
+      "required": [
+        {
+          "tool": "mcp__catalog__list_project_milestones",
+          "arguments": {
+            "project": "mini"
+          },
+          "facts": [
+            "SYNTHETIC-1"
+          ]
+        }
+      ],
+      "final_required": [
+        "SYNTHETIC-1"
+      ],
+      "final_forbidden": [],
+      "offline": {
+        "steps": [
+          {
+            "tool": "mcp__catalog__list_project_milestones",
+            "arguments": {
+              "project": "mini"
+            },
+            "facts": [
+              "SYNTHETIC-1"
+            ],
+            "query": "project milestones"
+          }
+        ],
+        "reply": "SYNTHETIC-1"
+      },
+      "category": "single_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-9",
+      "prompt": "Explain the word tool without calling MCP tools.",
+      "required": [],
+      "final_required": [],
+      "final_forbidden": [
+        "TASK-999",
+        "DOC-999",
+        "CODE-999",
+        "EVENT-999",
+        "DATA-999"
+      ],
+      "offline": {
+        "steps": [],
+        "reply": "A tool is an instrument."
+      },
+      "final_exact": "A tool is an instrument.",
+      "category": "no_tool",
+      "language": "en"
+    },
+    {
+      "case_id": "challenge-10",
+      "prompt": "Use the builtin file tool to write note.txt with HELLO.",
+      "category": "builtin",
+      "language": "en",
+      "required": [
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "note.txt",
+            "content": "HELLO"
+          },
+          "facts": []
+        }
+      ],
+      "final_required": [
+        "HELLO"
+      ],
+      "final_forbidden": [],
+      "offline": {
+        "steps": [
+          {
+            "tool": "write_file",
+            "arguments": {
+              "path": "note.txt",
+              "content": "HELLO"
+            },
+            "facts": [],
+            "query": ""
+          }
+        ],
+        "reply": "HELLO"
+      }
+    }
+  ]
+}
