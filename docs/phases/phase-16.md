@@ -223,7 +223,7 @@ uv run python -m scripts.evaluate_tool_agent --live --confirm-api-cost \
 
 ## 14. 测试、限制和阶段变化
 
-新增17项检索测试和24项Harness测试：TF饱和/IDF/字段权重/长度归一化、中文混合、权限过滤、负例分母/多目标NDCG、可复现排序；真实stdio三组流程、参数与返回事实、配对/可见性快照、无意义调用、隔离、预算/取消清理、SDK retry=0、缺Usage/缓存、估价、报告隐私/独占保存、Phase15基线不变。Phase11审批与HTTP/Bearer/OAuth边界由原全量回归继续验证。Phase1–16全量354项unittest、Phase1/2原断言、归档安全集成检查和mybot/scripts编译均通过；独立归档结果在完成后补记。
+新增17项检索测试和24项Harness测试：TF饱和/IDF/字段权重/长度归一化、中文混合、权限过滤、负例分母/多目标NDCG、可复现排序；真实stdio三组流程、参数与返回事实、配对/可见性快照、无意义调用、隔离、预算/取消清理、SDK retry=0、缺Usage/缓存、估价、报告隐私/独占保存、Phase15基线不变。Phase11审批与HTTP/Bearer/OAuth边界由原全量回归继续验证。Phase1–16全量354项unittest、Phase1/2原断言、归档安全集成检查和mybot/scripts编译均通过；独立归档和还原已验证，详见末节。
 
 算法局限：小词典不是语义理解，短metadata可能缺必要线索，中文字符片段有噪声，独立加权字段BM25也可能让常见或同义工具误排。小内部数据有领域偏差，不能推广为通用检索能力。未实现Embedding、list_changed、动态启动、自动编排或新权限系统。
 
@@ -247,5 +247,7 @@ uv run python -m scripts.evaluate_tool_agent
 ```
 
 归档包含完整源码/锁文件/配置模板/案例/学习资料，不含真实配置、凭证、Session或运行报告。旧Phase1–15 Tag/ZIP不变，不混入用户app.py/USER.md修改；不Push、不运行Live、不进入Phase17。ExFAT上只清理经文件头确认的AppleDouble，COPYFILE_DISABLE=1可减少元数据但不能保证完全阻止；ZIP不含._*。
+
+实际归档结果：唯一annotated `phase-16` 指向实现提交 `332e1b97b90c64735d0872bb69fd89b8b3765cf4`。`../mybot-mini-snapshots/phase-16.zip`共135条目，SHA256为 `bf011ed02be2ddeae40fa001c1658da6f7fb75ee049f6bff08a56160ec011f0f`。干净APFS worktree保存时独立冻结安装、mybot编译、354项回归及Phase1/2原断言通过；restore_phase.sh 16还原后再次冻结安装、mybot/scripts编译、354项及原断言通过。检索报告排序/指标完全一致，Agent评分/调用计数/Schema/Token空值/配对完全一致（本地计时和Git元数据自然不同）。还原目录编译前清理136个经文件头确认的AppleDouble。CRC/ZIP提交SHA/必要文件/无元数据及用户文件的已提交版本核对通过，旧15个Tag对象和ZIP哈希不变，临时worktree已移除。未运行Live或第三方MCP。最终归档记录另作文档提交，不移动阶段Tag。
 
 archive-ready: true

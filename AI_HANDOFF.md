@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase16检索与合成Agent Harness已实现：17项检索专项、24项Harness专项及编译通过，Phase15原39项通过；全量354项与Phase1/2原断言、归档安全检查通过，尚未创建phase-16 Tag/ZIP。不运行Live、不Push、不进入Phase17。Phase15已按用户要求推送（main 05c4310/phase-15）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改，不混入阶段提交。
+Phase16检索与合成Agent Harness已实现：17项检索专项、24项Harness专项及编译通过，Phase15原39项通过；全量354项与Phase1/2原断言、归档安全检查通过，phase-16 Tag/ZIP和独立还原验证完成。不运行Live、不Push、不进入Phase17。Phase15已按用户要求推送（main 05c4310/phase-15）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改，不混入阶段提交。
 
 ## 实现与架构
 
@@ -24,6 +24,10 @@ Phase16检索与合成Agent Harness已实现：17项检索专项、24项Harness�
 
 36例Hit@5 literal .59375 / bm25 .625 / hybrid .875；负例空结果率均1。Agent固定脚本12例/模式：eager12成功25请求、literal11成功49请求、hybrid12成功51请求；累计Schema1461425/167123/175363。Literal中文agent-08检索失败明确保留。全部Token/费用/Live成功率未知；真实LLM与真实第三方MCP均未调用。详表/本地计时在phase-16学习文档。
 
+## 归档与验证
+
+实现提交332e1b97b90c64735d0872bb69fd89b8b3765cf4，唯一annotated phase-16指向该提交。../mybot-mini-snapshots/phase-16.zip共135条目，SHA256 bf011ed02be2ddeae40fa001c1658da6f7fb75ee049f6bff08a56160ec011f0f。APFS独立ZIP及../mybot-mini-learning/phase-16还原目录均通过冻结安装/编译/354项及原断言，还原另编译scripts并运行两种离线对比。检索排序/指标完全一致；Agent评分/计数/Schema/Token空值/配对一致，仅计时/Git元数据不同。清理136个经文件头确认的还原AppleDouble；CRC/提交SHA/必要文件/无元数据/用户文件已提交版本核对通过。旧15个Tag对象及ZIP哈希未变，临时worktree已移除；最终归档记录另作文档提交，不移动Tag。
+
 ## 限制与下一步
 
-小内部合成集与受限词典不能泛化；ID/数值最终答案rubric不是自然语言语义验证。Live API/模型选择能力/费用未实测，Usage仅兼容标准字段；静默忽略tools的Provider不能自动证明不兼容。无Embedding/动态启动/list_changed/新权限。全量354项、原断言和归档安全检查通过，已审查待提交源码/合成数据/文档及跟踪文件边界，补archive-ready并commit；使用干净APFS worktree save16，核对旧15 Tag/ZIP后独立restore/冻结安装/全源码编译/全量及两组对比，补最终验证记录。不得覆盖用户改动、旧归档、Push或进入Phase17。
+小内部合成集与受限词典不能泛化；ID/数值最终答案rubric不是自然语言语义验证。Live API/模型选择能力/费用未实测，Usage仅兼容标准字段；静默忽略tools的Provider不能自动证明不兼容。无Embedding/动态启动/list_changed/新权限。阶段完成，等待用户下一项任务。不得覆盖用户改动、旧归档、自动Push或进入Phase17。主工作区仅保留用户app.py/USER.md未提交修改；学习历史仅在docs/phases和Git。
