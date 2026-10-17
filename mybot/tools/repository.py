@@ -1,5 +1,6 @@
 """One Workspace resolver (FileTool), plus conservative policy for new read-only tools."""
 import json
+import re
 import asyncio
 import os
 import stat
@@ -86,6 +87,9 @@ class RepositoryTool(FileTool):
             for raw in sorted(set(cfg.stdout.split(b'\0'))-{b''}):
                 key=raw.decode('utf-8')
                 if key.rsplit('.',1)[-1].casefold() in ('clean','smudge','process','required'):
+                    # -c separates at the first '=': ambiguous subsection names must FAIL CLOSED.
+                    if not re.fullmatch(r'filter\.[A-Za-z0-9_.-]+\.(?:clean|smudge|process|required)',key,re.IGNORECASE|re.ASCII):
+                        raise ValueError('unsafe_git_filter_configuration')
                     overrides+=['-c',key+('=false' if key.rsplit('.',1)[-1].casefold()=='required' else '=')]
         return await run_readonly('git',[*GIT_OPTIONS,*overrides,*args],cwd=root,workspace=self.workspace,**limits)
 

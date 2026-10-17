@@ -164,3 +164,6 @@ uv run python -m scripts.check_repository_tools
 ```
 
 源码与Diff可能进入LLM请求及Session，不提供完整秘密脱敏或OS沙盒。没有Patch、任意Shell、自动测试或Git写入工具。真实Git/rg实现、边界、教学项目与验证见 [Phase 19](docs/phases/phase-19.md)。本阶段在独立codex/phase-19分支完成，原用户工作区不自动合并。
+
+
+Phase 19最终交付使用安全修订 `phase-19-r1`；初版 `phase-19`/ZIP保留为历史，不应作为当前版本。还原请从codex/phase-19工作树运行 `bash scripts/restore_phase.sh 19 r1`。修订原因与验证见阶段学习文档。

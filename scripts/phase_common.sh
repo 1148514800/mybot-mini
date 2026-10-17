@@ -6,3 +6,11 @@ phase_id() {
     (( n >= 1 && n <= 99 )) || die 'Phase must be from 1 to 99.'
     printf -v tag 'phase-%02d' "$n"
 }
+
+# Explicit immutable revision suffix; base phase documentation remains phase-XX.md.
+phase_revision() {
+    base_tag=$tag
+    local revision=${1:-}
+    [[ -z $revision || $revision =~ ^r[1-9][0-9]{0,5}$ ]] || die 'Revision must be r1..r999999.'
+    [[ -z $revision ]] || tag="$base_tag-$revision"
+}

@@ -370,6 +370,20 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
         result=await self.run_tool('git_diff')
         self.assertFalse(result.success);self.assertFalse(marker.exists())
 
+    async def test_ambiguous_git_filter_names_fail_closed(self):
+        marker=self.repo/'EXECUTED'
+        script=self.write('.ambiguous-filter.py',f'from pathlib import Path\nPath({str(marker)!r}).write_text("BAD")\n')
+        for driver in ('foo=bar','foo bar','foo"bar','fooKbar'):
+            key='filter.'+driver+'.clean'
+            self.git('config',key,f'{sys.executable} {script}')
+            self.write('.gitattributes','*.py filter='+driver+'\n')
+            for name in ('git_status','git_diff'):
+                result=await self.run_tool(name)
+                self.assertFalse(result.success)
+                self.assertEqual(result.error,'unsafe_git_filter_configuration')
+                self.assertFalse(marker.exists())
+            self.git('config','--unset-all',key)
+
 
 def check_repository_tools():
     result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(RepositoryChecks))

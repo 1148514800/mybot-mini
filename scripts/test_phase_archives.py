@@ -61,4 +61,17 @@ with tempfile.TemporaryDirectory(prefix="mybot-phase-tests-") as folder:
     malicious.write_bytes(b"not a zip")
     run(["uv", "run", "--no-project", "python", "scripts/phase_zip.py", str(malicious), "phase-01", str(base / "bad-output")], False)
 
+    # Revision archives are new immutable names; default restore may follow a documented revision.
+    run(["git", "tag", "-a", "phase-01-r1", "-m", "synthetic revision"])
+    run(["bash", "scripts/restore_phase.sh", "1", "r1"])
+    run(["bash", "scripts/restore_phase.sh", "1", "r1"], False)
+    run(["bash", "scripts/restore_phase.sh", "1", "../escape"], False)
+    run(["bash", "scripts/save_phase.sh", "1", "invalid revision", "../escape"], False)
+    doc=repo / "docs/phases/phase-01.md"
+    doc.write_text(doc.read_text()+"\narchive-revision: r1\n")
+    run(["bash", "scripts/restore_phase.sh", "1"], False)
+    shutil.rmtree(base / "mybot-mini-learning" / "phase-01-r1")
+    run(["bash", "scripts/restore_phase.sh", "1"])
+    assert (base / "mybot-mini-learning" / "phase-01-r1" / "mybot/main.py").exists()
+
 print("Archive integration checks passed.")

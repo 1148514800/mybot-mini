@@ -1,5 +1,9 @@
 # Phase 19：Repository Exploration & Code Search
 
+archive-revision: r1
+
+**修订版r1：原phase-19 Tag/ZIP存在Git过滤器名边界漏洞，不作为最终安全交付；原样保留，不覆盖。当前推荐phase-19-r1，代码及专项/全量/归档脚本验证通过，待独立修订归档与还原。**
+
 ## 1. 学习目标与方向变化
 
 项目为mybot-mini，环境macOS、Python3.12+、uv。从Phase18的MCP路由质量研究转向本地Coding Agent的仓库调查能力；本阶段不再调整路由策略、词典或评分。Coding Agent需要把“函数在哪里”“谁调用它”“哪些修改已经属于用户”转化为可核对的路径、行号、状态与Diff，再进入后续编辑/测试阶段。本阶段只有阅读能力，没有新增Patch、Shell、测试执行、自动修复、Commit或回滚工具。
@@ -131,7 +135,7 @@ repo_path缺省`.`，允许Workspace下的嵌套仓库。先在Workspace范围�
 
 每次子进程使用新建最小环境，不继承GIT_DIR/WORK_TREE/INDEX_FILE/CONFIG_COUNT、外部diff、Pager、RIPGREP_CONFIG_PATH、动态加载器注入等环境。固定GIT_CONFIG_NOSYSTEM/GLOBAL=/dev/null、GIT_OPTIONAL_LOCKS=0、GIT_TERMINAL_PROMPT=0、GIT_NO_LAZY_FETCH=1、GIT_NO_REPLACE_OBJECTS=1、GIT_ATTR_NOSYSTEM=1。
 
-Git argv固定关闭core.fsmonitor、hooksPath、Pager、用户attributes/excludes文件、untrackedCache、preloadIndex，忽略子模块。status/diff前用有界只读git config枚举filter键，以同名-c覆盖clean/smudge/process为空、required=false；配置过多/损坏就失败，不带着未屏蔽的过滤器继续。测试实际放置会写marker的脚本，确认这些入口以及缺失promisor blob的远程helper均未执行。
+Git argv固定关闭core.fsmonitor、hooksPath、Pager、用户attributes/excludes文件、untrackedCache、preloadIndex，忽略子模块。status/diff前用有界只读git config枚举filter键，以同名-c覆盖clean/smudge/process为空、required=false；由于-c按第一个等号分隔，r1先严格限制filter键为无歧义ASCII名称（字母/数字/点/下划线/短横线），含等号、空格、引号等名称即unsafe_git_filter_configuration，不执行status/diff。配置过多/损坏也失败，不带着未屏蔽的过滤器继续。测试实际放置会写marker的脚本，确认这些入口以及缺失promisor blob的远程helper均未执行。
 
 允许的Git元数据/属性仍是可信本地仓库数据，Git内部可能读取对象和属性；参数与输出限制不是OS级资源隔离或所有Git版本的安全认证。本机实际Git2.54.0 (Apple Git-157)、rg15.2.0，独立还原再次执行真实专项；旧系统版本必须先验证支持这些选项/环境，不能仅凭uv安装宣称成功。
 
@@ -216,11 +220,11 @@ config/config.example.json复制到真实配置后，只在本地填凭证、cod
 
 ## 15. 专项、旧基准与全量验证
 
-新增33项unittest将70项建议行为合并为配置/注册、真实literal/regex/case/glob/行列、Unicode/特殊文件名、忽略/私有路径/二进制/编码、排序/无匹配/上限、真实超时/取消回收、恶意PATH/配置/选项注入、按行续读/长行/CRLF/大小、Git各状态/重命名NUL/嵌套/外部根/worktree、scope/pathspec/Diff截断、Index/文件不变、helper/filter/pager/textconv不执行、缺失对象不惰性取回、Gateway接线与不引导写入、原AgentLoop/Context/Session/Plan/Discovery兼容等断言。
+新增34项unittest将70项建议行为合并为配置/注册、真实literal/regex/case/glob/行列、Unicode/特殊文件名、忽略/私有路径/二进制/编码、排序/无匹配/上限、真实超时/取消回收、恶意PATH/配置/选项注入、按行续读/长行/CRLF/大小、Git各状态/重命名NUL/嵌套/外部根/worktree、scope/pathspec/Diff截断、Index/文件不变、helper/filter/pager/textconv不执行、缺失对象不惰性取回、Gateway接线与不引导写入、原AgentLoop/Context/Session/Plan/Discovery兼容等断言。
 
 四份旧基准与独立还原Phase18当前同代码重跑逐字段对比，除计时/Git元数据全部一致；Coding关闭时没有四个新Schema。Phase18核心四模式仍12/12成功，Eager25请求/1461425字符、Progressive51/175363、Legacy25/176425、Selective27/137582；挑战集四模式仍10/10。这里用实际比较证明兼容，没有用历史数值代替本轮运行。
 
-最终全量455项unittest（旧422+新33）及Phase1/2原断言通过；33项专项真实Git/rg通过，归档安全集成通过，mybot/scripts编译通过。提交前审阅全部136个已跟踪/新增文件路径及内容，凭证/Session/真实配置/缓存/运行报告/大型文件检查无异常；原main与两处用户修改、旧18组Tag/ZIP哈希保持不变。独立归档及还原在提交后执行，最终结果另作文档记录。
+初版全量455项及Phase1/2原断言通过，但新增的过滤器名复核暴露安全漏洞，原测试不足以覆盖。r1的34项专项与456项全量（旧422+新34）及原断言通过，增加歧义过滤器名的双工具回归和修订归档兼容/禁止覆盖检查。归档安全集成通过，mybot/scripts编译通过。提交前审阅全部136个已跟踪/新增文件路径及内容，凭证/Session/真实配置/缓存/运行报告/大型文件检查无异常；原main与两处用户修改、旧18组Tag/ZIP哈希保持不变。独立归档及还原在提交后执行，最终结果另作文档记录。
 
 ## 16. 限制与后续边界
 
@@ -234,15 +238,15 @@ Phase19完成后停止，等待用户下一项任务，不进入Phase20，不Pus
 
 新增8个文件：mybot/tools/repository.py、readonly_process.py、search_code.py、read_file_range.py、git_tools.py；scripts/coding_repo_demo.py、scripts/check_repository_tools.py、docs/phases/phase-19.md。
 
-修改9个文件：mybot/tools/registry.py、mybot/config.py、mybot/app.py、mybot/agent/loop.py、config/config.example.json、scripts/check_phase.py、README.md、docs/phases/README.md、AI_HANDOFF.md。app.py修改基于干净已提交版本，用户原文件未覆盖；USER.md不在阶段修改中。
+修改13个文件：mybot/tools/registry.py、mybot/config.py、mybot/app.py、mybot/agent/loop.py、config/config.example.json、scripts/check_phase.py、README.md、docs/phases/README.md、AI_HANDOFF.md，以及scripts/phase_common.sh、scripts/save_phase.sh、scripts/restore_phase.sh、scripts/test_phase_archives.py（r1不可覆盖修订归档支持）。app.py修改基于干净已提交版本，用户原文件未覆盖；USER.md不在阶段修改中。
 
 本阶段从干净已提交worktree保存，唯一Tag/ZIP不可移动覆盖：
 
 ```bash
-bash scripts/save_phase.sh 19 "Repository Exploration & Code Search"
+bash scripts/save_phase.sh 19 "Repository Exploration & Code Search" r1
 # 工作树版脚本输出到其同级目录，随后独占复制至原项目同级mybot-mini-snapshots
-bash scripts/restore_phase.sh 19
-cd ../mybot-mini-learning/phase-19
+bash scripts/restore_phase.sh 19 r1
+cd ../mybot-mini-learning/phase-19-r1
 uv sync --frozen
 rg --version
 git --version
@@ -252,5 +256,14 @@ uv run python -m scripts.coding_repo_demo
 ```
 
 已存在还原目录时不覆盖，直接进入已有学习目录。ExFAT可能自动生成._*；复制设置COPYFILE_DISABLE=1减少元数据，仅对已确认AppleDouble头的文件清理，ZIP不包含它们。独立验证优先APFS。不自动Push，不合并原main，不进入20。
+
+
+## 18. r1修订原因与不可覆盖的历史
+
+初版过滤器屏蔽直接把Git config返回的键放进`-c key=`。Git按第一个等号分割，因此合法过滤器名`foo=bar`会使覆盖错位。归档后额外的合成目录复核确认脚本marker被执行；初版33/455项不足以覆盖此情况。当前实现先校验所有可执行过滤器键为无歧义ASCII标识符（字母、数字、点、短横线、下划线），其他名称在任何status/diff前失败关闭；新增34号专项在两个工具中确认拒绝并且marker不出现。不能把初版旧测试通过当作安全证明。
+
+已存在phase-19与phase-19.zip按AGENTS不可移动/覆盖规则原样保留，推荐使用新annotated phase-19-r1与phase-19-r1.zip。两者是同一个学习阶段的修订，不进入Phase20。只接受数字的旧归档脚本增加可选rN后缀，基础文档仍phase-19.md；restore可从`archive-revision: r1`选择修订版，或显式传r1。没有revision的历史Phase保持原行为，目标目录和Tag/ZIP仍禁止覆盖。
+
+请从本阶段worktree使用新脚本；原main仍为Phase18，其旧restore脚本不理解修订后缀。原phase-19学习目录也保留，不应作为修复版本运行；新目录为phase-19-r1。
 
 archive-ready: true
