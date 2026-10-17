@@ -2,32 +2,27 @@
 
 ## 当前目标与状态
 
-Phase16检索与合成Agent Harness已实现：17项检索专项、24项Harness专项及编译通过，Phase15原39项通过；全量354项与Phase1/2原断言、归档安全检查通过，phase-16 Tag/ZIP和独立还原验证完成。不运行Live、不Push、不进入Phase17。Phase15已按用户要求推送（main 05c4310/phase-15）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改，不混入阶段提交。
+Phase17 Adaptive Tool Routing已实现，30项专项、原39 Discovery/17 Retrieval/24 Harness通过；全量最终384项、Phase1/2原断言及归档安全检查通过，尚未创建phase-17 Tag/ZIP。不运行Live、不Push、不进入Phase18。Phase16已按用户要求Push（main f5e7fad/phase-16）。保留用户mybot/app.py三处注释和workspace/instructions/USER.md未提交修改；旧16阶段Tag/ZIP身份已保存供核对。
 
 ## 实现与架构
 
-- discovery.retrieval_mode可选literal/bm25/hybrid；缺省literal且旧默认对象不新增键。Literal原6/3/1不变；Catalog权限过滤、240字符描述、query/结果限制、激活原子性、请求快照不变。
-- retrieval.py纯Python加权字段BM25：k1=1.2、b=.75、IDF log1p((N-df+.5)/(df+.5))、字段6/3/1；英文casefold/标点分词，中文单字/双字。别名字典独立、最长匹配、最多16次/32扩展词，hybrid=原始BM25+.35别名BM25，不是Embedding语义搜索。索引只取Catalog，不读真实文件/Schema/Gold。
-- 独立tool_retrieval评测36例（32正/4负、8条保留表达），Hit/Recall/MRR/NDCG@1/3/5和语言/类别/分母；与Phase9评分和Agent成功率分开。
-- tool_agent.py复用原AgentLoop/Manager/Context/Registry；MeasuredAgent只观测执行/收尾，无新循环。12内置合成任务、三模式，每次临时空Workspace/新Agent/Session，关闭持久化/Skills/DEBUG，强制只用本地35工具Demo，不连接用户MCP。Gold仅评分，Live用户Prompt不注入Gold。
-- Live必须双开关；SDK retry=0，共享请求预算，固定输出/案例/重复/ReAct/Context/请求/任务/总时间限制；顺序seed仅洗牌，不是模型seed。asyncio.timeout围住MCP进入/调用/退出同owner Task，取消正确清理，不wait_for整个Agent。
-- Usage真实字段优先，缺失/缓存未知为null，不字符估Token；显式价格且必要Usage完整才estimated_cost，不是账单/硬费用上限。报告不存Prompt/回复/参数/异常/URL/密钥；记录Commit/dirty/case哈希/配置摘要，--save独占写忽略runs/evals。
-- Demo仅扩三个固定结果CODE-1/EVENT-1/DATA-1与42行，35工具Schema/原TASK-DOC行为不变。原AgentLoop、Registry、Planning、Session、Manager/Adapter/认证响应边界、Phase9评分、依赖锁文件均未改。
+- discovery新增可选routing_mode（缺省manual）、eager_tool_threshold（缺省4，0–64）、preselect_limit（缺省min(3,max_active_tools)，显式1–max_active_tools）；adaptive必须显式discovery.enabled=true，旧默认对象形状不新增键。模板保持manual/literal，不改真实config。
+- router.py纯本地一次首轮决策，Catalog/索引不重复建。基础Context不可容纳沿原异常；空目录no_mcp_tools；4096字符上限/控制字符拒绝检索走manual_fallback；小目录满足数量/完整Schema/总Context预算才small_eager；否则同ranked_names正分排序贪心选最多preselect_limit，放不下跳过，无候选或全放不下则manual_fallback。无新LLM、MCP调用或审批。
+- Catalog共享原Literal/BM25/Hybrid排序，retrieval.py/aliases未改；apply_preselection复用原原子验证。AgentLoop仅首轮挂接，手动activate仍完整替换且后续不自动覆盖；请求快照/Plan证据/执行权限不变。finally清空active/含名称决策，仅安全计数诊断供评测。
+- Router只接收当前用户文本/Catalog/预算视图，不接Case/Gold/脚本；历史messages/turns/plan仅供原Context.prepare只读预算，不作检索query。Spy与Gold Canary验证边界、canonical状态不改。完整Schema不裁剪，Context关闭仍守专用数量/Schema上限。
+- 扩旧Harness adaptive_hybrid/bm25，默认MODES不变；专用compare_adaptive_routing入口默认eager/progressive_hybrid/adaptive_hybrid。FixedClient只在本轮目标真实可见时跳过预声明探索动作，缺失仍搜索/激活，搜索miss不靠Gold修复。12例Prompt/Gold/脚本与phase16相同，仅新增category/language元数据。
+- 独立preselection_count/hit/recall、direct MCP、模型手动探索段数和Router初始fallback数、路由耗时；自动不伪造显式retrieval/activation，未显式调用时Adaptive相应为null。有明确preselection_miss诊断，补救成功不当失败。中断前实际路由工作计入数量/耗时，命中率只用完成正例。原Live双开关、SDK retry=0、共享预算、Usage/隐私/owner Task不变。
 
-## 修改文件
+## 文件
 
-新增retrieval.py/retrieval_aliases.py、evaluation/tool_retrieval.py/tool_agent.py、两个evals案例集、三个evaluate/compare入口和两个check脚本、phase-16学习文档；修改discovery排序/验证、两配置模板、Demo返回值、check_phase、README/索引/本交接。仅提交本阶段文件。
+新增mcp_client/router.py、scripts/compare_adaptive_routing.py、check_adaptive_routing.py、docs/phases/phase-17.md；修改discovery、loop、evaluation/tool_agent、evaluate_tool_agent CLI、check_phase、两模板、case分类元数据、README/索引/本交接。Registry/ContextManager/Planning/Session/Manager/Adapter/认证/Phase9评分/检索算法词典/依赖均未改。
 
-## 测试与实测
+## 验证与实测
 
-检索17项、Harness24项及Phase15原39项通过；编译mybot/scripts通过（先清理35个经文件头确认的AppleDouble）。覆盖公式/分词/词典边界/权限、指标多目标与负例分母、默认不建真实Client、Live开关/预算/retry/Usage/估价/隐私、真实stdio三组流程/配对/同批快照、错误参数/自报完成不算成功、恢复错误、超时与取消清理、Phase15比较不变。
+30项专项覆盖配置/两层预算/跳过候选/权限/Gold边界/首轮/手动覆盖/快照/Plan证据/生命周期/真实审批/真实MCP取消清理/三模式评测/Live兼容。mybot/scripts编译通过（清理24个确认AppleDouble）；原17 Retrieval、39 Discovery、24 Harness专项通过。最终全量384项及Phase1/2原断言、归档安全检查通过；中断预算额外定向1项通过。
 
-36例Hit@5 literal .59375 / bm25 .625 / hybrid .875；负例空结果率均1。Agent固定脚本12例/模式：eager12成功25请求、literal11成功49请求、hybrid12成功51请求；累计Schema1461425/167123/175363。Literal中文agent-08检索失败明确保留。全部Token/费用/Live成功率未知；真实LLM与真实第三方MCP均未调用。详表/本地计时在phase-16学习文档。
-
-## 归档与验证
-
-实现提交332e1b97b90c64735d0872bb69fd89b8b3765cf4，唯一annotated phase-16指向该提交。../mybot-mini-snapshots/phase-16.zip共135条目，SHA256 bf011ed02be2ddeae40fa001c1658da6f7fb75ee049f6bff08a56160ec011f0f。APFS独立ZIP及../mybot-mini-learning/phase-16还原目录均通过冻结安装/编译/354项及原断言，还原另编译scripts并运行两种离线对比。检索排序/指标完全一致；Agent评分/计数/Schema/Token空值/配对一致，仅计时/Git元数据不同。清理136个经文件头确认的还原AppleDouble；CRC/提交SHA/必要文件/无元数据/用户文件已提交版本核对通过。旧15个Tag对象及ZIP哈希未变，临时worktree已移除；最终归档记录另作文档提交，不移动Tag。
+本轮同代码12例三模式全部12成功、36完整样本、12配对：eager25请求/1461425 Schema字符，progressive_hybrid51/175363，adaptive_hybrid25/176425；业务调用均13。Adaptive自动预选合计31，10个正例Hit/Recall均1，Direct13，模型探索0，Router初始fallback1。无匹配agent-11误选1个无关候选但无业务执行；简单问答agent-10空集合fallback但模型不探索。Adaptive比Progressive多1062 Schema字符，不能宣称各指标都赢。旧检索报告逐项一致，旧默认Agent统计重新运行仍25/49/51请求、成功12/11/12。Token/费用/Live能力未知；无真实LLM或第三方MCP。计时和全部分组见phase-17文档。
 
 ## 限制与下一步
 
-小内部合成集与受限词典不能泛化；ID/数值最终答案rubric不是自然语言语义验证。Live API/模型选择能力/费用未实测，Usage仅兼容标准字段；静默忽略tools的Provider不能自动证明不兼容。无Embedding/动态启动/list_changed/新权限。阶段完成，等待用户下一项任务。不得覆盖用户改动、旧归档、自动Push或进入Phase17。主工作区仅保留用户app.py/USER.md未提交修改；学习历史仅在docs/phases和Git。
+贪心/词法/小词典不是语义置信度，普通措辞可漏选多工具、无匹配任务可误选；固定脚本不是真实模型，ID评分不通用。预算预检查只保证首轮，后续仍可能超总Context；静态目录/全Server启动不变。Manager旧审计窗口256，饱和时Direct保守null。开发验证和内容审查已完成，补archive-ready并提交阶段文件；干净APFS worktree保存17，发布ZIP/核对旧16归档，独立restore冻结安装/编译/全量及旧新三种对比后补最终文档记录。不覆盖用户修改/旧Tag ZIP、不Push、不进入Phase18。

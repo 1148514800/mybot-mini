@@ -44,7 +44,9 @@
           }
         ],
         "reply": "TASK-1 TASK-2"
-      }
+      },
+      "category": "single_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-02",
@@ -84,7 +86,9 @@
           }
         ],
         "reply": "DOC-1"
-      }
+      },
+      "category": "single_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-03",
@@ -124,7 +128,9 @@
           }
         ],
         "reply": "CODE-1"
-      }
+      },
+      "category": "single_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-04",
@@ -164,7 +170,9 @@
           }
         ],
         "reply": "EVENT-1"
-      }
+      },
+      "category": "single_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-05",
@@ -207,7 +215,9 @@
           }
         ],
         "reply": "DATA-1 42"
-      }
+      },
+      "category": "single_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-06",
@@ -272,7 +282,9 @@
           }
         ],
         "reply": "TASK-1 TASK-2 DOC-1"
-      }
+      },
+      "category": "two_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-07",
@@ -332,7 +344,9 @@
           }
         ],
         "reply": "CODE-1 EVENT-1"
-      }
+      },
+      "category": "two_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-08",
@@ -377,7 +391,9 @@
           }
         ],
         "reply": "TASK-1 TASK-2"
-      }
+      },
+      "category": "single_tool",
+      "language": "zh"
     },
     {
       "case_id": "agent-09",
@@ -417,7 +433,9 @@
           }
         ],
         "reply": "DOC-1"
-      }
+      },
+      "category": "single_tool",
+      "language": "mixed"
     },
     {
       "case_id": "agent-10",
@@ -437,7 +455,9 @@
         "steps": [],
         "reply": "4"
       },
-      "final_exact": "4"
+      "final_exact": "4",
+      "category": "no_tool",
+      "language": "en"
     },
     {
       "case_id": "agent-11",
@@ -456,7 +476,9 @@
       "offline": {
         "steps": [],
         "reply": "unavailable"
-      }
+      },
+      "category": "no_match",
+      "language": "en"
     },
     {
       "case_id": "agent-12",
@@ -519,7 +541,9 @@
           }
         ],
         "reply": "DATA-1 42 CODE-1"
-      }
+      },
+      "category": "two_tool",
+      "language": "en"
     }
   ]
 }

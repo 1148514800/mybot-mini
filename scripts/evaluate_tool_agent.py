@@ -5,11 +5,11 @@ import json
 from mybot.evaluation.tool_agent import evaluate, Limits, MODES, save_report
 
 
-def main():
+def main(default_modes=MODES):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live',action='store_true')
     parser.add_argument('--confirm-api-cost',action='store_true')
-    parser.add_argument('--modes',default=','.join(MODES))
+    parser.add_argument('--modes',default=','.join(default_modes))
     for name,default in (('max-cases',12),('repeats',1),('max-requests',240),('max-output-tokens',512),('max-react-steps',16),('context-max-chars',160000),('seed',16)):
         parser.add_argument('--'+name,type=int,default=default)
     for name,default in (('task-timeout',15.0),('total-timeout',240.0),('request-timeout',10.0)):

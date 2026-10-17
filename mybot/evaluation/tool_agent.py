@@ -22,11 +22,14 @@ from ..agent import AgentLoop, ContextBuilder
 from ..agent.context_manager import ContextBudgetError
 from ..config import GatewayConfig, PROJECT_DIR, build_client
 from ..mcp_client.manager import MCPClientManager
+from ..mcp_client.adapter import MCPToolAdapter
 from ..tools import build_default_tool_registry
 from .runner import save_report
 from scripts.compare_tool_discovery import demo_server
 
 MODES = ('eager','progressive_literal','progressive_hybrid')
+ADAPTIVE_MODES = ('adaptive_hybrid','adaptive_bm25')
+ADAPTIVE_ROUTING = {'routing_mode':'adaptive','eager_tool_threshold':4,'preselect_limit':3}
 TOKEN_KEYS = ('prompt_tokens','completion_tokens','total_tokens','cached_input_tokens')
 INCOMPLETE = {'request_budget_exceeded','total_time_exceeded'}
 
@@ -122,6 +125,8 @@ def pair_messages(messages, complete=False):
 class Observation:
     def __init__(self,case):
         self.case=case
+        self.routing=None; self.preselected=None; self.direct_mcp_calls=0
+        self.manual_fallback_count=0; self.manual_started=False; self.manual_flow=False
         self.requests=0; self.usages=[]; self.latencies=[]; self.schemas=[]; self.events=[]
         self.retrieved=set(); self.activated=set(); self.correct=set(); self.errors=[]
         self.terminal=None; self.finished=False; self.paired=True; self.plan_incomplete=False
@@ -130,6 +135,10 @@ class Observation:
         try: args=json.loads(raw) if isinstance(raw,str) else raw
         except (ValueError,TypeError):args={}
         args=args if isinstance(args,dict) else {}
+        if name in ('search_mcp_tools','activate_mcp_tools'):
+            if not self.manual_flow:self.manual_fallback_count+=1
+            self.manual_flow=True;self.manual_started=True
+        elif name.startswith('mcp__'):self.manual_flow=False
         known={req['tool'] for req in self.case['required']}
         safe=name if name in known or name in ('search_mcp_tools','activate_mcp_tools','create_plan','update_plan','read_file','write_file','list_files') else '<other>'
         self.events.append({'name':safe,'success':result.success})
@@ -193,8 +202,23 @@ class MeasuredAgent(AgentLoop):
         self.observation=observation
         super().__init__(*args,**kwargs)
 
+    def _route_initial_tools(self,user_input,messages,turns):
+        super()._route_initial_tools(user_input,messages,turns)
+        self.observation.routing=dict(self.routing_diagnostics)
+        self.observation.preselected=set(self.routing_decision.selected_tool_names)
+
     async def _execute(self,name,raw_arguments):
-        result=await super()._execute(name,raw_arguments)
+        adapter=self.tools.get_tool(name)
+        before=len(adapter.manager.audit) if isinstance(adapter,MCPToolAdapter) else None
+        try:
+            result=await super()._execute(name,raw_arguments)
+        finally:
+            if before is not None and not self.observation.manual_started:
+                audit=adapter.manager.audit
+                # Manager audit is bounded; never manufacture counts once its window saturates.
+                if before>=256:self.observation.direct_mcp_calls=None
+                elif len(audit)>before and audit[-1]['executed'] and self.observation.direct_mcp_calls is not None:
+                    self.observation.direct_mcp_calls+=1
         self.observation.tool(name,raw_arguments,result)
         return result
 
@@ -208,7 +232,8 @@ class MeasuredAgent(AgentLoop):
 
 class FixedClient:
     """Predeclared synthetic script. Does not estimate real model competence."""
-    def __init__(self,script,progressive):
+    def __init__(self,script,progressive,adaptive=False):
+        self.adaptive=adaptive
         self.actions=[]; self.reply=script['reply'];self.index=0;self.last=None
         for step in script['steps']:
             if progressive:
@@ -232,6 +257,10 @@ class FixedClient:
                 raise AssertionError('Real MCP result does not satisfy fixture')
         if self.index==len(self.actions):return N(choices=[N(message=N(content=self.reply,tool_calls=None))],usage=None)
         name,args,expect=self.actions[self.index]
+        if self.adaptive and name=='search_mcp_tools' and expect in visible:
+            # Explicit offline fixture only; decide from THIS actual request, never edit Router.
+            self.index+=2  # Skip the predeclared search + activation pair.
+            name,args,expect=self.actions[self.index]
         if name not in visible:raise AssertionError('Offline script attempted invisible tool')
         self.index+=1;self.last=(name,args,expect)
         return N(choices=[N(message=N(content=None,tool_calls=[N(id=f'synthetic-{self.index}',function=N(name=name,arguments=json.dumps(args)))]))],usage=None)
@@ -242,7 +271,7 @@ def contains_fact(text, fact):
     return bool(re.search(r'(?<![A-Za-z0-9_-])'+re.escape(fact)+r'(?![A-Za-z0-9_-])',text,re.IGNORECASE))
 
 
-def grade(obs,reply,progressive,audit):
+def grade(obs,reply,progressive,audit,*,adaptive=False):
     required={r['tool'] for r in obs.case['required']}
     final=all(contains_fact(reply,f) for f in obs.case['final_required']) and not any(contains_fact(reply,f) for f in obs.case['final_forbidden'])
     if 'final_exact' in obs.case: final = final and reply.strip()==obs.case['final_exact']
@@ -252,9 +281,13 @@ def grade(obs,reply,progressive,audit):
     task=bool(final and calls and obs.finished and obs.terminal is None and obs.paired and not obs.plan_incomplete)
     retrieval=required<=obs.retrieved if progressive and required else None
     activation=required<=obs.activated if progressive and required else None
+    if adaptive:
+        if not any(e['name']=='search_mcp_tools' for e in obs.events):retrieval=None
+        if not any(e['name']=='activate_mcp_tools' for e in obs.events):activation=None
     causes=[]
     if not task:
         if obs.terminal:causes.append(obs.terminal)
+        if adaptive and required and obs.preselected is not None and not required<=obs.preselected:causes.append('preselection_miss')
         if retrieval is False:causes.append('retrieval_miss')
         if activation is False:causes.append('activation_failed')
         if not calls:
@@ -287,8 +320,25 @@ def summarize(results,live,prices):
         tokens={k:sum(r[k] for r in rows) if all(r[k] is not None for r in rows) else None for k in TOKEN_KEYS}
         item.update(tokens);item['input_tokens']=tokens['prompt_tokens'];item['output_tokens']=tokens['completion_tokens']
         item['estimated_cost']=estimated_cost(tokens,prices) if live else None
+        routed=[r for r in rows if r.get('routing_strategy') is not None]
+        positives=[r for r in routed if r['status']=='complete' and r['preselection_hit'] is not None]
+        item.update(routing_samples=len(routed),preselection_positive_denominator=len(positives),
+                    preselection_count=sum(r['preselection_count'] for r in routed) if routed else None,
+                    preselection_hit_rate=sum(r['preselection_hit'] for r in positives)/len(positives) if positives else None,
+                    preselection_recall=sum(r['preselection_recall'] for r in positives)/len(positives) if positives else None,
+                    direct_mcp_calls=sum(r['direct_mcp_calls'] for r in rows) if all(r.get('direct_mcp_calls') is not None for r in rows) else None,
+                    manual_fallback_count=sum(r.get('manual_fallback_count',0) for r in rows),
+                    initial_manual_fallback_count=sum(r['routing_strategy']=='manual_fallback' for r in routed),
+                    routing_overhead_ms=sum(r['routing_overhead_ms'] for r in routed) if routed else None)
+        item['task_success_count']=sum(r['task_success'] for r in completed)
         summary[mode]=item
     return summary
+
+
+def summarize_categories(results,live,prices):
+    groups={key:[r for r in results if r.get('category')==key] for key in ('single_tool','two_tool','no_tool','no_match')}
+    groups.update(chinese=[r for r in results if r.get('language')=='zh'],mixed=[r for r in results if r.get('language')=='mixed'])
+    return {key:summarize(rows,live,prices) for key,rows in groups.items()}
 
 
 def safe_label(value):
@@ -300,7 +350,7 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
         raise ValueError('Live requires both --live and --confirm-api-cost')
     limits=limits or Limits(); prices=validate_prices(prices)
     modes=tuple(modes)
-    if not modes or len(set(modes))!=len(modes) or any(m not in (*MODES,'progressive_bm25') for m in modes):raise ValueError('Invalid agent modes')
+    if not modes or len(set(modes))!=len(modes) or any(m not in (*MODES,'progressive_bm25',*ADAPTIVE_MODES) for m in modes):raise ValueError('Invalid agent modes')
     cases=load_cases()[:limits.max_cases]
     neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},session_persist=False,skills_enabled=False,debug=False)
     base=base_config or GatewayConfig(**neutral,**({} if live else dict(provider='offline',model='fixed-script',api_key=None,base_url=None)))
@@ -329,14 +379,15 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                             progressive=mode!='eager'
                             config=replace(common,workspace=workspace,session_path=Path(folder)/'state.json',
                                 mcp_enabled=True,mcp_servers={'catalog':demo_server()},
-                                mcp_discovery={'enabled':progressive,'retrieval_mode':mode.removeprefix('progressive_') if progressive else 'literal'})
+                                mcp_discovery={'enabled':progressive,'retrieval_mode':mode.split('_',1)[1] if progressive else 'literal',
+                                               **(ADAPTIVE_ROUTING if mode in ADAPTIVE_MODES else {})})
                             tools=build_default_tool_registry(workspace)
                             # timeout surrounds the whole connection lifecycle in THIS owner task.
                             remaining=budget['deadline']-time.monotonic()
                             try:
                                 async with asyncio.timeout(min(limits.task_timeout,max(0,remaining))):
                                     async with MCPClientManager(config,tools) as manager:
-                                        actual_client=client if live else (client_factory(config,case,mode) if client_factory else FixedClient(case['offline'],progressive))
+                                        actual_client=client if live else (client_factory(config,case,mode) if client_factory else FixedClient(case['offline'],progressive,adaptive=mode in ADAPTIVE_MODES))
                                         agent=MeasuredAgent(MeasuringClient(actual_client,obs,budget),config,tools,ContextBuilder(workspace),observation=obs)
                                         try:
                                             with contextlib.redirect_stdout(io.StringIO()):reply=await agent.handle_message(case['prompt'])
@@ -352,13 +403,23 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                                 if obs.terminal and agent.session.history():obs.paired=False
                     if obs.terminal in INCOMPLETE:stop=obs.terminal
                     tokens=token_totals(obs.usages,obs.requests) if live else dict.fromkeys(TOKEN_KEYS)
-                    score=grade(obs,reply,mode!='eager',audit)
+                    score=grade(obs,reply,mode!='eager',audit,adaptive=mode in ADAPTIVE_MODES)
+                    required_names={req['tool'] for req in case['required']}
+                    adaptive=mode in ADAPTIVE_MODES
+                    routing_metrics={
+                        'routing_strategy':obs.routing['routing_strategy'] if obs.routing else None,
+                        'routing_diagnostics':obs.routing,
+                        'preselection_count':len(obs.preselected) if obs.preselected is not None else None,
+                        'preselection_hit':bool(required_names & obs.preselected) if required_names and obs.preselected is not None else None,
+                        'preselection_recall':len(required_names & obs.preselected)/len(required_names) if required_names and obs.preselected is not None else None,
+                        'direct_mcp_calls':obs.direct_mcp_calls,'manual_fallback_count':obs.manual_fallback_count,
+                        'routing_overhead_ms':obs.routing['routing_overhead_ms'] if obs.routing else None}
                     incomplete=obs.terminal in INCOMPLETE
                     if incomplete:
                         for key in ('task_success','tool_call_success','final_answer_correct','retrieval_success','activation_success'):score[key]=None
                         score.update(failure_category=obs.terminal,secondary_failures=[])
-                    results.append({'case_id':case['case_id'],'repeat':repeat,'agent_mode':mode,'status':'incomplete' if incomplete else 'complete',
-                        **score,**tokens,'llm_requests':obs.requests,'request_latency_seconds':sum(obs.latencies),
+                    results.append({'case_id':case['case_id'],'category':case.get('category'),'language':case.get('language'),'repeat':repeat,'agent_mode':mode,'status':'incomplete' if incomplete else 'complete',
+                        **score,**tokens,**routing_metrics,'llm_requests':obs.requests,'request_latency_seconds':sum(obs.latencies),
                         'request_latencies_seconds':list(obs.latencies),'task_wall_time_seconds':time.perf_counter()-task_started,
                         'tool_calls':len(obs.events),'tool_failures':sum(not e['success'] for e in obs.events),
                         'search_calls':sum(e['name']=='search_mcp_tools' for e in obs.events),
@@ -388,8 +449,8 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
     return {'mode':'live' if live else 'offline','actual_tokens':{k:sum(r[k] for r in results) if all(r[k] is not None for r in results) else None for k in TOKEN_KEYS} if live else None,
             'actual_cost':None,'live_task_success_rate':{m:s['task_success_rate'] for m,s in summary.items()} if live else None,
             'provider':safe_label(common.provider) if live else 'offline','model':safe_label(common.model) if live else 'fixed-script',
-            'git_commit':commit,'worktree_dirty':dirty,'case_sha256':case_version,'configuration':{**limits.__dict__,'modes':list(modes),'temperature':0.1,'sdk_max_retries':0,'prices':prices},
+            'git_commit':commit,'worktree_dirty':dirty,'case_sha256':case_version,'configuration':{**limits.__dict__,'modes':list(modes),'adaptive_routing':ADAPTIVE_ROUTING if any(m in ADAPTIVE_MODES for m in modes) else None,'temperature':0.1,'sdk_max_retries':0,'prices':prices},
             'sample_count':len(results),'incomplete_count':sum(r['status']=='incomplete' for r in results),
-            'complete_paired_cases':len(paired),'paired_differences':differences,'overall':summary,'results':results,
+            'complete_paired_cases':len(paired),'paired_differences':differences,'overall':summary,'by_task_category':summarize_categories(results,live,prices),'results':results,
             'limitations':['Fixed scripts validate harness only; no model ability claim.' if not live else 'Provider randomness remains; order seed is not a model seed.',
                           'Missing usage/cache fields remain null. Estimated cost is not a bill or a hard spending cap.']}

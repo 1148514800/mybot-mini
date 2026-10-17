@@ -124,3 +124,16 @@ uv run python -m scripts.check_tool_agent_eval
 ```
 
 以上默认离线，排名指标与 Agent 任务成功率独立报告。新 Harness 的 Live 必须同时显式指定 `--live --confirm-api-cost`，只连接内置合成 stdio Demo，关闭 Session 持久化、Skills、DEBUG和SDK重试；受请求数、案例数、重复次数、输出Token及总时长限制。开发验证未运行真实 LLM API。完整算法、实测结果、预算参数、Usage/缓存/估价限制见 [Phase 16](docs/phases/phase-16.md)。
+
+## Adaptive Tool Routing（Phase 17）
+
+显式配置 `mcp.discovery.enabled=true`、`routing_mode="adaptive"` 后，Agent 在每个新任务首轮模型请求前，使用同一个 Catalog/检索索引预选预算内的完整 MCP Schema。建议显式选择 `retrieval_mode="hybrid"`。缺省仍是 manual，旧 Eager/Progressive 行为与评测入口保持兼容。
+
+Router 根据目录数量、完整 MCP Schema 上限与原 ContextManager 总预算选择 small_eager、ranked_preselect 或 manual_fallback。没有额外模型请求或自动业务执行，不改变审批；模型仍能搜索并完整替换激活集合，请求级快照约束保留。
+
+```bash
+uv run python -m scripts.compare_adaptive_routing
+uv run python -m scripts.check_adaptive_routing
+```
+
+新对比入口默认 Eager / Progressive Hybrid / Adaptive Hybrid，使用相同12条合成任务、固定模型和真实本地 stdio；自动预选指标与显式搜索/激活分开，未知 Token/费用保留 null。算法、两层预算、Gold 隔离、实际对比与限制见 [Phase 17](docs/phases/phase-17.md)。开发验证不运行 Live。

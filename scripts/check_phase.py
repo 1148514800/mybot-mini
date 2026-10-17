@@ -90,4 +90,7 @@ if Path(__file__).with_name("check_tool_retrieval.py").exists():
 if Path(__file__).with_name("check_tool_agent_eval.py").exists():
     from scripts.check_tool_agent_eval import check_tool_agent_eval
     check_tool_agent_eval()
+if Path(__file__).with_name("check_adaptive_routing.py").exists():
+    from scripts.check_adaptive_routing import check_adaptive_routing
+    check_adaptive_routing()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

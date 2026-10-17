@@ -17,6 +17,7 @@ from .context_manager import ContextManager, ContextBudgetError
 from ..skills.registry import SkillRegistry
 from ..tools.skill import SkillTool
 from ..mcp_client.discovery import MCPToolCatalog, DiscoveryTool
+from ..mcp_client.router import AdaptiveToolRouter
 
 
 class AgentLoop:
@@ -42,6 +43,10 @@ class AgentLoop:
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
         self.discovery = MCPToolCatalog(tools, config.mcp_discovery) if config.mcp_discovery['enabled'] else None
+        self.router = (AdaptiveToolRouter(self.discovery) if self.discovery is not None
+                       and config.mcp_discovery.get('routing_mode','manual') == 'adaptive' else None)
+        self.routing_decision = None
+        self.routing_diagnostics = None
         self._request_visible_names = frozenset()
         if self.discovery is not None:
             if any(self.tools.has_tool(name) for name in self.discovery.tool_names):
@@ -71,6 +76,8 @@ class AgentLoop:
     async def handle_message(self, user_input: str) -> str:
         if self.discovery is not None:self.discovery.reset()
         self._request_visible_names = frozenset()
+        self.routing_decision = None
+        self.routing_diagnostics = None
         self.plan.reset(user_input)
         self.context_clipped = False
         self.context_history_omitted = False
@@ -89,6 +96,13 @@ class AgentLoop:
         finally:
             if self.discovery is not None:self.discovery.reset()
             self._request_visible_names = frozenset()
+            self.routing_decision = None
+
+    def _route_initial_tools(self, user_input, messages, turns):
+        decision = self.router.route(user_input,messages=messages,turns=turns,plan=self.plan,context_manager=self.context_manager)
+        self.discovery.apply_preselection(decision.selected_tool_names)
+        self.routing_decision = decision
+        self.routing_diagnostics = decision.diagnostics()
 
     async def _handle_message(self, user_input: str) -> str:
         if user_input.strip() == "/clear":
@@ -100,6 +114,7 @@ class AgentLoop:
         messages = self.context.build_messages(user_input, self.session.history())
         turns = self.session.export_turns()
         turn_start = len(messages) - 1
+        if self.router is not None:self._route_initial_tools(user_input,messages,turns)
         limit = max(1, min(self.config.max_react_steps, 30))
         debug = self.config.debug
         for step in range(1, limit + 1):
