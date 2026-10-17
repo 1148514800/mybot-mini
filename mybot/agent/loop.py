@@ -176,6 +176,8 @@ class AgentLoop:
                         args["content"] = f"<{len(str(args['content']))} chars>"
                     if call.function.name.startswith("mcp__") or (self.discovery is not None and call.function.name in self.discovery.tool_names):
                         args = "<MCP arguments omitted>"
+                    if getattr(self.tools.get_tool(call.function.name),'private_arguments',False):
+                        args = '<Coding arguments omitted>'
                     print(f"[CALL] {call.function.name}: {args}")
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
                           if permission_denied else await self._execute(call.function.name, call.function.arguments))

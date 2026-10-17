@@ -11,9 +11,12 @@ from .mcp_client.approval import cli_approval
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
     config = config or GatewayConfig()
-    init_workspace(config.workspace)
+    if config.coding_enabled:
+        if not config.workspace.is_dir():raise ValueError('Coding workspace must already exist')
+    else:
+        init_workspace(config.workspace)
 
-    tools = build_default_tool_registry(config.workspace)
+    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled)
     llm_client = None
     try:
         async with MCPClientManager(config, tools, approval_provider=cli_approval):

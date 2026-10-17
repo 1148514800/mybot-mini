@@ -151,3 +151,16 @@ uv run python -m scripts.check_routing_confidence
 ```
 
 独立60例路由集与10例Agent挑战集分别报告；保留原12例核心基准。Selective减少无关预选，但会漏掉有用工具并增加手动探索请求，不宣称全面优于Legacy。规则、分母、完整实测及限制见 [Phase 18](docs/phases/phase-18.md)。本阶段完全离线。
+
+
+## Repository Exploration（Phase 19）
+
+显式设置 `coding.enabled=true` 并将 `workspace.path` 指向已经存在的目标仓库，额外启用 `search_code`、`read_file_range`、`git_status`、`git_diff`。默认false，旧Registry和MCP实验Schema不变。Coding模式不自动写入Workspace引导文件；四个新增工具只读，原write_file仍保留。
+
+```bash
+brew install ripgrep
+uv run python -m scripts.coding_repo_demo
+uv run python -m scripts.check_repository_tools
+```
+
+源码与Diff可能进入LLM请求及Session，不提供完整秘密脱敏或OS沙盒。没有Patch、任意Shell、自动测试或Git写入工具。真实Git/rg实现、边界、教学项目与验证见 [Phase 19](docs/phases/phase-19.md)。本阶段在独立codex/phase-19分支完成，原用户工作区不自动合并。

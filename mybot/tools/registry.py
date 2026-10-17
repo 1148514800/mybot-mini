@@ -51,7 +51,8 @@ class ToolRegistry:
         return ToolResult(success=False, error=f"tool returned {type(result).__name__}")
 
 
-def build_default_tool_registry(workspace: Path) -> ToolRegistry:
+def build_default_tool_registry(workspace: Path, *, coding_enabled=False) -> ToolRegistry:
+    if type(coding_enabled) is not bool:raise ValueError('coding_enabled must be a boolean')
     registry = ToolRegistry()
     for tool in (
         ReadFileTool(workspace),
@@ -59,4 +60,9 @@ def build_default_tool_registry(workspace: Path) -> ToolRegistry:
         ListFilesTool(workspace),
     ):
         registry.register(tool)
+    if coding_enabled:
+        from .search_code import SearchCodeTool
+        from .read_file_range import ReadFileRangeTool
+        from .git_tools import GitStatusTool,GitDiffTool
+        for cls in (SearchCodeTool,ReadFileRangeTool,GitStatusTool,GitDiffTool):registry.register(cls(workspace))
     return registry

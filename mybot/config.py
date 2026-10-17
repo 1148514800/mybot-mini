@@ -64,6 +64,13 @@ def _skills_value(key: str, default):
     return section.get(key, default)
 
 
+def _coding_value():
+    value = _CONFIG.get('coding', {})
+    if not isinstance(value,dict) or set(value)-{'enabled'}:
+        raise ValueError('coding must contain only enabled')
+    return value.get('enabled',False)
+
+
 def _mcp_value(key: str, default):
     section = _CONFIG.get("mcp", {})
     if not isinstance(section, dict):
@@ -80,6 +87,7 @@ def _resolve_path(raw_value) -> Path:
 
 @dataclass
 class GatewayConfig:
+    coding_enabled: bool = field(default_factory=_coding_value)
     mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
     mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
     mcp_discovery: dict = field(default_factory=lambda: _mcp_value("discovery", {}))
@@ -106,6 +114,7 @@ class GatewayConfig:
     )
 
     def __post_init__(self) -> None:
+        if type(self.coding_enabled) is not bool:raise ValueError('coding.enabled must be a boolean')
         from .mcp_client.config import validate_mcp
         self.mcp_servers = validate_mcp(self.mcp_enabled,self.mcp_servers)
         from .mcp_client.discovery import validate_discovery

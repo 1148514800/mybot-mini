@@ -1,4 +1,5 @@
 {
+  "coding": {"enabled": false},
   "debug": false,
   "session": {
     "max_turns": 6,

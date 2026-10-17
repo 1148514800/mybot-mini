@@ -22,6 +22,7 @@
 | 16 | BM25/双语检索与独立Agent评测Harness | 已验证，独立归档 | `phase-16` | [phase-16.md](phase-16.md) |
 | 17 | 首轮自适应工具路由、两层预算与隔离评测 | 已验证，独立归档 | `phase-17` | [phase-17.md](phase-17.md) |
 | 18 | 路由证据门控、安全弃选与覆盖感知预选 | 已验证，独立归档 | `phase-18` | [phase-18.md](phase-18.md) |
+| 19 | 原生只读仓库搜索、按行读取、Git状态与Diff | 已验证，待独立归档 | `phase-19` | [phase-19.md](phase-19.md) |
 
 ## 保存一个新阶段
 
