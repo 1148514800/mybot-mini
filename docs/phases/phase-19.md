@@ -2,7 +2,7 @@
 
 archive-revision: r1
 
-**修订版r1：原phase-19 Tag/ZIP存在Git过滤器名边界漏洞，不作为最终安全交付；原样保留，不覆盖。当前推荐phase-19-r1，代码及专项/全量/归档脚本验证通过，待独立修订归档与还原。**
+**修订版r1：原phase-19 Tag/ZIP存在Git过滤器名边界漏洞，不作为最终安全交付；原样保留，不覆盖。当前推荐phase-19-r1，代码、专项/全量、归档脚本及独立修订归档与还原均验证通过。**
 
 ## 1. 学习目标与方向变化
 
@@ -90,7 +90,7 @@ column为rg的1-based UTF-8字节列，不是Unicode字符或显示宽度。meta
 
 ## 6. read_file_range：稳定闭区间与续读
 
-旧read_file只读取前50000字符，新工具支持path/start_line/end_line必填，行号均为正整数，end>=start，每次至多200行。LF定义真实行号，CRLF原样保留，不把Unicode行分隔符误算成rg的换行。文件内容不修改、不执行。
+旧read_file只返回前50000字符，新工具支持path/start_line/end_line必填，行号均为正整数，end>=start，每次至多200行。LF定义真实行号，CRLF原样保留，不把Unicode行分隔符误算成rg的换行。文件内容不修改、不执行。
 
 输出如`70 | ...`；仅在2MiB内计算完整行数。输出正文预算14500字符，整个ToolResult约16000以内。metadata包括requested_start_line、returned_start_line/end_line、total_lines、truncated、next_start_line、partial_line。
 
@@ -224,11 +224,13 @@ config/config.example.json复制到真实配置后，只在本地填凭证、cod
 
 四份旧基准与独立还原Phase18当前同代码重跑逐字段对比，除计时/Git元数据全部一致；Coding关闭时没有四个新Schema。Phase18核心四模式仍12/12成功，Eager25请求/1461425字符、Progressive51/175363、Legacy25/176425、Selective27/137582；挑战集四模式仍10/10。这里用实际比较证明兼容，没有用历史数值代替本轮运行。
 
-初版全量455项及Phase1/2原断言通过，但新增的过滤器名复核暴露安全漏洞，原测试不足以覆盖。r1的34项专项与456项全量（旧422+新34）及原断言通过，增加歧义过滤器名的双工具回归和修订归档兼容/禁止覆盖检查。归档安全集成通过，mybot/scripts编译通过。提交前审阅全部136个已跟踪/新增文件路径及内容，凭证/Session/真实配置/缓存/运行报告/大型文件检查无异常；原main与两处用户修改、旧18组Tag/ZIP哈希保持不变。独立归档及还原在提交后执行，最终结果另作文档记录。
+初版全量455项及Phase1/2原断言通过，但新增的过滤器名复核暴露安全漏洞，原测试不足以覆盖。r1的34项专项与456项全量（旧422+新34）及原断言通过，增加歧义过滤器名的双工具回归和修订归档兼容/禁止覆盖检查。归档安全集成通过，mybot/scripts编译通过。提交前审阅全部136个已跟踪/新增文件路径及内容，凭证/Session/真实配置/缓存/运行报告/大型文件检查无异常；原main与两处用户修改、旧18组Tag/ZIP哈希保持不变。独立归档及还原已在提交后执行，最终结果见第19节。
 
 ## 16. 限制与后续边界
 
 这是文本搜索，不是语言服务器/AST索引；动态调用、别名、跨语言语义可能漏查。默认排除隐藏/依赖/私有文件；显式range不解析.gitignore，但仍执行相同私有路径策略。2048文件、2MiB文件和所有输出/时间预算会影响召回，必须根据truncated缩小范围。长单行没有字符偏移续读；只支持UTF-8；非UTF-8路径/正文不会替换字节冒充原文。status不检查子模块，Diff禁用重命名检测，秘密探测不完整。
+
+为防执行外部程序，Git过滤器（包括LFS clean/smudge）、宿主全局配置等被屏蔽，因此过滤器仓库的status/diff可能与用户普通Git视图不同，这是安全的原始内容视图。Git配置枚举与后续调用不是原子操作，需信任本地Git元数据、不受恶意并发修改。
 
 依赖宿主可信Git/rg，路径检查不是OS沙盒，固定模拟器不是自主代码理解评测。没有Patch、命令执行、测试运行、自动修复或自动Git写工具；原write_file仍保留，不意味着整个Agent只读。开发阶段固定Git准备/提交不属于模型工具能力。
 
@@ -265,5 +267,19 @@ uv run python -m scripts.coding_repo_demo
 已存在phase-19与phase-19.zip按AGENTS不可移动/覆盖规则原样保留，推荐使用新annotated phase-19-r1与phase-19-r1.zip。两者是同一个学习阶段的修订，不进入Phase20。只接受数字的旧归档脚本增加可选rN后缀，基础文档仍phase-19.md；restore可从`archive-revision: r1`选择修订版，或显式传r1。没有revision的历史Phase保持原行为，目标目录和Tag/ZIP仍禁止覆盖。
 
 请从本阶段worktree使用新脚本；原main仍为Phase18，其旧restore脚本不理解修订后缀。原phase-19学习目录也保留，不应作为修复版本运行；新目录为phase-19-r1。
+
+## 19. r1归档与独立还原最终验证
+
+- 初版实现Commit：`230374b3931df21f6debd81f1502f6d235e3ddc3`；修复实现及最终归档Commit：`6c2747799dfca74c49815fa7351ccabffd5fe342`。
+- 推荐Annotated Tag：`phase-19-r1`，准确指向上述修复提交；ZIP comment与该Commit相同。生成前在独立解压源码执行frozen安装、编译和456项全量回归，通过后才发布。
+- 正式ZIP：`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-19-r1.zip`，SHA-256为`5b7d8691af0edcd5ff1536044d9cb31ab32cc06fb443bb8acfc9ce84af561e30`；155 entries、136 files，CRC通过，全部文件逐字节等于修订Tag，无AppleDouble/真实配置/凭证/Session/缓存。
+- 从worktree执行`bash scripts/restore_phase.sh 19 r1`，独立学习目录为`/Users/godblack/.codex/worktrees/phase-19/mybot-mini-learning/phase-19-r1`，另独占复制至`/Volumes/move-disk/data/code/mybot-mini-learning/phase-19-r1`；没有覆盖旧目录、切换或合并main。
+- APFS还原目录及正式ZIP另行在APFS新临时目录独立解压，分别`uv sync --frozen`、编译mybot/scripts、34项专项及真实合成Git/rg Demo通过。
+- 外置磁盘学习目录独立`uv sync --frozen`、编译mybot/scripts、456项全量回归及Phase1/2原断言通过；实际依赖rg15.2.0、Git2.54.0（Apple Git-157）。清理98个已确认AppleDouble头的mybot/scripts旁文件后编译，未删除业务源码。
+- 四组旧离线基准在修订源码和独立学习目录重跑，除计时/Git元数据外逐字段等于独立Phase18基线。Demo在这些独立副本均为5次固定模拟请求、四工具链定位减法Bug、业务文件与Index未改变、Tool Call ID配对；没有真实LLM或第三方MCP/OAuth请求。
+- 原`phase-19` Tag对象`f9a4981666540f67f9eae5bd08bf2502f3dd381b`仍指向初版230374b；原ZIP的SHA-256仍为`dd2b351412de296491f45cebde3886ffaf6a202c5f9418ccb021fc04dbbcb53e`。它们只作为已取代的历史保存，不作为当前交付。旧Phase1–18的Tag/ZIP全部校验未变。
+- 原main仍为`3461dc7031bb9542070b034bed0be47f61760f75`；用户原app.py与USER.md内容哈希未变。完整成果在`codex/phase-19`工作树，未Push、未自动合并、未进入20。
+
+本节属于归档后的文档记录提交，代码和归档仍固定在6c27477；本记录不移动Tag或覆盖ZIP。学习文档随归档已包含完整实现说明与r1修订原因，最终验证记录以分支上的本文及Git为准。
 
 archive-ready: true

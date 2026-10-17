@@ -2,24 +2,28 @@
 
 ## 当前目标与状态
 
-Phase19 Repository Exploration & Code Search在独立worktree /Users/godblack/.codex/worktrees/phase-19/mybot-mini、分支codex/phase-19开发，基线3461dc7（Phase18已推送）。原 /Volumes/move-disk/data/code/mybot-mini 的main/app.py/USER.md保持原状，不合并、不Push、不进入20。初版230374b已有phase-19 Tag/ZIP，原455项通过但归档后发现Git过滤器名含=可绕过-c覆盖（已实际复现执行marker）。修复及34项专项/456全量与修订脚本集成已通过，待r1提交和独立归档；原Tag/ZIP不移动覆盖，修复版另归档phase-19-r1。原归档不作为最终交付。
+Phase19 Repository Exploration & Code Search已完成并独立验证，停止等待下一任务，不进入20。成果分支codex/phase-19，worktree `/Users/godblack/.codex/worktrees/phase-19/mybot-mini`；原main仍3461dc7，原工作区app.py/USER.md未提交修改内容哈希不变。未自动合并或Push。
 
-## 实现与决策
+## 实现与架构
 
-coding.enabled严格布尔/未知字段检查，默认false；Registry旧调用仍3文件工具，显式true加4原生只读工具。Gateway传开关；Coding模式要求已存在Workspace、不bootstrap写instructions，默认false仍旧初始化。AgentLoop只加2行私有参数日志遮蔽，循环/Plan/Context/Session/MCP/权限未改。
+coding.enabled严格布尔、未知字段拒绝、默认false，旧Registry仍3工具，显式true加search_code/read_file_range/git_status/git_diff四原生工具。Gateway接线；Coding Workspace须已存在、不bootstrap写入。沿用Tool/ToolResult/Registry/AgentLoop，Loop仅增加私有参数日志遮蔽，MCP/路由/Plan/Context/Session未重构。
 
-repository.py复用FileTool._resolve并加统一私有路径策略/2MiB/普通文件/严格UTF8/NUL拒绝；range最多200闭区间行、约16k结果，CRLF保留，部分行与续读元数据明确。search两阶段rg：先遵守gitignore有界枚举2048文件，再fnmatch筛选并用默认Rust regex/literal/JSON真实搜索；50匹配、500字单条、约16k结果，UTF8字节列，无Shell/PCRE2/配置注入。
+repository复用FileTool._resolve，统一敏感路径策略、普通文件/严格UTF8/NUL拒绝/2MiB保护。search用真实rg安全Rust regex或literal、遵守gitignore有界枚举2048文件、50匹配、真实路径/行/UTF8字节列、约16k输出。range闭区间1-based至多200行、约16k、CRLF保持、截断及下一行明确。Git根须在Workspace内，支持nested/worktree；status NUL/XY/rename双路径/200条，截断不称clean；Diff staged/unstaged固定参数/literal路径/300行约24k/不含Untracked。
 
-Git本地根须在Workspace内，支持nested/worktree、不使用父目录仓库；status NUL/XY/rename双路径，200条/约45k，truncated不称clean。diff固定staged/unstaged、literal pathspec、无ext-diff/textconv/pager/rename检测/子模块，先枚举允许修改路径，再读300行/约24k Diff，明确不含Untracked。最小环境关闭宿主配置/目标重定向/锁/惰性fetch/replace；固定关闭fsmonitor/hooks，动态屏蔽本地filter clean/smudge/process，r1严格拒绝含=、空格、引号等不能安全放入-c的filter键，防只读Git执行脚本。
+内部readonly_process仅固定Git/rg argv、可信宿主二进制/最小环境、禁用Git外部helper/filter/fsmonitor/textconv/pager/惰性fetch、5秒整工具预算、读取时字节/记录限额、超时取消回收本次进程组。r1拒绝含等号/空格/引号/非ASCII等歧义可执行过滤器键，防Git -c分割覆盖绕过。不提供模型Shell/Patch/测试执行/自动修复或Git写工具；原write_file仍存在。
 
-readonly_process仅内部Git/rg固定argv与可信宿主位置，真实读取时限stdout/stderr/记录，整个工具5秒，取消/超限回收本次进程组；宿主拒绝组信号时仅kill自有子进程，测试证明无关进程不受影响。不向模型开放run_command。
+## 验证与归档
 
-## 文件与测试
+34项专项、456项全量（旧422+新34）和Phase1/2断言通过，归档修订脚本集成通过。四组旧基准与独立Phase18除耗时/Git元数据逐字段一致。真实合成Git/rg及原AgentLoop Demo：5次固定模拟请求定位src/calculator.py:1 add使用减法，业务文件/Index未变，ID配对；无真实LLM、无第三方MCP/OAuth。APFS与外置磁盘独立安装编译验证，外置学习目录全456项再次通过，四组基准及Demo一致；正式ZIP另行独立解压的34项及Demo通过。
 
-新增5工具模块repository/readonly_process/search_code/read_file_range/git_tools、coding_repo_demo、check_repository_tools、phase-19学习文档；修改registry/config/app/debug分支、配置模板、check_phase及README/索引/本交接。旧文件工具、检索器/路由/Gold/依赖均未改。
+实现230374b，r1安全修复与归档实现6c2747799dfca74c49815fa7351ccabffd5fe342，Annotated Tag phase-19-r1固定指向6c27477。正式ZIP `/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-19-r1.zip`，SHA256 `5b7d8691af0edcd5ff1536044d9cb31ab32cc06fb443bb8acfc9ce84af561e30`，155 entries/136 files，逐文件等于Tag，无._*。学习目录 `/Volumes/move-disk/data/code/mybot-mini-learning/phase-19-r1`，由新worktree脚本 `bash scripts/restore_phase.sh 19 r1`还原；原main旧脚本不支持r1后缀。禁止覆盖已有目录。
 
-33项专项通过，真实合成Git/rg和原AgentLoop Demo用5次模拟请求定位src/calculator.py:1 add的减法Bug，实际状态/Diff核对，业务文件与Index未变、调用ID配对。未运行fixture测试或修复Bug，无真实API、无第三方MCP。四份旧基准与独立Phase18逐字段一致（除计时/Git元数据）。
+初版phase-19/ZIP在归档后发现Git歧义过滤器名漏洞，已被r1取代；按不可覆盖规则保留旧Tag/ZIP/学习目录，不应使用旧版。旧Phase1–18与初版19归档哈希全部未变。最终归档事实由后续纯文档记录提交保存，不能移动Tag重导出。
 
-## 限制与下一步
+修改共21文件：8新增（5工具模块、coding_repo_demo、check_repository_tools、phase-19学习文档），13修改（registry/config/app/Loop日志、配置模板、check_phase、4归档脚本、README/索引/本交接）。完整学习说明和文件清单见docs/phases/phase-19.md。
 
-源码/Diff会进入Provider请求及Session，持久化开启可落盘，没有完整秘密脱敏或OS沙盒。父目录并发替换/硬链接、可信Git元数据/宿主二进制需信任；只支持UTF8、长单行尾部无字符偏移续读，有限枚举/结果/时间需据truncated缩小范围。原write_file仍在，不是整个Agent只读。初版旧33/455回归及旧基准兼容通过；安全复核失败已修复，当前34/456及归档修订集成通过。只提交r1修复、同等不可覆盖的可选rN归档脚本支持及学习文档。保留原phase-19/ZIP事实，另建phase-19-r1修订归档与学习目录，不改写历史。保持原main/用户文件不变，不覆盖旧18个Tag/ZIP，不自动Push或进入20。
+## 已知限制与下一步
+
+仅UTF8/2MiB，2048文件/输出/时间预算影响召回；长单行无字符偏移续读。源码/Diff进入Provider请求与Session，可持久化，无完整秘密脱敏/OS沙盒；信任宿主二进制、Git元数据与非恶意并发文件系统。屏蔽过滤器（含LFS）和全局配置可能导致Git视图与普通Git不同，配置枚举与调用非原子。固定模拟器不代表真实模型理解能力。
+
+保留独立worktree供审阅，原main和用户文件不动。完成后停止，不自动Push/合并/Phase20；不要重做已通过的实现或强制覆盖任何Tag/ZIP。
