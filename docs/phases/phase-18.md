@@ -203,10 +203,37 @@ uv run python -m scripts.test_phase_archives
 
 专项包含严格配置、Strong/Weak/None、中英文别名、未知词、高DF、小目录全相关/部分/闲聊/无匹配、冗余与跨领域、数量/Schema/Context、原子性、Gold隔离和无I/O、首次可见性、手动替换、同批快照、deny/confirm、Planning证据、Session与clear、异常/超时/取消、真实MCP owner生命周期、真实builtin、指标分母、不完整样本和Live控制；原全阶段回归共同验证旧接口。
 
-最终新增38项专项全部通过；Phase1–18全量422项unittest及Phase1/2原断言通过。原17 Retrieval/39 Discovery/24 Harness/30 Adaptive专项均保留通过。旧检索报告与独立还原的Phase17逐项一致；旧默认Agent及Phase17三模式、新四模式当前版本配对比较均重跑，除本地计时/Git元数据外结果复现。mybot/scripts编译和归档安全集成测试通过；ExFAT仅清理文件头确认的AppleDouble。提交前审阅全部已跟踪/新增路径及内容，未包含真实配置、凭证、Session、报告或不必要大文件。独立归档与还原在提交后执行，结果另作最终记录，不移动Tag。
+最终新增38项专项全部通过；Phase1–18全量422项unittest及Phase1/2原断言通过。原17 Retrieval/39 Discovery/24 Harness/30 Adaptive专项均保留通过。旧检索报告与独立还原的Phase17逐项一致；旧默认Agent及Phase17三模式、新四模式当前版本配对比较均重跑，除本地计时/Git元数据外结果复现。mybot/scripts编译和归档安全集成测试通过；ExFAT仅清理文件头确认的AppleDouble。提交前审阅全部已跟踪/新增路径及内容，未包含真实配置、凭证、Session、报告或不必要大文件。干净APFS worktree归档时独立冻结安装、编译mybot、422项及原断言通过；发布ZIP另在APFS解压，冻结安装、编译mybot/scripts、38项专项及新四模式比较通过。restore_phase.sh还原的独立学习目录再次冻结安装、编译mybot/scripts、422项及原断言通过；旧排名、默认Agent、Phase17三模式与本阶段新比较的所有非耗时/Git字段逐项一致。还原清理91个文件头确认的AppleDouble。CRC、完整128文件清单、ZIP提交SHA、原用户文件已提交版本一致，无元数据。旧17个Tag对象/ZIP哈希和用户两文件内容保持不变。最终记录另作文档提交，不移动Tag。
 
-仍启动并发现所有配置Server，只改变首轮Schema可见性，没有减少Server启动或Schema缓存成本。
+仍启动并发现所有配置Server，只改变首轮Schema可见性，没有减少Server启动或Schema缓存成本。当前证据名称解析使用双下划线最后片段：合法远端名含`__`时，前缀概念会丢失，可能漏选；源码与单独构造目录验证此限制，原排名/显式搜索仍能找到工具。复杂标识符归一化是后续修正方向。
 
 后续方向：更好的动作概念、否定和细粒度任务覆盖，必须使用新的独立数据验证；不在本阶段引入Embedding或自动改代码。Phase18只是可复现候选策略评估基础，不实现RSI自修改闭环。未来晋级还需独立测试、负面回归、明确条件、受控批准和回滚。本阶段停止于18，不进入19，不Push，不改旧Tag或ZIP，保留用户app.py与USER.md修改。
+
+## 13. 新增和修改文件清单
+
+新增8个文件：mybot/mcp_client/relevance.py、mybot/evaluation/tool_routing.py、evals/tool_routing_cases.json、evals/tool_agent_routing_cases.json、scripts/check_routing_confidence.py、scripts/evaluate_tool_routing.py、scripts/compare_selective_routing.py、docs/phases/phase-18.md。
+
+修改10个文件：mybot/mcp_client/router.py、mybot/mcp_client/discovery.py、mybot/evaluation/tool_agent.py、scripts/check_phase.py、scripts/evaluate_tool_agent.py、config/config.example.json、config/mcp.discovery.example.json、README.md、docs/phases/README.md、AI_HANDOFF.md。mybot/app.py与workspace/instructions/USER.md的用户修改未加入本阶段提交。
+
+## 14. 独立归档与还原记录
+
+唯一annotated `phase-18` 指向实现提交 `d1808304202d0d1c5d9bdfb7f4d68f6bdaff00a9`。ZIP：`../mybot-mini-snapshots/phase-18.zip`，147条目/128文件，SHA256：`fed645e2b0175ff7eecfa9fa2a266780885d5926e5e7828103c18ed65f932819`。还原目录：`../mybot-mini-learning/phase-18`。这些均为本地结果，未Push。当前主分支另含最终验证记录提交；Tag保持实现提交，不为文档记录移动Tag。
+
+生成方式（现存Tag/ZIP不可覆盖，以下save命令仅说明原归档过程）：
+
+```bash
+# 本轮在干净APFS worktree执行，导出后独占复制至主项目同级快照目录
+bash scripts/save_phase.sh 18 "Tool Routing Confidence & Safe Abstention"
+# 目标目录不存在时才执行；已还原时直接cd进入
+bash scripts/restore_phase.sh 18
+cd ../mybot-mini-learning/phase-18
+uv sync --frozen
+uv run python -m compileall -q mybot scripts
+uv run python -m scripts.check_phase
+uv run python -m scripts.compare_tool_retrieval
+uv run python -m scripts.evaluate_tool_agent
+uv run python -m scripts.compare_adaptive_routing
+uv run python -m scripts.compare_selective_routing
+```
 
 archive-ready: true
