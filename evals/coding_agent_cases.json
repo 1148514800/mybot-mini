@@ -1,0 +1,143 @@
+[
+  {
+    "id": "single_add",
+    "policy": "repair",
+    "expected_state": "verified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "multi_file",
+    "policy": "multi_repair",
+    "fixture": "multi_file",
+    "expected_state": "verified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py",
+      "src/consumer.py"
+    ]
+  },
+  {
+    "id": "failure_feedback",
+    "policy": "repair",
+    "expected_state": "verified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "already_correct",
+    "policy": "repair",
+    "fixture": "already_correct",
+    "expected_state": "completed_without_changes",
+    "expected_files": []
+  },
+  {
+    "id": "stale_hash",
+    "policy": "stale",
+    "expected_state": "verified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "anchor_conflict",
+    "policy": "anchor",
+    "expected_state": "verified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "continuous_failure",
+    "policy": "continuous_failure",
+    "expected_state": "budget_exhausted",
+    "expected_files": []
+  },
+  {
+    "id": "repeat_command",
+    "policy": "repeat_command",
+    "expected_state": "budget_exhausted",
+    "expected_files": []
+  },
+  {
+    "id": "no_retest",
+    "policy": "no_retest",
+    "expected_state": "edited_unverified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "repatch",
+    "policy": "repatch",
+    "expected_state": "edited_unverified",
+    "expected_files": []
+  },
+  {
+    "id": "zero_tests",
+    "policy": "zero_tests",
+    "expected_state": "edited_unverified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "non_test",
+    "policy": "non_test",
+    "expected_state": "edited_unverified",
+    "expected_repair": true,
+    "expected_files": [
+      "src/calculator.py"
+    ]
+  },
+  {
+    "id": "denied",
+    "policy": "denied",
+    "expected_state": "blocked",
+    "expected_files": []
+  },
+  {
+    "id": "sandbox_unavailable",
+    "policy": "sandbox_unavailable",
+    "expected_state": "blocked",
+    "expected_files": []
+  },
+  {
+    "id": "timeout",
+    "policy": "timeout",
+    "expected_state": "blocked",
+    "expected_files": []
+  },
+  {
+    "id": "output_limit",
+    "policy": "output_limit",
+    "expected_state": "blocked",
+    "expected_files": []
+  },
+  {
+    "id": "fake_success",
+    "policy": "fake_success",
+    "expected_state": "completed_without_changes",
+    "expected_files": []
+  },
+  {
+    "id": "investigation",
+    "policy": "investigate",
+    "expected_state": "completed_without_changes",
+    "expected_files": []
+  },
+  {
+    "id": "repeat_read",
+    "policy": "repeat_read",
+    "expected_state": "budget_exhausted",
+    "expected_files": []
+  }
+]

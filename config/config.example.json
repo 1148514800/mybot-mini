@@ -1,5 +1,22 @@
 {
-  "coding": {"enabled": false, "patch_mode": "off", "command": {"mode": "off", "timeout_seconds": 30, "max_output_bytes": 32768}},
+  "coding": {
+    "enabled": false,
+    "patch_mode": "off",
+    "command": {
+      "mode": "off",
+      "timeout_seconds": 30,
+      "max_output_bytes": 32768
+    },
+    "autonomy": {
+      "enabled": false,
+      "max_model_requests": 20,
+      "max_tool_calls": 48,
+      "max_patch_write_attempts": 3,
+      "max_command_attempts": 6,
+      "max_no_progress": 3,
+      "max_task_seconds": 300
+    }
+  },
   "debug": false,
   "session": {
     "max_turns": 6,

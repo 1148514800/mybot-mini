@@ -195,4 +195,16 @@ uv run python -m scripts.coding_repo_demo --command
 uv run python -m scripts.coding_repo_demo --command --command-mode host_confirm
 ```
 
-Demo仅在可丢弃夹具中使用合成审批与固定模型，真实测试先失败、精确Patch后通过，不调用真实LLM或第三方MCP/OAuth。[Phase21学习文档](docs/phases/phase-21.md)包含完整输入/权限/调用链、文件清单、实际验证与限制。没有全后代/内存/硬磁盘配额保证，不进入Phase22。
+Demo仅在可丢弃夹具中使用合成审批与固定模型，真实测试先失败、精确Patch后通过，不调用真实LLM或第三方MCP/OAuth。[Phase21学习文档](docs/phases/phase-21.md)包含完整输入/权限/调用链、文件清单、实际验证与限制。没有全后代/内存/硬磁盘配额保证；自主任务控制见下文Phase22。
+
+## Autonomous Coding（Phase 22）
+
+`coding.autonomy.enabled`默认false；开启需已有`coding.enabled=true`、`patch_mode=write`与显式命令模式。原AgentLoop接入每任务Controller，限制请求/工具/Patch/命令/无进展/总时间；每条命令仍需独立审批，不自动扩大原ReAct上限。修改后必须有当前修订、当前文件哈希和非零数量Python测试通过证据，才能报告`verified`。模型或Plan声称完成不能替代宿主判定。
+
+```bash
+uv run python -m scripts.autonomous_coding_demo
+uv run python -m scripts.evaluate_coding_agent
+uv run python -m scripts.check_autonomous_coding
+```
+
+以上默认真实macOS只读沙盒、临时合成仓库、动态合成Client与独立合成审批，不调用真实LLM、第三方MCP或真实用户项目。19例包含成功修复与安全停止负例，成功率不是通用模型能力；Token/费用为null。只核验原生Patch涉及文件及指定测试范围，host_confirm没有OS隔离；预算用尽保留合法修改，不自动Git回滚/Commit/Push。完整配置、状态机、调用链、实测与学习说明见[Phase22](docs/phases/phase-22.md)。

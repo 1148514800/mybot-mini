@@ -66,8 +66,8 @@ def _skills_value(key: str, default):
 
 def _coding_value(key='enabled', default=False):
     value = _CONFIG.get('coding', {})
-    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command'}:
-        raise ValueError('coding must contain only enabled, patch_mode and command')
+    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command','autonomy'}:
+        raise ValueError('coding must contain only enabled, patch_mode, command and autonomy')
     return value.get(key,default)
 
 
@@ -90,6 +90,7 @@ class GatewayConfig:
     coding_enabled: bool = field(default_factory=_coding_value)
     coding_patch_mode: str = field(default_factory=lambda: _coding_value('patch_mode', 'off'))
     coding_command: dict = field(default_factory=lambda: _coding_value('command', {}))
+    coding_autonomy: dict = field(default_factory=lambda: _coding_value('autonomy', {}))
     mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
     mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
     mcp_discovery: dict = field(default_factory=lambda: _mcp_value("discovery", {}))
@@ -124,6 +125,9 @@ class GatewayConfig:
         from .tools.command_config import validate_command
         from dataclasses import asdict
         self.coding_command = asdict(validate_command(self.coding_command, coding_enabled=self.coding_enabled, patch_mode=self.coding_patch_mode))
+        from .agent.coding_controller import validate_autonomy
+        self.coding_autonomy = asdict(validate_autonomy(self.coding_autonomy, coding_enabled=self.coding_enabled,
+            patch_mode=self.coding_patch_mode, command_mode=self.coding_command['mode']))
         from .mcp_client.config import validate_mcp
         self.mcp_servers = validate_mcp(self.mcp_enabled,self.mcp_servers)
         from .mcp_client.discovery import validate_discovery
@@ -166,6 +170,8 @@ def build_client(config: GatewayConfig) -> AsyncOpenAI:
         "api_key": config.api_key,
         "timeout": config.request_timeout_seconds,
     }
+    if config.coding_autonomy['enabled']:
+        kwargs['max_retries'] = 0  # One counted create call must not hide SDK retry requests.
     if config.base_url:
         kwargs["base_url"] = config.base_url
     return AsyncOpenAI(**kwargs)

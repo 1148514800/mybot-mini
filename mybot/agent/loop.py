@@ -39,6 +39,8 @@ class AgentLoop:
         self.store = SessionStore(config.session_path, config.workspace) if config.session_persist else None
         if self.store is not None:
             self.session.restore(self.store.load())
+        self.coding_controller = None
+        self.last_coding_report = None
         self.plan = Plan()
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
@@ -81,6 +83,19 @@ class AgentLoop:
         self.plan.reset(user_input)
         self.context_clipped = False
         self.context_history_omitted = False
+        from .coding_controller import CodingTaskController, AutonomySettings
+        from ..tools.run_command import RunCommandTool
+        self.last_coding_report = None
+        self.coding_controller = (CodingTaskController(AutonomySettings(**self.config.coding_autonomy), self.tools)
+            if self.config.coding_autonomy['enabled'] and user_input.strip() != '/clear' else None)
+        command = self.tools.get_tool('run_command')
+        old_guard = command.execution_guard if type(command) is RunCommandTool else None
+        if self.coding_controller is not None and type(command) is RunCommandTool:
+            controller_guard = self.coding_controller.command_guard
+            def task_guard(launch, timeout):
+                if old_guard is not None: timeout = min(timeout, old_guard(launch, timeout))
+                return controller_guard(launch, timeout)
+            command.execution_guard = task_guard
         try:
             reply = await self._handle_message(user_input)
             if self.context_clipped:
@@ -89,11 +104,16 @@ class AgentLoop:
                 reply = "[CONTEXT] 部分历史已省略，预算不足以提供其摘要。\n" + reply
             return reply
         except BaseException as exc:
+            if self.coding_controller is not None:
+                self.coding_controller.stop('cancelled' if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt)) else 'execution_uncertain', 'task_interrupted')
+                self.last_coding_report = self.coding_controller.snapshot()
             report = self.plan.close("上下文预算不足" if isinstance(exc, ContextBudgetError) else "任务异常或中断")
             if report:
                 print(report)
             raise
         finally:
+            if type(command) is RunCommandTool: command.execution_guard = old_guard
+            self.coding_controller = None
             if self.discovery is not None:self.discovery.reset()
             self._request_visible_names = frozenset()
             self.routing_decision = None
@@ -117,7 +137,11 @@ class AgentLoop:
         if self.router is not None:self._route_initial_tools(user_input,messages,turns)
         limit = max(1, min(self.config.max_react_steps, 30))
         debug = self.config.debug
+        controller = self.coding_controller
+        base_system = messages[0]["content"]
         for step in range(1, limit + 1):
+            if controller is not None:
+                messages[0]['content'] = base_system + controller.instruction()
             visible = self.discovery.visible_names() if self.discovery is not None else None
             definitions = self.tools.get_definitions(visible) or None
             # Freeze what THIS response may execute; activation cannot change it mid-batch.
@@ -127,6 +151,8 @@ class AgentLoop:
             self.context_history_omitted = self.context_history_omitted or stats.get("history_omitted", False)
             if debug and self.config.context_enabled:
                 print(f"[CONTEXT] chars={stats['before']}->{stats['after']} max={self.config.context_max_chars}")
+            if controller is not None and not controller.before_request(definitions):
+                return self._finish_turn(messages, turn_start, '', controller.stop_reason)
             start = time.perf_counter()
             try:
                 response = await asyncio.wait_for(
@@ -137,9 +163,14 @@ class AgentLoop:
                         temperature=0.1,
                         max_tokens=self.config.max_completion_tokens,
                     ),
-                    timeout=max(1.0, self.config.request_timeout_seconds),
+                    timeout=(min(self.config.request_timeout_seconds, max(.001, controller.remaining_seconds))
+                             if controller is not None else max(1.0, self.config.request_timeout_seconds)),
                 )
             except (TimeoutError, APITimeoutError):
+                if controller is not None:
+                    controller.check_time()
+                    controller.stop('blocked', 'model_request_timeout')
+                    return self._finish_turn(messages, turn_start, '', controller.stop_reason)
                 report = self.plan.close("模型请求超时")
                 return f"模型请求超时（{self.config.request_timeout_seconds:g} 秒）。" + (f"\n{report}" if report else "")
 
@@ -152,6 +183,8 @@ class AgentLoop:
                 )
             if not message.tool_calls:
                 reply = (message.content or "").strip() or "模型没有返回文本。"
+                if controller is not None and controller.needs_continuation():
+                    continue
                 return self._finish_turn(messages, turn_start, reply)
 
             messages.append({
@@ -165,6 +198,7 @@ class AgentLoop:
                     for call in message.tool_calls
                 ],
             })
+            batch_allowed = controller.before_batch(message.tool_calls) if controller is not None else True
             permission_denied = False
             command_stopped = False
             for call in message.tool_calls:
@@ -182,8 +216,18 @@ class AgentLoop:
                             args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
                 was_stopped = permission_denied or command_stopped
+                if controller is not None and (not batch_allowed or controller.state != 'running'):
+                    messages.append({'role': 'tool', 'tool_call_id': call.id, 'content':
+                        ToolResult(False, error='autonomy_stopped', metadata={'reason': controller.stop_reason, 'executed': False}).to_text()})
+                    continue
+                if controller is not None and not controller.before_tool(call.function.name, call.function.arguments):
+                    messages.append({'role': 'tool', 'tool_call_id': call.id, 'content':
+                        ToolResult(False, error='autonomy_stopped', metadata={'reason': controller.stop_reason, 'executed': False}).to_text()})
+                    continue
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
                           if permission_denied or command_stopped else await self._execute(call.function.name, call.function.arguments))
+                if controller is not None and not was_stopped:
+                    controller.observe(call.function.name, call.function.arguments, result)
                 from ..tools.run_command import RunCommandTool
                 native_command = (call.function.name == 'run_command' and type(self.tools.get_tool(call.function.name)) is RunCommandTool)
                 command_stopped = command_stopped or (native_command and not was_stopped and not result.success and result.metadata.get('completed') is not True)
@@ -197,6 +241,8 @@ class AgentLoop:
                     "role": "tool", "tool_call_id": call.id, "content": result.to_text(),
                 })
 
+            if controller is not None and controller.state != 'running':
+                return self._finish_turn(messages, turn_start, '', controller.stop_reason)
             if command_stopped:
                 return self._finish_turn(messages, turn_start,
                     '原生命令未完成或未获批准，本轮任务已停止；后续工具未执行。已执行命令可能已有副作用。', '原生命令停止')
@@ -208,8 +254,12 @@ class AgentLoop:
 
     def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: str,
                      reason: str = "") -> str:
+        controller = self.coding_controller
+        if controller is not None:
+            reply = controller.finish(reason)
+            self.last_coding_report = controller.snapshot()
         report = self.plan.close(reason)
-        if report:
+        if report and controller is None:
             reply = f"{reply}\n{report}" if reason else report
         messages.append({"role": "assistant", "content": reply})
         if self.store is not None:

@@ -52,6 +52,7 @@ class RunCommandTool(RepositoryTool):
         self.settings = validate_command(command, coding_enabled=True, patch_mode=patch_mode)
         if self.settings.mode == 'off': raise ValueError('command_disabled')
         self.approval_provider = approval_provider
+        self.execution_guard = None  # Optional per-turn host constraint, never a model argument.
 
     def _cwd(self, value):
         raw = Path(value)
@@ -91,6 +92,7 @@ class RunCommandTool(RepositoryTool):
             request = inspectable_command(mode, relative, launch.argv, timeout)
             approved, reason = await authorize_command(self.approval_provider, request)
             if not approved: return self.failure_result(reason, mode=mode, permission=True)
+            if self.execution_guard is not None: timeout = self.execution_guard(launch, timeout)
             # Revalidate the exact approved argv/cwd/runtime, never a mutable caller payload.
             if self._cwd(relative) != cwd or identity(cwd.stat()) != cwd_identity:
                 raise ValueError('cwd_changed')
@@ -103,6 +105,7 @@ class RunCommandTool(RepositoryTool):
                 # The self-test may yield: recheck once more immediately before spawn.
                 if self._cwd(relative) != cwd or identity(cwd.stat()) != cwd_identity or resolve_launch(argv, self.workspace) != launch:
                     raise ValueError('execution_snapshot_changed')
+                if self.execution_guard is not None: timeout = self.execution_guard(launch, timeout)
                 result = await run_process(launch, cwd=cwd, cwd_fd=fd, temp=temp, timeout=timeout,
                     output_limit=settings.max_output_bytes, profile=sandbox)
                 replacements = [(str(self.workspace), '<workspace>'), (str(temp), '<run-temp>'),
