@@ -99,4 +99,7 @@ if Path(__file__).with_name("check_routing_confidence.py").exists():
 if Path(__file__).with_name("check_repository_tools.py").exists():
     from scripts.check_repository_tools import check_repository_tools
     check_repository_tools()
+if Path(__file__).with_name("check_patch_editing.py").exists():
+    from scripts.check_patch_editing import check_patch_editing
+    check_patch_editing()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

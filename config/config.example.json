@@ -1,5 +1,5 @@
 {
-  "coding": {"enabled": false},
+  "coding": {"enabled": false, "patch_mode": "off"},
   "debug": false,
   "session": {
     "max_turns": 6,

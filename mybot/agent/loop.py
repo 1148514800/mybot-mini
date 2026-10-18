@@ -168,16 +168,17 @@ class AgentLoop:
             permission_denied = False
             for call in message.tool_calls:
                 if debug:
-                    try:
-                        args = json.loads(call.function.arguments or "{}")
-                    except json.JSONDecodeError:
-                        args = "<invalid JSON>"
-                    if isinstance(args, dict) and "content" in args:
-                        args["content"] = f"<{len(str(args['content']))} chars>"
-                    if call.function.name.startswith("mcp__") or (self.discovery is not None and call.function.name in self.discovery.tool_names):
-                        args = "<MCP arguments omitted>"
-                    if getattr(self.tools.get_tool(call.function.name),'private_arguments',False):
+                    if getattr(self.tools.get_tool(call.function.name), 'private_arguments', False):
                         args = '<Coding arguments omitted>'
+                    else:
+                        try:
+                            args = json.loads(call.function.arguments or "{}")
+                        except json.JSONDecodeError:
+                            args = "<invalid JSON>"
+                        if isinstance(args, dict) and "content" in args:
+                            args["content"] = f"<{len(str(args['content']))} chars>"
+                        if call.function.name.startswith("mcp__") or (self.discovery is not None and call.function.name in self.discovery.tool_names):
+                            args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
                           if permission_denied else await self._execute(call.function.name, call.function.arguments))
@@ -219,10 +220,21 @@ class AgentLoop:
             result = ToolResult(success=False,error='mcp_tool_not_visible_in_request; search and activate it, then wait for the next model request')
         else:
             result = await self._execute_tool(name, raw_arguments)
-        self.plan.observe(name, result)
+        from ..tools.patch import ApplyPatchTool
+        self.plan.observe(name, result, native_patch=(
+            name == 'apply_patch' and type(self.tools.get_tool(name)) is ApplyPatchTool))
         return result
 
     async def _execute_tool(self, name: str, raw_arguments: Any) -> ToolResult:
+        from ..tools.patch import ApplyPatchTool, parse_arguments
+        if name == 'apply_patch' and type(self.tools.get_tool(name)) is ApplyPatchTool:
+            try:
+                arguments = parse_arguments(raw_arguments)
+            except ValueError as exc:
+                return ToolResult(False, error=str(exc), metadata={
+                    'status': 'preflight_failed', 'applied': False,
+                    'execution_evidence': False, 'safe_to_retry': False})
+            return await self.tools.execute(name, arguments)
         try:
             arguments = json.loads(raw_arguments or "{}") if isinstance(raw_arguments, str) else raw_arguments
         except json.JSONDecodeError as exc:

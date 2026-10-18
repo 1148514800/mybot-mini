@@ -71,11 +71,18 @@ class Plan:
             return "Plan cannot execute: start the next step, or stop after failure/completion"
         return None
 
-    def observe(self, name: str, result: ToolResult) -> None:
+    def observe(self, name: str, result: ToolResult, *, native_patch: bool = False) -> None:
         step = self.active
         if step is None:
             return
         print(f"[TOOL] {name}")
+        if native_patch:
+            if result.success and result.metadata.get('applied') is False:
+                return
+            if (not result.success and result.metadata.get('status') == 'preflight_failed'
+                    and result.metadata.get('safe_to_retry') is True):
+                step.verified = False
+                return
         if result.success:
             step.verified = True
         else:

@@ -1,4 +1,4 @@
-"""Synthetic repository SETUP only: no Agent-accessible write/command tools are added."""
+"""Synthetic fixtures and offline investigation/patch demos; no Agent command tool."""
 import argparse
 import asyncio
 import contextlib
@@ -87,12 +87,70 @@ async def investigate(root):
             'files_unchanged':True,'index_unchanged':True,'tool_call_ids_paired':True}
 
 
+class EditingClient(InvestigationClient):
+    """Fixed offline orchestration; versions and diffs come from real tool results."""
+    async def create(self, **kwargs):
+        self.requests.append(kwargs)
+        for m in kwargs['messages']:
+            if m['role'] == 'tool': self.outputs[m['tool_call_id']] = m['content']
+        step = len(self.requests)
+        if step == 1: name, args = 'git_status', {}
+        elif step == 2: name, args = 'search_code', {'query': 'def add', 'file_glob': '*.py'}
+        else:
+            hit = json.loads(self.outputs['edit-2'].split('\n\nmetadata=', 1)[0])['matches'][0]
+            path = hit['path']
+            if step in (3, 6):
+                name, args = 'read_file_range', {'path': path, 'start_line': 1, 'end_line': 20}
+            elif step in (4, 5):
+                version = json.loads(self.outputs['edit-3'].split('\n\nmetadata=', 1)[1])['file_sha256']
+                name, args = 'apply_patch', {'dry_run': step == 4, 'changes': [{
+                    'op': 'update', 'path': path, 'expected_sha256': version,
+                    'edits': [{'old_text': 'return left - right', 'new_text': 'return left + right'}]}]}
+            elif step == 7: name, args = 'git_diff', {'file_path': path}
+            else:
+                assert 'return left + right' in self.outputs['edit-6']
+                assert '+    return left + right' in self.outputs['edit-7']
+                return N(choices=[N(message=N(content='Applied precise edit and reread actual file/diff; no tests executed by Agent.', tool_calls=None))], usage=None)
+        return N(choices=[N(message=N(content=None, tool_calls=[N(id=f'edit-{step}',
+            function=N(name=name, arguments=json.dumps(args)))]))], usage=None)
+
+
+async def edit_demo(root):
+    before = fingerprint(root); index = (root / '.git/index').read_bytes()
+    original = (root / 'src/calculator.py').read_bytes()
+    client = EditingClient()
+    cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write',
+        skills_enabled=False, session_persist=False, mcp_enabled=False, context_enabled=True,
+        context_max_chars=80000, context_tool_result_max_chars=16000, debug=False)
+    agent = AgentLoop(client, cfg, build_default_tool_registry(root, coding_enabled=True, patch_mode='write'), ContextBuilder(root))
+    with contextlib.redirect_stdout(io.StringIO()):
+        reply = await agent.handle_message('Read, preview and precisely repair add; preserve all other changes. No commands or tests.')
+    after = fingerprint(root)
+    assert (root / 'src/calculator.py').read_bytes() == original.replace(b'return left - right', b'return left + right')
+    assert {p: h for p, h in before.items() if p != 'src/calculator.py'} == {p: h for p, h in after.items() if p != 'src/calculator.py'}
+    assert (root / '.git/index').read_bytes() == index
+    from mybot.evaluation.tool_agent import pair_messages
+    assert pair_messages(agent.session.history(), complete=True)
+    preview = json.loads(client.outputs['edit-4'].split('\n\nmetadata=', 1)[1])
+    applied = json.loads(client.outputs['edit-5'].split('\n\nmetadata=', 1)[1])
+    assert not preview['applied'] and applied['applied']
+    return {'mode': 'offline-fixed-model', 'llm_requests': len(client.requests), 'reply': reply,
+        'before_sha256': sha256_hex(original), 'after_sha256': after['src/calculator.py'],
+        'preview_diff': preview['preview_diff'], 'actual_git_diff': client.outputs['edit-7'].split('\n\nmetadata=', 1)[0],
+        'index_unchanged': True, 'other_files_unchanged': True, 'user_comment_preserved': True,
+        'tool_call_ids_paired': True, 'agent_ran_tests': False, 'actual_tokens': None, 'actual_cost': None}
+
+
+def sha256_hex(data):
+    return hashlib.sha256(data).hexdigest()
+
+
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--create',type=Path)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--create',type=Path);parser.add_argument('--edit',action='store_true')
     args=parser.parse_args()
     if args.create:make_demo(args.create);print('Created synthetic fixture:',args.create)
     else:
         with tempfile.TemporaryDirectory(prefix='mybot-coding-demo-') as folder:
-            print(json.dumps(asyncio.run(investigate(make_demo(Path(folder)/'repo'))),ensure_ascii=False,indent=2))
+            print(json.dumps(asyncio.run((edit_demo if args.edit else investigate)(make_demo(Path(folder)/'repo'))),ensure_ascii=False,indent=2))
 
 if __name__=='__main__':main()

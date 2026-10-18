@@ -16,7 +16,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     else:
         init_workspace(config.workspace)
 
-    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled)
+    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled, patch_mode=config.coding_patch_mode)
     llm_client = None
     try:
         async with MCPClientManager(config, tools, approval_provider=cli_approval):

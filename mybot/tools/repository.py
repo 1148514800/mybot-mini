@@ -50,7 +50,7 @@ class RepositoryTool(FileTool):
         if root is not None and not target.is_relative_to(root):raise ValueError('path_outside_repository')
         return target
 
-    def read_text(self,target):
+    def read_bytes(self,target):
         if not stat.S_ISREG(target.stat().st_mode):raise ValueError('not_regular_file')
         if target.stat().st_size>MAX_FILE_BYTES:raise ValueError('file_too_large')
         fd=os.open(target,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
@@ -59,8 +59,12 @@ class RepositoryTool(FileTool):
             data=f.read(MAX_FILE_BYTES+1)
         if len(data)>MAX_FILE_BYTES:raise ValueError('file_too_large')
         if b'\0' in data:raise ValueError('binary_file')
-        try:return data.decode('utf-8')
+        try:data.decode('utf-8')
         except UnicodeDecodeError:raise ValueError('invalid_utf8') from None
+        return data
+
+    def read_text(self,target):
+        return self.read_bytes(target).decode('utf-8')
 
     async def git_root(self,path):
         target=self.resolve(path)

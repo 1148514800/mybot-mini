@@ -167,3 +167,17 @@ uv run python -m scripts.check_repository_tools
 
 
 Phase 19最终交付使用安全修订 `phase-19-r1`；初版 `phase-19`/ZIP保留为历史，不应作为当前版本。还原请从codex/phase-19工作树运行 `bash scripts/restore_phase.sh 19 r1`。修订原因与验证见阶段学习文档。
+
+
+## Patch-Based Editing（Phase 20）
+
+`coding.patch_mode` 缺省 `off`，保持原工具集合。显式 `coding.enabled=true` 配合 `preview` 或 `write` 时，Registry真正移除原 `write_file` 并注册结构化 `apply_patch`。`read_file_range`提供完整原始字节SHA-256；update要求版本匹配和唯一非重叠锚点，add要求目标不存在、父目录已存在。
+
+默认 `dry_run=true` 只验证与生成有界Diff；`preview`明确拒绝写入。用户显式开启 `write` 后，模型可传 `dry_run=false`在Workspace内受约束修改。全量预检查、同目录暂存、单文件原子发布和可捕获失败的条件恢复保护已有修改；不提供跨文件崩溃原子性或OS沙盒，也不自动受MCP Approval保护。不新增Shell/测试运行能力，不改变独立MCP工具权限。
+
+```bash
+uv run python -m scripts.check_patch_editing
+uv run python -m scripts.coding_repo_demo --edit
+```
+
+Demo使用固定模拟模型和真实临时Git仓库，不调用真实LLM；验证用户注释、已暂存/未跟踪文件及Index保持不变。源码/参数/Diff可能进入Session，Debug参数遮蔽不等于完整秘密脱敏。输入结构、安全策略、恢复状态、完整学习流程与限制见 [Phase 20](docs/phases/phase-20.md)。成果位于独立 `codex/phase-20`，不自动合并原main。

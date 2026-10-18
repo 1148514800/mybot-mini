@@ -64,11 +64,11 @@ def _skills_value(key: str, default):
     return section.get(key, default)
 
 
-def _coding_value():
+def _coding_value(key='enabled', default=False):
     value = _CONFIG.get('coding', {})
-    if not isinstance(value,dict) or set(value)-{'enabled'}:
-        raise ValueError('coding must contain only enabled')
-    return value.get('enabled',False)
+    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode'}:
+        raise ValueError('coding must contain only enabled and patch_mode')
+    return value.get(key,default)
 
 
 def _mcp_value(key: str, default):
@@ -88,6 +88,7 @@ def _resolve_path(raw_value) -> Path:
 @dataclass
 class GatewayConfig:
     coding_enabled: bool = field(default_factory=_coding_value)
+    coding_patch_mode: str = field(default_factory=lambda: _coding_value('patch_mode', 'off'))
     mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
     mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
     mcp_discovery: dict = field(default_factory=lambda: _mcp_value("discovery", {}))
@@ -115,6 +116,10 @@ class GatewayConfig:
 
     def __post_init__(self) -> None:
         if type(self.coding_enabled) is not bool:raise ValueError('coding.enabled must be a boolean')
+        if type(self.coding_patch_mode) is not str or self.coding_patch_mode not in ('off', 'preview', 'write'):
+            raise ValueError('coding.patch_mode must be off, preview or write')
+        if self.coding_patch_mode != 'off' and not self.coding_enabled:
+            raise ValueError('coding.patch_mode requires coding.enabled=true')
         from .mcp_client.config import validate_mcp
         self.mcp_servers = validate_mcp(self.mcp_enabled,self.mcp_servers)
         from .mcp_client.discovery import validate_discovery

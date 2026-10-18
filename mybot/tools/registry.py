@@ -51,12 +51,15 @@ class ToolRegistry:
         return ToolResult(success=False, error=f"tool returned {type(result).__name__}")
 
 
-def build_default_tool_registry(workspace: Path, *, coding_enabled=False) -> ToolRegistry:
+def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_mode='off') -> ToolRegistry:
     if type(coding_enabled) is not bool:raise ValueError('coding_enabled must be a boolean')
+    if type(patch_mode) is not str or patch_mode not in ('off','preview','write'):
+        raise ValueError('invalid patch_mode')
+    if patch_mode != 'off' and not coding_enabled:raise ValueError('patch_mode requires coding_enabled')
     registry = ToolRegistry()
     for tool in (
         ReadFileTool(workspace),
-        WriteFileTool(workspace),
+        *([WriteFileTool(workspace)] if patch_mode == 'off' else []),
         ListFilesTool(workspace),
     ):
         registry.register(tool)
@@ -64,5 +67,10 @@ def build_default_tool_registry(workspace: Path, *, coding_enabled=False) -> Too
         from .search_code import SearchCodeTool
         from .read_file_range import ReadFileRangeTool
         from .git_tools import GitStatusTool,GitDiffTool
-        for cls in (SearchCodeTool,ReadFileRangeTool,GitStatusTool,GitDiffTool):registry.register(cls(workspace))
+        registry.register(SearchCodeTool(workspace))
+        registry.register(ReadFileRangeTool(workspace, include_version=patch_mode != 'off'))
+        for cls in (GitStatusTool,GitDiffTool):registry.register(cls(workspace))
+        if patch_mode != 'off':
+            from .patch import ApplyPatchTool
+            registry.register(ApplyPatchTool(workspace, patch_mode=patch_mode))
     return registry

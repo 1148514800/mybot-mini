@@ -2,28 +2,24 @@
 
 ## 当前目标与状态
 
-Phase19 Repository Exploration & Code Search已完成并独立验证，停止等待下一任务，不进入20。成果分支codex/phase-19，worktree `/Users/godblack/.codex/worktrees/phase-19/mybot-mini`；原main仍3461dc7，原工作区app.py/USER.md未提交修改内容哈希不变。未自动合并或Push。
+Phase20 Patch-Based Editing实现已完成，55项专项、511项全量及编译通过，待提交和独立归档；未标记阶段完成。独立分支codex/phase-20，APFS工作树 `/Users/godblack/.codex/worktrees/phase-20/mybot-mini`，基线4343ada（包含Phase19安全修订6c27477）。原main仍3461dc7，原用户app.py/USER.md及Index未参与修改；不合并、不Push、不进入21。
 
 ## 实现与架构
 
-coding.enabled严格布尔、未知字段拒绝、默认false，旧Registry仍3工具，显式true加search_code/read_file_range/git_status/git_diff四原生工具。Gateway接线；Coding Workspace须已存在、不bootstrap写入。沿用Tool/ToolResult/Registry/AgentLoop，Loop仅增加私有参数日志遮蔽，MCP/路由/Plan/Context/Session未重构。
+- coding.patch_mode默认off，preview/write必须enabled=true；显式关键字接线，Patch模式从原生Registry真正移除write_file，保留read/list和四调查工具并加apply_patch。独立MCP权限不受此开关限制，原生Patch不是MCP Approval。
+- read_file_range在Patch模式返回完整原始字节file_sha256/file_bytes，off保留旧Schema/元数据。结构化update/add，严格Schema、256KiB参数、8文件/16编辑、2MiB文件、24000字符Diff；锚点在同一快照唯一非重叠匹配，字节拼接保护换行/BOM/未选内容。
+- 全量Preflight，默认Dry Run无临时写入；write显式false才同目录stage+备份、重新验证、update原子replace/add原子no-clobber hardlink发布、读回验证。错误条件恢复，核对已发布inode/内容/元数据和备份；清理只删除本工具inode，拒绝删除被替换临时文件。无跨文件崩溃原子性/事务日志/OS沙盒。
+- 复用RepositoryTool保守敏感路径，新增逐级dir_fd/O_NOFOLLOW、普通文件/单硬链接/哈希/stat验证。保留mode，仅同euid/egid；拒绝ACL/flags/特殊mode/不支持xattrs。Darwin系统provenance仅在stage/backup属性字节一致时允许；其他系统操作不支持时失败关闭。
+- 原AgentLoop仅增加私有参数解析前遮蔽、原生Patch解码前限额和可信Plan观察；预览无编辑证据，无发布的stale/anchor/ambiguous可重读重试，未知写入/回滚冲突终止。第三方Tool伪造metadata不能豁免。Context/Session/MCP/OAuth/路由未重构。
 
-repository复用FileTool._resolve，统一敏感路径策略、普通文件/严格UTF8/NUL拒绝/2MiB保护。search用真实rg安全Rust regex或literal、遵守gitignore有界枚举2048文件、50匹配、真实路径/行/UTF8字节列、约16k输出。range闭区间1-based至多200行、约16k、CRLF保持、截断及下一行明确。Git根须在Workspace内，支持nested/worktree；status NUL/XY/rename双路径/200条，截断不称clean；Diff staged/unstaged固定参数/literal路径/300行约24k/不含Untracked。
+## 文件与实测
 
-内部readonly_process仅固定Git/rg argv、可信宿主二进制/最小环境、禁用Git外部helper/filter/fsmonitor/textconv/pager/惰性fetch、5秒整工具预算、读取时字节/记录限额、超时取消回收本次进程组。r1拒绝含等号/空格/引号/非ASCII等歧义可执行过滤器键，防Git -c分割覆盖绕过。不提供模型Shell/Patch/测试执行/自动修复或Git写工具；原write_file仍存在。
+新增patch.py、check_patch_editing.py、phase-20.md；修改config/app/registry/repository/range、Loop/Plan、配置模板、coding_repo_demo/check_phase、README/阶段索引/本交接。完整教学与边界见docs/phases/phase-20.md。
 
-## 验证与归档
+55项专项、511项全量（456+55）及Phase1/2原断言通过，编译/归档脚本集成通过；含实际ACL/xattr、换行/权限、预览无写入、多文件故障恢复、备份篡改/临时文件替换、原Loop/Plan/Session/日志与Context。Phase19的34项通过。编辑Demo8次固定模型请求：真实哈希→预览→将减法改为加法→重读→真实Git Diff；原注释/暂存README/未跟踪notes/Index均保留。无Agent命令或测试执行。四组旧基准与4343ada逐字段相同（除计时/Git元数据），Core四模式12/12、Challenge四模式10/10。未调用真实LLM、第三方MCP/OAuth；旧回归用本机模拟服务。
 
-34项专项、456项全量（旧422+新34）和Phase1/2断言通过，归档修订脚本集成通过。四组旧基准与独立Phase18除耗时/Git元数据逐字段一致。真实合成Git/rg及原AgentLoop Demo：5次固定模拟请求定位src/calculator.py:1 add使用减法，业务文件/Index未变，ID配对；无真实LLM、无第三方MCP/OAuth。APFS与外置磁盘独立安装编译验证，外置学习目录全456项再次通过，四组基准及Demo一致；正式ZIP另行独立解压的34项及Demo通过。
+## 剩余工作与限制
 
-实现230374b，r1安全修复与归档实现6c2747799dfca74c49815fa7351ccabffd5fe342，Annotated Tag phase-19-r1固定指向6c27477。正式ZIP `/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-19-r1.zip`，SHA256 `5b7d8691af0edcd5ff1536044d9cb31ab32cc06fb443bb8acfc9ce84af561e30`，155 entries/136 files，逐文件等于Tag，无._*。学习目录 `/Volumes/move-disk/data/code/mybot-mini-learning/phase-19-r1`，由新worktree脚本 `bash scripts/restore_phase.sh 19 r1`还原；原main旧脚本不支持r1后缀。禁止覆盖已有目录。
+代码测试已完成，接下来提交含学习文档的阶段Commit（archive-ready已标记）。从干净提交save_phase.sh 20，核实输出位置后独占复制到正式快照目录，ZIP独立冻结安装/编译/全量回归/旧基准；restore到独立目录并验证，最后记录归档Commit。phase-20 Tag/ZIP开始时均不存在，旧20个Tag/ZIP指纹已存/tmp用于最终核对，不覆盖任何历史。
 
-初版phase-19/ZIP在归档后发现Git歧义过滤器名漏洞，已被r1取代；按不可覆盖规则保留旧Tag/ZIP/学习目录，不应使用旧版。旧Phase1–18与初版19归档哈希全部未变。最终归档事实由后续纯文档记录提交保存，不能移动Tag重导出。
-
-修改共21文件：8新增（5工具模块、coding_repo_demo、check_repository_tools、phase-19学习文档），13修改（registry/config/app/Loop日志、配置模板、check_phase、4归档脚本、README/索引/本交接）。完整学习说明和文件清单见docs/phases/phase-19.md。
-
-## 已知限制与下一步
-
-仅UTF8/2MiB，2048文件/输出/时间预算影响召回；长单行无字符偏移续读。源码/Diff进入Provider请求与Session，可持久化，无完整秘密脱敏/OS沙盒；信任宿主二进制、Git元数据与非恶意并发文件系统。屏蔽过滤器（含LFS）和全局配置可能导致Git视图与普通Git不同，配置枚举与调用非原子。固定模拟器不代表真实模型理解能力。
-
-保留独立worktree供审阅，原main和用户文件不动。完成后停止，不自动Push/合并/Phase20；不要重做已通过的实现或强制覆盖任何Tag/ZIP。
+限UTF8/现有父目录/保守路径和元数据；最后检查与rename/unlink仍有竞争窗口；回滚不恢复inode/时间戳，断电/崩溃可留部分修改和临时文件。源码/参数/Diff可能进入持久Session，private_arguments只保护Debug。固定模拟器不证明真实模型能力。不要重做已通过机制，不混入原用户修改，不自动Push/Merge/Phase21。
