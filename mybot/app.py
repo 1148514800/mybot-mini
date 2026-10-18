@@ -7,6 +7,7 @@ from .tools import build_default_tool_registry
 from .workspace import init_workspace
 from .mcp_client.manager import MCPClientManager
 from .mcp_client.approval import cli_approval
+from .tools.command_approval import cli_command_approval
 
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
@@ -16,7 +17,8 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     else:
         init_workspace(config.workspace)
 
-    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled, patch_mode=config.coding_patch_mode)
+    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled, patch_mode=config.coding_patch_mode,
+        command=config.coding_command, command_approval_provider=cli_command_approval)
     llm_client = None
     try:
         async with MCPClientManager(config, tools, approval_provider=cli_approval):

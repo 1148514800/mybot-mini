@@ -1,5 +1,5 @@
 {
-  "coding": {"enabled": false, "patch_mode": "off"},
+  "coding": {"enabled": false, "patch_mode": "off", "command": {"mode": "off", "timeout_seconds": 30, "max_output_bytes": 32768}},
   "debug": false,
   "session": {
     "max_turns": 6,

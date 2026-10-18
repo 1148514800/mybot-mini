@@ -102,4 +102,7 @@ if Path(__file__).with_name("check_repository_tools.py").exists():
 if Path(__file__).with_name("check_patch_editing.py").exists():
     from scripts.check_patch_editing import check_patch_editing
     check_patch_editing()
+if Path(__file__).with_name("check_command_execution.py").exists():
+    from scripts.check_command_execution import check_command_execution
+    check_command_execution()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

@@ -72,22 +72,8 @@ def bounded_arguments(args):
 
 
 def parse_arguments(raw):
-    """Native loop boundary: reject oversized raw JSON before decoding it."""
-    if isinstance(raw, str):
-        if len(raw) > MAX_PATCH_BYTES: raise ValueError('patch_too_large')
-        try:
-            if len(raw.encode('utf-8')) > MAX_PATCH_BYTES: raise ValueError('patch_too_large')
-        except UnicodeEncodeError: raise ValueError('invalid_utf8') from None
-        def unique(pairs):
-            result = {}
-            for key, value in pairs:
-                if key in result: raise ValueError('invalid_arguments')
-                result[key] = value
-            return result
-        try: raw = json.loads(raw, object_pairs_hook=unique)
-        except (ValueError, RecursionError): raise ValueError('invalid_arguments') from None
-    if not isinstance(raw, dict): raise ValueError('invalid_arguments')
-    return raw
+    from .arguments import parse_object
+    return parse_object(raw, max_bytes=MAX_PATCH_BYTES, size_error='patch_too_large')
 
 
 def text_bytes(text):

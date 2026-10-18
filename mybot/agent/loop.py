@@ -166,6 +166,7 @@ class AgentLoop:
                 ],
             })
             permission_denied = False
+            command_stopped = False
             for call in message.tool_calls:
                 if debug:
                     if getattr(self.tools.get_tool(call.function.name), 'private_arguments', False):
@@ -180,8 +181,12 @@ class AgentLoop:
                         if call.function.name.startswith("mcp__") or (self.discovery is not None and call.function.name in self.discovery.tool_names):
                             args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
+                was_stopped = permission_denied or command_stopped
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
-                          if permission_denied else await self._execute(call.function.name, call.function.arguments))
+                          if permission_denied or command_stopped else await self._execute(call.function.name, call.function.arguments))
+                from ..tools.run_command import RunCommandTool
+                native_command = (call.function.name == 'run_command' and type(self.tools.get_tool(call.function.name)) is RunCommandTool)
+                command_stopped = command_stopped or (native_command and not was_stopped and not result.success and result.metadata.get('completed') is not True)
                 permission_denied = permission_denied or result.metadata.get("permission_denied",False)
                 if debug:
                     print(
@@ -192,6 +197,9 @@ class AgentLoop:
                     "role": "tool", "tool_call_id": call.id, "content": result.to_text(),
                 })
 
+            if command_stopped:
+                return self._finish_turn(messages, turn_start,
+                    '原生命令未完成或未获批准，本轮任务已停止；后续工具未执行。已执行命令可能已有副作用。', '原生命令停止')
             if permission_denied:
                 return self._finish_turn(messages, turn_start,
                     "MCP 操作未获批准，本轮任务已停止；后续工具未执行。已执行的操作不会自动回滚。", "工具审批拒绝")
@@ -221,11 +229,18 @@ class AgentLoop:
         else:
             result = await self._execute_tool(name, raw_arguments)
         from ..tools.patch import ApplyPatchTool
-        self.plan.observe(name, result, native_patch=(
+        from ..tools.run_command import RunCommandTool
+        self.plan.observe(name, result, native_command=(name == 'run_command' and type(self.tools.get_tool(name)) is RunCommandTool), native_patch=(
             name == 'apply_patch' and type(self.tools.get_tool(name)) is ApplyPatchTool))
         return result
 
     async def _execute_tool(self, name: str, raw_arguments: Any) -> ToolResult:
+        from ..tools.run_command import RunCommandTool, parse_arguments as parse_command_arguments
+        if name == 'run_command' and type(self.tools.get_tool(name)) is RunCommandTool:
+            try: arguments = parse_command_arguments(raw_arguments)
+            except ValueError as exc:
+                return RunCommandTool.failure_result(str(exc))
+            return await self.tools.execute(name, arguments)
         from ..tools.patch import ApplyPatchTool, parse_arguments
         if name == 'apply_patch' and type(self.tools.get_tool(name)) is ApplyPatchTool:
             try:

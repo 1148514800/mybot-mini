@@ -145,12 +145,97 @@ def sha256_hex(data):
     return hashlib.sha256(data).hexdigest()
 
 
+COMMAND_TEST = """import unittest
+from src.calculator import add
+
+class CalculatorTest(unittest.TestCase):
+    def test_add(self):
+        self.assertEqual(add(2, 3), 5)
+"""
+COMMAND_ARGV = ['python', '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_unittest_calculator.py', '-v']
+
+
+def make_command_demo(root):
+    root = make_demo(root)
+    (root / 'tests/test_unittest_calculator.py').write_text(COMMAND_TEST)
+    return root
+
+
+class CommandClient(InvestigationClient):
+    """Offline sequence branches on actual command exit/output and file versions."""
+    async def create(self, **kwargs):
+        self.requests.append(kwargs)
+        for m in kwargs['messages']:
+            if m['role'] == 'tool': self.outputs[m['tool_call_id']] = m['content']
+        step = len(self.requests)
+        def metadata(number):return json.loads(self.outputs[f'command-{number}'].split('\n\nmetadata=', 1)[1])
+        if step == 1: calls = [('create_plan', {'steps': ['Diagnose and precisely repair', 'Run tests again and inspect diff']})]
+        elif step == 2: calls = [('update_plan', {'step': 1, 'status': 'in_progress'})]
+        elif step == 3: calls = [('run_command', {'argv': COMMAND_ARGV})]
+        elif step == 4:
+            actual = metadata(3)
+            assert actual['completed'] and actual['exit_code'] != 0 and 'AssertionError' in self.outputs['command-3']
+            calls = [('search_code', {'query': 'def add', 'file_glob': '*.py'})]
+        else:
+            hit = json.loads(self.outputs['command-4'].split('\n\nmetadata=', 1)[0])['matches'][0]
+            if step == 5:calls = [('read_file_range', {'path': hit['path'], 'start_line': 1, 'end_line': 20})]
+            elif step in (6, 7):
+                calls = [('apply_patch', {'dry_run': step == 6, 'changes': [{'op': 'update', 'path': hit['path'],
+                    'expected_sha256': metadata(5)['file_sha256'],
+                    'edits': [{'old_text': 'return left - right', 'new_text': 'return left + right'}]}]})]
+            elif step == 8:calls = [('update_plan', {'step': 1, 'status': 'completed'}), ('update_plan', {'step': 2, 'status': 'in_progress'})]
+            elif step == 9:calls = [('run_command', {'argv': COMMAND_ARGV})]
+            elif step == 10:
+                assert metadata(9)['completed'] and metadata(9)['exit_code'] == 0 and 'OK' in self.outputs['command-9']
+                calls = [('git_diff', {'file_path': hit['path']})]
+            elif step == 11:calls = [('update_plan', {'step': 2, 'status': 'completed'})]
+            else:
+                assert '+    return left + right' in self.outputs['command-10']
+                return N(choices=[N(message=N(content=f"真实 unittest：修复前 exit_code={metadata(3)['exit_code']}，精确 Patch 后 exit_code={metadata(9)['exit_code']}，1 项测试通过。", tool_calls=None))], usage=None)
+        return N(choices=[N(message=N(content=None, tool_calls=[N(id=f'command-{step}' if i == 0 else f'command-{step}-{i}',
+            function=N(name=name, arguments=json.dumps(args))) for i, (name, args) in enumerate(calls)]))], usage=None)
+
+
+async def command_demo(root, *, mode='macos_readonly'):
+    from mybot.mcp_client.approval import ApprovalDecision
+    approvals = []
+    async def approve(request): approvals.append(request);return ApprovalDecision.APPROVE
+    before = fingerprint(root); index = (root / '.git/index').read_bytes()
+    original = (root / 'src/calculator.py').read_bytes()
+    cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write', coding_command={'mode': mode},
+        skills_enabled=False, session_persist=False, mcp_enabled=False, context_enabled=True,
+        context_max_chars=120000, context_tool_result_max_chars=20000, max_react_steps=16, debug=False)
+    tools = build_default_tool_registry(root, coding_enabled=True, patch_mode='write',
+        command=cfg.coding_command, command_approval_provider=approve)
+    client = CommandClient();agent = AgentLoop(client, cfg, tools, ContextBuilder(root))
+    with contextlib.redirect_stdout(io.StringIO()):
+        reply = await agent.handle_message('运行 calculator 的测试，定位失败原因，精确修改加法 Bug，并重新执行测试。')
+    after = fingerprint(root)
+    assert (root / 'src/calculator.py').read_bytes() == original.replace(b'return left - right', b'return left + right')
+    assert {k: v for k, v in before.items() if k != 'src/calculator.py'} == {k: v for k, v in after.items() if k != 'src/calculator.py'}
+    assert index == (root / '.git/index').read_bytes()
+    from mybot.evaluation.tool_agent import pair_messages
+    assert pair_messages(agent.session.history(), complete=True)
+    assert len(approvals) == 2 and all(s.status == 'completed' for s in agent.plan.steps)
+    results = [json.loads(client.outputs[f'command-{n}'].split('\n\nmetadata=', 1)[1]) for n in (3, 9)]
+    return {'mode': mode, 'response_source': 'fixed_offline_model', 'llm_requests': len(client.requests),
+        'approvals': len(approvals), 'approval_source': 'synthetic provider for disposable fixture only',
+        'before_exit_code': results[0]['exit_code'], 'after_exit_code': results[1]['exit_code'],
+        'sandbox_applied': [r['sandbox_applied'] for r in results], 'reply': reply,
+        'failed_assertion_observed': True, 'index_unchanged': True, 'other_files_unchanged': True,
+        'user_comment_preserved': True, 'plan_completed': True, 'tool_call_ids_paired': True,
+        'actual_git_diff': client.outputs['command-10'].split('\n\nmetadata=', 1)[0],
+        'actual_tokens': None, 'actual_cost': None}
+
+
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--create',type=Path);parser.add_argument('--edit',action='store_true')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--create',type=Path);parser.add_argument('--edit',action='store_true');parser.add_argument('--command',action='store_true');parser.add_argument('--command-mode',choices=['host_confirm','macos_readonly'],default='macos_readonly')
     args=parser.parse_args()
     if args.create:make_demo(args.create);print('Created synthetic fixture:',args.create)
     else:
         with tempfile.TemporaryDirectory(prefix='mybot-coding-demo-') as folder:
-            print(json.dumps(asyncio.run((edit_demo if args.edit else investigate)(make_demo(Path(folder)/'repo'))),ensure_ascii=False,indent=2))
+            if args.command:result=asyncio.run(command_demo(make_command_demo(Path(folder)/'repo'),mode=args.command_mode))
+            else:result=asyncio.run((edit_demo if args.edit else investigate)(make_demo(Path(folder)/'repo')))
+            print(json.dumps(result,ensure_ascii=False,indent=2))
 
 if __name__=='__main__':main()

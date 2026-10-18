@@ -71,11 +71,16 @@ class Plan:
             return "Plan cannot execute: start the next step, or stop after failure/completion"
         return None
 
-    def observe(self, name: str, result: ToolResult, *, native_patch: bool = False) -> None:
+    def observe(self, name: str, result: ToolResult, *, native_patch: bool = False, native_command: bool = False) -> None:
         step = self.active
         if step is None:
             return
         print(f"[TOOL] {name}")
+        if (native_command and not result.success and result.metadata.get('completed') is True
+                and result.metadata.get('command_nonzero') is True
+                and type(result.metadata.get('exit_code')) is int and result.metadata['exit_code'] != 0):
+            step.verified = False
+            return
         if native_patch:
             if result.success and result.metadata.get('applied') is False:
                 return

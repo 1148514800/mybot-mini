@@ -51,11 +51,14 @@ class ToolRegistry:
         return ToolResult(success=False, error=f"tool returned {type(result).__name__}")
 
 
-def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_mode='off') -> ToolRegistry:
+def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_mode='off', command=None, command_approval_provider=None) -> ToolRegistry:
     if type(coding_enabled) is not bool:raise ValueError('coding_enabled must be a boolean')
     if type(patch_mode) is not str or patch_mode not in ('off','preview','write'):
         raise ValueError('invalid patch_mode')
     if patch_mode != 'off' and not coding_enabled:raise ValueError('patch_mode requires coding_enabled')
+    from .command_config import validate_command
+    command = {} if command is None else command
+    settings = validate_command(command, coding_enabled=coding_enabled, patch_mode=patch_mode)
     registry = ToolRegistry()
     for tool in (
         ReadFileTool(workspace),
@@ -73,4 +76,7 @@ def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_
         if patch_mode != 'off':
             from .patch import ApplyPatchTool
             registry.register(ApplyPatchTool(workspace, patch_mode=patch_mode))
+    if settings.mode != 'off':
+        from .run_command import RunCommandTool
+        registry.register(RunCommandTool(workspace, command=command, patch_mode=patch_mode, approval_provider=command_approval_provider))
     return registry

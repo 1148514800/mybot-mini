@@ -66,8 +66,8 @@ def _skills_value(key: str, default):
 
 def _coding_value(key='enabled', default=False):
     value = _CONFIG.get('coding', {})
-    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode'}:
-        raise ValueError('coding must contain only enabled and patch_mode')
+    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command'}:
+        raise ValueError('coding must contain only enabled, patch_mode and command')
     return value.get(key,default)
 
 
@@ -89,6 +89,7 @@ def _resolve_path(raw_value) -> Path:
 class GatewayConfig:
     coding_enabled: bool = field(default_factory=_coding_value)
     coding_patch_mode: str = field(default_factory=lambda: _coding_value('patch_mode', 'off'))
+    coding_command: dict = field(default_factory=lambda: _coding_value('command', {}))
     mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
     mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
     mcp_discovery: dict = field(default_factory=lambda: _mcp_value("discovery", {}))
@@ -120,6 +121,9 @@ class GatewayConfig:
             raise ValueError('coding.patch_mode must be off, preview or write')
         if self.coding_patch_mode != 'off' and not self.coding_enabled:
             raise ValueError('coding.patch_mode requires coding.enabled=true')
+        from .tools.command_config import validate_command
+        from dataclasses import asdict
+        self.coding_command = asdict(validate_command(self.coding_command, coding_enabled=self.coding_enabled, patch_mode=self.coding_patch_mode))
         from .mcp_client.config import validate_mcp
         self.mcp_servers = validate_mcp(self.mcp_enabled,self.mcp_servers)
         from .mcp_client.discovery import validate_discovery

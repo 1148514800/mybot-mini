@@ -181,3 +181,18 @@ uv run python -m scripts.coding_repo_demo --edit
 ```
 
 Demo使用固定模拟模型和真实临时Git仓库，不调用真实LLM；验证用户注释、已暂存/未跟踪文件及Index保持不变。源码/参数/Diff可能进入Session，Debug参数遮蔽不等于完整秘密脱敏。输入结构、安全策略、恢复状态、完整学习流程与限制见 [Phase 20](docs/phases/phase-20.md)。成果位于独立 `codex/phase-20`，不自动合并原main。
+
+## Terminal Execution（Phase 21）
+
+`coding.command`缺省`{"mode":"off","timeout_seconds":30,"max_output_bytes":32768}`，不增加默认Tool Schema。显式开启后注册原生`run_command`，只接受有界argv数组和Workspace内cwd，每次执行需独立批准。`host_confirm`必须配合`patch_mode=write`，按当前用户权限运行，没有OS隔离；`macos_readonly`使用实际Seatbelt策略，每次命令前验证读写/网络/子进程等13项隔离，不可用即拒绝，不降级。
+
+CLI使用独立原生命令审批，非交互或无Provider默认拒绝；仅明确yes单次批准。stdout/stderr/真实exit_code、超时与资源限制进入原Loop；正常非零退出让Plan继续调查，不当作测试通过，也不自动重试。源码、命令参数和输出可能进入Session，Debug遮蔽不是完整秘密脱敏。sandbox-exec已弃用，仅声明当前macOS实际验证的能力。
+
+```bash
+uv run python -m scripts.check_command_execution
+uv run python -m scripts.coding_repo_demo --command
+# 明确无OS沙盒的合成演示：
+uv run python -m scripts.coding_repo_demo --command --command-mode host_confirm
+```
+
+Demo仅在可丢弃夹具中使用合成审批与固定模型，真实测试先失败、精确Patch后通过，不调用真实LLM或第三方MCP/OAuth。[Phase21学习文档](docs/phases/phase-21.md)包含完整输入/权限/调用链、文件清单、实际验证与限制。没有全后代/内存/硬磁盘配额保证，不进入Phase22。
