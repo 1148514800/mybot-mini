@@ -227,7 +227,7 @@ Evaluation 累计28项 Agent文件记录、60项任务前Dirty记录；它们是
 | Selective：60路由案例 | precision88.8889%、recall97.2222%；负例24/24正确；多工具全覆盖10/12 |
 | Selective任务 | 核心12例27请求/137582字符；挑战10例23/109693；最终成功，原有路由遗漏仍保留 |
 
-归档脚本集成测试已通过：不可覆盖、只还原独立目录、缺失/恶意ZIP、Session/密钥/缓存拒绝及不可变修订测试。Phase1～23全量750/750（原649+新101）及Phase1/2原断言通过，退出码0；先前一次进程在编辑中启动导致旧类/新测试混用，已以最终实现重跑通过，未把该失败计为完成。独立解压/还原和正式归档发布事实在后续纯文档记录提交补齐。
+归档脚本集成测试已通过：不可覆盖、只还原独立目录、缺失/恶意ZIP、Session/密钥/缓存拒绝及不可变修订测试。Phase1～23全量750/750（原649+新101）及Phase1/2原断言通过，退出码0；先前一次进程在编辑中启动导致旧类/新测试混用，已以最终实现重跑通过，未把该失败计为完成。正式归档与独立解压/还原的已完成事实见第13节；本节源验证结论不变。
 
 - `/undo` unavailable：检查显式配置、原生工具模式、有效 checkout 根目录、完整 Index 支持范围、Capsule 生命周期；不要通过绕过检查强行撤销。
 - conflict：先人工查看目标与 Git 状态；没有自动 reset 或清理建议。
@@ -237,6 +237,23 @@ Evaluation 累计28项 Agent文件记录、60项任务前Dirty记录；它们是
 
 Phase22→23 增加 Baseline/Journal/Capsule/宿主 Review 与 Undo；原预算、修订绑定测试、每条命令授权和失败反馈闭环保留。下一阶段若开展 Coding Agent Evaluation，需继续使用独立 Gold、真实文件/测试证据、误归属/误覆盖指标，区分合成策略安全验证与真实模型能力。尚未运行真实 LLM、第三方 MCP/OAuth，没有实际 Token/费用；二者均 null。
 
-阶段不自动进入24，不 Push/Merge。归档源应为干净的已提交版本，唯一 annotated phase-23；完整 ZIP、独立解压与 restore 都需验证，发布事实随后作独立文档记录，不移动 Tag。
+阶段不自动进入24，不 Push/Merge。以下发布记录属于后续纯文档提交，未修改功能源或移动 Tag。
+
+## 13. 正式归档与独立还原记录
+
+- 实现/归档源提交：`edda5426534eaffe1ffb303f69fb855a9ebe482e`，19文件变更；源工作树干净，`save_phase.sh 23` 对确切提交导出并再次冻结安装、编译、750全量通过后创建唯一 annotated `phase-23`。
+- Tag对象：`58e43675638404da2f851f91856b83e74922a6df`，始终指向上述源提交。本记录后补，未移动Tag或重导出旧ZIP。
+- 正式ZIP：`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-23.zip`。
+- 脚本默认ZIP：`/Users/godblack/.codex/worktrees/phase-23/mybot-mini-snapshots/phase-23.zip`；通过独占创建不可覆盖复制到正式位置，SHA256均为 `96d546cc1db18be067299b93b4cc3a805de053371d62d77f637aca5c1e069626`。
+- ZIP：183 entries / 164 files；CRC、安全路径/敏感内容校验、ZIP注释提交SHA、清单及每文件字节与Tag一致；没有._文件。
+- 正式ZIP独立APFS解压：`/var/folders/7p/n7p6_hdd08j48k1kbg6kjnvh0000gn/T/mybot-phase23-official-zip-40s6vqiw/source`。
+- `bash scripts/restore_phase.sh 23` 独立学习目录：`/Users/godblack/.codex/worktrees/phase-23/mybot-mini-learning/phase-23`；未切换当前开发分支。
+- 两个副本均 `uv sync --frozen`、编译mybot/scripts、750全量及原断言、四组旧基准、16例Evaluation、3例Demo通过；四基准与Phase22除六字段逐字段一致。测试后164个源文件哈希仍与Tag一致。
+- 两个副本均false_owned=0、unintended=0、Index保留16/16；没有真实LLM/第三方服务、真实配置或Session文件。
+- 原main仍3461dc7，用户app.py/USER.md和原Index哈希不变；旧23个Tag对象及全部旧ZIP（含已有AppleDouble）哈希不变。只新增phase-23；未Push/Merge/进入24。
+
+复习：`cd "/Users/godblack/.codex/worktrees/phase-23/mybot-mini-learning/phase-23"`，执行第11节离线命令即可。APFS临时解压用于核验，长期学习使用restore目录。不要将临时目录视为永久备份。ExFAT可能自行生成AppleDouble；导出不含它们，复制设置COPYFILE_DISABLE=1，不承诺操作系统永不生成。
+
+当前保守边界还包括：尚无提交的仓库、非ASCII/未支持分支名、特殊Git布局或完整Index无法确认时禁Undo；无原子inode条件replace/unlink、跨文件崩溃事务、完整外部副作用监视和进程总内存硬配额。Seatbelt弃用及原Phase21资源/后代进程回收边界不变。下一阶段评测可在明确新任务后开展，本阶段无关键未完成项。
 
 archive-ready: true

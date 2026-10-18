@@ -26,8 +26,7 @@
 | 20 | 版本校验、精确Patch、预览与条件恢复 | 已验证，独立归档 | `phase-20` | [phase-20.md](phase-20.md) |
 | 21 | 原生命令、单次审批与macOS Seatbelt只读隔离 | 已验证，独立归档 | `phase-21` | [phase-21.md](phase-21.md) |
 | 22 | 自主任务控制、预算、修订绑定验证与动态离线评测 | 已验证，独立归档 | `phase-22` | [phase-22.md](phase-22.md) |
-
-| 23 | Git基线、任务级原生Patch审查与单次安全撤销 | 750项验证通过，待发布独立归档 | `phase-23` | [phase-23.md](phase-23.md) |
+| 23 | Git基线、任务级原生Patch审查与单次安全撤销 | 750项及双副本还原验证通过，独立归档 | `phase-23` | [phase-23.md](phase-23.md) |
 
 ## 保存一个新阶段
 
