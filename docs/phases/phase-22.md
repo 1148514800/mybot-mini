@@ -242,7 +242,7 @@ Phase21建立真实命令、批准和沙盒反馈；Phase22给同一个循环增
 
 ## 18. 验证结果与归档
 
-此节在所有开发验证完成后更新准确数量和案例结果；归档完成事实另作纯文档提交，不移动Tag。唯一phase-22只标记干净已验证实现，ZIP独立解压与restore均在APFS验证。
+开发验证全部通过；归档完成事实另作纯文档提交，不移动Tag。唯一phase-22只标记干净已验证实现，ZIP独立解压与restore均在APFS验证。
 
 ### 实际动态案例结果
 
@@ -270,7 +270,7 @@ Phase21建立真实命令、批准和沙盒反馈；Phase22给同一个循环增
 
 19/19符合预期安全结果，5 verified、4 edited_unverified、4 blocked、3 budget_exhausted、3 completed_without_changes；false_verified_count=0、missed_verification_count=0。单文件7次请求/6工具/1Patch/2真实测试，exit1→exit0，1项通过；多文件8请求/7工具/1次Patch涉及2文件，同样真实测试前失败后通过。总91请求、73工具、10次写入尝试且10次发布、25次命令尝试、20次测试运行（7次通过证据/13次失败或无有效证据），Schema累计541086字符；真实Token/费用null。所有案例ID配对、Index/用户注释/其他文件与外部哨兵保持。
 
-本机macOS26.6.2（25G83）、Python3.12.14、uv0.12.10、Git2.54.0 Apple Git157、rg15.2.0。80项自主专项含完整19例与真实Seatbelt，58命令、55Patch、34Repository、25MCP Approval专项和编译通过。完整全量验收与归档事实待最终确认。合成host_confirm对照18/18符合预期、false_verified=0；sandbox_unavailable单列not_applicable。
+本机macOS26.6.2（25G83）、Python3.12.14、uv0.12.10、Git2.54.0 Apple Git157、rg15.2.0。80项自主专项含完整19例与真实Seatbelt，58命令、55Patch、34Repository、25MCP Approval专项和编译通过。最终冻结实现649项全量及Phase1/2原断言全部通过，归档集成通过；不可变归档事实后续记录。合成host_confirm对照18/18符合预期、false_verified=0；sandbox_unavailable单列not_applicable。
 
 ### 原四组基准回归
 
@@ -282,3 +282,22 @@ Phase21建立真实命令、批准和沙盒反馈；Phase22给同一个循环增
 | Retrieval，36例 | Literal/BM25/Hybrid Recall@5分别57.8125%/62.5%/87.5%；负例4/4正确弃选 |
 | Adaptive，12例 | Eager25请求/1461425，Progressive51/175363，Adaptive25/176425；均12/12 |
 | Selective，60路由+12核心+10挑战 | 路由Precision88.89%/Recall97.22%，负例24/24弃选；核心Selective27请求/137582，挑战23/109693，最终均完成但原有误选/漏选保留 |
+
+### 保存与独立学习
+
+```bash
+bash scripts/save_phase.sh 22 "Autonomous Coding Loop"
+bash scripts/restore_phase.sh 22
+cd ../mybot-mini-learning/phase-22
+uv sync --frozen
+uv run python -m compileall -q mybot scripts
+uv run python -m scripts.check_phase
+uv run python -m scripts.autonomous_coding_demo
+uv run python -m scripts.evaluate_coding_agent
+```
+
+唯一Annotated phase-22与ZIP从干净已验证提交创建，不覆盖。脚本默认输出`/Users/godblack/.codex/worktrees/phase-22/mybot-mini-snapshots/phase-22.zip`，核对后独占复制至正式`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-22.zip`。默认restore目录为`/Users/godblack/.codex/worktrees/phase-22/mybot-mini-learning/phase-22`，不会checkout当前分支。
+
+归档脚本先独立冻结安装、编译和全量回归，再创建Tag。另需核对CRC、提交SHA、154文件、安全清单与旧归档；正式ZIP的独立APFS解压和restore副本均应运行冻结安装、编译、649全量、四基准及动态Demo/Evaluation。COPYFILE_DISABLE=1与普通字节复制减少AppleDouble，归档只含Git跟踪内容，不保证ExFAT永不生成元数据。
+
+archive-ready: true

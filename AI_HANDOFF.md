@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase22 Autonomous Coding Task正在完成最终验证与归档。独立分支codex/phase-22，工作树`/Users/godblack/.codex/worktrees/phase-22/mybot-mini`，基线Phase21 3063196。原main仍3461dc7，用户app.py/USER.md与原Index保持开始时哈希；不Push/Merge、不进入23。
+Phase22实现与开发验收完成，正在执行不可变归档与独立还原验证。独立分支codex/phase-22，工作树`/Users/godblack/.codex/worktrees/phase-22/mybot-mini`，基线Phase21 3063196。原main仍3461dc7，用户app.py/USER.md与原Index保持开始时哈希；不Push/Merge、不进入23。
 
 ## 实现与架构
 
@@ -16,12 +16,12 @@ Phase22 Autonomous Coding Task正在完成最终验证与归档。独立分支co
 
 新增Controller、reactive coding_agent评测/JSON案例、三个CLI/专项脚本和phase-22学习文档；修改Loop/config/run_command可选guard、模板/check_phase、README/阶段索引/本交接，共15文件。原Patch/Planning/Session/ContextManager/MCP实现未改。
 
-79专项已通过；真实动态19例全部符合预期安全结果，5 verified、4 edited_unverified、4 blocked、3预算停止、3无修改，false_verified=0/missed=0。单文件7请求/6工具/1Patch/2测试，真实失败→修复→通过；多文件单Patch2文件正确验证。整体91请求/73工具/10Patch/25命令尝试/20测试运行；Token/费用null。测试读取与数值解析并非密码学证明。无真实LLM或第三方MCP/OAuth。
+80专项已通过；真实动态19例全部符合预期安全结果，5 verified、4 edited_unverified、4 blocked、3预算停止、3无修改，false_verified=0/missed=0。单文件7请求/6工具/1Patch/2测试，真实失败→修复→通过；多文件单Patch2文件正确验证。整体91请求/73工具/10Patch/25命令尝试/20测试运行；Token/费用null。测试读取与数值解析并非密码学证明。无真实LLM或第三方MCP/OAuth。
 
-58命令/55Patch/34Repository/25MCP Approval专项、编译通过；归档脚本集成通过。四组旧基准与Phase21除计时/Git元数据逐字段相同。最终冻结代码的全量648项及独立归档验证正在进行；首次全量期间修改源码导致新测试与旧进程模块不一致，已冻结代码重跑，不视为通过。
+58命令/55Patch/34Repository/25MCP Approval专项、编译通过；归档脚本集成通过。四组旧基准与Phase21除计时/Git元数据逐字段相同。最终冻结代码649全量及Phase1/2原断言全部通过；独立归档验证待执行。自主模式SDK禁用隐式重试。
 
 ## 边界与下一步
 
-优先等待/检查最终全量日志，再完成文档状态、提交与唯一phase-22归档。此时尚未创建Tag/ZIP；只有完成验证才添加archive-ready。相关日志在/tmp/phase22-*，不提交日志。
+下一步从干净实现提交执行save_phase.sh 22，唯一Tag/ZIP、APFS解压与restore全量验证后另作纯文档记录。开发验证已满足archive-ready；独立归档尚未完成。日志在/tmp/phase22-*，不提交。
 
 只核验原生Patch涉及文件和指定测试，不能完整监测所有并发写入、MCP/外部副作用；host_confirm无OS隔离。总时间在交互审批返回后重检，不能强制中断input线程。沿用Phase21 Seatbelt弃用、无硬内存/总磁盘配额/恶意脱组后代保证等限制。动态教学规则不是通用LLM能力，真实模型/Token/费用未测。不要移动旧Tag/覆盖ZIP或混入用户工作。
