@@ -173,6 +173,7 @@ class ApplyPatchTool(RepositoryTool):
         super().__init__(workspace)
         if patch_mode not in ('preview', 'write'): raise ValueError('invalid_patch_mode')
         self.patch_mode = patch_mode
+        self.observer = None  # Host-only, opt-in; never a Tool argument.
 
     def _open_parent(self, path):
         # Reuse the Phase19 resolver AND forbid every lexical symlink component.
@@ -366,6 +367,7 @@ class ApplyPatchTool(RepositoryTool):
             changed = [x for x in items if x.op == 'add' or x.before != x.after]
             diff, truncated = self._diff(changed)
             if not dry_run:
+                if self.observer is not None: self.observer.before_publish(changed)
                 for item in changed: self._stage(item)
                 # Revalidate ALL versions before publishing the first file.
                 for item in items: self._recheck(item)
@@ -409,4 +411,16 @@ class ApplyPatchTool(RepositoryTool):
                 result.success = False; result.error = 'temporary_cleanup_failed'
                 result.metadata.update(status='partial_failure_possible', rollback_status='partial_failure_possible',
                                        safe_to_retry=False, execution_evidence=False)
+        if self.observer is not None and not dry_run:
+            try:
+                if result is not None and result.success and result.metadata.get('applied') is True:
+                    self.observer.after_success(changed)
+                else:
+                    self.observer.on_failure(result)
+            except Exception:
+                result = ToolResult(False, error='journal_commit_failed', metadata={
+                    'status': 'partial_failure_possible' if attempted else 'preflight_failed',
+                    'applied': False, 'execution_evidence': False, 'safe_to_retry': False})
+                try: self.observer.on_failure(result)
+                except Exception: pass
         return result

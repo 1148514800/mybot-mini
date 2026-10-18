@@ -24,7 +24,7 @@ class AgentLoop:
     """Run a simple tool-calling loop for one CLI conversation."""
 
     def __init__(self, client: AsyncOpenAI, config: GatewayConfig, tools: ToolRegistry,
-                 context: ContextBuilder, session: Session | None = None):
+                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None):
         self.client = client
         self.config = config
         self.tools = tools
@@ -41,6 +41,10 @@ class AgentLoop:
             self.session.restore(self.store.load())
         self.coding_controller = None
         self.last_coding_report = None
+        self._git_capsule = None
+        self._active_journal = None
+        self._undo_provider = undo_approval_provider
+        self._undo_notice = False
         self.plan = Plan()
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
@@ -76,6 +80,13 @@ class AgentLoop:
             print(f"\nBot: {reply}\n")
 
     async def handle_message(self, user_input: str) -> str:
+        if self.config.coding_git_workflow['enabled']:
+            command = user_input.strip()
+            if command in ('/changes', '/undo'):
+                return await self._git_cli(command)
+            if self._git_capsule is not None: self._git_capsule.close()
+            self._git_capsule = None
+            if command == '/clear': self._undo_notice = False
         if self.discovery is not None:self.discovery.reset()
         self._request_visible_names = frozenset()
         self.routing_decision = None
@@ -104,6 +115,9 @@ class AgentLoop:
                 reply = "[CONTEXT] 部分历史已省略，预算不足以提供其摘要。\n" + reply
             return reply
         except BaseException as exc:
+            if self._active_journal is not None:
+                self._active_journal.close()
+                self._git_capsule = None
             if self.coding_controller is not None:
                 self.coding_controller.stop('cancelled' if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt)) else 'execution_uncertain', 'task_interrupted')
                 self.last_coding_report = self.coding_controller.snapshot()
@@ -114,6 +128,9 @@ class AgentLoop:
         finally:
             if type(command) is RunCommandTool: command.execution_guard = old_guard
             self.coding_controller = None
+            if self._active_journal is not None:
+                self._active_journal.patch_tool.observer = None
+                self._active_journal = None
             if self.discovery is not None:self.discovery.reset()
             self._request_visible_names = frozenset()
             self.routing_decision = None
@@ -132,6 +149,29 @@ class AgentLoop:
             self.plan.reset()
             return "当前会话已清空。"
         messages = self.context.build_messages(user_input, self.session.history())
+        if self.config.coding_git_workflow['enabled']:
+            from .git_workflow import GitBaseline, GitWorkflowSettings
+            from .change_journal import ChangeJournal
+            from ..tools.patch import ApplyPatchTool
+            from ..tools.run_command import RunCommandTool
+            patch_tool = self.tools.get_tool('apply_patch')
+            try:
+                if type(patch_tool) is not ApplyPatchTool or self.tools.has_tool('write_file'):
+                    raise ValueError('patch_only_registry_required')
+                if patch_tool.workspace != self.config.workspace or patch_tool.patch_mode != 'write' or patch_tool.observer is not None:
+                    raise ValueError('native_patch_required')
+                if self.config.coding_git_workflow['undo_enabled']:
+                    self._validate_undo_registry()
+                baseline = await GitBaseline.capture(self.config.workspace)
+                self._active_journal = ChangeJournal(baseline, patch_tool,
+                    GitWorkflowSettings(**self.config.coding_git_workflow),
+                    external_side_effects_possible=self.config.mcp_enabled or self.config.coding_command['mode'] == 'host_confirm')
+                patch_tool.observer = self._active_journal
+                if self._undo_notice:
+                    messages[0]['content'] += '\nPrevious task verification is invalid after Undo or external changes; old Session text is not current evidence.'
+            except (OSError, ValueError):
+                self.coding_controller.stop('blocked', 'git_baseline_or_registry_unavailable')
+                return self._finish_turn(messages, len(messages) - 1, '')
         turns = self.session.export_turns()
         turn_start = len(messages) - 1
         if self.router is not None:self._route_initial_tools(user_input,messages,turns)
@@ -152,7 +192,7 @@ class AgentLoop:
             if debug and self.config.context_enabled:
                 print(f"[CONTEXT] chars={stats['before']}->{stats['after']} max={self.config.context_max_chars}")
             if controller is not None and not controller.before_request(definitions):
-                return self._finish_turn(messages, turn_start, '', controller.stop_reason)
+                return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             start = time.perf_counter()
             try:
                 response = await asyncio.wait_for(
@@ -170,7 +210,7 @@ class AgentLoop:
                 if controller is not None:
                     controller.check_time()
                     controller.stop('blocked', 'model_request_timeout')
-                    return self._finish_turn(messages, turn_start, '', controller.stop_reason)
+                    return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
                 report = self.plan.close("模型请求超时")
                 return f"模型请求超时（{self.config.request_timeout_seconds:g} 秒）。" + (f"\n{report}" if report else "")
 
@@ -185,7 +225,7 @@ class AgentLoop:
                 reply = (message.content or "").strip() or "模型没有返回文本。"
                 if controller is not None and controller.needs_continuation():
                     continue
-                return self._finish_turn(messages, turn_start, reply)
+                return await self._complete_turn(messages, turn_start, reply)
 
             messages.append({
                 "role": "assistant",
@@ -242,15 +282,60 @@ class AgentLoop:
                 })
 
             if controller is not None and controller.state != 'running':
-                return self._finish_turn(messages, turn_start, '', controller.stop_reason)
+                return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             if command_stopped:
-                return self._finish_turn(messages, turn_start,
+                return await self._complete_turn(messages, turn_start,
                     '原生命令未完成或未获批准，本轮任务已停止；后续工具未执行。已执行命令可能已有副作用。', '原生命令停止')
             if permission_denied:
-                return self._finish_turn(messages, turn_start,
+                return await self._complete_turn(messages, turn_start,
                     "MCP 操作未获批准，本轮任务已停止；后续工具未执行。已执行的操作不会自动回滚。", "工具审批拒绝")
 
-        return self._finish_turn(messages, turn_start, f"已达到单次任务的 {limit} 步上限。", "达到 ReAct 上限")
+        return await self._complete_turn(messages, turn_start, f"已达到单次任务的 {limit} 步上限。", "达到 ReAct 上限")
+
+    async def _complete_turn(self, messages, turn_start, reply, reason=''):
+        if self._active_journal is not None:
+            await self._active_journal.refresh()
+        return self._finish_turn(messages, turn_start, reply, reason)
+
+    def _validate_undo_registry(self):
+        from ..tools.file import ReadFileTool
+        from ..tools.list_files import ListFilesTool
+        from ..tools.search_code import SearchCodeTool
+        from ..tools.read_file_range import ReadFileRangeTool
+        from ..tools.git_tools import GitStatusTool, GitDiffTool
+        from ..tools.patch import ApplyPatchTool
+        from ..tools.run_command import RunCommandTool
+        allowed = {ReadFileTool, ListFilesTool, SearchCodeTool, ReadFileRangeTool, GitStatusTool, GitDiffTool,
+                   ApplyPatchTool, RunCommandTool, PlanningTool, SkillTool, DiscoveryTool}
+        if any(type(t) not in allowed for t in self.tools.iter_tools()): raise ValueError('unsupported_undo_registry')
+        native = self.tools.get_tool('run_command')
+        if type(native) is not RunCommandTool or native.settings.mode != 'macos_readonly':
+            raise ValueError('readonly_command_required')
+
+    async def _git_cli(self, command):
+        journal = self._git_capsule
+        if journal is None: return 'undo_unavailable: no recent task capsule'
+        if command == '/changes':
+            await journal.refresh()
+            state = journal.summary()
+            if (not state['git_metadata_unchanged'] or any(not f.get('current_matches', True) for f in state['files'])):
+                self._invalidate_coding_review('stale_review')
+            return journal.review()
+        from ..tools.undo import UndoService
+        result = await UndoService(journal, self._undo_provider).undo()
+        if result.get('verification_invalidated'):
+            self._invalidate_coding_review(result['undo_status'],
+                changed=result.get('files_may_have_changed', False), uncertain=result['undo_status'] == 'undo_partial_failure_possible')
+        return json.dumps(result, ensure_ascii=True) + ('\n此前修复的测试记录不再适用于当前内容；未自动复测。' if result.get('verification_invalidated') else '')
+
+    def _invalidate_coding_review(self, reason, *, changed=False, uncertain=False):
+        self._undo_notice = True
+        if self.last_coding_report is not None:
+            self.last_coding_report = {**self.last_coding_report,
+                'state': 'execution_uncertain' if uncertain else 'edited_unverified',
+                'verification': 'invalid', 'tests_passed_after_last_patch': 0,
+                'current_revision': self.last_coding_report['current_revision'] + int(changed),
+                'stop_reason': reason, 'undo_status': reason, 'verification_invalidated': True}
 
     def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: str,
                      reason: str = "") -> str:
@@ -261,6 +346,9 @@ class AgentLoop:
         report = self.plan.close(reason)
         if report and controller is None:
             reply = f"{reply}\n{report}" if reason else report
+        if self._active_journal is not None:
+            self._git_capsule = self._active_journal
+            reply += '\n[TASK CHANGE SUMMARY]\n' + self._active_journal.summary_text(4000)
         messages.append({"role": "assistant", "content": reply})
         if self.store is not None:
             turns = self.session.export_turns() + [messages[turn_start:]]

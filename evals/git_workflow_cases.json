@@ -1,0 +1,140 @@
+[
+  {
+    "id": "clean",
+    "behavior": "clean",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_completed"
+  },
+  {
+    "id": "dirty",
+    "behavior": "dirty",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_completed"
+  },
+  {
+    "id": "multi_file_add",
+    "behavior": "add",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_completed"
+  },
+  {
+    "id": "multiple_updates",
+    "behavior": "multiple_updates",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_completed"
+  },
+  {
+    "id": "external_edit",
+    "behavior": "external_edit",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_conflict"
+  },
+  {
+    "id": "replacement",
+    "behavior": "replacement",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_conflict"
+  },
+  {
+    "id": "index_change",
+    "behavior": "index_change",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_conflict"
+  },
+  {
+    "id": "head_change",
+    "behavior": "head_change",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_conflict"
+  },
+  {
+    "id": "denied",
+    "behavior": "denied",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_denied"
+  },
+  {
+    "id": "clear",
+    "behavior": "clear",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_unavailable"
+  },
+  {
+    "id": "restart",
+    "behavior": "restart",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_unavailable"
+  },
+  {
+    "id": "rollback",
+    "behavior": "rollback",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_rolled_back"
+  },
+  {
+    "id": "budget",
+    "behavior": "budget",
+    "expected_owned": [],
+    "expected_undo": "undo_unavailable"
+  },
+  {
+    "id": "unrelated",
+    "behavior": "unrelated",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_completed"
+  },
+  {
+    "id": "spoof",
+    "behavior": "spoof",
+    "expected_owned": [],
+    "expected_undo": "undo_unavailable"
+  },
+  {
+    "id": "partial_failure",
+    "behavior": "partial_failure",
+    "expected_owned": [
+      "src/calculator.py",
+      "tests/regression.py"
+    ],
+    "expected_undo": "undo_partial_failure_possible"
+  }
+]

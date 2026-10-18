@@ -15,6 +15,13 @@
       "max_command_attempts": 6,
       "max_no_progress": 3,
       "max_task_seconds": 300
+    },
+    "git_workflow": {
+      "enabled": false,
+      "undo_enabled": false,
+      "max_files": 24,
+      "max_journal_bytes": 8388608,
+      "max_review_chars": 20000
     }
   },
   "debug": false,

@@ -8,6 +8,7 @@ from .workspace import init_workspace
 from .mcp_client.manager import MCPClientManager
 from .mcp_client.approval import cli_approval
 from .tools.command_approval import cli_command_approval
+from .tools.undo_approval import cli_undo_approval
 
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
@@ -28,6 +29,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
                 config=config,
                 tools=tools,
                 context=ContextBuilder(config.workspace),
+                undo_approval_provider=cli_undo_approval,
             )
 
             print("Gateway started. Channel: cli\n")
