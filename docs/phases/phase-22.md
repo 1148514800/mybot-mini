@@ -301,3 +301,16 @@ uv run python -m scripts.evaluate_coding_agent
 归档脚本先独立冻结安装、编译和全量回归，再创建Tag。另需核对CRC、提交SHA、154文件、安全清单与旧归档；正式ZIP的独立APFS解压和restore副本均应运行冻结安装、编译、649全量、四基准及动态Demo/Evaluation。COPYFILE_DISABLE=1与普通字节复制减少AppleDouble，归档只含Git跟踪内容，不保证ExFAT永不生成元数据。
 
 archive-ready: true
+
+
+## 19. 不可变归档与独立还原最终记录
+
+- 功能提交：`f1de6107fd96192c286aa2272e86cd59763ed39e`。归档准备提交`aa74730f0d347956c80c376db0d83b76ac447c28`仅补齐三个文档，包含相同代码和archive-ready。唯一Annotated Tag `phase-22`固定指向aa74730，Tag对象`7355f4d1a15fba20ca9ba13023e0e1a4cde341ce`。
+- 从干净已提交版本执行save_phase.sh 22；归档源独立冻结安装、编译和649全量/原断言通过后发布。确切归档源的test_phase_archives集成再次通过。
+- 正式完整ZIP：`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-22.zip`。SHA256 `8bde581512362e7d9c70c53e50571ee5a1393ff34f5664252aa76bc65a45add6`，173条目/154文件，CRC、安全清单、ZIP comment提交SHA及逐文件等于Tag均通过。工作树同级另有脚本默认相同ZIP。
+- 正式ZIP在APFS独立目录`/var/folders/7p/n7p6_hdd08j48k1kbg6kjnvh0000gn/T/mybot-phase22-official-zip-vnmaf_v4/source`解压；冻结安装、编译mybot/scripts、649全量及原断言、四组基准、19例Evaluation和6例Demo全部通过。
+- `restore_phase.sh 22`独立生成`/Users/godblack/.codex/worktrees/phase-22/mybot-mini-learning/phase-22`；同样完成冻结安装、编译、649全量/原断言、四组基准、19例Evaluation与6例Demo。
+- 两个副本的四基准均逐字段等于Phase21，排除项仍仅六个计时/Git元数据字段；Evaluation均19/19、false_verified=0、missed=0、91请求/73工具/10Patch/20测试运行，Demo均6/6。测试后全部154文件仍逐字节等于Tag，没有实际配置或Session目录。验收日志前有uv提示外层VIRTUAL_ENV与副本不匹配，uv按设计忽略外层环境、使用副本自身.venv；仅剥离这条stderr提示后解析JSON，没有改变任何指标或执行结果。
+- 22个原Tag对象、所有旧ZIP及原有AppleDouble文件哈希均未改变；原main仍3461dc7，用户app.py、USER.md和原Index的开始/结束哈希相同。无真实LLM、第三方MCP/OAuth，网络回归仅本机合成服务。
+
+本节是后续纯文档归档记录；不移动Tag、不重导ZIP。归档中的学习文档已含实现、验收与archive-ready，发布事实以分支本节和Git记录为准。Phase22完整结束，保留独立工作树和学习目录供审阅；未Push/Merge，不进入Phase23。
