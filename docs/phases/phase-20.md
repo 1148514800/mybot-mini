@@ -188,7 +188,7 @@ uv run python -m scripts.compare_selective_routing
 
 最终55项Patch专项、34项Phase19专项、511项全量（456+55）及Phase1/2原断言通过，mybot/scripts编译通过，归档脚本集成通过。已审查139个源码/文档文件，未发现真实配置/凭证/Session/缓存/不必要大文件。原main两处用户文件及Index哈希与开始一致。四组Phase16–18旧基准已经在4343ada和Phase20源码各重跑，除计时、Git提交/工作区元数据外逐字段完全一致：默认Schema、任务结果和检索/选择结果未变。Core四模式仍12/12，Challenge四模式仍10/10；Core累计Schema字符为eager1461425、progressive175363、legacy176425、selective137582。Phase19四调查工具34项保持通过。
 
-测试仅使用本机合成仓库、模拟模型及项目既有本机测试服务；没有连接真实第三方MCP/OAuth。既有HTTP/OAuth回归中的localhost fixture不代表使用真实外部服务。真实模型Token、费用和自主修复能力未验证。
+测试仅使用本机合成仓库、模拟模型及项目既有本机测试服务；没有连接真实第三方MCP/OAuth。既有HTTP/OAuth回归中的localhost fixture不代表使用真实外部服务。真实模型Token、费用和自主修复能力未验证。本轮实际平台为macOS/APFS、Python3.12.14；Linux兼容分支未实测。
 
 ## 14. 与Phase19比较和边界
 
@@ -213,3 +213,17 @@ uv run python -m scripts.coding_repo_demo --edit
 worktree脚本的默认输出是worktree的同级mybot-mini-snapshots/phase-20.zip，需核实路径后独占复制到原项目同级正式归档目录，不覆盖任何旧文件。Tag为唯一annotated phase-20，不移动phase-19-r1或旧Tag，不以最新代码冒充历史阶段。ZIP用git archive，不含venv/Session/真实配置/缓存/AppleDouble。APFS独立解压后冻结安装、编译、完整离线回归和四组基准，再用restore脚本独立还原并验证。记录提交、实际路径与ZIP哈希见完成后的归档记录；不Push、不Merge、不改变main。
 
 archive-ready: true
+
+
+## 16. 最终归档与独立还原记录
+
+- 实现Commit：`73688daa2118d6236a17e2cd960399aa4ae00401`；唯一Annotated Tag `phase-20`准确指向该提交，Tag对象为`ad597fc88d8c83fd1267bc50045648eafb841c76`。
+- 从干净工作树实际执行save_phase.sh；脚本独立冻结安装、编译和511项全量通过后发布，默认ZIP位置为`/Users/godblack/.codex/worktrees/phase-20/mybot-mini-snapshots/phase-20.zip`。
+- 独占复制至正式ZIP：`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-20.zip`；SHA-256 `c53f28904e752701844fc0784c218c5ed1c68f4a3dfcf4f379321e0ed85be9dd`。158 entries/139 files，CRC通过，ZIP comment为实现提交，全部139文件逐字节等于Tag，无AppleDouble/真实配置/Session/缓存/凭证。
+- 正式ZIP再次在全新APFS临时目录独立解压，uv sync --frozen、编译全部mybot/scripts、55项Patch、34项Repository、511项全量及Phase1/2原断言全部通过。
+- 从开发worktree执行restore_phase.sh 20，独立学习目录为`/Users/godblack/.codex/worktrees/phase-20/mybot-mini-learning/phase-20`。冻结安装、编译、55/34专项、511项全量及原断言全部通过，不改变当前分支或原main。
+- 两个独立副本均重跑四组旧基准，除计时/Git元数据外逐字段等于Phase19的4343ada基线；编辑Demo完整结果（真实哈希、Diff、用户修改保护与Index字节）等于开发副本。固定模型8请求，没有真实LLM、第三方MCP/OAuth或Agent命令/测试执行。
+- 最终确切实现的归档脚本集成再次通过，包括非法输入、脏工作树、禁止覆盖、修订rN、路径穿越、损坏ZIP、敏感路径与Session拒绝。
+- 原20个历史Tag对象和20份ZIP哈希全部未变，包含phase-19-r1；原main仍`3461dc7031bb9542070b034bed0be47f61760f75`，原用户app.py/USER.md与Index哈希未变。
+
+本节属于后续纯文档归档记录提交，Tag和ZIP固定在73688da，不移动Tag或重导出。当前分支保留工作树供学习/审阅，未Push、未Merge，不继续Phase21。归档中的学习文档已包含完整实现说明与archive-ready；本节最终事实以分支文档与Git为准。

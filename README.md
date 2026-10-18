@@ -66,7 +66,7 @@ bash scripts/save_phase.sh 2 "自定义 Agent 工具 list_files"
 bash scripts/restore_phase.sh 1
 ```
 
-保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–19 已分别归档（19推荐安全修订phase-19-r1）；已存在的 Tag 和 ZIP 不可重复保存。
+保存会创建唯一 Tag 并将完整源码 ZIP 写到 `../mybot-mini-snapshots/`；还原到 `../mybot-mini-learning/phase-01`，不修改开发分支，拒绝覆盖已有版本。Phase 01–20 已分别归档（19推荐安全修订phase-19-r1）；已存在的 Tag 和 ZIP 不可重复保存。
 
 归档设施验证命令：`uv run python -m scripts.test_phase_archives`。
 
