@@ -24,7 +24,7 @@
 | 18 | 路由证据门控、安全弃选与覆盖感知预选 | 已验证，独立归档 | `phase-18` | [phase-18.md](phase-18.md) |
 | 19 | 原生只读仓库搜索、按行读取、Git状态与Diff | r1已验证，独立归档；初版已取代 | `phase-19-r1` | [phase-19.md](phase-19.md) |
 | 20 | 版本校验、精确Patch、预览与条件恢复 | 已验证，独立归档 | `phase-20` | [phase-20.md](phase-20.md) |
-| 21 | 原生命令、单次审批与macOS Seatbelt只读隔离 | 已验证，待独立归档 | `phase-21`（待创建） | [phase-21.md](phase-21.md) |
+| 21 | 原生命令、单次审批与macOS Seatbelt只读隔离 | 已验证，独立归档 | `phase-21` | [phase-21.md](phase-21.md) |
 
 ## 保存一个新阶段
 

@@ -268,3 +268,17 @@ uv run python -m scripts.coding_repo_demo --command
 工作树脚本默认将ZIP输出到其同级mybot-mini-snapshots，需核实后独占复制至原项目同级正式快照目录。唯一Annotated Tag为phase-21，任何旧Tag/ZIP不可移动覆盖。ZIP必须CRC、安全清单、必要文件、提交SHA和逐文件核对；正式ZIP独立APFS解压及restore目录均冻结安装、编译、完整回归、旧基准与真实Demo验证。._*不入归档，COPYFILE_DISABLE=1减少元数据，不承诺ExFAT完全不生成。实际提交/路径/哈希与最终记录完成后另列，不能用最新代码冒充历史。
 
 archive-ready: true
+
+
+## 21. 最终归档与独立还原记录
+
+- 实现Commit：`db50a5da4c86adb4d67704554f170e7655ab92ee`；唯一Annotated Tag `phase-21`准确指向它，Tag对象`678d960adcd93d756314001363dcf2b3cb8a9345`。
+- 在干净提交运行save_phase.sh 21；独立冻结安装、编译和569项全量通过后，脚本发布到`/Users/godblack/.codex/worktrees/phase-21/mybot-mini-snapshots/phase-21.zip`，再独占复制至正式目录。
+- 正式完整ZIP：`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-21.zip`；SHA256 `9ee8c896ccef8977b6d5cc5aa0cb1dac9fa24bd9c43345bda53e12f64cfc6e48`。166 entries/147 files，CRC通过，ZIP comment为实现提交，147文件逐字节等于Tag，无AppleDouble、真实配置、凭证、Session或缓存。
+- 正式ZIP再次在全新APFS临时目录独立解压，冻结安装、编译mybot/scripts、58命令/55Patch/34Repository/25MCP Approval专项、569全量及Phase1/2原断言全部通过。
+- restore_phase.sh 21实际生成学习目录`/Users/godblack/.codex/worktrees/phase-21/mybot-mini-learning/phase-21`。该独立目录同样冻结安装、编译、四项专项与569全量/原断言全部通过；测试后全部147个源码/文档文件仍逐字节等于Tag。
+- 两个副本均重跑四组旧基准，除计时/Git元数据外逐字段等于Phase20 db50c67；两种模式的真实Demo完整结果也与开发副本一致：12固定请求、2合成审批，exit1→实际Patch→exit0，1项通过，沙盒版两次true、宿主版两次false，原注释/其他文件/Index保留。
+- 最终确切实现的归档脚本集成再次通过，覆盖脏树、非法参数、禁止覆盖、rN修订、ZIP路径穿越/CRC/秘密与Session拒绝。没有真实LLM或第三方MCP/OAuth连接；网络只用本机可达合成服务作为隔离对照及旧回归。
+- 原21个历史Tag对象、21份ZIP哈希全部不变；原main仍`3461dc7031bb9542070b034bed0be47f61760f75`，用户app.py/USER.md及原Index哈希与开始一致。Phase19/20及旧学习目录没有覆盖或改写。
+
+本节属于后续纯文档归档记录提交；Tag和ZIP固定在db50a5d，不移动Tag或重导出。保留codex/phase-21工作树供审阅，未Push、未Merge，不进入Phase22。归档中的学习文档已经包含实现/验证与archive-ready；最终发布事实以分支本文及Git记录为准。
