@@ -1,6 +1,6 @@
 # Phase 24：Real-Model Coding Agent Evaluation — 真实模型接口与隐藏测试评测
 
-版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后已取得首次真实Live报告；其结果和本次修复见第15节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，本次修复不覆盖它们。
+版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时修复见第15～16节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
 
 ## 1. 目标、数据来源与当前结论
 
@@ -271,5 +271,29 @@ read_file_range在Patch模式由Registry设置include_version=true，对读取�
 针对性7项、Phase24专项116项、命令58项、自主编码80项、MCP审批25项及编译通过；`uv run python -m scripts.check_phase`全量866项通过（原859项全部保留+新增7项），原Phase1/2断言亦通过。完整日志在本机`/tmp/phase24-fix-full.log`，未作为原始运行日志提交。原main、用户修改、原Index、配置、已有Live报告和全部Tag/ZIP哈希保持不变。
 
 当前未运行新的付费Live；须用户确认后才重新执行案例A，不自动进入案例B或Phase25，不Push/Merge。原phase-24 Tag/ZIP不移动或覆盖；本次修复不在旧归档内，源码以后续Commit为准。非交互运行仍须拒绝，不因为本次修复开放自动审批。
+
+## 16. Live命令超时约定与独立结果呈现
+
+修复基线`89a3737`。既有本地报告`runs/coding_benchmark/live-20261019T142215-f2814615.json`记录config-default-001使用deepseek-v4.1-flash，请求8次、工具11次，真实Patch预览和写入各1次；Judge公开2项、隐藏4项全部通过，verified_repair_success=true。但Agent状态blocked、stop_reason=timeout_exceeds_configuration、Agent测试0次，原顶层failure却为null。报告不保存原始命令参数，因此不能从现有元数据断言模型当时具体请求了多少秒。
+
+### 配置、Schema与提示的一致性
+
+coding_benchmark.configuration原本就将单命令最大/默认超时固定为30秒；任务300秒、全局600秒或API请求45秒不改变这项安全限制。RunCommandTool省略timeout_seconds时使用自身CommandSettings.timeout_seconds，明确请求超限时在审批/进程启动前拒绝；Controller另按剩余任务预算约束已批准命令。
+
+缺陷在于原通用Tool Schema只暴露整数1～60秒，自主提示也未给出当前配置。现在每个RunCommandTool实例独立复制参数Schema，将timeout_seconds.maximum/default设置为该实例经过验证的实际配置，并建议省略参数；不增加参数名或必填项，不改变默认执行方式。类级通用输入范围和明确的host上限检查保留，因此旧输入错误分类保持，配置30秒时请求31～60秒仍返回timeout_exceeds_configuration，而不是静默截断或自动重试。
+
+CodingTaskController每轮直接从原生run_command.settings读取command_timeout_seconds写入动态约束，建议省略timeout_seconds，不把任务/API超时当作命令上限。提示和Schema没有硬编码30；离线测试验证1/7/30/60秒配置互不污染，Phase24配置仍严格30秒。原Live终端审批输出通道、真实TTY、每次人工yes、Seatbelt和非交互拒绝不变。
+
+### Judge修复与Agent工作流是两个维度
+
+保留judge.verified_repair_success的原含义和评分规则，不将它改成Agent是否完成测试流程。新增每案例agent_workflow_success，仅在Agent verified且协议证据和Tool Call ID配对有效时为true；聚合新增agent_workflow_success_cases及agent_blocked_count。已有agent_state、controller.stop_reason仍保留。顶层failure在完整Judge有效且Agent blocked时保留Controller停止原因，不再被Judge修复成功清空。verified_repair_cases只表示独立Judge修复成功，不能据此声称Agent工作流已完成。
+
+离线重现明确得到：真实Patch写入、Judge公开/隐藏通过及verified_repair_success=true；同时Agent blocked、agent_workflow_success=false、real_test_runs=0、failure=timeout_exceeds_configuration。报告保存/读取保留两组事实，没有修改Gold、隐藏测试、Reference或修复率分母。
+
+### 验证与限制
+
+新增4项专项测试：动态Schema/提示与配置相符；超限值审批前拒绝且不截断；合法30秒经真实PTY的逐次审批、Seatbelt与unittest；Judge修复成功和超时blocked同时呈现及保存。原有省略超时的终端链路也新增Schema/default/提示/批准超时断言。PTY和模拟人工输入仅用于离线合成模型回归，不用于付费Live。
+
+针对性5项（4项新增及既有默认终端链路）、Phase24专项120项、命令执行58项、自主编码80项、编译均通过；`uv run python -m scripts.check_phase`全量870项及原Phase1/2断言通过，包含866个既有用例与新增4项。旧Schema固定60秒的断言更新为实际上限/default及其余原生结构不变检查，未删除既有用例。全量日志`/tmp/phase24-timeout-full.log`。main、用户修改、原Index、配置、已有报告及Tag/ZIP哈希核对未变。没有新增付费Live，不Push/Merge、不进入Phase25。模型仍可能忽略提示主动传超限值，此时安全拒绝是预期行为；离线通过不等于真实模型已复测成功。原phase-24 Tag/ZIP保持不变，不包含后续修复。
 
 archive-ready: true

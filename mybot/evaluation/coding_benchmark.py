@@ -62,7 +62,7 @@ def selected_cases(benchmark, ids, maximum, seed=24):
 async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits, budget, base, raw,
                    live, offline_client_factory=None, command_provider=None):
     result={'case_id':case.runtime.id,'difficulty':case.runtime.difficulty,'repeat':repeat,'attempted':False,
-        'agent_state':None,'controller':{},'metrics':{},'runtime_error':None,'multi_file_task':len(case.reference)>1,
+        'agent_state':None,'agent_workflow_success':False,'controller':{},'metrics':{},'runtime_error':None,'multi_file_task':len(case.reference)>1,
         'judge':{'judge_state':'unscored','failure':'not_started','verified_repair_success':False}}
     if validation['status']!='valid':
         result['judge'].update(judge_state='invalid_case' if validation['status']=='invalid_benchmark_case' else 'grader_error',failure=validation['status'])
@@ -98,6 +98,8 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     result['controller']={k:v for k,v in controller.items() if k not in ('last_test_command','changed_files')}
     result['controller']['changed_files']=report_paths(controller.get('changed_files',[]),case.public)
     result['metrics']=case_metrics(trace,controller,agent.session.history() if agent else [],live)
+    result['agent_workflow_success']=(result['agent_state']=='verified' and
+        not result['metrics']['protocol_false_verified_count'] and result['metrics']['tool_call_ids_paired'])
     result['premature_completion_count']=sum(e['event']=='llm_response' and not e.get('tool_calls') for e in trace.events) if controller.get('continuation_used') else int(controller.get('stop_reason')=='missing_current_revision_test_evidence')
     owned=set(agent._git_capsule.entries) if agent and agent._git_capsule else set()
     if agent and agent._git_capsule:agent._git_capsule.close();agent._git_capsule=None

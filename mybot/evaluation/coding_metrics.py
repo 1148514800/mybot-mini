@@ -99,6 +99,7 @@ def failure_reason(result):
     if stop.startswith('max_'):return 'tool_budget'
     if judge.get('judge_state') in ('invalid_case','grader_error','unscored'):return judge.get('failure') or 'grader_error'
     if judge.get('failure') in ('unexpected_file_change','index_changed','journal_attribution_mismatch'):return judge['failure']
+    if state=='blocked' and stop:return stop
     if judge.get('verified_repair_success'):return None
     if not judge.get('modified_code'):
         return 'model_did_not_investigate' if not metrics.get('tool_calls') else 'no_code_change'
@@ -127,6 +128,8 @@ def summarize(results, *, live, budget):
         'hidden_test_pass_rate':len(hidden)/len(attempted) if measured and attempted else None,
         'multi_file_repair_rate':sum(r['judge'].get('verified_repair_success',False) for r in multi)/len(multi) if measured and multi else None,
         'multi_file_eligible_cases':len(multi),'agent_verified_count':len(verified),
+        'agent_workflow_success_cases':sum(r.get('agent_workflow_success',r['agent_state']=='verified') for r in attempted),
+        'agent_blocked_count':sum(r['agent_state']=='blocked' for r in attempted),
         'hidden_pass_after_agent_verified':sum(r['judge']['judge_state']=='hidden_pass' for r in verified),
         'hidden_failure_after_agent_verified':sum(r['judge']['judge_state']=='hidden_fail' for r in verified),
         'edited_unverified_count':sum(r['agent_state']=='edited_unverified' for r in attempted),

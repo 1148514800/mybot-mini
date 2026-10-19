@@ -1,5 +1,6 @@
 """Explicitly approved native commands with independent lifecycle and Seatbelt gate."""
 import json
+from copy import deepcopy
 import os
 from pathlib import Path
 import re
@@ -51,6 +52,10 @@ class RunCommandTool(RepositoryTool):
         super().__init__(workspace)
         self.settings = validate_command(command, coding_enabled=True, patch_mode=patch_mode)
         if self.settings.mode == 'off': raise ValueError('command_disabled')
+        self.parameters = deepcopy(type(self).parameters)
+        self.parameters['properties']['timeout_seconds'].update(
+            maximum=self.settings.timeout_seconds, default=self.settings.timeout_seconds,
+            description='Optional; omit to use the configured safe default. Explicit values cannot exceed this maximum.')
         self.approval_provider = approval_provider
         self.execution_guard = None  # Optional per-turn host constraint, never a model argument.
 
@@ -78,7 +83,9 @@ class RunCommandTool(RepositoryTool):
         approved = False; fd = None; result = None; settings = self.settings; mode = settings.mode
         try:
             args = parse_arguments(args)
-            if not Draft202012Validator(self.parameters).is_valid(args): raise ValueError('invalid_arguments')
+            # Keep the original input envelope/error semantics, then enforce the
+            # host cap explicitly below. Never clamp an excessive requested value.
+            if not Draft202012Validator(type(self).parameters).is_valid(args): raise ValueError('invalid_arguments')
             argv = tuple(args['argv'])
             if any('\0' in arg for arg in argv) or sum(len(a.encode('utf-8')) for a in argv) > 8192:
                 raise ValueError('invalid_arguments')

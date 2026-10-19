@@ -18,7 +18,7 @@ from types import SimpleNamespace as N
 from unittest.mock import AsyncMock, patch
 
 from mybot.agent import AgentLoop
-from mybot.agent.coding_controller import CodingTaskController
+from mybot.agent.coding_controller import CodingTaskController, AutonomySettings
 from mybot.config import GatewayConfig
 from mybot.evaluation.coding_fixtures import load_benchmark, snapshot, write_images, create_repository, Image, RuntimeCase
 from mybot.evaluation.coding_judge import judge, validate_case, validate_benchmark, run_suite, judge_images, trusted_seal
@@ -199,7 +199,13 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertIs(type(tools.get_tool('apply_patch')),ApplyPatchTool);self.assertIs(type(tools.get_tool('run_command')),RunCommandTool)
         self.assertFalse(tools.has_tool('write_file') or tools.has_tool('undo'))
         self.assertEqual(tools.get_parameters('apply_patch'),ApplyPatchTool.parameters)
-        self.assertEqual(tools.get_parameters('run_command'),RunCommandTool.parameters)
+        parameters=json.loads(json.dumps(tools.get_parameters('run_command')))
+        timeout=parameters['properties']['timeout_seconds']
+        self.assertEqual(timeout['maximum'],cfg.coding_command['timeout_seconds'])
+        self.assertEqual(timeout.pop('default'),cfg.coding_command['timeout_seconds'])
+        self.assertIn('omit',timeout.pop('description'))
+        timeout['maximum']=RunCommandTool.parameters['properties']['timeout_seconds']['maximum']
+        self.assertEqual(parameters,RunCommandTool.parameters)  # All other structure stays native.
         self.assertTrue(issubclass(BenchmarkAgent,AgentLoop));self.assertTrue(CodingTaskController)
 
     async def test_offline_never_constructs_sdk(self):
@@ -711,14 +717,26 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(r['results'][0]['judge']['verified_repair_success'])
         self.assertTrue(r['results'][0]['judge']['stale_final_version'])
 
-    async def terminal_task(self, answer):
+    async def terminal_task(self, answer, *, command_timeout=None):
         # Real PTY only in offline regression: synthetic model, no SDK/network.
         # Production Live still requires the human's own per-command response.
         class NoisyDemo(DemoClient):
             async def create(inner, **kwargs):
                 self.assertFalse(sys.stdout.isatty())  # Agent output is still captured.
                 print('PRIVATE_RAW_AGENT_OUTPUT')
-                return await super().create(**kwargs)
+                definition=next(d for d in kwargs['tools'] if d['function']['name']=='run_command')
+                timeout=definition['function']['parameters']['properties']['timeout_seconds']
+                self.assertEqual(timeout['maximum'],30);self.assertEqual(timeout['default'],30)
+                self.assertIn('"command_timeout_seconds": 30',kwargs['messages'][0]['content'])
+                response=await super().create(**kwargs)
+                calls=response.choices[0].message.tool_calls
+                if calls and calls[0].function.name=='run_command':
+                    args=json.loads(calls[0].function.arguments)
+                    self.assertNotIn('timeout_seconds',args)
+                    if command_timeout is not None:
+                        args['timeout_seconds']=command_timeout
+                        calls[0].function.arguments=json.dumps(args)
+                return response
         master, slave = pty.openpty()
         try:
             with os.fdopen(os.dup(slave), 'r') as stdin, os.fdopen(os.dup(slave), 'w') as stdout:
@@ -739,6 +757,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertIn('[NATIVE COMMAND APPROVAL]',terminal)
         self.assertIn('仅批准此命令一次',terminal)
         self.assertIn('macOS Seatbelt',terminal)
+        self.assertIn('"timeout_seconds": 30',terminal)
         for private in ('PRIVATE_RAW_AGENT_OUTPUT','SYNTHETIC_CREDENTIAL','negative ttl'):
             self.assertNotIn(private,terminal)
             self.assertNotIn(private,json.dumps(result))
@@ -849,6 +868,80 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result['judge']['index_changed'])
         self.assertEqual(result['judge']['journal_attribution_mismatch'],0)
         self.assertEqual(metrics['protocol_false_verified_count'],0)
+
+    def test_timeout_schema_and_hint_match_each_command_configuration(self):
+        base=GatewayConfig()
+        evaluation=configuration(base,self.root,Limits(task_timeout=600,request_timeout=120))
+        self.assertEqual(evaluation.coding_command['timeout_seconds'],30)
+        for seconds in (1,7,30,60):
+            tools=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',
+                command={'mode':'macos_readonly','timeout_seconds':seconds})
+            controller=CodingTaskController(AutonomySettings(enabled=True),tools)
+            hint=controller.instruction()
+            state=json.loads(hint[hint.index('{'):])
+            self.assertEqual(state['command_timeout_seconds'],seconds)
+            self.assertIn('prefer omitting timeout_seconds',hint)
+            spec=tools.get_tool('run_command').to_schema()['function']['parameters']
+            self.assertEqual(spec['properties']['timeout_seconds']['maximum'],seconds)
+            self.assertEqual(spec['properties']['timeout_seconds']['default'],seconds)
+            self.assertEqual(spec['required'],['argv'])
+        self.assertEqual(RunCommandTool.parameters['properties']['timeout_seconds']['maximum'],60)
+        self.assertNotIn('default',RunCommandTool.parameters['properties']['timeout_seconds'])
+
+    async def test_timeout_above_configuration_rejected_before_approval(self):
+        approval=AsyncMock(side_effect=AssertionError('must not ask approval for excess timeout'))
+        tool=RunCommandTool(self.root,command={'mode':'macos_readonly','timeout_seconds':30},
+            patch_mode='write',approval_provider=approval)
+        with patch('mybot.tools.run_command.run_process') as process:
+            for seconds in (31,60):
+                args={'argv':['python','-m','unittest'],'timeout_seconds':seconds}
+                result=await tool.execute(**args)
+                self.assertEqual(result.error,'timeout_exceeds_configuration')
+                self.assertFalse(result.metadata['approved'] or result.metadata['spawned'])
+                self.assertEqual(args['timeout_seconds'],seconds)
+            for invalid in (0,True,61):
+                result=await tool.execute(argv=['python'],timeout_seconds=invalid)
+                self.assertEqual(result.error,'invalid_arguments')
+        approval.assert_not_awaited();process.assert_not_called()
+
+    async def test_live_legal_explicit_timeout_uses_terminal_sandbox_and_tests(self):
+        result=await self.terminal_task('yes',command_timeout=30)
+        self.assertEqual(result['agent_state'],'verified')
+        self.assertTrue(result['agent_workflow_success'])
+        self.assertTrue(result['judge']['verified_repair_success'])
+        self.assertEqual(result['metrics']['real_test_runs'],1)
+        self.assertEqual(result['metrics']['protocol_false_verified_count'],0)
+
+    async def test_judge_pass_remains_distinct_from_timeout_blocked_workflow(self):
+        class ExcessTimeout(DemoClient):
+            async def create(inner,**kwargs):
+                response=await super().create(**kwargs)
+                calls=response.choices[0].message.tool_calls
+                if calls and calls[0].function.name=='run_command':
+                    args=json.loads(calls[0].function.arguments);args['timeout_seconds']=60
+                    calls[0].function.arguments=json.dumps(args)
+                return response
+        approval=AsyncMock(side_effect=AssertionError('excess timeout must not reach approval'))
+        with patch('mybot.tools.run_command.run_process') as process:
+            report=await self.evaluation(offline_client_factory=lambda public:ExcessTimeout(),command_provider=approval)
+        approval.assert_not_awaited();process.assert_not_called()
+        result=report['results'][0]
+        self.assertEqual(result['agent_state'],'blocked')
+        self.assertFalse(result['agent_workflow_success'])
+        self.assertEqual(result['controller']['stop_reason'],'timeout_exceeds_configuration')
+        self.assertEqual(result['failure'],'timeout_exceeds_configuration')
+        self.assertEqual(result['metrics']['real_test_runs'],0)
+        self.assertEqual(result['metrics']['committed_patches'],1)
+        self.assertEqual(result['metrics']['patch_preview_calls'],1)
+        self.assertEqual(result['judge']['judge_state'],'hidden_pass')
+        self.assertTrue(result['judge']['public']['passed'] and result['judge']['hidden']['passed'])
+        self.assertTrue(result['judge']['verified_repair_success'])
+        self.assertEqual(report['verified_repair_cases'],1)
+        self.assertEqual(report['agent_workflow_success_cases'],0)
+        self.assertEqual(report['agent_blocked_count'],1)
+        self.assertEqual(report['failures'],{'timeout_exceeds_configuration':1})
+        saved=save_report(report,self.root/'reports')
+        self.assertEqual(json.loads(saved.read_text())['results'][0]['failure'],'timeout_exceeds_configuration')
 
 
 def check_real_coding_eval():
