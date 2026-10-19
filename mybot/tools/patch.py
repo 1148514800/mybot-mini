@@ -23,6 +23,8 @@ from .repository import RepositoryTool, MAX_FILE_BYTES
 MAX_PATCH_BYTES = 256 * 1024
 MAX_DIFF_CHARS = 24000
 _RETRY = frozenset({'stale_file_hash', 'anchor_not_found', 'ambiguous_context'})
+# Pure input failures only while validating a preview. Do not extend write recovery.
+_PREVIEW_CORRECTABLE = frozenset({'invalid_arguments', 'overlapping_edits', 'no_effective_changes'})
 _STRING = {'type': 'string', 'maxLength': MAX_PATCH_BYTES}
 _PATH = {'type': 'string', 'minLength': 1, 'maxLength': 4096}
 _EDIT = {'type': 'object', 'properties': {
@@ -356,23 +358,27 @@ class ApplyPatchTool(RepositoryTool):
 
     async def execute(self, **args):
         # Synchronous local commit: no await/cancellation point within publication.
-        items = []; attempted = []; result = None
+        items = []; attempted = []; result = None; phase = 'validation'
         dry_run = args.get('dry_run', True)
         try:
             bounded_arguments(args); self.validate(args)
             if sys.platform not in ('darwin', 'linux') or not hasattr(os, 'O_NOFOLLOW'):
                 raise ValueError('unsupported_filesystem')
             if not dry_run and self.patch_mode != 'write': raise ValueError('patch_write_disabled')
+            phase = 'preflight'
             self._preflight(args, items)
+            phase = 'preview'
             changed = [x for x in items if x.op == 'add' or x.before != x.after]
             diff, truncated = self._diff(changed)
             if not dry_run:
+                phase = 'write_preparation'
                 if self.observer is not None: self.observer.before_publish(changed)
                 for item in changed: self._stage(item)
                 # Revalidate ALL versions before publishing the first file.
                 for item in items: self._recheck(item)
                 for item in changed:
                     self._recheck(item)
+                    phase = 'publication'
                     attempted.append(item)
                     self._publish(item)
                     self._recheck(item, published=True)
@@ -390,10 +396,11 @@ class ApplyPatchTool(RepositoryTool):
             reason = self.failure(exc).error
             status = self._recover(attempted) if attempted else 'preflight_failed'
             result = ToolResult(False, error=reason, metadata={
-                'status': status, 'rollback_status': status, 'applied': False,
+                'status': status, 'rollback_status': status, 'failure_phase': phase, 'applied': False,
                 'dry_run': dry_run if type(dry_run) is bool else True,
                 'execution_evidence': False,
-                'safe_to_retry': not attempted and reason in _RETRY})
+                'safe_to_retry': not attempted and (reason in _RETRY or
+                    (dry_run is True and phase in ('validation', 'preflight') and reason in _PREVIEW_CORRECTABLE))})
         finally:
             cleanup_failed = False
             for item in items:
@@ -410,7 +417,7 @@ class ApplyPatchTool(RepositoryTool):
             if cleanup_failed and result is not None:
                 result.success = False; result.error = 'temporary_cleanup_failed'
                 result.metadata.update(status='partial_failure_possible', rollback_status='partial_failure_possible',
-                                       safe_to_retry=False, execution_evidence=False)
+                                       failure_phase='cleanup', safe_to_retry=False, execution_evidence=False)
         if self.observer is not None and not dry_run:
             try:
                 if result is not None and result.success and result.metadata.get('applied') is True:
@@ -420,7 +427,7 @@ class ApplyPatchTool(RepositoryTool):
             except Exception:
                 result = ToolResult(False, error='journal_commit_failed', metadata={
                     'status': 'partial_failure_possible' if attempted else 'preflight_failed',
-                    'applied': False, 'execution_evidence': False, 'safe_to_retry': False})
+                    'failure_phase': 'journal', 'applied': False, 'execution_evidence': False, 'safe_to_retry': False})
                 try: self.observer.on_failure(result)
                 except Exception: pass
         return result

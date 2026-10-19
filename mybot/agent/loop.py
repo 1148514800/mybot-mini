@@ -385,7 +385,7 @@ class AgentLoop:
                 arguments = parse_arguments(raw_arguments)
             except ValueError as exc:
                 return ToolResult(False, error=str(exc), metadata={
-                    'status': 'preflight_failed', 'applied': False,
+                    'status': 'preflight_failed', 'failure_phase': 'argument_parsing', 'applied': False,
                     'execution_evidence': False, 'safe_to_retry': False})
             return await self.tools.execute(name, arguments)
         try:

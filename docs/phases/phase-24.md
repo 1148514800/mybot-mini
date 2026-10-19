@@ -1,6 +1,6 @@
 # Phase 24：Real-Model Coding Agent Evaluation — 真实模型接口与隐藏测试评测
 
-版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时修复见第15～16节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
+版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断见第15～17节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
 
 ## 1. 目标、数据来源与当前结论
 
@@ -295,5 +295,41 @@ CodingTaskController每轮直接从原生run_command.settings读取command_timeo
 新增4项专项测试：动态Schema/提示与配置相符；超限值审批前拒绝且不截断；合法30秒经真实PTY的逐次审批、Seatbelt与unittest；Judge修复成功和超时blocked同时呈现及保存。原有省略超时的终端链路也新增Schema/default/提示/批准超时断言。PTY和模拟人工输入仅用于离线合成模型回归，不用于付费Live。
 
 针对性5项（4项新增及既有默认终端链路）、Phase24专项120项、命令执行58项、自主编码80项、编译均通过；`uv run python -m scripts.check_phase`全量870项及原Phase1/2断言通过，包含866个既有用例与新增4项。旧Schema固定60秒的断言更新为实际上限/default及其余原生结构不变检查，未删除既有用例。全量日志`/tmp/phase24-timeout-full.log`。main、用户修改、原Index、配置、已有报告及Tag/ZIP哈希核对未变。没有新增付费Live，不Push/Merge、不进入Phase25。模型仍可能忽略提示主动传超限值，此时安全拒绝是预期行为；离线通过不等于真实模型已复测成功。原phase-24 Tag/ZIP保持不变，不包含后续修复。
+
+## 17. Medium预览失败：诊断边界与有界纠正
+
+基线`192fcbd`。已有本地报告`runs/coding_benchmark/live-20261019T145243-391f3475.json`：csv-export-001使用coco/deepseek-v4.1-flash，请求5次、工具9次（list_files×3、read_file×5、apply_patch×1），read_file_range为0；首次Patch预览失败，无实际写入/测试，blocked，stop_reason=patch_failed_without_safe_recovery，stale计数0。五次读取均为旧read_file，没有通过read_file_range取得file_sha256。
+
+**不能从旧Trace还原具体Patch错误。** 原Trace.error_category只识别计划错误，其他工具错误一概other_tool_error；报告未保存Patch或原始参数。本次没有把该错误武断归为invalid_arguments、重叠编辑或无效修改，也没有付费重放来猜测原因。能够确定的是：错误诊断被丢失，Controller因safe_to_retry不是true而立即停止；具体拒绝是否应继续，旧报告证据不足。
+
+### 原错误传递与副作用边界
+
+AgentLoop先做有界JSON解析；失败直接返回preflight_failed、safe_to_retry=false。解析成功才进入ApplyPatchTool：参数校验→逐文件只读预检/生成目标字节→Diff→（仅write）Journal准备与暂存→版本复查→逐文件发布→最终验证→清理。Controller只对真正原生ApplyPatchTool检查safe_to_retry与不确定状态；没有第二个循环。旧_RETRY仅有stale_file_hash、anchor_not_found、ambiguous_context，未尝试发布且清理无异常时可恢复，包含原有正式写入前的版本/锚点冲突；本次保持此集合不变。
+
+status=preflight_failed原本也可能表示写入准备失败，不能单靠该标签推断“从未写过任何字节”：暂存/备份和Journal资产可能已经生成。现在failure_phase明确区分argument_parsing、validation、preflight、preview、write_preparation、publication、cleanup、journal。validation/preflight及Dry Run的Diff不创建暂存/发布；write_preparation可能创建暂存/备份；publication后可能改变一个或多个目标，必须依靠现有回滚与身份/字节验证。cleanup或Journal异常继续按不确定/严格拒绝处理。
+
+### 恢复规则：诊断白名单不等于恢复授权
+
+新增独立_PREVIEW_CORRECTABLE，仅包含invalid_arguments、overlapping_edits、no_effective_changes。它要求dry_run严格为bool true、失败阶段为validation或preflight、没有任何发布尝试；清理异常会覆盖safe_to_retry=false。不是“所有Dry Run失败都可重试”，不是扩大全局_RETRY。
+
+| 情况 | 修改前 | 修改后 |
+| --- | --- | --- |
+| 已解析、确定是预览的三类纯输入错误 | blocked | running，允许模型在原剩余预算内纠正并重新生成 |
+| 正式写入请求的上述三类错误 | blocked | blocked，原安全断言保留 |
+| 原stale/anchor/ambiguous冲突且未发布 | running | 保持原规则，重新读取当前版本再构造 |
+| 无法解析JSON、无可信dry_run，或未知/资源错误 | blocked | blocked |
+| 路径越界、敏感文件、链接、权限/元数据拒绝 | blocked | blocked，即使Dry Run也是如此 |
+| 发布失败但已验证回滚 | blocked | blocked，不自动重做写入 |
+| rollback_conflict、partial_failure_possible、清理/Journal不确定 | execution_uncertain或原严格停止 | 保持严格停止 |
+
+工具只提供失败反馈，不自动重放调用、不扩请求/工具/写入/时间预算。模型应检查错误、重新用read_file_range读取目标SHA并重新生成；重复相同错误仍由max_no_progress等原预算停止。自主约束现明确要求任何Patch预览或写入前读取真实file_sha256，不猜哈希。新建文件没有既有SHA，add操作的原Schema不变；Benchmark运行契约仍禁止新增文件。
+
+### 安全Trace与验证
+
+只在CodingTrace添加固定PATCH_ERROR_CODES/PATCH_FAILURE_STATES/PATCH_FAILURE_PHASES白名单：错误代码、阶段、状态、safe_to_retry布尔值。未知值分别归为other_patch_error、unknown_patch_failure、unknown_patch_phase，绝不保存任意异常正文、参数、Patch、源码或私有路径；通用旧Trace不改。诊断列表中的安全拒绝代码绝不因此获得重试权限。
+
+新增11项：三类输入及原stale/anchor错误预览无写入证明；正式写入/非输入阶段不扩恢复；Schema/重叠/无变化分别在原Loop纠正→重新读取→有效预览→提交→真实测试→Judge；重复错误在原预算内停止；非法路径/敏感访问、权限拒绝；真实发布与回滚故障；未解析JSON仍阻断；白名单及任意异常/源码哨兵不泄露。没有删除原有安全断言。针对性11项、Phase24专项131项、Patch55项、自主编码80项及编译全部通过；`uv run python -m scripts.check_phase`全量881项通过（原870项全部保留+新增11项），原Phase1/2断言亦通过。日志`/tmp/phase24-preview-full.log`。main、用户文件、原Index、配置、已有Live报告及全部Tag/ZIP哈希已核对保持不变。
+
+本轮无付费Live，不Push/Merge、不进入25；Gold/评分标准不变，原Tag/ZIP不移动或覆盖。旧Medium错误类型仍未知，不能声称本次必然解决了那个具体模型Patch；后续明确授权的真实运行才可利用新分类诊断。
 
 archive-ready: true

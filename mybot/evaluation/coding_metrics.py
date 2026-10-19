@@ -10,6 +10,20 @@ from ..agent.coding_controller import test_runner, passed_tests
 from ..tools.command_process import resolve_launch
 
 
+# Diagnostic labels, not recovery permissions. Unknown exception text is never retained.
+PATCH_ERROR_CODES = frozenset({'invalid_arguments', 'patch_too_large', 'invalid_utf8',
+    'overlapping_edits', 'no_effective_changes', 'stale_file_hash', 'anchor_not_found', 'ambiguous_context',
+    'duplicate_path', 'invalid_path', 'path_outside_workspace', 'path_outside_repository', 'sensitive_path_denied',
+    'symlink_denied', 'hardlink_denied', 'permission_denied', 'unsupported_metadata', 'unsupported_ownership',
+    'unsupported_filesystem', 'patch_write_disabled', 'target_exists', 'parent_missing', 'not_found',
+    'not_regular_file', 'binary_file', 'file_too_large', 'path_changed', 'stage_verification_failed',
+    'temporary_cleanup_failed', 'journal_commit_failed', 'repository_tool_failed'})
+PATCH_FAILURE_STATES = frozenset({'preflight_failed', 'commit_failed_rolled_back',
+    'rollback_conflict', 'partial_failure_possible'})
+PATCH_FAILURE_PHASES = frozenset({'argument_parsing', 'validation', 'preflight', 'preview',
+    'write_preparation', 'publication', 'cleanup', 'journal'})
+
+
 class CodingTrace(Trace):
     def __init__(self):
         super().__init__();self.paired=True;self.revision=0;self.last_test_revision=None;self.hashes={};self.command_start=None
@@ -21,6 +35,13 @@ class CodingTrace(Trace):
     def tool(self,name,arguments,result,duration):
         super().tool(name,arguments,result,duration)
         event=self.events[-1];meta=result.metadata
+        if name=='apply_patch' and not result.success:
+            event['error']=result.error if isinstance(result.error,str) and result.error in PATCH_ERROR_CODES else 'other_patch_error'
+            state=meta.get('status')
+            event['patch_failure_state']=state if isinstance(state,str) and state in PATCH_FAILURE_STATES else 'unknown_patch_failure'
+            phase=meta.get('failure_phase')
+            event['patch_failure_phase']=phase if isinstance(phase,str) and phase in PATCH_FAILURE_PHASES else 'unknown_patch_phase'
+            event['patch_safe_to_retry']=meta.get('safe_to_retry') is True
         try: args=json.loads(arguments) if isinstance(arguments,str) else arguments
         except (ValueError,TypeError): args={}
         args=args if isinstance(args,dict) else {}

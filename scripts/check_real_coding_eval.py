@@ -27,6 +27,7 @@ from mybot.evaluation.coding_benchmark import evaluate, configuration, OfflineCl
 from mybot.evaluation.coding_metrics import CodingTrace, BenchmarkAgent, case_metrics, summarize
 from mybot.evaluation.tool_agent import usage_values, token_totals, validate_prices, estimated_cost
 from mybot.tools import build_default_tool_registry
+from mybot.tools.base import ToolResult
 from mybot.tools.patch import ApplyPatchTool
 from mybot.tools.run_command import RunCommandTool
 from mybot.tools.command_approval import cli_command_approval, inspectable_command
@@ -942,6 +943,204 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report['failures'],{'timeout_exceeds_configuration':1})
         saved=save_report(report,self.root/'reports')
         self.assertEqual(json.loads(saved.read_text())['results'][0]['failure'],'timeout_exceeds_configuration')
+
+    def preview_arguments(self, error, version):
+        change={'op':'update','path':'app/cache.py','expected_sha256':version,
+            'edits':[{'old_text':'now > expires','new_text':'now >= expires'}]}
+        if error=='invalid_arguments':change['unknown_field']='PRIVATE_PATCH_ARGUMENT'
+        elif error=='overlapping_edits':change['edits']*=2
+        elif error=='no_effective_changes':change['edits'][0]['new_text']='now > expires'
+        elif error=='stale_file_hash':change['expected_sha256']='0'*64
+        elif error=='anchor_not_found':change['edits'][0]['old_text']='ABSENT_ANCHOR'
+        elif error=='ambiguous_context':change['edits'][0]['old_text']='self'
+        return {'dry_run':True,'changes':[change]}
+
+    async def patch_context(self, name):
+        root=create_repository(self.root/name,self.case.public)
+        tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write')
+        read=await tools.execute('read_file_range',dict(path='app/cache.py',start_line=1,end_line=80))
+        self.assertTrue(read.success)
+        return root,tools,CodingTaskController(AutonomySettings(enabled=True),tools),read.metadata['file_sha256']
+
+    async def test_preview_input_failures_allow_regeneration_before_writes(self):
+        from mybot.tools.patch import _RETRY
+        self.assertEqual(_RETRY,{'stale_file_hash','anchor_not_found','ambiguous_context'})
+        for error in ('invalid_arguments','overlapping_edits','no_effective_changes',
+                      'stale_file_hash','anchor_not_found','ambiguous_context'):
+            with self.subTest(error=error):
+                root,tools,controller,version=await self.patch_context(error)
+                before=snapshot(root);index=(root/'.git/index').read_bytes();tool=tools.get_tool('apply_patch')
+                args=self.preview_arguments(error,version)
+                with patch.object(tool,'_stage') as stage,patch.object(tool,'_publish') as publish:
+                    result=await tools.execute('apply_patch',args)
+                stage.assert_not_called();publish.assert_not_called()
+                controller.observe('apply_patch',args,result)
+                self.assertEqual(result.error,error)
+                self.assertTrue(result.metadata['safe_to_retry'])
+                self.assertIn(result.metadata['failure_phase'],('validation','preflight'))
+                self.assertFalse(result.metadata['applied'] or result.metadata['execution_evidence'])
+                self.assertEqual(controller.state,'running')
+                self.assertEqual(snapshot(root),before);self.assertEqual((root/'.git/index').read_bytes(),index)
+                self.assertEqual(list(root.rglob('.mybot-patch-*')),[])
+
+    async def test_preview_recovery_never_applies_to_write_or_later_phases(self):
+        for error in ('invalid_arguments','overlapping_edits','no_effective_changes'):
+            root,tools,controller,version=await self.patch_context('write-'+error)
+            args=self.preview_arguments(error,version);args['dry_run']=False
+            result=await tools.execute('apply_patch',args)
+            controller.observe('apply_patch',args,result)
+            self.assertEqual(result.error,error);self.assertFalse(result.metadata['safe_to_retry'])
+            self.assertEqual(controller.state,'blocked')
+        root,tools,controller,version=await self.patch_context('late-preview')
+        tool=tools.get_tool('apply_patch');args=self.preview_arguments('',version)
+        with patch.object(tool,'_diff',side_effect=ValueError('no_effective_changes')):
+            result=await tool.execute(**args)
+        self.assertEqual(result.metadata['failure_phase'],'preview')
+        self.assertFalse(result.metadata['safe_to_retry'])
+        for dry_run in ('yes',1):
+            args['dry_run']=dry_run
+            result=await tool.execute(**args)
+            self.assertEqual(result.error,'invalid_arguments');self.assertFalse(result.metadata['safe_to_retry'])
+
+    async def corrected_preview(self, error):
+        owner=self
+        class CorrectPreview(DemoClient):
+            injected=False
+            reread=False
+            async def create(inner,**kwargs):
+                self.assertIn('Before any apply_patch preview or write',kwargs['messages'][0]['content'])
+                previous=next((m for m in reversed(kwargs['messages']) if m['role']=='tool'),None)
+                if previous and previous['content'].startswith('Error: '+error) and not inner.reread:
+                    inner.reread=True
+                    call=N(id='reread-after-preview',function=N(name='read_file_range',arguments=json.dumps(
+                        {'path':'app/cache.py','start_line':1,'end_line':80})))
+                    return N(choices=[N(message=N(content=None,tool_calls=[call]),finish_reason='tool_calls')],usage=None)
+                response=await super().create(**kwargs)
+                calls=response.choices[0].message.tool_calls
+                if calls and calls[0].function.name=='apply_patch' and not inner.injected:
+                    inner.injected=True
+                    version=json.loads(calls[0].function.arguments)['changes'][0]['expected_sha256']
+                    calls[0].function.arguments=json.dumps(owner.preview_arguments(error,version))
+                return response
+        client=CorrectPreview()
+        report=await self.evaluation(offline_client_factory=lambda public:client)
+        result=report['results'][0]
+        self.assertTrue(client.injected and client.reread)
+        self.assertEqual(result['agent_state'],'verified');self.assertTrue(result['agent_workflow_success'])
+        self.assertTrue(result['judge']['verified_repair_success'])
+        self.assertEqual(result['metrics']['read_calls'],2)
+        self.assertEqual(result['metrics']['patch_preview_calls'],2)
+        self.assertEqual(result['metrics']['committed_patches'],1)
+        self.assertEqual(result['metrics']['real_test_runs'],1)
+        failure=next(e for e in result['trace'] if e['event']=='tool' and not e['success'])
+        self.assertEqual(failure['error'],error);self.assertTrue(failure['patch_safe_to_retry'])
+        self.assertEqual(failure['patch_failure_state'],'preflight_failed')
+        self.assertFalse(result['judge']['index_changed'])
+        self.assertEqual(result['judge']['journal_attribution_mismatch'],0)
+        self.assertEqual(result['metrics']['protocol_false_verified_count'],0)
+        self.assertNotIn('PRIVATE_PATCH_ARGUMENT',json.dumps(report))
+
+    async def test_schema_preview_correction_in_original_loop(self):await self.corrected_preview('invalid_arguments')
+
+    async def test_overlapping_preview_correction_in_original_loop(self):await self.corrected_preview('overlapping_edits')
+
+    async def test_noop_preview_correction_in_original_loop(self):await self.corrected_preview('no_effective_changes')
+
+    async def test_repeated_preview_errors_stay_within_original_budget(self):
+        class RepeatPreview(OfflineClient):
+            count=0
+            async def create(inner,**kwargs):
+                inner.count+=1
+                name='read_file_range' if inner.count==1 else 'apply_patch'
+                args={'path':'app/cache.py','start_line':1,'end_line':80} if inner.count==1 else {'dry_run':True,'changes':[]}
+                call=N(id='repeat-preview-'+str(inner.count),function=N(name=name,arguments=json.dumps(args)))
+                return N(choices=[N(message=N(content=None,tool_calls=[call]),finish_reason='tool_calls')],usage=None)
+        report=await self.evaluation(offline_client_factory=lambda public:RepeatPreview())
+        result=report['results'][0]
+        self.assertEqual(result['agent_state'],'budget_exhausted')
+        self.assertEqual(result['controller']['stop_reason'],'max_no_progress')
+        self.assertEqual(result['controller']['repeated_actions'],3)
+        self.assertLessEqual(report['llm_requests'],12)
+        self.assertEqual(result['metrics']['patch_preview_calls'],4)
+        self.assertEqual(result['metrics']['patch_write_attempts'],0)
+        self.assertEqual(result['metrics']['real_test_runs'],0)
+        self.assertFalse(result['judge']['modified_code'])
+
+    async def test_unsafe_patch_paths_still_block(self):
+        for index,path in enumerate(('../escape.py','.env','.git/config','credentials.json','config/config.json')):
+            root,tools,controller,version=await self.patch_context('unsafe-'+str(index))
+            before=snapshot(root);args=self.preview_arguments('',version);args['changes'][0]['path']=path
+            result=await tools.execute('apply_patch',args)
+            controller.observe('apply_patch',args,result)
+            self.assertIn(result.error,('path_outside_workspace','sensitive_path_denied'))
+            self.assertFalse(result.metadata['safe_to_retry']);self.assertEqual(controller.state,'blocked')
+            self.assertEqual(snapshot(root),before)
+
+    async def test_permission_failure_still_blocks_preview(self):
+        root,tools,controller,version=await self.patch_context('permission')
+        args=self.preview_arguments('',version);tool=tools.get_tool('apply_patch')
+        with patch.object(tool,'_read',side_effect=PermissionError('PRIVATE_PERMISSION_BODY')):
+            result=await tools.execute('apply_patch',args)
+        controller.observe('apply_patch',args,result)
+        self.assertEqual(result.error,'permission_denied');self.assertFalse(result.metadata['safe_to_retry'])
+        self.assertEqual(controller.state,'blocked');self.assertNotIn('PRIVATE_PERMISSION_BODY',result.to_text())
+
+    async def test_write_rollback_and_uncertain_failures_still_stop(self):
+        for kind in ('stage','publish','rollback_conflict','rollback_failure'):
+            root,tools,controller,version=await self.patch_context(kind)
+            tool=tools.get_tool('apply_patch');args=self.preview_arguments('',version);args['dry_run']=False
+            publish=tool._publish;replace_file=os.replace;calls=0
+            def fail_publish(item):
+                if kind=='publish':raise OSError('PRIVATE_PUBLISH_FAILURE')
+                publish(item)
+                if kind=='rollback_conflict':(root/'app/cache.py').write_bytes(b'external user content')
+                raise OSError('PRIVATE_PUBLISH_FAILURE')
+            def fail_replace(*a,**kw):
+                nonlocal calls
+                calls+=1
+                if calls==2:raise OSError('PRIVATE_ROLLBACK_FAILURE')
+                return replace_file(*a,**kw)
+            with contextlib.ExitStack() as stack:
+                if kind=='stage':stack.enter_context(patch.object(tool,'_stage',side_effect=ValueError('invalid_arguments')))
+                else:stack.enter_context(patch.object(tool,'_publish',side_effect=fail_publish))
+                if kind=='rollback_failure':stack.enter_context(patch('mybot.tools.patch.os.replace',side_effect=fail_replace))
+                result=await tools.execute('apply_patch',args)
+            controller.observe('apply_patch',args,result)
+            self.assertFalse(result.metadata['safe_to_retry'])
+            status={'stage':'preflight_failed','publish':'commit_failed_rolled_back',
+                'rollback_conflict':'rollback_conflict','rollback_failure':'partial_failure_possible'}[kind]
+            self.assertEqual(result.metadata['status'],status)
+            self.assertEqual(controller.state,'execution_uncertain' if kind.startswith('rollback') else 'blocked')
+            if kind=='rollback_conflict':self.assertEqual((root/'app/cache.py').read_bytes(),b'external user content')
+            self.assertNotIn('PRIVATE_',result.to_text())
+
+    async def test_malformed_patch_json_remains_conservative(self):
+        class Malformed(OfflineClient):
+            async def create(inner,**kwargs):
+                call=N(id='malformed-patch',function=N(name='apply_patch',arguments='{PRIVATE_MALFORMED_JSON'))
+                return N(choices=[N(message=N(content=None,tool_calls=[call]),finish_reason='tool_calls')],usage=None)
+        report=await self.evaluation(offline_client_factory=lambda public:Malformed())
+        result=report['results'][0];event=next(e for e in result['trace'] if e.get('name')=='apply_patch')
+        self.assertEqual(result['agent_state'],'blocked')
+        self.assertEqual(event['error'],'invalid_arguments')
+        self.assertEqual(event['patch_failure_phase'],'argument_parsing')
+        self.assertFalse(event['patch_safe_to_retry'])
+        self.assertNotIn('PRIVATE_MALFORMED_JSON',json.dumps(report))
+
+    def test_patch_trace_allowlist_never_retains_arbitrary_text(self):
+        from mybot.evaluation.coding_metrics import PATCH_ERROR_CODES
+        for error in (*sorted(PATCH_ERROR_CODES),'PRIVATE_EXCEPTION_BODY',['PRIVATE_EXCEPTION_BODY']):
+            trace=CodingTrace();trace.names={'apply_patch'};trace.workspace=self.root
+            result=ToolResult(False,'PRIVATE_SOURCE_BODY',error=error,
+                metadata={'status':'PRIVATE_STATUS','failure_phase':{'PRIVATE_PHASE':1},'safe_to_retry':'PRIVATE_BOOLEAN'})
+            trace.tool('apply_patch',{'dry_run':True,'changes':['PRIVATE_PATCH_BODY']},result,0)
+            event=trace.events[-1]
+            expected=error if isinstance(error,str) and error in PATCH_ERROR_CODES else 'other_patch_error'
+            self.assertEqual(event['error'],expected)
+            self.assertEqual(event['patch_failure_state'],'unknown_patch_failure')
+            self.assertEqual(event['patch_failure_phase'],'unknown_patch_phase')
+            self.assertFalse(event['patch_safe_to_retry'])
+            self.assertNotIn('PRIVATE_',json.dumps(trace.events))
 
 
 def check_real_coding_eval():
