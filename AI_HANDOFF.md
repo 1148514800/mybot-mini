@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Phase24 Real-Model Coding Benchmark实现完成，最新109专项通过，原750/先前859全量通过；最新确切提交的集成验证待独立还原与正式归档，不能标Phase完整完成。分支codex/phase-24，工作树`/Users/godblack/.codex/worktrees/phase-24/mybot-mini`，准确基线dfd3461。原main仍3461dc7，用户app.py/USER.md和原Index、旧Tag/ZIP哈希在`/tmp/phase24-baseline.json`核对不变。不Push/Merge/进入25，不执行任何真实付费Live。
+Phase24 Real-Model Coding Benchmark实现完成，109专项/859全量及最新178859f的ZIP-only独立还原均通过；待正式Tag/ZIP和双副本最终验证，不能标Phase完整完成。分支codex/phase-24，工作树`/Users/godblack/.codex/worktrees/phase-24/mybot-mini`，准确基线dfd3461。原main仍3461dc7，用户app.py/USER.md和原Index、旧Tag/ZIP哈希在`/tmp/phase24-baseline.json`核对不变。不Push/Merge/进入25，不执行任何真实付费Live。
 
 ## 实现与架构
 
@@ -18,6 +18,8 @@ Live双标志+凭证+TTY+真实沙盒后才build_client，重试0，模型命令
 
 默认离线12/12完整评分，12合成请求、0修复，无文件/Index/归属/协议异常；四路径Demo真实结果正确（修复hidden_pass、公开过拟合verified但hidden_fail、口头伪造无分、注入grader_error）。ability_score=false、real_model_repair_rate/Token/费用null。真实模型编码能力未测，没有实际API费用，禁止冒充Live成绩。
 
-## 下一步
+## 预还原与下一步
 
-初始实现已提交fafab78；补齐基于真实工具行动的no_code_change分类后，后续预还原以最新确切提交为准，当前不得有archive-ready行。运行`/tmp/phase24-preflight.py`：从干净确切提交导出私有临时ZIP，使用ZIP-only restore到APFS独立目录，`/tmp/phase24-verify-copy.py`验证859全量/四基准/全12离线/四路径Demo。成功后才添加archive-ready并作就绪文档提交；从干净就绪提交save_phase.sh24创建唯一正式Tag/ZIP。正式ZIP不可覆盖复制外置盘，APFS解压和正式restore再次完整验证；最终纯文档记录提交，不移动Tag。当前源文件278个，Code已冻结，不重复实现或修改旧750断言。详细结构/CLI/学习/限制见docs/phases/phase-24.md。
+实现fafab78，修正源`178859f3340c9a00fb9808eed76af3f446af3634`。在添加archive-ready前已从干净修正源导出私有ZIP，使用原restore脚本的ZIP-only分支独立还原到`/private/tmp/mybot-phase24-preflight-x380wel9/mybot-mini-learning/phase-24`；859全量/原断言/四旧基准/12离线/四Demo及278源文件哈希全部通过。完整事实见phase-24学习文档。没有运行真实LLM或付费请求。
+
+本次仅添加archive-ready/就绪状态，不修改代码；提交此文档后从干净HEAD执行save_phase.sh24，创建唯一正式annotated phase-24及完整ZIP。正式ZIP不可覆盖复制外置盘，APFS解压和正式restore再次执行`/tmp/phase24-verify-copy.py`的全套验证；最后纯文档记录提交，不移动Tag。不自动Push/Merge/进入25，不混入main用户改动，不重做已完成实现。最终验证前不能标整个Phase完整完成。

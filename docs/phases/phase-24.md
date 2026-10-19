@@ -204,7 +204,7 @@ Demo只给一个TTL教学策略，读取真实文件/SHA，提交原生Patch，�
 
 默认全12项离线运行使用无修复策略：验证全部数据集可解，再跑原Loop/独立Judge；不能将无修改的回复拿到修复分。该路径是机制检查，不是模型能力排名。最终数据集SHA256为 `de4fd3f28acb43ecc89bb5412aa11954f62704b3f2d0c9b60716035bbe288dcd`。实跑12/12任务得到完整评分、12次合成请求、0次Agent Patch/命令、0修复；全部Baseline/Reference有效，四项文件/Index/归属保护异常和protocol_false_verified均0，能力率/Token/费用均null。无修复策略不等于模型失败成绩。
 
-专项目前109项通过，涵盖数据有效性、Gold隔离、真实文件/Index/临时清理、SDK双门/错误/缺Usage、预算与成本、正确/过拟合/伪造/保护/篡改/超时、最终版本、重复生命周期和旧报告。859项全量及Phase1/2原断言已通过；随后补充了只读Git来源/显式价格元数据与公开修改范围，当前109专项再次通过，最新确切提交的859全量还将由预还原和正式归档副本再次验证。Phase19～23专项分别34/55/58/80/101、原审批25均通过；编译与归档脚本集成通过。四基准与Phase23 dfd3461实跑结果除六个计时/Git字段逐字段相同，独立还原和正式归档仍待完成。
+专项目前109项通过，涵盖数据有效性、Gold隔离、真实文件/Index/临时清理、SDK双门/错误/缺Usage、预算与成本、正确/过拟合/伪造/保护/篡改/超时、最终版本、重复生命周期和旧报告。859项全量及Phase1/2原断言已通过；随后补充了只读Git来源/显式价格元数据与公开修改范围，当前109专项再次通过，最新修正源已在APFS预还原副本完成859全量/四基准/12项离线/四路径Demo；正式归档副本仍将再次验证。Phase19～23专项分别34/55/58/80/101、原审批25均通过；编译与归档脚本集成通过。四基准与Phase23 dfd3461实跑结果除六个计时/Git字段逐字段相同，独立还原和正式归档仍待完成。
 
 旧基准数值（与Phase23保持）：Discovery 3案例Eager7请求/409199 Schema字符、Progressive15/52280，均成功；Retrieval 36案例Recall@5 Literal57.8125%、BM25 62.5%、Hybrid87.5%，负例4/4正确；Adaptive12案例Eager25/1461425、Progressive51/175363、Adaptive25/176425，均成功；Selective60路由precision88.8889%、recall97.2222%，负例24/24、多工具覆盖10/12，核心12例27/137582、挑战10例23/109693最终成功，原有遗漏未隐藏。仅排除task_wall_time_seconds、request_latency_seconds、request_latencies_seconds、routing_overhead_ms、git_commit、worktree_dirty六字段。
 
@@ -225,4 +225,11 @@ Phase23→24增加的是Benchmark、受限Live请求适配、隔离Judge和指�
 
 按本次用户更严格的顺序：先提交已验证实现，从该确切提交做临时ZIP-only restore和独立验证；完成后才添加archive-ready，再作就绪文档提交。随后save_phase.sh24创建唯一正式annotated Tag/完整ZIP，不覆盖旧Tag/ZIP。正式ZIP须核对外置盘实际路径，并独立APFS解压与正式restore再次验证。发布事实另作纯文档记录，不移动Tag。
 
-当前尚未创建Phase24正式Tag/ZIP，本文件没有archive-ready标记；收尾后补充确切提交、路径、SHA和独立验证事实。
+实现提交 `fafab785f9305de9525144e61ffcb95d9796270b`，事件分类/取消计数修正源 `178859f3340c9a00fb9808eed76af3f446af3634`；原Loop/工具未变。
+
+已在添加archive-ready之前，从干净修正源提交生成私有预验证ZIP `/private/tmp/mybot-phase24-preflight-x380wel9/mybot-mini-snapshots/phase-24.zip`，CRC/注释提交SHA/278文件逐字节一致。使用原restore_phase.sh的ZIP-only分支在APFS独立还原到 `/private/tmp/mybot-phase24-preflight-x380wel9/mybot-mini-learning/phase-24`，冻结安装、编译、859全量及原断言、四基准、12项离线和四路径Demo均通过，源码哈希未变；未创建临时Git Tag来伪装正式归档。
+
+预验证ZIP SHA256 `f26f107f0c51c82087c576522c694ac23570f8bc5da99ebe3b78a15998300c6e`，仅为私有验证副本，不是正式phase-24归档。最新代码已完成独立集成回归，因此现在可以添加就绪标记。正式Tag/ZIP及双副本验证仍待下一步，完成后另作纯文档记录，不移动Tag。
+
+
+archive-ready: true
