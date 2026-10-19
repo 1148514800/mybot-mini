@@ -100,7 +100,8 @@ def failure_reason(result):
     if judge.get('judge_state') in ('invalid_case','grader_error','unscored'):return judge.get('failure') or 'grader_error'
     if judge.get('failure') in ('unexpected_file_change','index_changed','journal_attribution_mismatch'):return judge['failure']
     if judge.get('verified_repair_success'):return None
-    if not judge.get('modified_code'):return 'model_did_not_investigate'
+    if not judge.get('modified_code'):
+        return 'model_did_not_investigate' if not metrics.get('tool_calls') else 'no_code_change'
     if state=='verified' and judge.get('judge_state')=='hidden_fail':return 'public_tests_only'
     return judge.get('failure') or 'unknown'
 
@@ -135,7 +136,7 @@ def summarize(results, *, live, budget):
         'infra_error_cases':sum(r['judge']['judge_state']=='grader_error' for r in results),
         'invalid_cases':sum(r['judge']['judge_state']=='invalid_case' for r in results),
         'unscored_cases':sum(r['judge']['judge_state']=='unscored' for r in results),
-        'llm_requests':budget.state['used'],'successful_responses':budget.successes,'api_failures':budget.api_failures,
+        'llm_requests':budget.state['used'],'successful_responses':budget.successes,'api_failures':budget.api_failures,'cancelled_requests':budget.cancelled,
         'input_tokens':tokens['prompt_tokens'],'output_tokens':tokens['completion_tokens'],'total_tokens':tokens['total_tokens'],
         'actual_tokens':tokens['total_tokens'],'cached_input_tokens':tokens['cached_input_tokens'],
         'estimated_cost':cost,'estimated_cost_per_success':({'currency':cost['currency'],'amount':cost['amount']/len(successes)} if cost and successes else None),

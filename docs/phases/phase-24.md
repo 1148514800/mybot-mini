@@ -127,7 +127,7 @@ Judge同样执行可能不可信的最终代码，因此使用原Phase21真实�
 
 默认仅本次Evaluation作用的限制：max_cases=2、repeats=1、max_requests=24、每Case模型请求12、输出2048 Tokens、task240秒、total900秒、request45秒、Judge10秒、seed24。均严格检查类型/范围，不偷偷扩大预算。原Controller继续保留48工具/3Patch写入/6命令/3无进展等默认限制。
 
-全局门在真正API调用前检查请求、总期限及已知估价。每任务还有Controller预算与外层等待时限。记录尝试请求、成功响应、API失败数；达到上限后不再请求，剩余任务unscored。任务取消仍先安全清理，原同步Patch事务和交互input线程不能被任意中途硬停，时间限制不是跨所有阻塞边界的实时硬保证。
+全局门在真正API调用前检查请求、总期限及已知估价。每任务还有Controller预算与外层等待时限。记录尝试请求、成功响应、API失败数和取消数；失败包含本地取消/超时的未完成调用，不证明服务端未执行或未计费；达到上限后不再请求，剩余任务unscored。任务取消仍先安全清理，原同步Patch事务和交互input线程不能被任意中途硬停，时间限制不是跨所有阻塞边界的实时硬保证。
 
 不支持工具/Schema/legacy function_call、空/重复Call ID或异常响应结构明确provider_unsupported；SDK异常只使用受信任status/code分类provider_error/provider_timeout，不保存SDK原文、URL或环境变量。不更换模型/供应商，不回退固定Client伪装Live。
 
@@ -219,7 +219,7 @@ Demo只给一个TTL教学策略，读取真实文件/SHA，提交原生Patch，�
 
 Phase23→24增加的是Benchmark、受限Live请求适配、隔离Judge和指标；原自主循环/安全工具保持。当前只验证合成任务和机制，不证明真实LLM泛化、复杂仓库表现或对任意恶意解释器的鲁棒性。沿用Seatbelt已弃用、无进程总内存/总磁盘硬配额、脱组后代回收及元数据可见性边界。
 
-本次停在Phase24，不自动Push/Merge/进入25。下一步可由用户另行明确授权有限Live预算，观察同一冻结任务集下的真实失败分类，再决定改进方向；不根据某次模型失败临时修改隐藏标准来美化成绩。
+本次停在Phase24，不自动Push/Merge/进入25。下一步可由用户另行明确授权有限Live预算，观察同一冻结任务集下的真实失败分类，再决定改进方向；不根据某次模型失败临时修改隐藏标准来美化成绩。无工具行动才使用model_did_not_investigate；已有调查却未改代码记录no_code_change，不用缺少修改臆测没有调查。
 
 ## 13. 提交与归档状态
 

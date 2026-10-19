@@ -347,6 +347,9 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
     async def test_fake_success_text_does_not_score(self):
         r=(await self.demo_run('fake'))['results'][0]
         self.assertEqual(r['agent_state'],'completed_without_changes');self.assertFalse(r['judge']['verified_repair_success'])
+        from mybot.evaluation.coding_metrics import failure_reason
+        observed={**r,'metrics':{**r['metrics'],'tool_calls':1,'read_calls':1}}
+        self.assertEqual(failure_reason(observed),'no_code_change')
 
     async def test_incomplete_multifile_fix(self):
         c=next(c for c in self.benchmark.cases if c.runtime.id=='error-retry-001')
@@ -517,6 +520,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         with patch('mybot.evaluation.coding_benchmark.create_repository',capture):
             r=await self.evaluation(limits=Limits(max_cases=1,task_timeout=.02),offline_client_factory=lambda public:Slow())
         self.assertEqual(r['results'][0]['failure'],'task_timeout');self.assertTrue(all(not p.exists() for p in roots))
+        self.assertEqual(r['api_failures'],r['llm_requests']);self.assertEqual(r['cancelled_requests'],r['llm_requests'])
 
     async def test_repeated_action_budget_preserved(self):
         class Repeated(OfflineClient):
@@ -578,6 +582,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
             async def create(self,**kw):await asyncio.sleep(2)
         r=await self.evaluation(limits=Limits(max_cases=1,request_timeout=.01),offline_client_factory=lambda public:Slow())
         self.assertEqual(r['results'][0]['controller']['stop_reason'],'model_request_timeout')
+        self.assertEqual(r['llm_requests'],1);self.assertEqual(r['api_failures'],1);self.assertEqual(r['cancelled_requests'],1)
 
     async def test_zero_effect_patch_cannot_gain_repair(self):
         body=self.case.public['app/cache.py'].data

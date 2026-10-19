@@ -50,7 +50,7 @@ class RequestBudget:
             raise ValueError('invalid_estimated_cost_limit')
         self.state={'used':0,'maximum':limits.max_requests}
         self.deadline=time.monotonic()+limits.total_timeout
-        self.usages=[];self.successes=0;self.api_failures=0
+        self.usages=[];self.successes=0;self.api_failures=0;self.cancelled=0
 
     @property
     def tokens(self):return token_totals(self.usages,self.state['used'])
@@ -96,7 +96,9 @@ class CodingClient:
             self.budget.successes+=1
             self.trace.events[-1]['output_sha256']=hashlib.sha256((message.content or '').encode()).hexdigest()
             return response
-        except asyncio.CancelledError: raise
+        except asyncio.CancelledError:
+            self.budget.api_failures+=1;self.budget.cancelled+=1
+            raise
         except (TimeoutError,APITimeoutError):
             self.budget.api_failures+=1
             raise CodingEvaluationStop('provider_timeout') from None

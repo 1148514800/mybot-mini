@@ -20,4 +20,4 @@ Live双标志+凭证+TTY+真实沙盒后才build_client，重试0，模型命令
 
 ## 下一步
 
-检查diff/敏感内容后提交实现（包含phase-24学习文档，当前不得有archive-ready行）。运行`/tmp/phase24-preflight.py`：从干净确切提交导出私有临时ZIP，使用ZIP-only restore到APFS独立目录，`/tmp/phase24-verify-copy.py`验证859全量/四基准/全12离线/四路径Demo。成功后才添加archive-ready并作就绪文档提交；从干净就绪提交save_phase.sh24创建唯一正式Tag/ZIP。正式ZIP不可覆盖复制外置盘，APFS解压和正式restore再次完整验证；最终纯文档记录提交，不移动Tag。当前源文件278个，Code已冻结，不重复实现或修改旧750断言。详细结构/CLI/学习/限制见docs/phases/phase-24.md。
+初始实现已提交fafab78；补齐基于真实工具行动的no_code_change分类后，后续预还原以最新确切提交为准，当前不得有archive-ready行。运行`/tmp/phase24-preflight.py`：从干净确切提交导出私有临时ZIP，使用ZIP-only restore到APFS独立目录，`/tmp/phase24-verify-copy.py`验证859全量/四基准/全12离线/四路径Demo。成功后才添加archive-ready并作就绪文档提交；从干净就绪提交save_phase.sh24创建唯一正式Tag/ZIP。正式ZIP不可覆盖复制外置盘，APFS解压和正式restore再次完整验证；最终纯文档记录提交，不移动Tag。当前源文件278个，Code已冻结，不重复实现或修改旧750断言。详细结构/CLI/学习/限制见docs/phases/phase-24.md。
