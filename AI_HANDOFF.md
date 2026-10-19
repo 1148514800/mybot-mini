@@ -2,30 +2,22 @@
 
 ## 当前目标与状态
 
-Phase23 Git-Aware Coding Workflow完整完成：101专项、750全量及原断言、四旧基准、动态Demo/独立Evaluation、唯一Tag/ZIP、APFS解压和restore双副本验证均通过。分支codex/phase-23；工作树`/Users/godblack/.codex/worktrees/phase-23/mybot-mini`；基线Phase22 e117fd9。原main仍3461dc7，用户app.py/USER.md及原Index哈希不变。等待新任务，无Push/Merge/Phase24。
+Phase24 Real-Model Coding Benchmark实现完成，最新109专项通过，原750/先前859全量通过；最新确切提交的集成验证待独立还原与正式归档，不能标Phase完整完成。分支codex/phase-24，工作树`/Users/godblack/.codex/worktrees/phase-24/mybot-mini`，准确基线dfd3461。原main仍3461dc7，用户app.py/USER.md和原Index、旧Tag/ZIP哈希在`/tmp/phase24-baseline.json`核对不变。不Push/Merge/进入25，不执行任何真实付费Live。
 
 ## 实现与架构
 
-- coding.git_workflow默认双关闭；启用需coding+write+autonomy+checkout根；Undo额外需macos_readonly、关闭MCP、精确原生Patch-only Registry。默认Schema/路由/Session兼容。
-- 首请求前只读Baseline记录HEAD、实际当前checkout Index、Git状态/完整性。普通Git和Worktree指针安全验证；不开放.git模型读取。仅支持SHA1完整v2/v3 Index，未知布局/格式、稀疏/split/子模块等保守禁Undo。
-- Patch内部Observer发布前取真实Prepared A并预留预算；最终验证和清理后确认发布inode/字节/模式/属性再提交C。A→B→C合并A/C。有界私有镜像，不写metadata/Session/debug/持久文件，执行不确定停止。
-- 宿主/changes展示本任务累计Agent Diff、用户基线、当前版本及未知外部变化；默认只摘要。宿主/undo全批预检→独立一次枚举批准→完整重检→复用Patch Stage/replace/受限unlink/条件恢复，无Git写操作。冲突拒绝，未知恢复明确报告且保留并发用户内容。
-- Undo消费Capsule、使旧verified失效，不复测；clear/新普通任务/异常取消/重启不恢复旧授权。没有跨文件崩溃原子性、原子CAS或完整副作用监视保证；host_confirm/MCP只允许review并标未知副作用。
+新增coding_fixtures/judge/live/metrics/benchmark与3脚本；12个独立标准库Python任务，难度各4，2公开/4隐藏。严格manifest、RuntimeCase仅公开字段；hidden/reference不进Agent。每Case/Repeat新临时Git仓库，原Loop/Controller/Registry/工具Schema不改；Journal开、Undo/MCP/Skills/Session持久化/debug关。
 
-## 实测与文件
+Judge在Agent结束后用可信公开测试与最终生产源码另建副本，再注入隐藏测试，真实Seatbelt/run_process/时限/输出与进程清理；非零实际计数和结构化回执，不信模型文本。完整文件/保护/Index/Journal/可信资产及最终版本检查，常见unittest篡改检测。逐级dir_fd/O_NOFOLLOW快照；未知新增文件名仅摘要。没有任意同进程解释器操纵的形式化防作弊证明。
 
-19文件变更；完整文件表、关键函数/调用、配置、真实案例、学习命令、支持范围见docs/phases/phase-23.md。新增Baseline/Journal、Undo/独立批准、合成Evaluation/16JSON案例、专项/评测/Demo和阶段文档；Loop/Patch仅小接线，原Controller/命令/MCP安全机制保留。
+Live双标志+凭证+TTY+真实沙盒后才build_client，重试0，模型命令保持逐次CLI审批；禁止Live合成Client/自动批准覆盖。复用Trace/Token/价格；全局和每任务预算，未知Usage/价格为null，估价上限非账单硬限。元数据报告独占写入runs/coding_benchmark，不保存原始对话/源码/隐藏正文/SDK错误/HOME路径。
 
-101专项、750全量（649+101）及Phase1/2原断言、34Repository/55Patch/58Command/80Autonomy、编译、归档集成通过。16例Evaluation全部符合安全预期，false_owned=0、unintended=0、Index保留16/16，5Undo完成/4冲突/1拒绝/1部分失败；Demo3/3。评分器额外文件反例能检出非预期变化。真实Seatbelt/测试，无真实LLM/第三方MCP/OAuth，Token/费用null。四旧基准与e117fd9除六计时/Git字段逐字段一致。
+## 实测
 
-## 归档与独立还原
+最终数据集全部Baseline隐藏有失败、Reference公开24/隐藏48全通过；CSV含LF/CR/CRLF，缓存验证无关键不失效，邮箱输入域明确字符串。109专项、859全量（旧750+109）及原断言、34Repository/55Patch/58Command/80Autonomy/101GitWorkflow/25Approval、编译和归档集成通过。四旧基准与dfd3461除六计时/Git字段逐字段一致。
 
-实现/归档源`edda5426534eaffe1ffb303f69fb855a9ebe482e`；唯一annotated phase-23固定指向它，Tag对象`58e43675638404da2f851f91856b83e74922a6df`。本交接为后续纯文档发布记录，不移动Tag。
+默认离线12/12完整评分，12合成请求、0修复，无文件/Index/归属/协议异常；四路径Demo真实结果正确（修复hidden_pass、公开过拟合verified但hidden_fail、口头伪造无分、注入grader_error）。ability_score=false、real_model_repair_rate/Token/费用null。真实模型编码能力未测，没有实际API费用，禁止冒充Live成绩。
 
-正式ZIP `/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-23.zip`，SHA256 `96d546cc1db18be067299b93b4cc3a805de053371d62d77f637aca5c1e069626`，183 entries/164 files；CRC/安全/注释提交SHA/逐文件等于Tag通过。脚本默认ZIP也保留在本worktree同级snapshots。旧23个Tag/全部旧ZIP哈希不变。
+## 下一步
 
-正式ZIP独立APFS解压及学习目录`/Users/godblack/.codex/worktrees/phase-23/mybot-mini-learning/phase-23`均冻结安装/编译/750全量/四基准/16Eval/3Demo通过；测试后164源文件仍等于Tag。原main旧代码未覆盖，新功能请在本worktree或学习目录查看。
-
-## 边界与下一步
-
-本阶段无关键未完成项，等待用户新任务。仅确认原生Patch目标和受支持Git元数据，不完整监视外部副作用；无原子CAS/跨文件崩溃事务/进程总内存硬配额。非支持Index/特殊布局或分支名、无HEAD等保守拒绝。沿用Phase21 Seatbelt弃用/资源和脱组后代回收限制。真实模型能力与费用未测。不要重做已有功能、移动旧Tag/覆盖ZIP、混入原用户修改；不自动Push/Merge/进入24。
+检查diff/敏感内容后提交实现（包含phase-24学习文档，当前不得有archive-ready行）。运行`/tmp/phase24-preflight.py`：从干净确切提交导出私有临时ZIP，使用ZIP-only restore到APFS独立目录，`/tmp/phase24-verify-copy.py`验证859全量/四基准/全12离线/四路径Demo。成功后才添加archive-ready并作就绪文档提交；从干净就绪提交save_phase.sh24创建唯一正式Tag/ZIP。正式ZIP不可覆盖复制外置盘，APFS解压和正式restore再次完整验证；最终纯文档记录提交，不移动Tag。当前源文件278个，Code已冻结，不重复实现或修改旧750断言。详细结构/CLI/学习/限制见docs/phases/phase-24.md。

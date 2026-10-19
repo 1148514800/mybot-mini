@@ -1,0 +1,330 @@
+{
+  "version": 1,
+  "grading_version": 1,
+  "cases": [
+    {
+      "id": "config-default-001",
+      "difficulty": "easy",
+      "prompt": "修复布尔配置读取：显式False必须覆盖True默认值；缺省使用默认；非bool值应抛ValueError。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/config-default-001",
+      "hidden_suite": "hidden/config-default-001",
+      "reference": "reference/config-default-001",
+      "allowed_paths": [
+        "app/options.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "cache-ttl-001",
+      "difficulty": "easy",
+      "prompt": "修复TTL缓存：now等于过期时刻即失效；零TTL立即失效；负TTL抛ValueError；未到期可读。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/cache-ttl-001",
+      "hidden_suite": "hidden/cache-ttl-001",
+      "reference": "reference/cache-ttl-001",
+      "allowed_paths": [
+        "app/cache.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "pagination-001",
+      "difficulty": "easy",
+      "prompt": "修复1起始页码分页：每页最多size项，不能丢最后一项；page/size须为正整数，bool也无效。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/pagination-001",
+      "hidden_suite": "hidden/pagination-001",
+      "reference": "reference/pagination-001",
+      "allowed_paths": [
+        "app/paging.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "serialization-001",
+      "difficulty": "easy",
+      "prompt": "修复Record到JSON字典转换：只省略None，必须保留False、0、空字符串；保持字段名称。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/serialization-001",
+      "hidden_suite": "hidden/serialization-001",
+      "reference": "reference/serialization-001",
+      "allowed_paths": [
+        "app/records.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "csv-export-001",
+      "difficulty": "medium",
+      "prompt": "修复CSV导出：使用标准CSV引号规则，支持逗号、双引号和字段内换行；每行以LF结束，可由csv.reader无损读取。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/csv-export-001",
+      "hidden_suite": "hidden/csv-export-001",
+      "reference": "reference/csv-export-001",
+      "allowed_paths": [
+        "app/export.py",
+        "app/formatting.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "timezone-day-001",
+      "difficulty": "medium",
+      "prompt": "修复UTC报表日期：有offset的ISO时间必须先转换UTC；无时区按UTC，支持Z。保留跨月、跨年和闰日边界。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/timezone-day-001",
+      "hidden_suite": "hidden/timezone-day-001",
+      "reference": "reference/timezone-day-001",
+      "allowed_paths": [
+        "app/parsing.py",
+        "app/report.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "file-recovery-001",
+      "difficulty": "medium",
+      "prompt": "修复保存文本失败后原文件被截断的问题：参数类型或UTF8编码失败必须保持旧字节；成功安全替换，不遗留临时文件。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/file-recovery-001",
+      "hidden_suite": "hidden/file-recovery-001",
+      "reference": "reference/file-recovery-001",
+      "allowed_paths": [
+        "app/service.py",
+        "app/storage.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "cli-precedence-001",
+      "difficulty": "medium",
+      "prompt": "修复CLI与配置优先级：显式CLI优先，未指定时用配置，再用默认retries=3/verbose=False；retries=0是有效值。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/cli-precedence-001",
+      "hidden_suite": "hidden/cli-precedence-001",
+      "reference": "reference/cli-precedence-001",
+      "allowed_paths": [
+        "app/cli.py",
+        "app/configuration.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "validation-chain-001",
+      "difficulty": "hard",
+      "prompt": "输入为字符串。修复注册链路：先strip/lower规范化邮箱，再验证仅一个@、非空用户名、含点域名且无空白；返回规范化邮箱，非法输入抛ValueError。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/validation-chain-001",
+      "hidden_suite": "hidden/validation-chain-001",
+      "reference": "reference/validation-chain-001",
+      "allowed_paths": [
+        "app/normalize.py",
+        "app/service.py",
+        "app/validation.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "cache-sync-001",
+      "difficulty": "hard",
+      "prompt": "修复API写入后的缓存同步：已缓存键写入新值后立即读到新值；仅失效对应键，多次覆盖保持一致。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/cache-sync-001",
+      "hidden_suite": "hidden/cache-sync-001",
+      "reference": "reference/cache-sync-001",
+      "allowed_paths": [
+        "app/cache.py",
+        "app/service.py",
+        "app/store.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "parse-convert-001",
+      "difficulty": "hard",
+      "prompt": "修复key:value加载链：只按第一个冒号分割、strip键值、拒绝空键；有符号十进制整数转换为int，其他值保持文本；重复键后者覆盖。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/parse-convert-001",
+      "hidden_suite": "hidden/parse-convert-001",
+      "reference": "reference/parse-convert-001",
+      "allowed_paths": [
+        "app/conversion.py",
+        "app/parser.py",
+        "app/service.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "error-retry-001",
+      "difficulty": "hard",
+      "prompt": "修复重试调用链：retries表示首次之外重试次数（0仍调用一次）；只重试OSError，其他错误立即原样传播；耗尽后抛最后一个OSError。 仅修改已有app/下非__init__.py生产模块；不增删文件，不修改测试、README、notes或包初始化文件。运行公开unittest验证。",
+      "fixture": "fixtures/error-retry-001",
+      "hidden_suite": "hidden/error-retry-001",
+      "reference": "reference/error-retry-001",
+      "allowed_paths": [
+        "app/client.py",
+        "app/policy.py",
+        "app/transport.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "notes.txt",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    }
+  ]
+}

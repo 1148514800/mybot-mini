@@ -111,4 +111,7 @@ if Path(__file__).with_name("check_autonomous_coding.py").exists():
 if Path(__file__).with_name("check_git_workflow.py").exists():
     from scripts.check_git_workflow import check_git_workflow
     check_git_workflow()
+if Path(__file__).with_name("check_real_coding_eval.py").exists():
+    from scripts.check_real_coding_eval import check_real_coding_eval
+    check_real_coding_eval()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")

@@ -1,0 +1,709 @@
+"""Offline Benchmark/Gold/real sandbox/SDK-boundary regression; never paid API."""
+import asyncio
+import contextlib
+from dataclasses import replace
+import io
+import json
+import math
+import os
+from pathlib import Path
+import shutil
+import tempfile
+import unittest
+from types import SimpleNamespace as N
+from unittest.mock import AsyncMock, patch
+
+from mybot.agent import AgentLoop
+from mybot.agent.coding_controller import CodingTaskController
+from mybot.config import GatewayConfig
+from mybot.evaluation.coding_fixtures import load_benchmark, snapshot, write_images, create_repository, Image, RuntimeCase
+from mybot.evaluation.coding_judge import judge, validate_case, validate_benchmark, run_suite, judge_images, trusted_seal
+from mybot.evaluation.coding_live import Limits, RequestBudget, CodingClient, CodingEvaluationStop, live_client
+from mybot.evaluation.coding_benchmark import evaluate, configuration, OfflineClient, save_report
+from mybot.evaluation.coding_metrics import CodingTrace, BenchmarkAgent, case_metrics, summarize
+from mybot.evaluation.tool_agent import usage_values, token_totals, validate_prices, estimated_cost
+from mybot.tools import build_default_tool_registry
+from mybot.tools.patch import ApplyPatchTool
+from mybot.tools.run_command import RunCommandTool
+from mybot.mcp_client.approval import ApprovalDecision
+from scripts.coding_benchmark_demo import DemoClient, demonstrate
+
+
+class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name).resolve()
+        self.benchmark=load_benchmark();self.case=next(c for c in self.benchmark.cases if c.runtime.id=='cache-ttl-001')
+        self.fixed={**self.case.public,**self.case.reference}
+
+    async def asyncSetUp(self):
+        values=await validate_benchmark(self.benchmark)
+        self.validation=next(v for v in values if v['case_id']==self.case.runtime.id)
+
+    def clone_assets(self):
+        dest=self.root/'assets';shutil.copytree(self.benchmark.root,dest);return dest
+
+    def change_manifest(self, function):
+        root=self.clone_assets();p=root/'manifest.json';doc=json.loads(p.read_text());function(doc);p.write_text(json.dumps(doc));return root
+
+    async def score(self,candidate=None,**kw):
+        candidate=self.fixed if candidate is None else candidate
+        changed={p for p in candidate.keys()|self.case.public.keys() if candidate.get(p)!=self.case.public.get(p)}
+        options=dict(benchmark=self.benchmark,seal=trusted_seal(),index_unchanged=True,journal_paths=changed,agent_state='edited_unverified')
+        options.update(kw)
+        return await judge(self.case,candidate,self.validation,**options)
+
+    async def evaluation(self,**kw):
+        options=dict(limits=Limits(max_cases=1,max_requests=12),case_ids=['cache-ttl-001'])
+        options.update(kw);return await evaluate(**options)
+
+    async def demo_run(self,policy='correct',**kw):
+        return await self.evaluation(offline_client_factory=lambda public:DemoClient(policy),**kw)
+
+    async def request(self,raw,budget=None,trace=None):
+        trace=trace or CodingTrace();budget=budget or RequestBudget(Limits())
+        client=CodingClient(raw,trace,budget)
+        response=await client.create(messages=[{'role':'user','content':'synthetic'}],tools=[])
+        return response,trace,budget
+
+    def test_twelve_tasks_difficulties(self):
+        self.assertEqual(len(self.benchmark.cases),12)
+        for level in ('easy','medium','hard'):self.assertEqual(sum(c.runtime.difficulty==level for c in self.benchmark.cases),4)
+
+    def test_module_complexity(self):
+        for c in self.benchmark.cases:
+            count=sum(p.startswith('app/') and p.endswith('.py') for p in c.public)
+            bounds={'easy':(1,2),'medium':(2,4),'hard':(3,6)}[c.runtime.difficulty]
+            self.assertTrue(bounds[0]<=count<=bounds[1])
+
+    def test_public_and_hidden_counts(self):
+        self.assertTrue(all(c.public_count==2 and c.hidden_count==4 for c in self.benchmark.cases))
+
+    async def test_all_baselines_and_references(self):
+        values=await validate_benchmark(self.benchmark)
+        self.assertEqual(len(values),12)
+        self.assertTrue(all(v['status']=='valid' and v['baseline_hidden']['status']=='fail' and v['reference_hidden']['passed'] and v['reference_public']['passed'] for v in values))
+
+    def test_duplicate_case_rejected(self):
+        r=self.change_manifest(lambda d:d['cases'][1].update(id=d['cases'][0]['id']))
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_illegal_fixture_path(self):
+        for bad in ('/tmp/private','../private','fixtures/../private'):
+            r=self.change_manifest(lambda d:d['cases'][0].update(fixture=bad))
+            with self.assertRaises(ValueError):load_benchmark(r)
+            shutil.rmtree(r)
+
+    def test_unknown_manifest_fields(self):
+        r=self.change_manifest(lambda d:d.update(secret='synthetic'))
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_unknown_case_fields(self):
+        r=self.change_manifest(lambda d:d['cases'][0].update(expected_source='private'))
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_private_reference_cannot_change_tests(self):
+        r=self.change_manifest(lambda d:d['cases'][0]['allowed_paths'].append('tests/test_public.py'))
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_custom_public_command_refused(self):
+        r=self.change_manifest(lambda d:d['cases'][0].update(public_test=['python','-c','print(0)']))
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_duplicate_case_paths(self):
+        r=self.change_manifest(lambda d:d['cases'][0]['allowed_paths'].append(d['cases'][0]['allowed_paths'][0]))
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_missing_assets_refused(self):
+        r=self.clone_assets();(r/'hidden/config-default-001/test_hidden.py').unlink()
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_symlink_asset_refused(self):
+        r=self.clone_assets();p=r/'hidden/config-default-001/test_hidden.py';p.unlink();p.symlink_to(r/'manifest.json')
+        with self.assertRaises((ValueError,OSError)):load_benchmark(r)
+
+    def test_symlink_root_refused(self):
+        p=self.root/'alias';p.symlink_to(self.benchmark.root)
+        with self.assertRaises(ValueError):load_benchmark(p)
+
+    def test_zero_tests_refused(self):
+        r=self.clone_assets();(r/'hidden/config-default-001/test_hidden.py').write_text('import unittest\n')
+        with self.assertRaises(ValueError):load_benchmark(r)
+
+    def test_hash_stable_and_asset_sensitive(self):
+        self.assertEqual(self.benchmark.sha256,load_benchmark().sha256)
+        r=self.clone_assets();p=r/'fixtures/cache-ttl-001/app/cache.py';p.write_bytes(p.read_bytes()+b'\n')
+        self.assertNotEqual(self.benchmark.sha256,load_benchmark(r).sha256)
+
+    def test_hidden_not_in_public_images(self):
+        for c in self.benchmark.cases:
+            self.assertFalse(any('hidden' in p or 'reference' in p for p in c.public))
+            self.assertIsInstance(c.runtime,RuntimeCase)
+            self.assertFalse(hasattr(c.runtime,'hidden') or hasattr(c.runtime,'reference'))
+            self.assertIn('不增删文件',c.runtime.prompt);self.assertIn('非__init__.py',c.runtime.prompt)
+
+    async def test_invalid_reference_marked_invalid(self):
+        bad=replace(self.case,reference={'app/cache.py':self.case.public['app/cache.py']})
+        self.assertEqual((await validate_case(bad))['status'],'invalid_benchmark_case')
+
+    async def test_already_fixed_baseline_invalid(self):
+        bad=replace(self.case,public=self.fixed)
+        self.assertEqual((await validate_case(bad))['status'],'invalid_benchmark_case')
+
+    def test_independent_git_repositories(self):
+        a=create_repository(self.root/'a',self.case.public);b=create_repository(self.root/'b',self.case.public)
+        self.assertNotEqual((a/'.git/index').stat().st_ino,(b/'.git/index').stat().st_ino)
+        (a/'notes.txt').write_text('change');self.assertNotEqual((a/'notes.txt').read_bytes(),(b/'notes.txt').read_bytes())
+
+    def test_no_private_files_copied(self):
+        r=create_repository(self.root/'agent',self.case.public)
+        self.assertEqual(set(snapshot(r)),set(self.case.public))
+        self.assertFalse((r/'hidden').exists() or (r/'reference').exists())
+
+    def test_snapshot_rejects_hardlink(self):
+        r=write_images(self.root/'agent',self.case.public);os.link(r/'notes.txt',r/'alias')
+        with self.assertRaises((ValueError,OSError)):snapshot(r)
+
+    def test_snapshot_rejects_symlink(self):
+        r=write_images(self.root/'agent',self.case.public);(r/'alias').symlink_to('/etc/passwd')
+        with self.assertRaises((ValueError,OSError)):snapshot(r)
+
+    def test_snapshot_rejects_big_file(self):
+        r=write_images(self.root/'agent',self.case.public);(r/'huge').write_bytes(b'x'*131073)
+        with self.assertRaises((ValueError,OSError)):snapshot(r)
+
+    async def test_fresh_repeat_and_cleanup(self):
+        roots=[]
+        original=create_repository
+        def capture(root,images):roots.append(root);return original(root,images)
+        with patch('mybot.evaluation.coding_benchmark.create_repository',capture):
+            report=await self.evaluation(limits=Limits(max_cases=1,repeats=2))
+        self.assertEqual([r['repeat'] for r in report['results']],[1,2]);self.assertEqual(len(set(roots)),2)
+        self.assertTrue(all(not p.exists() for p in roots))
+        self.assertTrue(all(r['agent_state']=='completed_without_changes' for r in report['results']))
+
+    def test_configuration_closes_mcp_skills_session_undo(self):
+        cfg=configuration(GatewayConfig(),self.root,Limits())
+        self.assertFalse(cfg.mcp_enabled or cfg.skills_enabled or cfg.session_persist or cfg.debug or cfg.coding_git_workflow['undo_enabled'])
+        self.assertTrue(cfg.coding_git_workflow['enabled'] and cfg.coding_autonomy['enabled'])
+        self.assertEqual(cfg.coding_command['mode'],'macos_readonly')
+
+    def test_native_registry_and_schemas_unchanged(self):
+        cfg=configuration(GatewayConfig(),self.root,Limits())
+        tools=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',command=cfg.coding_command)
+        self.assertIs(type(tools.get_tool('apply_patch')),ApplyPatchTool);self.assertIs(type(tools.get_tool('run_command')),RunCommandTool)
+        self.assertFalse(tools.has_tool('write_file') or tools.has_tool('undo'))
+        self.assertEqual(tools.get_parameters('apply_patch'),ApplyPatchTool.parameters)
+        self.assertEqual(tools.get_parameters('run_command'),RunCommandTool.parameters)
+        self.assertTrue(issubclass(BenchmarkAgent,AgentLoop));self.assertTrue(CodingTaskController)
+
+    async def test_offline_never_constructs_sdk(self):
+        with patch('mybot.evaluation.coding_live.build_client',side_effect=AssertionError('must not call')):
+            report=await self.evaluation()
+        self.assertFalse(report['ability_score']);self.assertIsNone(report['real_model_repair_rate'])
+
+    async def test_live_double_gate(self):
+        for live,confirm in [(True,False),(False,True),(1,True)]:
+            with self.assertRaises(ValueError):await evaluate(live=live,confirm_api_cost=confirm)
+
+    async def test_live_synthetic_override_refused(self):
+        with self.assertRaises(ValueError):await evaluate(live=True,confirm_api_cost=True,offline_client_factory=lambda c:OfflineClient())
+        with self.assertRaises(ValueError):await evaluate(live=True,confirm_api_cost=True,command_provider=lambda r:True)
+
+    async def test_missing_credentials_before_sdk(self):
+        cfg=configuration(GatewayConfig(api_key=None),self.root,Limits())
+        with patch('mybot.evaluation.coding_live.build_client') as build,self.assertRaises(ValueError):
+            await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
+        build.assert_not_called()
+
+    async def test_live_non_tty_refused(self):
+        cfg=configuration(GatewayConfig(api_key='fixture-only'),self.root,Limits())
+        with patch('sys.stdin.isatty',return_value=False),patch('mybot.evaluation.coding_live.build_client') as build,self.assertRaises(ValueError):
+            await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
+        build.assert_not_called()
+
+    async def test_live_requires_verified_sandbox(self):
+        cfg=configuration(GatewayConfig(api_key='fixture-only'),self.root,Limits())
+        with patch('sys.stdin.isatty',return_value=True),patch('sys.stdout.isatty',return_value=True),patch('mybot.tools.macos_sandbox.verify_sandbox',return_value=False),patch('mybot.evaluation.coding_live.build_client') as build,self.assertRaises(ValueError):
+            await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
+        build.assert_not_called()
+
+    async def test_live_pins_retries_no_real_api(self):
+        cfg=configuration(GatewayConfig(api_key='fixture-only'),self.root,Limits())
+        sdk=N(with_options=lambda **kw:kw)
+        with contextlib.redirect_stdout(io.StringIO()),patch('sys.stdin.isatty',return_value=True),patch('sys.stdout.isatty',return_value=True),patch('mybot.tools.macos_sandbox.verify_sandbox',return_value=True),patch('mybot.evaluation.coding_live.build_client',return_value=sdk):
+            result=await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
+        self.assertEqual(result['max_retries'],0)
+
+    async def test_provider_exception_sanitized(self):
+        async def create(**kw):raise RuntimeError('PRIVATE_KEY /Users/private secret-url')
+        trace=CodingTrace();budget=RequestBudget(Limits())
+        with self.assertRaises(CodingEvaluationStop) as got:await self.request(N(chat=N(completions=N(create=create))),budget,trace)
+        self.assertEqual(str(got.exception),'provider_error');self.assertNotIn('PRIVATE_KEY',json.dumps(trace.events))
+        self.assertEqual(budget.state['used'],1);self.assertEqual(budget.api_failures,1)
+
+    async def test_provider_unsupported_structured(self):
+        class Unsupported(Exception):status_code=400;code='function_calling_not_supported'
+        async def create(**kw):raise Unsupported('private')
+        with self.assertRaises(CodingEvaluationStop) as got:await self.request(N(chat=N(completions=N(create=create))))
+        self.assertEqual(got.exception.category,'provider_unsupported')
+
+    async def test_bad_response_not_fallback(self):
+        raw=N(chat=N(completions=N(create=AsyncMock(return_value=N(choices=[],usage=None)))))
+        with self.assertRaises(CodingEvaluationStop) as got:await self.request(raw)
+        self.assertEqual(got.exception.category,'provider_unsupported')
+
+    async def test_duplicate_call_ids_rejected_before_execution(self):
+        call=N(id='same',function=N(name='read_file',arguments='{}'))
+        reply=N(choices=[N(message=N(content=None,tool_calls=[call,call]))],usage=None)
+        with self.assertRaises(CodingEvaluationStop):await self.request(N(chat=N(completions=N(create=AsyncMock(return_value=reply)))))
+
+    async def test_provider_timeout(self):
+        async def create(**kw):raise TimeoutError()
+        with self.assertRaises(CodingEvaluationStop) as got:await self.request(N(chat=N(completions=N(create=create))))
+        self.assertEqual(got.exception.category,'provider_timeout')
+
+    async def test_request_budget_before_call(self):
+        budget=RequestBudget(Limits(max_requests=1));budget.state['used']=1
+        raw=N(chat=N(completions=N(create=AsyncMock())))
+        with self.assertRaises(CodingEvaluationStop):await self.request(raw,budget)
+        raw.chat.completions.create.assert_not_called()
+
+    async def test_total_deadline_before_call(self):
+        budget=RequestBudget(Limits());budget.deadline=0
+        raw=N(chat=N(completions=N(create=AsyncMock())))
+        with self.assertRaises(CodingEvaluationStop) as got:await self.request(raw,budget)
+        self.assertEqual(got.exception.category,'total_timeout');raw.chat.completions.create.assert_not_called()
+
+    def test_strict_limits(self):
+        for field,value in [('max_cases',True),('max_cases',13),('repeats',0),('repeats',6),('max_requests',0),('max_output_tokens',8193),('task_timeout',float('nan')),('total_timeout',float('inf')),('seed',-1)]:
+            with self.assertRaises(ValueError):Limits(**{field:value})
+
+    def test_usage_missing_is_null(self):
+        self.assertTrue(all(v is None for v in token_totals([usage_values(None)],1).values()))
+
+    async def test_usage_aggregates_actual_server_fields(self):
+        response=await OfflineClient().create()
+        response.usage=N(prompt_tokens=10,completion_tokens=4,total_tokens=14,prompt_tokens_details=N(cached_tokens=2))
+        raw=N(chat=N(completions=N(create=AsyncMock(return_value=response))))
+        _,trace,budget=await self.request(raw)
+        self.assertEqual(budget.tokens,{'prompt_tokens':10,'completion_tokens':4,'total_tokens':14,'cached_input_tokens':2})
+        self.assertEqual(trace.events[-1]['output_sha256'],__import__('hashlib').sha256(response.choices[0].message.content.encode()).hexdigest())
+
+    def test_prices_explicit_and_cost(self):
+        prices=validate_prices({'currency':'USD','input_price_per_million':1,'output_price_per_million':4,'cached_input_price_per_million':.1})
+        tokens={'prompt_tokens':10,'completion_tokens':4,'cached_input_tokens':2}
+        self.assertAlmostEqual(estimated_cost(tokens,prices)['amount'],24.2/1000000)
+        self.assertIsNone(estimated_cost(tokens,None))
+        for value in ({},{'currency':'usd','input_price_per_million':1,'output_price_per_million':4},{'currency':'USD','input_price_per_million':float('nan'),'output_price_per_million':4}):
+            with self.assertRaises(ValueError):validate_prices(value)
+
+    def test_cost_limit_without_prices_refused(self):
+        with self.assertRaises(ValueError):RequestBudget(Limits(),max_cost=1)
+
+    def test_cost_unknown_usage_stops(self):
+        budget=RequestBudget(Limits(),prices={'currency':'USD','input_price_per_million':1,'output_price_per_million':4},max_cost=1)
+        budget.state['used']=1
+        with self.assertRaises(CodingEvaluationStop) as got:budget.check()
+        self.assertEqual(got.exception.category,'unknown_estimated_cost')
+
+    def test_estimated_cost_stops_after_response(self):
+        budget=RequestBudget(Limits(),prices={'currency':'USD','input_price_per_million':1,'output_price_per_million':4},max_cost=.000001)
+        budget.state['used']=1;budget.usages=[{'prompt_tokens':10,'completion_tokens':4,'total_tokens':14,'cached_input_tokens':0}]
+        with self.assertRaises(CodingEvaluationStop) as got:budget.check()
+        self.assertEqual(got.exception.category,'estimated_cost_budget')
+
+    async def test_correct_fix_independent_of_controller_verified(self):
+        r=await self.score(agent_state='edited_unverified')
+        self.assertEqual(r['judge_state'],'hidden_pass');self.assertTrue(r['verified_repair_success'])
+
+    async def test_no_change_no_repair(self):
+        r=await self.score(self.case.public)
+        self.assertFalse(r['verified_repair_success']);self.assertFalse(r['modified_code'])
+
+    async def test_test_tampering_cannot_win(self):
+        candidate={**self.fixed,'tests/test_public.py':Image(b'',0o644)}
+        r=await self.score(candidate);self.assertEqual(r['protected_file_changes'],1)
+        self.assertFalse(r['verified_repair_success']);self.assertEqual(r['public']['tests'],2)
+
+    async def test_protected_initializer_not_executed(self):
+        candidate={**self.fixed,'app/__init__.py':Image(b'raise RuntimeError("tampered")',0o644)}
+        r=await self.score(candidate);self.assertEqual(r['judge_state'],'hidden_pass');self.assertFalse(r['verified_repair_success'])
+
+    async def test_hardcoded_public_input_fails(self):
+        body=b'class Cache:\n def put(self,*args): pass\n def get(self,key,now): return 3 if key=="a" else None\n'
+        r=await self.score({**self.case.public,'app/cache.py':Image(body,0o644)})
+        self.assertEqual(r['judge_state'],'hidden_fail')
+
+    async def test_public_only_hidden_fail(self):
+        report=await self.demo_run('partial');r=report['results'][0]
+        self.assertEqual(r['agent_state'],'verified');self.assertEqual(r['judge']['judge_state'],'hidden_fail')
+        self.assertEqual(report['hidden_failure_after_agent_verified'],1);self.assertEqual(report['protocol_false_verified_count'],0)
+
+    async def test_real_patch_and_journal(self):
+        report=await self.demo_run();r=report['results'][0]
+        self.assertTrue(r['judge']['verified_repair_success']);self.assertEqual(r['judge']['journal_attribution_mismatch'],0)
+        self.assertEqual(r['metrics']['committed_patches'],1);self.assertTrue(r['metrics']['tool_call_ids_paired'])
+
+    async def test_fake_success_text_does_not_score(self):
+        r=(await self.demo_run('fake'))['results'][0]
+        self.assertEqual(r['agent_state'],'completed_without_changes');self.assertFalse(r['judge']['verified_repair_success'])
+
+    async def test_incomplete_multifile_fix(self):
+        c=next(c for c in self.benchmark.cases if c.runtime.id=='error-retry-001')
+        validation=next(r for r in await validate_benchmark(self.benchmark) if r['case_id']==c.runtime.id)
+        candidate={**c.public,'app/policy.py':c.reference['app/policy.py']}
+        r=await judge(c,candidate,validation,benchmark=self.benchmark,seal=trusted_seal(),index_unchanged=True,journal_paths={'app/policy.py'},agent_state='edited_unverified')
+        self.assertEqual(r['judge_state'],'hidden_fail')
+
+    async def test_extra_file_detected(self):
+        r=await self.score({**self.fixed,'rogue.txt':Image(b'unexpected',0o644)})
+        self.assertEqual(r['unrelated_file_changes'],1);self.assertFalse(r['verified_repair_success'])
+
+    async def test_unlisted_file_names_not_raw_metadata(self):
+        secret_name='PRIVATE_MODEL_CHOSEN_FILENAME.txt'
+        r=await self.score({**self.fixed,secret_name:Image(b'unexpected',0o644)})
+        self.assertNotIn(secret_name,json.dumps(r))
+        self.assertEqual(r['unrelated_file_changes'],1)
+        self.assertTrue(any(p.startswith('<unlisted-file:') for p in r['changed_files']))
+
+    async def test_index_changed_detected(self):
+        r=await self.score(index_unchanged=False)
+        self.assertTrue(r['index_changed']);self.assertFalse(r['verified_repair_success'])
+
+    async def test_attribution_mismatch_detected(self):
+        r=await self.score(journal_paths=set())
+        self.assertEqual(r['journal_attribution_mismatch'],1);self.assertFalse(r['verified_repair_success'])
+
+    async def test_uncertain_execution_never_wins(self):
+        self.assertFalse((await self.score(agent_state='execution_uncertain'))['verified_repair_success'])
+
+    async def test_private_asset_change_detected(self):
+        root=self.clone_assets();benchmark=load_benchmark(root)
+        (root/'hidden/cache-ttl-001/test_hidden.py').write_text('changed')
+        r=await self.score(benchmark=benchmark)
+        self.assertEqual(r['judge_state'],'grader_error');self.assertEqual(r['failure'],'trusted_assets_changed')
+
+    async def test_grader_code_seal_change_detected(self):
+        r=await self.score(seal=('different',))
+        self.assertEqual(r['judge_state'],'grader_error')
+
+    async def test_grader_timeout_not_hidden_fail(self):
+        candidate={**self.case.public,'app/cache.py':Image(b'import time;time.sleep(4)\n',0o644)}
+        r=await run_suite(judge_images(self.case,candidate),4,hidden=True,timeout=.05)
+        self.assertEqual(r['status'],'grader_error');self.assertEqual(r['category'],'timed_out')
+
+    async def test_grader_exception_sanitized(self):
+        with patch('mybot.evaluation.coding_judge.run_process',side_effect=RuntimeError('private grader source')):
+            r=await run_suite(judge_images(self.case,self.fixed),4,hidden=True)
+        self.assertEqual(r['status'],'grader_error');self.assertNotIn('private',json.dumps(r))
+
+    async def test_candidate_syntax_error_is_test_failure(self):
+        candidate={**self.case.public,'app/cache.py':Image(b'def broken(\n',0o644)}
+        r=await self.score(candidate)
+        self.assertEqual(r['judge_state'],'hidden_fail');self.assertEqual(r['hidden']['category'],'candidate_import_error')
+
+    async def test_zero_tests_not_success(self):
+        images=judge_images(self.case,self.fixed);images['hidden/test_hidden.py']=Image(b'import unittest\n',0o644)
+        r=await run_suite(images,4,hidden=True)
+        self.assertEqual(r['status'],'grader_error')
+
+    async def test_forged_test_output_not_success(self):
+        im=self.case.public['app/cache.py']
+        candidate={**self.case.public,'app/cache.py':Image(b'print("Ran 999 tests in 0.0s\\nOK")\n'+im.data,im.mode)}
+        r=await self.score(candidate)
+        self.assertEqual(r['judge_state'],'hidden_fail')
+
+    async def test_exit_zero_without_receipt_not_success(self):
+        candidate={**self.case.public,'app/cache.py':Image(b'import os;os._exit(0)\n',0o644)}
+        r=await self.score(candidate)
+        self.assertEqual(r['judge_state'],'grader_error')
+
+    async def test_output_limit_not_success(self):
+        candidate={**self.case.public,'app/cache.py':Image(b'import os;os.write(1,b"x"*65536)\n',0o644)}
+        r=await run_suite(judge_images(self.case,candidate),4,hidden=True,output_limit=512)
+        self.assertEqual(r['status'],'grader_error');self.assertEqual(r['category'],'output_limit_exceeded')
+
+    async def test_sandbox_failure_never_host_fallback(self):
+        with patch('mybot.tools.macos_sandbox.verify_sandbox',return_value=False),patch('mybot.evaluation.coding_judge.run_process') as run:
+            r=await run_suite(judge_images(self.case,self.fixed),4,hidden=True)
+        self.assertEqual(r['category'],'sandbox_unavailable');run.assert_not_called()
+
+    async def test_native_approval_denial_effective(self):
+        async def deny(request):return ApprovalDecision.DENY
+        report=await self.demo_run(command_provider=deny);r=report['results'][0]
+        self.assertEqual(r['failure'],'approval_denied');self.assertEqual(r['metrics']['real_test_runs'],0)
+
+    async def test_global_budget_across_tasks(self):
+        report=await evaluate(limits=Limits(max_cases=2,max_requests=1))
+        self.assertEqual(report['llm_requests'],1);self.assertEqual(report['attempted_cases'],1)
+        self.assertEqual(report['unscored_cases'],1);self.assertEqual(report['total_cases'],2)
+
+    async def test_per_case_controller_budget(self):
+        report=await self.demo_run(limits=Limits(max_cases=1,max_model_requests_per_case=1))
+        self.assertEqual(report['llm_requests'],1);self.assertEqual(report['results'][0]['failure'],'model_request_budget')
+
+    async def test_protocol_false_verified_audit(self):
+        trace=CodingTrace()
+        self.assertEqual(case_metrics(trace,{'state':'verified'},[],False)['protocol_false_verified_count'],1)
+
+    async def test_hidden_not_returned_to_client_session_or_tools(self):
+        requests=[]
+        class Inspect(DemoClient):
+            async def create(inner,**kw):requests.append(kw);return await super(Inspect,inner).create(**kw)
+        seen=[]
+        def factory(public):seen.append(public);return Inspect()
+        report=await self.evaluation(offline_client_factory=factory)
+        serialized=json.dumps(requests)
+        for marker in ('class Hidden','negative ttl test hidden','hidden_suite','reference_public','expected_source'):
+            self.assertNotIn(marker,serialized)
+        self.assertTrue(all(isinstance(p,RuntimeCase) for p in seen));self.assertNotIn('original_bytes',json.dumps(report))
+
+    async def test_metadata_report_no_source_or_private_paths(self):
+        report=await self.demo_run();text=json.dumps(report)
+        self.assertNotIn('class Cache:',text);self.assertNotIn('class Hidden',text)
+        self.assertNotIn(str(Path.home()),text);self.assertNotIn('expected_sha256',text)
+        self.assertIsNone(report['actual_tokens']);self.assertIsNone(report['estimated_cost']);self.assertFalse(report['ability_score'])
+        self.assertIn(report['worktree_dirty'],(None,True,False));self.assertIn('prices',report);self.assertIn('max_estimated_cost',report)
+
+    async def test_no_rate_for_offline(self):
+        r=await self.demo_run()
+        for key in ('verified_repair_rate','real_model_repair_rate','public_test_pass_rate','hidden_test_pass_rate','multi_file_repair_rate'):
+            self.assertIsNone(r[key])
+
+    def test_report_exclusive_and_old_reader_compatibility(self):
+        report={'mode':'offline','version':1,'ability_score':False}
+        a=save_report(report,self.root/'reports');b=save_report(report,self.root/'reports')
+        self.assertNotEqual(a,b);self.assertEqual(json.loads(a.read_text()),report)
+        from mybot.evaluation.history import analyze_report
+        old={'version':2,'results':[],'overall':{}}
+        p=self.root/'old-report.json';p.write_text(json.dumps(old));before=p.read_bytes()
+        self.assertEqual(analyze_report(p),old);self.assertEqual(p.read_bytes(),before)
+
+    async def test_demo_four_paths(self):
+        r=await demonstrate();pairs=[(v['judge_state'],v['repair_success']) for v in r['cases']]
+        self.assertEqual(pairs,[('hidden_pass',True),('hidden_fail',False),('hidden_fail',False),('grader_error',False)])
+        self.assertTrue(all(v['real_model_repair_rate'] is None for v in r['cases']))
+
+    async def test_agent_command_cannot_read_actual_private_gold(self):
+        agent=create_repository(self.root/'agent',self.case.public)
+        async def approve(request):return ApprovalDecision.APPROVE
+        tool=RunCommandTool(agent,command={'mode':'macos_readonly'},patch_mode='write',approval_provider=approve)
+        path=self.benchmark.root/'hidden/cache-ttl-001/test_hidden.py'
+        command=['python','-c','from pathlib import Path;print(Path('+repr(str(path))+').read_text())']
+        r=await tool.execute(argv=command)
+        self.assertFalse(r.success);self.assertTrue(r.metadata['sandbox_applied']);self.assertEqual(r.metadata['exit_code'],1)
+        self.assertNotIn('class Hidden',r.output)
+        read=build_default_tool_registry(agent,coding_enabled=True,patch_mode='write').get_tool('read_file')
+        self.assertFalse((await read.execute(path=str(path))).success)
+
+    async def test_agent_command_cannot_write_outside(self):
+        agent=create_repository(self.root/'agent',self.case.public);outside=self.root/'outside';outside.write_text('sentinel')
+        async def approve(request):return ApprovalDecision.APPROVE
+        tool=RunCommandTool(agent,command={'mode':'macos_readonly'},patch_mode='write',approval_provider=approve)
+        r=await tool.execute(argv=['python','-c','from pathlib import Path;Path('+repr(str(outside))+').write_text("BAD")'])
+        self.assertFalse(r.success);self.assertEqual(outside.read_text(),'sentinel')
+
+    async def test_judge_cannot_write_hidden_copy(self):
+        source=self.fixed['app/cache.py']
+        prefix=b'from pathlib import Path\ntry: (Path(__file__).parent.parent/"hidden/test_hidden.py").write_text("BAD")\nexcept PermissionError: pass\n'
+        candidate={**self.fixed,'app/cache.py':Image(prefix+source.data,source.mode)}
+        r=await self.score(candidate);self.assertTrue(r['verified_repair_success']);self.assertTrue(self.benchmark.unchanged())
+
+    async def test_task_timeout_and_cleanup(self):
+        class Slow(OfflineClient):
+            async def create(self,**kw):await asyncio.sleep(2)
+        roots=[];original=create_repository
+        def capture(root,images):roots.append(root);return original(root,images)
+        with patch('mybot.evaluation.coding_benchmark.create_repository',capture):
+            r=await self.evaluation(limits=Limits(max_cases=1,task_timeout=.02),offline_client_factory=lambda public:Slow())
+        self.assertEqual(r['results'][0]['failure'],'task_timeout');self.assertTrue(all(not p.exists() for p in roots))
+
+    async def test_repeated_action_budget_preserved(self):
+        class Repeated(OfflineClient):
+            def __init__(self):super().__init__();self.n=0
+            async def create(self,**kw):
+                self.n+=1
+                call=N(id='repeat-'+str(self.n),function=N(name='read_file_range',arguments=json.dumps({'path':'app/cache.py','start_line':1,'end_line':80})))
+                return N(choices=[N(message=N(content=None,tool_calls=[call]))],usage=None)
+        r=await self.evaluation(offline_client_factory=lambda public:Repeated())
+        self.assertEqual(r['results'][0]['failure'],'repeated_action_loop');self.assertGreater(r['repeated_actions'],0)
+
+    async def test_original_loop_controller_and_isolated_sessions(self):
+        original=AgentLoop._finish_turn;seen=[]
+        def capture(agent,*args,**kwargs):
+            seen.append((type(agent.coding_controller),agent.session,agent.tools,agent._git_capsule))
+            return original(agent,*args,**kwargs)
+        with patch.object(AgentLoop,'_finish_turn',capture):
+            r=await self.evaluation(limits=Limits(max_cases=1,repeats=2))
+        self.assertTrue(all(t[0] is CodingTaskController and t[3] is None for t in seen))
+        self.assertIsNot(seen[0][1],seen[1][1]);self.assertIsNot(seen[0][2],seen[1][2])
+        self.assertIs(BenchmarkAgent._handle_message,AgentLoop._handle_message)
+
+    async def test_no_hidden_grading_after_total_deadline(self):
+        with patch('mybot.evaluation.coding_benchmark.judge',AsyncMock()) as grader:
+            r=await self.evaluation(limits=Limits(max_cases=1,total_timeout=.01))
+        grader.assert_not_called();self.assertEqual(r['llm_requests'],0)
+
+    async def test_case_selection_rejects_unknown_and_duplicates(self):
+        for ids in (['no-such-case'],['cache-ttl-001','cache-ttl-001']):
+            with self.assertRaises(ValueError):await self.evaluation(case_ids=ids)
+
+    async def test_missing_usage_mixed_responses_stays_null(self):
+        known={'prompt_tokens':10,'completion_tokens':4,'total_tokens':14,'cached_input_tokens':0}
+        self.assertIsNone(token_totals([known,usage_values(None)],2)['total_tokens'])
+        self.assertIsNone(token_totals([known],2)['prompt_tokens'])
+
+    async def test_no_raw_live_response_in_metadata(self):
+        response=await OfflineClient().create();response.choices[0].message.content='PRIVATE_OUTPUT_BODY'
+        raw=N(chat=N(completions=N(create=AsyncMock(return_value=response))))
+        _,trace,budget=await self.request(raw)
+        self.assertNotIn('PRIVATE_OUTPUT_BODY',json.dumps(trace.events));self.assertIn('output_sha256',trace.events[-1])
+
+    async def test_synthetic_live_sdk_cleanup_without_network(self):
+        client=OfflineClient();client.close=AsyncMock()
+        cfg=GatewayConfig(api_key='fixture-only',provider='fixture',model='mock')
+        with patch('mybot.evaluation.coding_benchmark.live_client',AsyncMock(return_value=client)):
+            r=await self.evaluation(live=True,confirm_api_cost=True,base_config=cfg)
+        client.close.assert_awaited_once();self.assertEqual(r['llm_requests'],1)
+        self.assertIsNone(r['actual_tokens']);self.assertIsNone(r['estimated_cost'])
+
+    async def test_inferrable_failure_not_api_error_text(self):
+        class Broken(OfflineClient):
+            async def create(self,**kw):raise RuntimeError('PRIVATE /Users/secret api-body')
+        r=await self.evaluation(offline_client_factory=lambda public:Broken())
+        self.assertEqual(r['results'][0]['failure'],'provider_error');self.assertNotIn('api-body',json.dumps(r))
+
+    async def test_request_timeout_is_aggregate_bounded(self):
+        class Slow(OfflineClient):
+            async def create(self,**kw):await asyncio.sleep(2)
+        r=await self.evaluation(limits=Limits(max_cases=1,request_timeout=.01),offline_client_factory=lambda public:Slow())
+        self.assertEqual(r['results'][0]['controller']['stop_reason'],'model_request_timeout')
+
+    async def test_zero_effect_patch_cannot_gain_repair(self):
+        body=self.case.public['app/cache.py'].data
+        r=await self.score({**self.case.public,'app/cache.py':Image(body,0o644)})
+        self.assertFalse(r['verified_repair_success'])
+
+    async def test_public_tests_regraded_from_final_code(self):
+        candidate={**self.fixed,'app/cache.py':Image(self.fixed['app/cache.py'].data.replace(b'now >= expires',b'now > expires'),0o644)}
+        r=await self.score(candidate)
+        self.assertTrue(r['public']['passed']);self.assertFalse(r['hidden']['passed']);self.assertFalse(r['verified_repair_success'])
+
+    def test_ability_denominators_include_attempt_failures(self):
+        from mybot.evaluation.coding_metrics import summarize
+        budget=RequestBudget(Limits());budget.successes=1
+        common={'attempted':True,'difficulty':'easy','agent_state':'verified','metrics':{},'controller':{},'failure':None}
+        passed={**common,'judge':{'judge_state':'hidden_pass','verified_repair_success':True,'public':{'passed':True}}}
+        error={**common,'judge':{'judge_state':'grader_error','verified_repair_success':False}}
+        r=summarize([passed,error],live=True,budget=budget)
+        self.assertEqual(r['attempted_cases'],2);self.assertEqual(r['eligible_cases'],1)
+        self.assertEqual(r['verified_repair_rate'],.5);self.assertEqual(r['eligible_repair_rate'],1)
+
+
+    async def test_unittest_tampering_rejected(self):
+        original=self.fixed['app/cache.py']
+        body=b'import unittest\nunittest.TestCase.assertEqual=lambda *a,**k:None\n'+original.data
+        r=await self.score({**self.fixed,'app/cache.py':Image(body,original.mode)})
+        self.assertEqual(r['judge_state'],'grader_error');self.assertFalse(r['verified_repair_success'])
+
+    def test_manifest_boolean_version_invalid(self):
+        root=self.change_manifest(lambda d:d.update(version=True))
+        with self.assertRaises(ValueError):load_benchmark(root)
+
+    def test_snapshot_deep_directories_bounded(self):
+        root=write_images(self.root/'agent',self.case.public);path=root
+        for _ in range(18):path=path/'deep';path.mkdir()
+        with self.assertRaises(ValueError):snapshot(root)
+
+    def test_seed_orders_tasks_deterministically(self):
+        from mybot.evaluation.coding_benchmark import selected_cases
+        first=[c.runtime.id for c in selected_cases(self.benchmark,None,12,24)]
+        self.assertEqual(first,[c.runtime.id for c in selected_cases(self.benchmark,None,12,24)])
+        self.assertNotEqual(first,[c.runtime.id for c in selected_cases(self.benchmark,None,12,25)])
+        self.assertEqual([c.runtime.id for c in selected_cases(self.benchmark,['cache-ttl-001'],1,25)],['cache-ttl-001'])
+
+    def test_sensitive_provider_labels_hidden(self):
+        from mybot.evaluation.coding_live import labels
+        cfg=GatewayConfig(model='fixture-private-key',api_key='fixture-private-key',provider='/Users/private/provider')
+        self.assertEqual(labels(cfg),{'model':'<unavailable>','provider':'<unavailable>'})
+
+    async def test_legacy_function_call_not_silent_completion(self):
+        reply=N(choices=[N(message=N(content=None,tool_calls=None,function_call=N(name='read_file',arguments='{}')))],usage=None)
+        raw=N(chat=N(completions=N(create=AsyncMock(return_value=reply))))
+        with self.assertRaises(CodingEvaluationStop) as got:await self.request(raw)
+        self.assertEqual(got.exception.category,'provider_unsupported')
+
+    async def test_empty_call_ids_rejected(self):
+        call=N(id='',function=N(name='read_file',arguments='{}'))
+        reply=N(choices=[N(message=N(content=None,tool_calls=[call]))],usage=None)
+        raw=N(chat=N(completions=N(create=AsyncMock(return_value=reply))))
+        with self.assertRaises(CodingEvaluationStop):await self.request(raw)
+
+    async def test_hidden_results_do_not_trigger_new_requests(self):
+        class Count(DemoClient):
+            calls=0
+            async def create(self,**kw):type(self).calls+=1;return await super().create(**kw)
+        r=await self.evaluation(offline_client_factory=lambda public:Count('partial'))
+        self.assertEqual(Count.calls,r['llm_requests']);self.assertEqual(Count.calls,5)
+        self.assertEqual(r['results'][0]['judge']['judge_state'],'hidden_fail')
+
+    async def test_report_save_cannot_overwrite_same_generated_name(self):
+        report={'mode':'offline','report_type':'coding_benchmark','version':1}
+        import uuid
+        from datetime import datetime,timezone
+        fake=N(hex='aaaaaaaa1234567890')
+        with patch('uuid.uuid4',return_value=fake):
+            first=save_report(report,self.root/'reports')
+            with patch('mybot.evaluation.runner.datetime') as clock:
+                clock.now.return_value=datetime.strptime(first.name.split('-')[1],'%Y%m%dT%H%M%S').replace(tzinfo=timezone.utc)
+                with self.assertRaises(FileExistsError):save_report(report,self.root/'reports')
+        self.assertEqual(json.loads(first.read_text()),report)
+
+    async def test_failed_request_keeps_token_totals_unknown(self):
+        budget=RequestBudget(Limits());trace=CodingTrace()
+        async def fail(**kw):raise RuntimeError('private')
+        with self.assertRaises(CodingEvaluationStop):await self.request(N(chat=N(completions=N(create=fail))),budget,trace)
+        self.assertTrue(all(v is None for v in budget.tokens.values()))
+
+
+    async def test_test_then_modify_expires_verification(self):
+        from mybot.evaluation.coding_agent import decode_result
+        class Repatch(DemoClient):
+            def __init__(self):super().__init__('correct');self.phase='initial'
+            async def create(inner,**kw):
+                prior=next((m for m in reversed(kw['messages']) if m['role']=='tool'),None)
+                body,meta=decode_result(prior['content']) if prior else ('',{})
+                if inner.phase=='initial' and meta.get('completed') and meta.get('exit_code')==0:
+                    inner.phase='read';name='read_file_range';args={'path':'app/cache.py','start_line':1,'end_line':80}
+                elif inner.phase=='read':
+                    inner.phase='done';name='apply_patch';args={'dry_run':False,'changes':[{'op':'update','path':'app/cache.py','expected_sha256':meta['file_sha256'],'edits':[{'old_text':'now >= expires','new_text':'now > expires'}]}]}
+                elif inner.phase=='done':
+                    return N(choices=[N(message=N(content='All tests passed.',tool_calls=None))],usage=None)
+                else:return await super(Repatch,inner).create(**kw)
+                call=N(id='repatch-'+inner.phase,function=N(name=name,arguments=json.dumps(args)))
+                return N(choices=[N(message=N(content=None,tool_calls=[call]))],usage=None)
+        r=await self.evaluation(offline_client_factory=lambda public:Repatch())
+        self.assertEqual(r['results'][0]['agent_state'],'edited_unverified')
+        self.assertEqual(r['verification_expired_count'],1);self.assertEqual(r['protocol_false_verified_count'],0)
+        self.assertFalse(r['results'][0]['judge']['verified_repair_success'])
+
+    async def test_final_source_change_during_grading_not_success(self):
+        from mybot.evaluation.coding_judge import judge as original_judge
+        roots=[];original_create=create_repository
+        def capture(root,images):roots.append(root);return original_create(root,images)
+        async def mutate(*args,**kwargs):
+            r=await original_judge(*args,**kwargs)
+            p=roots[-1]/'app/cache.py';p.write_bytes(p.read_bytes()+b'\n# external change\n')
+            return r
+        with patch('mybot.evaluation.coding_benchmark.create_repository',capture),patch('mybot.evaluation.coding_benchmark.judge',mutate):
+            r=await self.demo_run()
+        self.assertFalse(r['results'][0]['judge']['verified_repair_success'])
+        self.assertTrue(r['results'][0]['judge']['stale_final_version'])
+
+
+def check_real_coding_eval():
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CodingEvaluationChecks))
+    if not result.wasSuccessful():raise SystemExit(1)
+
+
+if __name__=='__main__':check_real_coding_eval()

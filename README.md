@@ -217,3 +217,10 @@ uv run python -m scripts.check_autonomous_coding
 任务结束仅显示变更摘要；输入 `/changes` 查看本任务原生 Patch 首次修改前到最终结果的 Diff、用户原有 Git 状态、当前版本匹配和撤销资格。输入 `/undo` 后需独立明确确认；完整版本和 Index 预检通过才恢复本任务旧字节、删除本任务新增文件，保留用户原有变化。冲突整批拒绝。撤销使旧测试验证失效，不自动复测。`/clear`、新任务和重启释放 Capsule；镜像不写 Session。此机制不提供跨文件崩溃事务或完整外部副作用追踪。
 
 离线体验：`uv run python -m scripts.git_workflow_demo`；专项：`uv run python -m scripts.check_git_workflow`；独立评测：`uv run python -m scripts.evaluate_git_workflow`。完整架构、实际结果、支持范围与学习命令见 [Phase23](docs/phases/phase-23.md)。
+
+
+## Coding Benchmark 与隐藏测试（Phase24）
+
+默认离线：`uv run python -m scripts.evaluate_real_coding`；全12项机制检查加 `--max-cases 12`；四条正反演示：`uv run python -m scripts.coding_benchmark_demo`。任务按Easy/Medium/Hard各4项构造，每项2公开/4隐藏测试；Agent只接触公开合成仓库，结束后由独立沙盒Judge重建并评分。复用原Loop、Controller、Patch/命令与Git Journal，Tool Schema不变。
+
+Live必须同时指定 `--live --confirm-api-cost`、具备凭证与TTY并通过沙盒检查；每次模型命令仍需原独立审批。请求/时间/输出/显式估价受限，缺Token/价格保持null；估价不是账单硬限额。`--save`仅保存有界元数据到独立目录，不保存原始对话/源码/隐藏正文。本阶段未调用付费模型，真实模型修复率未测，不能用固定离线策略冒充真实模型成绩。完整数据、用法、学习与防作弊边界见 [Phase24](docs/phases/phase-24.md)。
