@@ -204,7 +204,7 @@ Demo只给一个TTL教学策略，读取真实文件/SHA，提交原生Patch，�
 
 默认全12项离线运行使用无修复策略：验证全部数据集可解，再跑原Loop/独立Judge；不能将无修改的回复拿到修复分。该路径是机制检查，不是模型能力排名。最终数据集SHA256为 `de4fd3f28acb43ecc89bb5412aa11954f62704b3f2d0c9b60716035bbe288dcd`。实跑12/12任务得到完整评分、12次合成请求、0次Agent Patch/命令、0修复；全部Baseline/Reference有效，四项文件/Index/归属保护异常和protocol_false_verified均0，能力率/Token/费用均null。无修复策略不等于模型失败成绩。
 
-专项目前109项通过，涵盖数据有效性、Gold隔离、真实文件/Index/临时清理、SDK双门/错误/缺Usage、预算与成本、正确/过拟合/伪造/保护/篡改/超时、最终版本、重复生命周期和旧报告。859项全量及Phase1/2原断言已通过；随后补充了只读Git来源/显式价格元数据与公开修改范围，当前109专项再次通过，最新修正源已在APFS预还原副本完成859全量/四基准/12项离线/四路径Demo；正式归档副本仍将再次验证。Phase19～23专项分别34/55/58/80/101、原审批25均通过；编译与归档脚本集成通过。四基准与Phase23 dfd3461实跑结果除六个计时/Git字段逐字段相同，独立还原和正式归档仍待完成。
+专项目前109项通过，涵盖数据有效性、Gold隔离、真实文件/Index/临时清理、SDK双门/错误/缺Usage、预算与成本、正确/过拟合/伪造/保护/篡改/超时、最终版本、重复生命周期和旧报告。859项全量及Phase1/2原断言已通过；随后补充了只读Git来源/显式价格元数据与公开修改范围，当前109专项再次通过，最新修正源已在APFS预还原副本完成859全量/四基准/12项离线/四路径Demo；正式归档的两份独立副本也已完成同一套验证。Phase19～23专项分别34/55/58/80/101、原审批25均通过；编译与归档脚本集成通过。四基准与Phase23 dfd3461实跑结果除六个计时/Git字段逐字段相同；正式归档与两份独立副本验证现已全部通过。
 
 旧基准数值（与Phase23保持）：Discovery 3案例Eager7请求/409199 Schema字符、Progressive15/52280，均成功；Retrieval 36案例Recall@5 Literal57.8125%、BM25 62.5%、Hybrid87.5%，负例4/4正确；Adaptive12案例Eager25/1461425、Progressive51/175363、Adaptive25/176425，均成功；Selective60路由precision88.8889%、recall97.2222%，负例24/24、多工具覆盖10/12，核心12例27/137582、挑战10例23/109693最终成功，原有遗漏未隐藏。仅排除task_wall_time_seconds、request_latency_seconds、request_latencies_seconds、routing_overhead_ms、git_commit、worktree_dirty六字段。
 
@@ -229,7 +229,21 @@ Phase23→24增加的是Benchmark、受限Live请求适配、隔离Judge和指�
 
 已在添加archive-ready之前，从干净修正源提交生成私有预验证ZIP `/private/tmp/mybot-phase24-preflight-x380wel9/mybot-mini-snapshots/phase-24.zip`，CRC/注释提交SHA/278文件逐字节一致。使用原restore_phase.sh的ZIP-only分支在APFS独立还原到 `/private/tmp/mybot-phase24-preflight-x380wel9/mybot-mini-learning/phase-24`，冻结安装、编译、859全量及原断言、四基准、12项离线和四路径Demo均通过，源码哈希未变；未创建临时Git Tag来伪装正式归档。
 
-预验证ZIP SHA256 `f26f107f0c51c82087c576522c694ac23570f8bc5da99ebe3b78a15998300c6e`，仅为私有验证副本，不是正式phase-24归档。最新代码已完成独立集成回归，因此现在可以添加就绪标记。正式Tag/ZIP及双副本验证仍待下一步，完成后另作纯文档记录，不移动Tag。
+预验证ZIP SHA256 `f26f107f0c51c82087c576522c694ac23570f8bc5da99ebe3b78a15998300c6e`，仅为私有验证副本，不是正式phase-24归档。最新代码已完成独立集成回归，因此现在可以添加就绪标记。正式Tag/ZIP及双副本验证已经完成，确切发布事实见下节；Tag保持原位。
 
+
+## 14. 正式归档与最终验证
+
+- 实现提交 `fafab785f9305de9525144e61ffcb95d9796270b`；事件分类与取消计数修正 `178859f3340c9a00fb9808eed76af3f446af3634`。
+- 归档就绪提交/Tag所指源 `3f53b0562c22ce3727d9ffe403880be74dbbd5e1`；唯一annotated Tag `phase-24`，Tag对象 `43c325fe77fed6d48ef9cc0844a957e742c272e7`。本节是后续纯文档记录，未移动Tag或重新导出归档。
+- 完整ZIP `/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-24.zip`；脚本原始输出 `/Users/godblack/.codex/worktrees/phase-24/mybot-mini-snapshots/phase-24.zip`。二者SHA256均为 `3c69bb4eb29d982f3f8a9b1c1ea9fe968e098f1e58d3d5a04b8ca7a3fc5f8e09`。
+- ZIP共373条目、278个文件，CRC正常，ZIP注释等于源提交；全部源码逐字节与Tag一致，不含AppleDouble、真实配置、凭证、Session、虚拟环境或缓存。
+- 外置盘正式ZIP在APFS独立解压到 `/var/folders/7p/n7p6_hdd08j48k1kbg6kjnvh0000gn/T/mybot-phase24-official-zip-erbp3ik2/source`；原restore_phase.sh24还原到 `/Users/godblack/.codex/worktrees/phase-24/mybot-mini-learning/phase-24`，未覆盖已有目录。
+- 两份正式副本分别完成`uv sync --frozen`、mybot/scripts编译、859项全量及原Phase1/2断言、四旧基准、12项完整离线和四条Demo，均通过。测试前后278个源文件哈希及文件集合完全相同；四基准与Phase23除已列六字段一致。
+- 每份评测均验证12个Buggy Baseline隐藏失败、12个Reference公开/隐藏通过；无修复离线策略不授予修复分，能力率/Token/费用null。隐藏隔离、文件/Index/归属保护、协议检查无异常。
+- 原main `3461dc7031bb9542070b034bed0be47f61760f75`、用户app.py/USER.md、原Index、24个旧Tag对象和全部旧ZIP字节均保留；开发只在codex/phase-24进行。未Push、未Merge、未进入Phase25。
+- 没有调用真实LLM或产生实际API费用。Seatbelt/进程资源边界、同进程Python测试防作弊局限和估算成本非硬账单上限仍如上文；真实Provider兼容性、模型修复率/成本/稳定性尚未实测。
+
+**真实模型 Coding 能力尚未实测，当前完成的是安全、可重复、支持真实模型的 Benchmark 评测系统。**
 
 archive-ready: true
