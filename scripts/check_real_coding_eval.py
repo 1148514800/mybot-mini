@@ -2,12 +2,16 @@
 import asyncio
 import contextlib
 from dataclasses import replace
+import hashlib
 import io
 import json
 import math
 import os
+import pty
 from pathlib import Path
 import shutil
+import select
+import sys
 import tempfile
 import unittest
 from types import SimpleNamespace as N
@@ -19,12 +23,14 @@ from mybot.config import GatewayConfig
 from mybot.evaluation.coding_fixtures import load_benchmark, snapshot, write_images, create_repository, Image, RuntimeCase
 from mybot.evaluation.coding_judge import judge, validate_case, validate_benchmark, run_suite, judge_images, trusted_seal
 from mybot.evaluation.coding_live import Limits, RequestBudget, CodingClient, CodingEvaluationStop, live_client
-from mybot.evaluation.coding_benchmark import evaluate, configuration, OfflineClient, save_report
+from mybot.evaluation.coding_benchmark import evaluate, configuration, OfflineClient, save_report, run_task
 from mybot.evaluation.coding_metrics import CodingTrace, BenchmarkAgent, case_metrics, summarize
 from mybot.evaluation.tool_agent import usage_values, token_totals, validate_prices, estimated_cost
 from mybot.tools import build_default_tool_registry
 from mybot.tools.patch import ApplyPatchTool
 from mybot.tools.run_command import RunCommandTool
+from mybot.tools.command_approval import cli_command_approval, inspectable_command
+from mybot.tools.read_file_range import ReadFileRangeTool
 from mybot.mcp_client.approval import ApprovalDecision
 from scripts.coding_benchmark_demo import DemoClient, demonstrate
 
@@ -704,6 +710,145 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
             r=await self.demo_run()
         self.assertFalse(r['results'][0]['judge']['verified_repair_success'])
         self.assertTrue(r['results'][0]['judge']['stale_final_version'])
+
+    async def terminal_task(self, answer):
+        # Real PTY only in offline regression: synthetic model, no SDK/network.
+        # Production Live still requires the human's own per-command response.
+        class NoisyDemo(DemoClient):
+            async def create(inner, **kwargs):
+                self.assertFalse(sys.stdout.isatty())  # Agent output is still captured.
+                print('PRIVATE_RAW_AGENT_OUTPUT')
+                return await super().create(**kwargs)
+        master, slave = pty.openpty()
+        try:
+            with os.fdopen(os.dup(slave), 'r') as stdin, os.fdopen(os.dup(slave), 'w') as stdout:
+                self.assertTrue(stdin.isatty() and stdout.isatty())
+                os.write(master, (answer+'\n').encode())
+                limits=Limits(max_cases=1,max_requests=12)
+                with patch('sys.stdin',stdin), contextlib.redirect_stdout(stdout), \
+                        patch('mybot.evaluation.coding_live.build_client') as build:
+                    result=await run_task(self.case,self.validation,self.benchmark,trusted_seal(),self.root,
+                        repeat=1,limits=limits,budget=RequestBudget(limits),
+                        base=GatewayConfig(api_key='SYNTHETIC_CREDENTIAL'),raw=NoisyDemo(),live=True)
+                build.assert_not_called()
+            chunks=[]
+            while select.select([master],[],[],0)[0]:chunks.append(os.read(master,65536))
+            terminal=b''.join(chunks).decode()
+        finally:
+            os.close(master);os.close(slave)
+        self.assertIn('[NATIVE COMMAND APPROVAL]',terminal)
+        self.assertIn('仅批准此命令一次',terminal)
+        self.assertIn('macOS Seatbelt',terminal)
+        for private in ('PRIVATE_RAW_AGENT_OUTPUT','SYNTHETIC_CREDENTIAL','negative ttl'):
+            self.assertNotIn(private,terminal)
+            self.assertNotIn(private,json.dumps(result))
+        self.assertFalse(result['judge']['index_changed'])
+        self.assertEqual(result['judge']['journal_attribution_mismatch'],0)
+        return result
+
+    async def test_live_approval_reaches_real_terminal_under_capture(self):
+        result=await self.terminal_task('yes')
+        self.assertEqual(result['agent_state'],'verified')
+        self.assertTrue(result['judge']['verified_repair_success'])
+        self.assertEqual(result['metrics']['real_test_runs'],1)
+        self.assertEqual(result['metrics']['committed_patches'],1)
+        self.assertEqual(result['metrics']['patch_preview_calls'],1)
+        self.assertEqual(result['metrics']['protocol_false_verified_count'],0)
+
+    async def test_live_terminal_rejection_still_stops_command(self):
+        result=await self.terminal_task('no')
+        self.assertEqual(result['agent_state'],'blocked')
+        self.assertEqual(result['metrics']['approval_denials'],1)
+        self.assertEqual(result['metrics']['real_test_runs'],0)
+
+    async def test_dedicated_approval_requires_exact_yes_for_each_call(self):
+        class Terminal(io.StringIO):
+            def isatty(self):return True
+        terminal=Terminal();captured=io.StringIO()
+        request=inspectable_command('macos_readonly','.',('python','-m','unittest'),10)
+        answers=iter(['yes','no','YES','yes all'])
+        def respond():
+            self.assertTrue(terminal.isatty())
+            self.assertFalse(sys.stdout.isatty())
+            self.assertTrue(terminal.getvalue().endswith('其他输入拒绝: '))
+            return next(answers)
+        with patch('sys.stdin.isatty',return_value=True), contextlib.redirect_stdout(captured), \
+                patch('builtins.input',side_effect=respond) as prompt:
+            decisions=[await cli_command_approval(request,output=terminal) for _ in range(4)]
+        self.assertEqual(decisions,[ApprovalDecision.APPROVE]+[ApprovalDecision.DENY]*3)
+        self.assertEqual(prompt.call_count,4)
+        self.assertEqual(terminal.getvalue().count(request.display_json),4)
+        self.assertEqual(captured.getvalue(),'')
+
+    async def test_dedicated_approval_does_not_bypass_noninteractive_channels(self):
+        request=inspectable_command('macos_readonly','.',('python','-m','unittest'),10)
+        for stdin,stdout in ((False,True),(True,False),(False,False)):
+            output=io.StringIO();output.isatty=lambda:stdout
+            with patch('sys.stdin.isatty',return_value=stdin),patch('builtins.input') as prompt:
+                self.assertIs(await cli_command_approval(request,output=output),ApprovalDecision.DENY)
+            prompt.assert_not_called();self.assertEqual(output.getvalue(),'')
+
+    async def test_offline_keeps_capture_and_never_builds_live_client(self):
+        class NoisyOffline(OfflineClient):
+            async def create(inner,**kwargs):
+                print('PRIVATE_OFFLINE_OUTPUT')
+                return await super().create(**kwargs)
+        with contextlib.redirect_stdout(io.StringIO()) as terminal, \
+                patch('mybot.evaluation.coding_live.build_client') as build, \
+                patch('mybot.evaluation.coding_benchmark.live_client') as live:
+            result=await self.evaluation(offline_client_factory=lambda public:NoisyOffline())
+        build.assert_not_called();live.assert_not_called()
+        self.assertEqual(terminal.getvalue(),'')
+        self.assertNotIn('PRIVATE_OFFLINE_OUTPUT',json.dumps(result))
+        self.assertFalse(result['ability_score']);self.assertIsNone(result['actual_tokens'])
+
+    async def test_range_hash_is_entire_file_and_legacy_mode_unchanged(self):
+        root=create_repository(self.root/'hash',self.case.public)
+        args=dict(path='app/cache.py',start_line=1,end_line=1)
+        result=await ReadFileRangeTool(root,include_version=True).execute(**args)
+        self.assertTrue(result.success)
+        self.assertEqual(result.metadata['file_sha256'],hashlib.sha256((root/'app/cache.py').read_bytes()).hexdigest())
+        legacy=await ReadFileRangeTool(root).execute(**args)
+        self.assertEqual(legacy.output,result.output)
+        self.assertNotIn('file_sha256',legacy.metadata)
+
+    async def test_wrong_patch_hash_reread_preview_and_retry_in_original_loop(self):
+        class RetryDemo(DemoClient):
+            rejected=False
+            retried=False
+            async def create(inner,**kwargs):
+                instruction=kwargs['messages'][0]['content']
+                for text in ('metadata.file_sha256','expected_sha256','Never guess','dry_run=true','stale_file_hash'):
+                    self.assertIn(text,instruction)
+                previous=next((m for m in reversed(kwargs['messages']) if m['role']=='tool'),None)
+                if previous and 'stale_file_hash' in previous['content'] and not inner.retried:
+                    inner.retried=True
+                    call=N(id='fresh-read-after-stale',function=N(name='read_file_range',arguments=json.dumps(
+                        {'path':'app/cache.py','start_line':1,'end_line':80})))
+                    return N(choices=[N(message=N(content=None,tool_calls=[call]),finish_reason='tool_calls')],usage=None)
+                response=await super().create(**kwargs)
+                calls=response.choices[0].message.tool_calls
+                if calls and calls[0].function.name=='apply_patch' and not inner.rejected:
+                    inner.rejected=True
+                    args=json.loads(calls[0].function.arguments)
+                    args['dry_run']=False;args['changes'][0]['expected_sha256']='0'*64
+                    calls[0].function.arguments=json.dumps(args)
+                return response
+        client=RetryDemo()
+        report=await self.evaluation(offline_client_factory=lambda public:client)
+        result=report['results'][0];metrics=result['metrics']
+        self.assertTrue(client.rejected and client.retried)
+        self.assertEqual(metrics['stale_patch_conflicts'],1)
+        self.assertEqual(metrics['read_calls'],2)
+        self.assertEqual(metrics['patch_write_attempts'],2)
+        self.assertEqual(metrics['patch_preview_calls'],1)
+        self.assertEqual(metrics['committed_patches'],1)
+        self.assertEqual(metrics['real_test_runs'],1)
+        self.assertEqual(result['agent_state'],'verified')
+        self.assertTrue(result['judge']['verified_repair_success'])
+        self.assertFalse(result['judge']['index_changed'])
+        self.assertEqual(result['judge']['journal_attribution_mismatch'],0)
+        self.assertEqual(metrics['protocol_false_verified_count'],0)
 
 
 def check_real_coding_eval():

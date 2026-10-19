@@ -2,22 +2,24 @@
 
 ## 当前目标与状态
 
-Phase24实现、离线验证、学习文档和本地归档完成；真实模型能力未测。分支codex/phase-24，基线dfd3461；不Push/Merge/进入25。原main3461dc7、用户app.py/USER.md、原Index、24旧Tag及旧ZIP保持不变。
+Phase24首次Live反馈的两处修复已完成，离线回归通过，待用户确认后重新测试案例A。分支codex/phase-24，修复基线571e7d8。本轮不Push/Merge、不执行付费Live、不进入Phase25。main3461dc7、用户app.py/USER.md、原Index、真实配置、已有Live报告及全部Tag/ZIP已核对哈希未变。
 
-## 实现与架构
+## 首次Live事实
 
-新增mybot/evaluation/coding_{fixtures,judge,live,metrics,benchmark}.py、3个评测/演示/专项脚本、12任务数据集。复用原Loop/Controller/Registry/Patch/Command/Journal；原生Tool Schema未改。每次任务独立Git目录，Agent不接触Hidden/Reference；结束后Judge新副本+可信测试+真实Seatbelt评分。默认离线，关闭MCP/Skills/Session持久化/Undo。报告只存元数据，独占写入。
+既有忽略报告runs/coding_benchmark/live-20261019T134803-ec1eaddc.json：coco / deepseek-v4.1-flash，config-default-001请求6次、工具9次、Token15991（输入15410/输出581），价格缺失故估价null；read_file四次、read_file_range零次、Patch写入一次stale_file_hash、命令一次审批拒绝；最终blocked，公开通过但隐藏失败，无修复。含Harness审批缺陷，不能全部归因模型能力。此前“真实模型从未调用”只适用于原归档时点。
 
-Live需--live与--confirm-api-cost、有效凭证、TTY、真实沙盒；SDK重试0，每条模型命令沿用原逐次审批。请求/输出/单任务/全局时间与显式价格估算预算齐全；未知Usage/成本保留null，错误脱敏。本阶段无真实LLM或API费用。
+## 修复与架构决策
 
-## 验证与归档
+run_task保留全局stdout捕获以保护原始Agent/工具输出；Live审批在捕获前绑定原调用者输出。cli_command_approval增加host-only可选output参数，提示与flush发到该通道，仍检查真实stdin和所选输出TTY；每次人工精确yes，不缓存，不回退__stdout__/dev/tty。默认调用方与MCP安全语义保留，Seatbelt未改。
 
-109新专项+750旧测试=859；Phase19～23专项34/55/58/80/101、审批25通过。12任务各公开2/隐藏4，全部Buggy隐藏失败，Reference公开24/隐藏48通过。四旧基准除六个计时/Git字段与Phase23相同。无修复离线12/12完整评分、0修复，能力率/Token/费用null；Demo正确修复/公开过拟合/口头伪造/评分故障区分正确。
+仅给CodingTaskController自主编码提示补充read_file_range的metadata.file_sha256→expected_sha256、不得猜哈希、建议Dry Run、stale后重新读取重建。SHA是完整原始文件字节，非编号片段。Patch校验、工具参数Schema、旧读取模式、Gold均未改。
 
-实现fafab78、修正178859f；先独立ZIP-only还原全套通过，再添加archive-ready。归档源`3f53b0562c22ce3727d9ffe403880be74dbbd5e1`；annotated phase-24对象`43c325fe77fed6d48ef9cc0844a957e742c272e7`。正式ZIP`/Volumes/move-disk/data/code/mybot-mini-snapshots/phase-24.zip`，SHA256`3c69bb4eb29d982f3f8a9b1c1ea9fe968e098f1e58d3d5a04b8ca7a3fc5f8e09`，278文件逐字节与Tag一致。
+## 验证
 
-正式ZIP独立APFS解压`/var/folders/7p/n7p6_hdd08j48k1kbg6kjnvh0000gn/T/mybot-phase24-official-zip-erbp3ik2/source`及restore目录`/Users/godblack/.codex/worktrees/phase-24/mybot-mini-learning/phase-24`均冻结安装、编译、859全量/四基准/12离线/四Demo通过；源文件哈希未变。归档后仅补文档记录，未移动Tag。完整学习与命令见docs/phases/phase-24.md。
+新增7项全过：真实PTY离线原Loop/Controller/Journal/Judge审批与拒绝，逐次yes、非交互拒绝、Offline无SDK且保护输出、全文件SHA/旧模式、错误SHA重新读取预览再写入和真实测试。PTY及模拟输入仅用于离线测试，未用于付费Live。
 
-## 已知限制与下一步
+Phase24专项116、命令58、自主编码80、MCP审批25和编译通过；uv run python -m scripts.check_phase全量866通过（原859+新增7），原Phase1/2断言通过。日志/tmp/phase24-fix-full.log；无凭证/原始工具正文泄露哨兵，Index/Journal与独立Judge兼容。
 
-真实Provider兼容性、模型能力/稳定性/费用尚未实测；Python同进程测试防作弊不是形式化保证，估算费用不是账单硬上限，Seed只固定任务顺序。只有用户另行明确授权后才执行付费Live；当前停止在Phase24。不重复实现、不改旧750断言、不将离线策略当LLM成绩。Phase24正式Tag/ZIP已存在，禁止覆盖或移动。
+## 归档与下一步
+
+phase-24仍指原3f53b05，原ZIP不包含本次修复，不移动Tag、不覆盖ZIP；修复以本分支后续Commit为准。学习及根因见docs/phases/phase-24.md第15节，索引已更新。用户确认后再在真实交互终端运行案例A，保留逐次命令审批；A正常且另获同意后才能B。本轮离线通过不证明真实模型已修复成功；不自动重跑付费测试，不改评分或Gold。

@@ -3,10 +3,12 @@ import asyncio
 import contextlib
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
+from functools import partial
 import hashlib
 import io
 import json
 import math
+import sys
 from pathlib import Path
 import tempfile
 import time
@@ -74,7 +76,9 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     root=create_repository(parent/'agent',case.public)
     before=snapshot(root);baseline=await GitBaseline.capture(root)
     config=configuration(base,root,limits)
-    provider=cli_command_approval if live else (command_provider or synthetic_approval)
+    # Keep only approval output on the actual caller channel; raw Agent output
+    # remains captured below in both modes. The approval function checks its TTY.
+    provider=partial(cli_command_approval,output=sys.stdout) if live else (command_provider or synthetic_approval)
     tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=provider)
     # Public fields only cross the client boundary. No Case/private evaluator object.
     client=raw if live else (offline_client_factory(case.runtime) if offline_client_factory else OfflineClient())

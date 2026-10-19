@@ -30,14 +30,18 @@ def inspectable_command(mode, cwd, argv, timeout):
     return CommandApprovalRequest(mode, cwd, tuple(argv), timeout, mode == 'macos_readonly', display)
 
 
-async def cli_command_approval(request):
-    if not sys.stdin.isatty() or not sys.stdout.isatty(): return ApprovalDecision.DENY
-    print('[NATIVE COMMAND APPROVAL] ' + request.display_json)
+async def cli_command_approval(request, *, output=None):
+    # A host may retain its terminal while capturing unrelated Agent output.
+    # Never fall back to __stdout__ or /dev/tty when the selected channel is not a TTY.
+    output = sys.stdout if output is None else output
+    if not sys.stdin.isatty() or not output.isatty(): return ApprovalDecision.DENY
+    print('[NATIVE COMMAND APPROVAL] ' + request.display_json, file=output)
     if request.mode == 'host_confirm':
-        print('警告：以当前系统用户权限执行，无 OS 沙盒；可读写外部文件、启动其他程序或访问网络。')
+        print('警告：以当前系统用户权限执行，无 OS 沙盒；可读写外部文件、启动其他程序或访问网络。', file=output)
     else:
-        print('macOS Seatbelt：Workspace 只读，仅本次临时目录可写，网络禁止；自检失败则拒绝。')
-    answer = await asyncio.to_thread(input, '仅批准此命令一次？输入 yes 批准，其他输入拒绝: ')
+        print('macOS Seatbelt：Workspace 只读，仅本次临时目录可写，网络禁止；自检失败则拒绝。', file=output)
+    print('仅批准此命令一次？输入 yes 批准，其他输入拒绝: ', end='', file=output, flush=True)
+    answer = await asyncio.to_thread(input)
     return ApprovalDecision.APPROVE if answer.strip() == 'yes' else ApprovalDecision.DENY
 
 

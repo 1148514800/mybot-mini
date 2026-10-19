@@ -1,5 +1,7 @@
 # Phase 24：Real-Model Coding Agent Evaluation — 真实模型接口与隐藏测试评测
 
+版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后已取得首次真实Live报告；其结果和本次修复见第15节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，本次修复不覆盖它们。
+
 ## 1. 目标、数据来源与当前结论
 
 本阶段建立安全、可重复、可审计的 Coding Benchmark，不新增 Coding Tool，不重写 AgentLoop，不实现 RSI、自动 Commit/Push 或模型 Reviewer。
@@ -245,5 +247,29 @@ Phase23→24增加的是Benchmark、受限Live请求适配、隔离Judge和指�
 - 没有调用真实LLM或产生实际API费用。Seatbelt/进程资源边界、同进程Python测试防作弊局限和估算成本非硬账单上限仍如上文；真实Provider兼容性、模型修复率/成本/稳定性尚未实测。
 
 **真实模型 Coding 能力尚未实测，当前完成的是安全、可重复、支持真实模型的 Benchmark 评测系统。**
+
+## 15. 首次Live反馈：审批通道与Patch版本提示修复
+
+基线`codex/phase-24` / `571e7d8`。本地既有报告`runs/coding_benchmark/live-20261019T134803-ec1eaddc.json`记录`coco / deepseek-v4.1-flash`在config-default-001实际请求6次、工具9次、Token15991（输入15410、输出581），费用因没有价格而null。工具为list_files×3、read_file×4、apply_patch×1、run_command×1；没有read_file_range或Patch预览，写入被stale_file_hash拒绝，命令审批拒绝，最终blocked，公开2项通过、隐藏4项未全过、无成功修复。此结果含Harness问题，不能全部归咎模型能力。
+
+### 审批输出通道
+
+原run_task用redirect_stdout(StringIO())屏蔽Agent输出，原审批同时检查sys.stdout.isatty()，导致外层是真TTY而内部必然拒绝。现在Live在捕获前绑定调用者stdout到原cli_command_approval的可选host-only output参数；审批提示、完整受检命令、警告和输入提示仅写该通道，并在读取输入前flush。stdin和所选输出都必须是真TTY；不回退__stdout__或/dev/tty，不伪造isatty，不缓存批准，不自动输入yes。每次仍须精确yes，拒绝/EOF/异常沿原授权路径停止。
+
+Agent原始输出继续在Live和Offline中捕获，避免通过取消捕获暴露源码、工具正文或模型输出；报告仍只有有界元数据。MCP Approval、Seatbelt、Registry/Tool Schema与命令逐次审批语义保持。
+
+### Patch版本约定
+
+read_file_range在Patch模式由Registry设置include_version=true，对读取的完整原始文件字节计算file_sha256；截取/编号后的行文本不是哈希输入。ApplyPatchTool的expected_sha256必须与当前完整字节匹配，错误哈希仍被stale_file_hash拒绝。
+
+仅在CodingTaskController自主编码instruction补充：先用read_file_range获取metadata.file_sha256，复制到expected_sha256，不猜测哈希；建议dry_run=true预览，再dry_run=false写入；stale_file_hash后重新读取当前版本并重建Patch。未修改工具参数、Patch安全检查、Benchmark Gold或非自主默认模式；提示只是指导，不能保证模型必然遵守。
+
+### 离线回归与后续
+
+新增7项：真实PTY中的原Loop/Controller/Journal/Judge审批与修复链路；拒绝停止；逐次精确yes且无复用；非交互拒绝；Offline捕获且不构造Live Client；完整文件SHA与旧读取模式；错误SHA拒绝后重新读取、预览、写入和实际测试。PTY与合成用户输入仅用于离线回归，模型为模拟Client，不发真实API。测试同时检查原始输出/凭证哨兵不泄露、Index和Journal归属、最终Judge及协议证据。
+
+针对性7项、Phase24专项116项、命令58项、自主编码80项、MCP审批25项及编译通过；`uv run python -m scripts.check_phase`全量866项通过（原859项全部保留+新增7项），原Phase1/2断言亦通过。完整日志在本机`/tmp/phase24-fix-full.log`，未作为原始运行日志提交。原main、用户修改、原Index、配置、已有Live报告和全部Tag/ZIP哈希保持不变。
+
+当前未运行新的付费Live；须用户确认后才重新执行案例A，不自动进入案例B或Phase25，不Push/Merge。原phase-24 Tag/ZIP不移动或覆盖；本次修复不在旧归档内，源码以后续Commit为准。非交互运行仍须拒绝，不因为本次修复开放自动审批。
 
 archive-ready: true
