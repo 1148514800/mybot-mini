@@ -352,6 +352,68 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(r['agent_state'],'verified');self.assertEqual(r['judge']['judge_state'],'hidden_fail')
         self.assertEqual(report['hidden_failure_after_agent_verified'],1);self.assertEqual(report['protocol_false_verified_count'],0)
 
+    async def test_identical_preview_changes_commit_and_verify_in_original_loop(self):
+        seen = []
+        class Client(DemoClient):
+            preview = None
+            async def create(self, **kwargs):
+                seen.append('reuse the same changes structure' in kwargs['messages'][0]['content'])
+                result = await super().create(**kwargs)
+                for call in result.choices[0].message.tool_calls or []:
+                    if call.function.name=='apply_patch':
+                        args = json.loads(call.function.arguments)
+                        if args['dry_run']: self.preview = args
+                        else: seen.append(args=={**self.preview,'dry_run':False})
+                return result
+        with patch('mybot.evaluation.coding_live.build_client', side_effect=AssertionError('offline only')) as sdk:
+            report = await self.evaluation(offline_client_factory=lambda public:Client())
+        sdk.assert_not_called(); self.assertTrue(seen and all(seen))
+        r = report['results'][0]
+        self.assertEqual(r['agent_state'], 'verified')
+        self.assertTrue(r['agent_workflow_success'])
+        self.assertTrue(r['judge']['verified_repair_success'])
+        self.assertEqual(r['metrics']['patch_preview_calls'], 1)
+        self.assertEqual(r['metrics']['committed_patches'], 1)
+        self.assertEqual(r['metrics']['real_test_runs'], 1)
+        self.assertEqual(r['controller']['current_revision'], r['controller']['last_verified_revision'])
+        self.assertFalse(r['judge']['index_changed'])
+        self.assertEqual(r['judge']['journal_attribution_mismatch'], 0)
+        self.assertEqual(r['metrics']['protocol_false_verified_count'], 0)
+        self.assertTrue(r['metrics']['tool_call_ids_paired'])
+
+    async def test_extra_write_field_after_good_preview_stops_without_sensitive_trace(self):
+        class Client(DemoClient):
+            async def create(self, **kwargs):
+                result = await super().create(**kwargs)
+                for call in result.choices[0].message.tool_calls or []:
+                    if call.function.name=='apply_patch':
+                        args = json.loads(call.function.arguments)
+                        if args['dry_run'] is False:
+                            args['PRIVATE_PATCH_ARGUMENT'] = 'PRIVATE_SOURCE_CREDENTIAL_SENTINEL'
+                            call.function.arguments = json.dumps(args)
+                return result
+        with patch('mybot.evaluation.coding_live.build_client', side_effect=AssertionError('offline only')) as sdk:
+            report = await self.evaluation(offline_client_factory=lambda public:Client())
+        sdk.assert_not_called()
+        r = report['results'][0]
+        self.assertEqual(r['agent_state'], 'blocked')
+        self.assertFalse(r['agent_workflow_success'])
+        self.assertEqual(r['controller']['stop_reason'], 'patch_failed_without_safe_recovery')
+        self.assertEqual(r['metrics']['patch_preview_calls'], 1)
+        self.assertEqual(r['metrics']['patch_write_attempts'], 1)
+        self.assertEqual(r['metrics']['committed_patches'], 0)
+        self.assertEqual(r['metrics']['real_test_runs'], 0)
+        self.assertEqual(r['controller']['current_revision'], 0)
+        event = next(e for e in r['trace'] if e['event']=='tool' and not e['success'])
+        self.assertEqual(event['error'], 'invalid_arguments')
+        self.assertEqual(event['patch_failure_phase'], 'validation')
+        self.assertEqual(event['patch_failure_state'], 'preflight_failed')
+        self.assertFalse(event['patch_safe_to_retry'])
+        self.assertFalse(r['judge']['modified_code'] or r['judge']['index_changed'])
+        self.assertEqual(r['judge']['journal_attribution_mismatch'], 0)
+        self.assertTrue(r['metrics']['tool_call_ids_paired'])
+        self.assertNotIn('PRIVATE_', json.dumps(report))
+
     async def test_cwd_omitted_guidance_reaches_original_loop_and_real_tests(self):
         check = self
         class Client(DemoClient):

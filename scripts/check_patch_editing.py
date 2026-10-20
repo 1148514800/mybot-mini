@@ -10,6 +10,7 @@ import stat
 import sys
 import tempfile
 import unittest
+from copy import deepcopy
 from types import SimpleNamespace as N
 from unittest.mock import patch, AsyncMock
 
@@ -105,6 +106,127 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
         for args in bad:
             r=await self.tool.execute(**args); self.assertFalse(r.success, args)
         self.no_temps(); self.assertEqual(self.file.read_bytes(),self.body)
+
+    def test_patch_schema_documents_preview_write_and_operation_shapes(self):
+        schema = self.tool.to_schema()['function']['parameters']
+        Draft202012Validator.check_schema(schema)
+        description = self.tool.description
+        for text in ('dry_run=true', 'dry_run=false', 'op, path, expected_sha256 and edits',
+                     'old_text and new_text', 'op, path and content', 'No extra fields',
+                     'does not grant write permission', 'Reread and rebuild', 'never replay blindly'):
+            self.assertIn(text, description)
+        dry = schema['properties']['dry_run']
+        self.assertEqual(dry['type'], 'boolean'); self.assertIs(dry['default'], True)
+        self.assertIn('true previews only', dry['description'])
+        self.assertIn('false requests a write', dry['description'])
+        changes = schema['properties']['changes']
+        for text in ('target files', 'unchanged', 'reuse the same changes', 'only dry_run=false', 'preview again'):
+            self.assertIn(text, changes['description'])
+        self.assertEqual(schema['required'], ['changes'])
+        self.assertFalse(schema['additionalProperties'])
+        update, add = changes['items']['oneOf']
+        self.assertEqual(update['required'], ['op','path','expected_sha256','edits'])
+        self.assertEqual(add['required'], ['op','path','content'])
+        self.assertEqual(update['properties']['edits']['items']['required'], ['old_text','new_text'])
+        for spec in (update, add, update['properties']['edits']['items']):
+            self.assertFalse(spec['additionalProperties'])
+
+    async def test_same_changes_preview_then_explicit_write_without_mutation(self):
+        changes = [self.update(), {'op':'add','path':'src/extra.py','content':'VALUE = 1\n'}]
+        original = deepcopy(changes); before = fingerprint(self.root)
+        with patch.object(self.tool, '_stage', wraps=self.tool._stage) as stage, \
+                patch.object(self.tool, '_publish', wraps=self.tool._publish) as publish:
+            preview = await self.tool.execute(dry_run=True, changes=changes)
+            self.assertTrue(preview.success, preview.to_text())
+            self.assertFalse(preview.metadata['applied'] or preview.metadata['execution_evidence'])
+            stage.assert_not_called(); publish.assert_not_called()
+        self.assertEqual(fingerprint(self.root), before)
+        self.assertEqual((self.root/'.git/index').read_bytes(), self.index)
+        self.no_temps()
+        write = await self.tool.execute(dry_run=False, changes=changes)
+        self.assertTrue(write.success, write.to_text())
+        self.assertTrue(write.metadata['applied'])
+        self.assertEqual(set(write.metadata['changed_files']), {'src/calculator.py','src/extra.py'})
+        self.assertEqual(self.file.read_bytes(), self.body.replace(b'return left - right', b'return left + right'))
+        self.assertEqual((self.root/'src/extra.py').read_text(), 'VALUE = 1\n')
+        self.assertEqual(changes, original)
+        self.assertEqual((self.root/'.git/index').read_bytes(), self.index)
+        self.no_temps()
+
+    async def test_successful_preview_does_not_enable_write_mode(self):
+        tool = ApplyPatchTool(self.root, patch_mode='preview')
+        changes = [self.update()]
+        self.assertTrue((await tool.execute(dry_run=True, changes=changes)).success)
+        result = await tool.execute(dry_run=False, changes=changes)
+        self.assertEqual(result.error, 'patch_write_disabled')
+        self.assertFalse(result.metadata['safe_to_retry'])
+        self.assertEqual(self.file.read_bytes(), self.body)
+        self.assertEqual((self.root/'.git/index').read_bytes(), self.index)
+        self.no_temps()
+
+    async def test_invalid_dry_run_types_still_fail_before_preflight(self):
+        with patch.object(self.tool, '_preflight') as preflight:
+            for value in (0,1,'true','false',None,[],{}):
+                with self.subTest(value=value):
+                    result = await self.tool.execute(dry_run=value, changes=[self.update()])
+                    self.assertEqual(result.error, 'invalid_arguments')
+                    self.assertEqual(result.metadata['failure_phase'], 'validation')
+                    self.assertFalse(result.metadata['safe_to_retry'])
+                    self.assertFalse(result.metadata['applied'] or result.metadata['execution_evidence'])
+            preflight.assert_not_called()
+        self.assertEqual(self.file.read_bytes(), self.body)
+        self.assertEqual((self.root/'.git/index').read_bytes(), self.index)
+
+    async def test_preview_does_not_repair_invalid_write_structures(self):
+        base = {'dry_run':False,'changes':[self.update()]}
+        self.assertTrue((await self.tool.execute(**{**base,'dry_run':True})).success)
+        bad = [{'dry_run':False}, {**base,'changes':[]}, {**base,'extra':'PRIVATE_PATCH_FIELD'}]
+        for name in ('op','path','expected_sha256','edits'):
+            args = deepcopy(base); del args['changes'][0][name]; bad.append(args)
+        for name in ('old_text','new_text'):
+            args = deepcopy(base); del args['changes'][0]['edits'][0][name]; bad.append(args)
+        for edits in ({'old_text':'x','new_text':'y'}, [{}], [{'old_text':'','new_text':'y'}],
+                      [{'old_text':'x','new_text':1}], [{'old_text':'x','new_text':'y','extra':1}]):
+            args = deepcopy(base); args['changes'][0]['edits'] = edits; bad.append(args)
+        for value in ('x'*64, '0'*63, 123):
+            args = deepcopy(base); args['changes'][0]['expected_sha256'] = value; bad.append(args)
+        args = deepcopy(base); args['changes'][0]['extra'] = True; bad.append(args)
+        args = deepcopy(base); args['changes'][0]['edits'] *= 17; bad.append(args)
+        bad.extend([{**base,'changes':base['changes']*9},
+                    {**base,'changes':[{'op':'add','path':'src/new.py'}]},
+                    {**base,'changes':[{'op':'add','path':'src/new.py','content':'x','extra':1}]}])
+        before = fingerprint(self.root)
+        with patch.object(self.tool, '_preflight') as preflight, patch.object(self.tool, '_stage') as stage:
+            for args in bad:
+                with self.subTest(shape=list(args)):
+                    result = await self.tool.execute(**args)
+                    self.assertEqual(result.error, 'invalid_arguments')
+                    self.assertEqual(result.metadata['failure_phase'], 'validation')
+                    self.assertEqual(result.metadata['status'], 'preflight_failed')
+                    self.assertFalse(result.metadata['safe_to_retry'])
+                    self.assertFalse(result.metadata['applied'] or result.metadata['execution_evidence'])
+                    self.assertEqual(fingerprint(self.root), before)
+                    self.assertEqual((self.root/'.git/index').read_bytes(), self.index)
+                    self.no_temps()
+            preflight.assert_not_called(); stage.assert_not_called()
+
+    async def test_stale_after_preview_requires_reread_and_new_preview(self):
+        changes = [self.update()]
+        self.assertTrue((await self.tool.execute(dry_run=True, changes=changes)).success)
+        external = self.body+b'\n# external update\n'; self.file.write_bytes(external)
+        result = await self.tool.execute(dry_run=False, changes=changes)
+        self.assertEqual(result.error, 'stale_file_hash')
+        self.assertTrue(result.metadata['safe_to_retry'])
+        self.assertEqual(result.metadata['failure_phase'], 'preflight')
+        self.assertEqual(self.file.read_bytes(), external)
+        version = await self.tools.execute('read_file_range', {'path':'src/calculator.py','start_line':1,'end_line':20})
+        self.assertTrue(version.success)
+        changes[0]['expected_sha256'] = version.metadata['file_sha256']
+        self.assertTrue((await self.tool.execute(dry_run=True, changes=changes)).success)
+        self.assertTrue((await self.tool.execute(dry_run=False, changes=changes)).success)
+        self.assertEqual(self.file.read_bytes(), external.replace(b'return left - right',b'return left + right'))
+        self.assertEqual((self.root/'.git/index').read_bytes(), self.index)
+        self.no_temps()
 
     async def test_full_raw_hash_even_partial_range(self):
         self.file.write_bytes(b'\xef\xbb\xbf# \xe4\xb8\xad\xe6\x96\x87\r\nabc\r\nend')

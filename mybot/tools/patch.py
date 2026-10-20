@@ -163,11 +163,18 @@ class ApplyPatchTool(RepositoryTool):
     description = ('Precisely update UTF-8 files using full-file SHA256 and unique non-overlapping old_text, '
                    'or add new files in existing directories. Default dry_run=true previews only. '
                    'Write requires patch_mode=write and explicit dry_run=false. No tests or commands run. '
-                   'Reread and rebuild on stale_file_hash/anchor conflicts. Hidden/private paths denied.')
+                   'Each update requires op, path, expected_sha256 and edits (each edit: old_text and new_text); '
+                   'each add requires op, path and content. No extra fields at any level. '
+                   'A successful preview does not grant write permission. '
+                   'Reread and rebuild on stale_file_hash/anchor conflicts; never replay blindly. Hidden/private paths denied.')
     private_arguments = True
     parameters = {'type': 'object', 'properties': {
-        'dry_run': {'type': 'boolean', 'default': True},
+        'dry_run': {'type': 'boolean', 'default': True,
+                    'description': 'true previews only (default); false requests a write, still requiring patch_mode=write.'},
         'changes': {'type': 'array', 'minItems': 1, 'maxItems': 8,
+                    'description': 'Use the declared update/add structure only. After a successful preview, if target files '
+                        'and intended edits are unchanged, reuse the same changes and set only dry_run=false. '
+                        'If changes are revised, preview again.',
                     'items': {'oneOf': [_UPDATE, _ADD]}}},
         'required': ['changes'], 'additionalProperties': False}
 

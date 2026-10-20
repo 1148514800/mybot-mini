@@ -1,6 +1,6 @@
 # Phase 24：Real-Model Coding Agent Evaluation — 真实模型接口与隐藏测试评测
 
-版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断、Planning预算指引和cwd契约说明见第15～19节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
+版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断、Planning预算指引、cwd和Patch提交契约见第15～20节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
 
 ## 1. 目标、数据来源与当前结论
 
@@ -454,5 +454,59 @@ uv run python -m scripts.check_phase
 新增针对性9项、命令62、自主编码97、Phase24评测134项及编译通过；`uv run python -m scripts.check_phase`全量905项通过（原896+新增9），原Phase1/2断言亦通过，包含真实TTY审批、Seatbelt和Git工作流101项安全回归。三个测试文件原有284个测试方法AST比对保持不变，没有删除或弱化已有断言。配置coco2、API Key、端点、模型、既有报告、main、用户文件与原Index、全部Tag/ZIP哈希核对保留；Benchmark/Gold/Reference/隐藏测试、Judge、请求预算不改，旧归档不覆盖。日志`/tmp/phase24-cwd-full.log`。
 
 这是契约说明优化，不会让既有非法cwd变合法，也不能从旧Trace追溯模型具体参数。离线证明默认/相对目录和原安全执行流程可用，**不代表真实模型一定会按提示省略cwd**。下一次Live须用户另行授权，可继续使用gpt-6-astra；本轮不执行、不重跑、不Push/Merge、不进入Phase25。
+
+## 20. apply_patch预览到提交的参数契约
+
+### 已知失败与不可还原的信息
+
+基线`946ac20`，本轮只做离线调查与通用说明优化。历史报告`runs/coding_benchmark/live-20261020T145953-eb85cef0.json`：error-retry-001使用coco2/gpt-6-astra，11次模型请求全部响应、21次工具；create_plan=1、update_plan=3，4次请求仅管理计划。第10次Patch预览成功，第11次正式写入尝试返回invalid_arguments、failure_phase=validation、safe_to_retry=false，Controller blocked/patch_failed_without_safe_recovery。没有成功提交或Agent测试，revision=0，Judge评估未修改基线，不能据其隐藏失败推断预览中的修复是否正确。
+
+这证明正式调用没有通过本地参数契约，不能证明预览与写入的changes相同、哪个字段错误、是否增删字段或改变类型。报告不保留原始参数、Patch、源码或任意异常正文；本轮不追溯猜测，也不读取Gold、参考实现或隐藏测试来设计提示。现有Schema已完整列出结构和约束，能确认的改进空间是操作说明缺少“预览通过后如何保持同一changes提交”，不能声称说明缺口已经被证明是那次错误的唯一原因。
+
+### 分阶段传递与safe_to_retry规则
+
+| 阶段 | 实际调用与含义 | 安全边界 |
+| --- | --- | --- |
+| argument_parsing | Loop原生分支先用parse_object检查原始字节、UTF-8、JSON/重复键、有限值、深度/节点等，返回独立有界快照 | 失败未进入工具，无可信完整模式，safe_to_retry=false |
+| validation | ApplyPatchTool以该phase起步，bounded_arguments再次检查大小/结构，再由RepositoryTool.validate执行完整JSON Schema；随后检查平台和写模式 | 仍未进入文件预检；历史invalid_arguments定位到此本地校验阶段，无法定位原始字段 |
+| preflight | 解析安全路径、只读文件、校验SHA、唯一锚点、非重叠编辑、大小和有效变化，构造目标字节 | 尚未暂存或发布；版本/锚点冲突保留原有可恢复规则 |
+| preview | 构造有界Diff；dry_run=true在此返回 | 不写文件、不产生Controller修订或测试证据，也不授权写入 |
+| write_preparation | 仅显式dry_run=false且patch_mode=write：Journal准备、暂存、备份、元数据/字节验证，发布前复查全部版本 | 可能已有临时/Journal写入，不能仅凭preflight_failed状态断言无任何暂存副作用 |
+| publication | 单文件replace/link发布、重检、必要时_recover | 保留单文件原子替换及多文件预检/既有尽力回滚边界，不承诺跨文件崩溃原子性 |
+| cleanup / journal | 清理临时资产、记录归属与失败状态 | 异常继续覆盖可恢复标记；回滚冲突/状态不确定严格停止 |
+
+`validation`是代码设置的阶段标签，不等于原始JSON解析失败，也不等于任何写入后异常。工具Schema对dry_run只接受bool，默认true；正式写入只通过显式false开启，还须宿主patch_mode=write。没有“通过预览就自动提交”的状态或缓存。
+
+原_RETRY保持stale_file_hash、anchor_not_found、ambiguous_context；在没有发布尝试且清理正常时可由模型重新读取并构造新调用。独立_PREVIEW_CORRECTABLE仅对严格dry_run is True、validation/preflight阶段的invalid_arguments、overlapping_edits、no_effective_changes开放纠正。**正式写入invalid_arguments即使发生在文件写入之前，也不满足这两类规则，继续safe_to_retry=false并停止。** 本轮不扩白名单、不修正参数、不自动重放成功预览。CodingTrace继续仅记录固定错误/阶段/状态及布尔值，未增加原始数据。
+
+### 最小通用说明优化
+
+只改`mybot/tools/patch.py`和`mybot/agent/coding_controller.py`的模型可见说明：
+
+- 原工具说明已有SHA、唯一锚点、预览默认和显式写入标志；现在简明列出update所需op/path/expected_sha256/edits、edit的old_text/new_text、add的op/path/content，以及各层禁止多余字段。
+- 为现有dry_run字段增加true预览、false请求正式写入且仍需写权限的说明；为changes增加“目标文件和修改内容均未变时，复用同一changes，只把dry_run改为false；修改changes后重新预览”的建议。
+- Controller补充同样的紧凑规则及禁止添加未声明字段；既有SHA/上下文冲突重新读取重建、禁止盲目重放继续保留。
+
+这些是说明，不是新增执行前置状态：原本合法的直接写入仍按原规则处理。完整嵌套Schema去除description后与基线逐项一致，字段、类型、必填项、额外字段规则、数量/大小上限和default都未变；整个Patch模块除工具description/parameters外AST一致，Controller除instruction外AST一致。解析、原子发布、权限/路径、Journal、Revision、命令审批、Seatbelt和预算不变。
+
+预算提示已经说明清晰任务可DIRECT、复杂依赖可少量PLANNED步骤、按顺序批处理计划操作、剩余≤3避免计划独占响应，并为必要修复（包括提交）、真实批准测试和结果审查留请求。本轮不重复堆叠或改变Planning算法。历史计划开销不小，但实际停止原因是写入校验拒绝而非预算耗尽。
+
+### 离线验证、使用方法与限制
+
+新增11项：Patch 6项验证完整操作说明、同一changes的update+add预览/提交、预览无文件变化且不启用写模式、非法dry_run类型、缺失/多余字段与错误edits/SHA及原数量限制、预览后stale时重新读取和预览；自主编码3项验证通用提示及原预算提示单份保留、提交后无真实测试不能verified、预览后非法写入仍fatal且Index/Revision/Journal不变并保持ID配对；评测2项验证合成客户端复用同一changes后原Loop→真实测试→Judge成功，以及一个故意增加字段的写入在validation阶段严格停止且敏感哨兵不进入报告。负例只是该错误类别的离线合成示例，**不是历史原始载荷的还原**。
+
+macOS + uv命令（全部离线）：
+
+```bash
+uv run python -m scripts.check_patch_editing
+uv run python -m scripts.check_autonomous_coding
+uv run python -m scripts.check_real_coding_eval
+uv run python -m compileall -q mybot scripts
+uv run python -m scripts.check_phase
+```
+
+针对性11、Patch61、自主编码100、Phase24评测136项及编译通过；`uv run python -m scripts.check_phase`全量916项通过（原905+新增11），原Phase1/2断言亦通过。三个测试文件原有286项方法AST不变，未删除或弱化既有用例。既有stale/锚点恢复、路径/元数据保护、多文件发布/回滚冲突、真实TTY/Seatbelt、当前revision测试证据、Git工作流101项、Journal和Trace隐私回归均通过。日志`/tmp/phase24-patch-contract-full.log`。
+
+配置、API Key、端点、模型、Benchmark/Fixtures/Gold/Reference/隐藏测试、Judge、请求预算、main、原用户修改和Index、历史报告、Tag/ZIP不改；原归档不覆盖。本轮没有真实模型请求、不Push/Merge、不进入Phase25。可在用户另行授权后用原预算复测error-retry-001；离线通过不等于真实模型一定会复用正确changes，也不能声称必然修复了历史那次具体参数错误。
 
 archive-ready: true

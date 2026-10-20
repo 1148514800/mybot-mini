@@ -337,6 +337,62 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
         for private in ('parse-convert-001','conversion.py','parser.py',str(self.root)):
             self.assertNotIn(private, hint)
 
+    def test_patch_guidance_reuses_changes_without_duplicate_planning_rules(self):
+        hint = self.controller.instruction()
+        for text in ('After a successful preview', 'target files and intended edits',
+                     'reuse the same changes structure', 'set only dry_run=false',
+                     'changes content is revised, preview again', 'Never add undeclared fields',
+                     'DIRECT', 'PLANNED', 'avoid plan-only responses', 'reserve requests'):
+            self.assertIn(text, hint)
+        self.assertEqual(hint.count('avoid plan-only responses'), 1)
+        for private in ('error-retry-001','client.py','policy.py','transport.py',str(self.root)):
+            self.assertNotIn(private, hint)
+
+    async def test_same_preview_write_changes_require_real_tests_to_verify(self):
+        args = self.patch_args(dry=True)
+        preview = await self.native('apply_patch', args)
+        self.assertTrue(preview.success)
+        self.assertEqual(self.controller.current_revision, 0)
+        self.assertFalse(self.controller.can_verify())
+        write = await self.native('apply_patch', {**args,'dry_run':False})
+        self.assertTrue(write.success)
+        self.assertEqual(self.controller.current_revision, 1)
+        self.assertIsNone(self.controller.last_verified_revision)
+        self.assertFalse(self.controller.can_verify())
+        self.assertEqual(self.controller.test_runs, 0)
+        self.assertTrue((await self.run_tests()).success)
+        self.assertTrue(self.controller.can_verify())
+        self.assertEqual(self.controller.last_verified_revision, 1)
+        self.controller.finish()
+        self.assertEqual(self.controller.state, 'verified')
+
+    async def test_successful_preview_cannot_auto_correct_invalid_write_or_revision(self):
+        before = (self.root/'src/calculator.py').read_bytes()
+        index = (self.root/'.git/index').read_bytes()
+        invalid = {**self.patch_args(), 'PRIVATE_PATCH_ARGUMENT':'PRIVATE_SOURCE_SENTINEL'}
+        with patch.object(self.tools.get_tool('read_file_range'), 'execute', new_callable=AsyncMock) as read:
+            a, _, requests = await self.run_loop([
+                response(calls=[call('apply_patch', self.patch_args(dry=True))]),
+                response(calls=[call('apply_patch', invalid),
+                    call('read_file_range', {'path':'notes.txt','start_line':1,'end_line':1})])],
+                coding_git_workflow={'enabled':True,'undo_enabled':False})
+        self.addCleanup(a._git_capsule.close)
+        read.assert_not_awaited()
+        report = a.last_coding_report
+        self.assertEqual(report['state'], 'blocked')
+        self.assertEqual(report['stop_reason'], 'patch_failed_without_safe_recovery')
+        self.assertEqual(report['patch_write_attempts'], 1)
+        self.assertEqual(report['committed_patches'], 0)
+        self.assertEqual(report['current_revision'], 0)
+        self.assertIsNone(report['last_verified_revision'])
+        self.assertEqual(report['test_runs'], 0)
+        self.assertEqual(len(requests), 2)
+        self.assertFalse(a._git_capsule.entries)
+        self.assertEqual((self.root/'src/calculator.py').read_bytes(), before)
+        self.assertEqual((self.root/'.git/index').read_bytes(), index)
+        self.assertIn('autonomy_stopped', a.session.history()[-2]['content'])
+        self.assertNotIn('PRIVATE_', json.dumps(report))
+
     async def test_invalid_cwd_remains_fatal_and_pairs_remaining_calls(self):
         illegal = str(self.root/'PRIVATE_CWD_SENTINEL')
         approval = AsyncMock(side_effect=yes)

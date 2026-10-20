@@ -2,30 +2,30 @@
 
 ## 当前目标与状态
 
-Phase24 run_command cwd契约说明修复完成，基线codex/phase-24 / f20999c，离线回归通过。生产修改只涉及工具description、cwd Schema文档注解及Controller提示；路径校验、审批、沙盒、Loop与证据语义不改。本轮不付费Live、不Push/Merge、不进入25。
+Phase24 apply_patch预览到提交契约优化完成，基线codex/phase-24 / 946ac20，离线回归通过。仅补充模型可见说明及离线测试，不真实LLM、不付费Live、不Push/Merge、不进入25。生产修改仅mybot/tools/patch.py description/parameters注解和mybot/agent/coding_controller.py instruction。
 
-## 根因证据与限制
+## 历史证据与未知范围
 
-报告runs/coding_benchmark/live-20261020T141547-afa40771.json：coco2/gpt-6-astra，7次请求全部成功，预览/提交各1次，三文件修复经Judge公开2/2、隐藏4/4通过；第7次run_command审批前invalid_cwd，Agent blocked、测试0次、revision1/last_verified_revision=null。未出现审批或启动测试进程。报告无原始cwd，不能猜具体非法参数；Judge修复成功不等于Agent工作流成功。
+runs/coding_benchmark/live-20261020T145953-eb85cef0.json：error-retry-001、coco2/gpt-6-astra，11次请求全响应、21次工具、4次计划独占响应；第10次预览成功，第11次正式写入invalid_arguments，failure_phase=validation、safe_to_retry=false。Agent blocked/patch_failed_without_safe_recovery，无提交/测试，revision0；Judge评估未修改基线。报告无原始参数，不能认定预览和提交changes相同或定位具体错误字段，不能据隐藏失败判定预览修复错误。
 
-Schema原本仅说明cwd字符串长度，Controller未解释合法形式，属于契约描述缺口，未发现放宽路径校验的依据。cwd可选，省略用`.`工作区根；显式值须是已有安全相对目录。绝对路径、..片段、内部/外部或中间符号链接、缺失目录与文件继续拒绝，敏感路径保留原共享策略。
+原Loop有界JSON解析失败使用argument_parsing；validation是工具本地有界/Schema校验阶段，尚未文件预检。write_preparation可能已有暂存/备份/Journal写入，publication后需原恢复流程；不能混淆阶段或仅凭preflight_failed断言完全无副作用。Schema结构本来完整，改进点是预览到提交使用说明，未证明文档缺口必然导致那次错误。
 
-## 修改与安全决定
+## 最小修改与安全规则
 
-mybot/tools/run_command.py补充工具说明、cwd description/default="."；mybot/agent/coding_controller.py提示优先省略cwd，禁止宿主项目/临时评测绝对路径、..和符号链接。default仅文档注解，不注入或修正参数，Schema类型/长度、required与有效输入包络不变。RunCommandTool所有方法AST保持相同，包括_cwd、execute、审批后复检和失败结果。
+工具说明列明update/op/path/expected_sha256/edits、edit/old_text/new_text、add/op/path/content及禁止多字段；dry_run说明true仅预览、false显式请求写入且需patch_mode=write；changes说明目标与内容未变时复用同一结构，仅切换dry_run=false，改动changes须重新预览。Controller补充同样通用规则，不含案例答案。
 
-非法cwd仍在审批/进程前拒绝并command_fatal停止，不自动修正或重试；同批后续工具停止且ID配对。真实TTY通道、30秒命令上限、Seatbelt、Journal、Patch版本/原子性及当前revision/文件哈希测试证据检查均保留。通用提示不含案例答案，Trace不增加原始参数。
+既有DIRECT/PLANNED、批处理及临近预算优先修复/真实测试/审查提示已覆盖，不重复叠加或改Planning。没有自动缓存/重放预览、修正非法参数或新增工具状态；合法直接写入旧行为保留。
 
-## 测试
+完整嵌套Schema去除新增description后与基线一致；Patch模块除description/parameters外AST相同，Controller除instruction外AST相同。_RETRY三项stale/anchor/ambiguous和独立预览纠正规则不变；正式写入invalid_arguments仍safe_to_retry=false且严格停止。SHA、路径/权限、原子发布/回滚、Journal、Revision、真实测试证据、审批/Seatbelt及预算均不改，Trace只保留固定分类不存原参数。
 
-新增9项：命令4（契约/输入范围，省略与`.`真实沙盒unittest，src真实unittest，非法路径审批前拒绝）；自主编码3（通用提示、fatal/配对/隐私、显式`.`测试后revision与哈希失效）；评测2（省略cwd完整链路、Judge通过但非法cwd仍blocked且不泄露参数）。三个测试文件原有284项方法AST比对不变。
+## 离线验证
 
-针对性9、命令62、自主编码97、Phase24评测134项及Python编译通过；uv run python -m scripts.check_phase全量905项通过（原896+新增9），原Phase1/2断言亦通过。日志/tmp/phase24-cwd-full.log。安全回归验证超时、拒绝、真实TTY/Seatbelt失败、执行不确定及审批后目录变化仍严格停止；Git工作流101项通过。
+新增11项：Patch6（说明、同changes的update+add预览/写入、预览无修改且不启用写权限、非法dry_run、必填/额外/edits/SHA/数量、预览后stale重新读取）；自主编码3（通用契约及原预算指令单份、提交后需真实测试、非法写入fatal且文件/Index/Revision/Journal不变）；评测2（同changes完整验证、预览后多字段拒绝与敏感哨兵不入报告）。负例是合成错误类别，不是历史载荷还原。原三个测试文件286项方法AST不变。
+
+针对性11、Patch61、自主编码100、Phase24评测136及Python编译通过；uv run python -m scripts.check_phase全量916项通过（原905+新增11），原Phase1/2断言亦通过，包含真实TTY审批、Seatbelt及Git工作流101项安全回归。日志/tmp/phase24-patch-contract-full.log。
 
 ## 配置、文档与下一步
 
-学习说明见docs/phases/phase-24.md第19节。评测工作树当前有效配置为coco2/gpt-6-astra，忽略的config/config.json独立于主目录，本轮不改配置/凭证/端点。最近Live用90/600/900秒请求/任务/总超时，仅是该次命令参数，不是永久默认。
+详细学习与阶段表见docs/phases/phase-24.md第20节。配置仍为评测工作树独立忽略文件中的coco2/gpt-6-astra，不改凭证/端点；近期Live用90/600/900秒仅为当次请求/任务/总超时参数，不是永久默认。最近parse-convert-001在946ac20已完整verified/hidden_pass；error-retry-001仍未提交修复。
 
-Benchmark/Gold/Reference/隐藏测试、Judge、预算均不改；main3461dc7、原用户修改与Index、既有报告及Tag/ZIP保留。旧phase-24归档不包含后续修复，禁止移动Tag或覆盖ZIP。
-
-离线通过仅证明路径契约和原执行机制可用，不代表真实模型一定遵循提示。下一次Live需用户另行授权，可继续gpt-6-astra；先核对实际配置与用户给定超时/预算，不自动复测、不放宽非法cwd、不把Judge hidden_pass写成Agent verified。
+Benchmark/Fixtures/Gold/Reference/隐藏测试、Judge、预算不改；main3461dc7、原用户文件及Index、历史报告、全部Tag/ZIP保留；旧phase-24归档不含后续修复，禁止覆盖或移动。下一次error-retry-001 Live须用户另行授权，可保持原模型与预算；离线通过不保证真实模型遵循changes复用说明，不自动重跑、不扩大正式写入重试白名单。
