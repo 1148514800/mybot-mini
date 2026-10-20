@@ -510,3 +510,7 @@ uv run python -m scripts.check_phase
 配置、API Key、端点、模型、Benchmark/Fixtures/Gold/Reference/隐藏测试、Judge、请求预算、main、原用户修改和Index、历史报告、Tag/ZIP不改；原归档不覆盖。本轮没有真实模型请求、不Push/Merge、不进入Phase25。可在用户另行授权后用原预算复测error-retry-001；离线通过不等于真实模型一定会复用正确changes，也不能声称必然修复了历史那次具体参数错误。
 
 archive-ready: true
+
+## 21. Phase25开始前的历史审计
+
+截至ff10fb6现存20次Live，9次完整成功覆盖9/12；Hard4/4，尚未测pagination/serialization/file-recovery。最新error-retry报告live-20261020T154523-bbbb9fde.json为coco2/gpt-6-astra、8/8请求、34063 Token、270.763秒、Agent verified/Judge hidden_pass、公开2/2隐藏4/4、提交/测试各1、Revision1/1。之前第20节“没有Live”仅指该次离线开发，不代表最终状态。完整Benchmark、稳定性和生产泛化尚未验证，后续见Phase25；旧Tag/ZIP不移动。

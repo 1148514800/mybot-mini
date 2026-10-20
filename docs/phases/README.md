@@ -27,7 +27,9 @@
 | 21 | 原生命令、单次审批与macOS Seatbelt只读隔离 | 已验证，独立归档 | `phase-21` | [phase-21.md](phase-21.md) |
 | 22 | 自主任务控制、预算、修订绑定验证与动态离线评测 | 已验证，独立归档 | `phase-22` | [phase-22.md](phase-22.md) |
 | 23 | Git基线、任务级原生Patch审查与单次安全撤销 | 750项及双副本还原验证通过，独立归档 | `phase-23` | [phase-23.md](phase-23.md) |
-| 24 | 真实模型接口、独立Python任务与隔离隐藏评分 | 原归档109/859通过；Patch提交契约完善，136专项、916全量通过；parse已完整通过，error-retry写入参数拒绝，契约优化未Live复测 | `phase-24`（原归档，后续修复见分支） | [phase-24.md](phase-24.md) |
+| 24 | 真实模型接口、独立Python任务与隔离隐藏评分 | 原归档109/859通过；Patch提交契约完善，136专项、916全量通过；parse/error-retry均已完整Live通过；历史9/12、Hard4/4 | `phase-24`（原归档，后续修复见分支） | [phase-24.md](phase-24.md) |
+
+| 25 | Coding Agent可靠性、固定Benchmark与外部项目验证 | 开发与离线验证中，未验收 | 待验证，不创建旧归档覆盖 | [phase-25.md](phase-25.md) |
 
 ## 保存一个新阶段
 

@@ -115,3 +115,6 @@ if Path(__file__).with_name("check_real_coding_eval.py").exists():
     from scripts.check_real_coding_eval import check_real_coding_eval
     check_real_coding_eval()
 print("Offline Phase checks passed: loop, logging, content masking, files, error paths.")
+if Path(__file__).with_name('check_coding_campaign.py').exists():
+    from scripts.check_coding_campaign import check_coding_campaign
+    check_coding_campaign()
