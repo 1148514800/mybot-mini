@@ -106,6 +106,81 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
         r=await self.command('import os;print(os.path.basename(os.getcwd()))',cwd='src')
         self.assertTrue(r.success);self.assertIn('src',r.output)
 
+    def test_cwd_schema_documents_contract_without_narrowing_input(self):
+        spec = self.tool.to_schema()['function']['parameters']
+        cwd = dict(spec['properties']['cwd'])
+        self.assertEqual(cwd.pop('default'), '.')
+        description = cwd.pop('description')
+        self.assertEqual(cwd, {'type':'string','minLength':1,'maxLength':4096})
+        for word in ('Optional', 'prefer omitting', 'workspace root', 'existing',
+                     'workspace-relative', 'absolute', "'..'", 'symlinks', 'host', 'temporary'):
+            self.assertIn(word, description)
+        self.assertIn('Prefer omitting optional cwd', self.tool.description)
+        self.assertEqual(spec['required'], ['argv'])
+        # These annotations describe runtime policy; they do not change JSON input validity.
+        validator = Draft202012Validator(spec)
+        for value in ('.','src','/tmp/absolute','src/..','missing','link'):
+            self.assertTrue(validator.is_valid({'argv':['python'],'cwd':value}))
+        for value in ('', 1, None, 'x'*4097):
+            self.assertFalse(validator.is_valid({'argv':['python'],'cwd':value}))
+
+    async def test_cwd_omitted_and_dot_run_real_unittest_at_root(self):
+        (self.root/'tests/test_cwd_location.py').write_text(
+            'from pathlib import Path\nimport unittest\n'
+            'class Location(unittest.TestCase):\n'
+            ' def test_root(self): self.assertTrue(Path("src/calculator.py").is_file())\n')
+        requests = []
+        async def provider(request):
+            requests.append(request)
+            return ApprovalDecision.APPROVE
+        self.tool = self.make_tool(mode='macos_readonly', provider=provider)
+        argv = ['python','-m','unittest','discover','-s','tests','-p','test_cwd_location.py','-v']
+        for options in ({}, {'cwd':'.'}):
+            result = await self.tool.execute(argv=argv, **options)
+            self.assertTrue(result.success, result.to_text())
+            self.assertEqual(result.metadata['exit_code'], 0)
+            for field in ('approved','spawned','completed','sandbox_applied','execution_evidence'):
+                self.assertTrue(result.metadata[field])
+            self.assertIn('Ran 1 test', self.body(result)['stderr'])
+        self.assertEqual([request.cwd for request in requests], ['.','.'])
+        self.assertTrue(all(request.mode=='macos_readonly' and request.os_sandbox for request in requests))
+        self.assertTrue(all(request.timeout_seconds==30 for request in requests))
+
+    async def test_existing_relative_cwd_runs_real_unittest(self):
+        (self.root/'src/test_cwd_location.py').write_text(
+            'from pathlib import Path\nimport unittest\n'
+            'class Location(unittest.TestCase):\n'
+            ' def test_src(self): self.assertTrue(Path("calculator.py").is_file())\n')
+        approval = AsyncMock(return_value=ApprovalDecision.APPROVE)
+        self.tool = self.make_tool(mode='macos_readonly', provider=approval)
+        result = await self.tool.execute(argv=['python','-m','unittest','discover','-s','.',
+            '-p','test_cwd_location.py','-v'], cwd='src')
+        self.assertTrue(result.success, result.to_text())
+        self.assertTrue(result.metadata['sandbox_applied'])
+        self.assertIn('Ran 1 test', self.body(result)['stderr'])
+        approval.assert_awaited_once()
+        self.assertEqual(approval.call_args.args[0].cwd, 'src')
+
+    async def test_illegal_cwd_rejected_before_approval_and_process(self):
+        (self.root/'internal_alias').symlink_to(self.root/'src')
+        (self.root/'external_alias').symlink_to(Path(self.tmp.name))
+        approval = AsyncMock(return_value=ApprovalDecision.APPROVE)
+        self.tool = self.make_tool(mode='macos_readonly', provider=approval)
+        invalid = (str(self.root), str(Path(self.tmp.name)), '..', 'src/..', 'missing',
+                   'README.md', 'internal_alias', 'internal_alias/missing', 'external_alias', '.git')
+        with patch('mybot.tools.run_command.run_process') as process, \
+                patch('mybot.tools.run_command.resolve_launch') as launch, \
+                patch('mybot.tools.macos_sandbox.verify_sandbox') as sandbox:
+            for cwd in invalid:
+                with self.subTest(cwd=cwd):
+                    result = await self.tool.execute(argv=['python','-m','unittest'], cwd=cwd)
+                    self.assertFalse(result.success)
+                    self.assertTrue(result.metadata['command_fatal'])
+                    for field in ('approved','spawned','completed','sandbox_applied','execution_evidence'):
+                        self.assertFalse(result.metadata[field])
+            approval.assert_not_awaited()
+            launch.assert_not_called(); sandbox.assert_not_called(); process.assert_not_called()
+
     async def test_workspace_fake_python_and_path_ignored(self):
         fake=self.root/'python';fake.write_text('#!/bin/sh\ntouch HACKED\n');fake.chmod(0o755)
         with patch.dict(os.environ,{'PATH':str(self.root)}):r=await self.command()

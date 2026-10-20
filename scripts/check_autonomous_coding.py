@@ -329,6 +329,56 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
                         str(self.root),'return left - right','expected_patch','hidden_suite'):
             self.assertNotIn(private, hint)
 
+    def test_cwd_guidance_is_optional_relative_and_general(self):
+        hint = self.controller.instruction()
+        for text in ('prefer omitting cwd', "default '.'", 'workspace root', 'existing',
+                     'workspace-relative', 'absolute host', 'temporary', "'..'", 'symlinks'):
+            self.assertIn(text, hint)
+        for private in ('parse-convert-001','conversion.py','parser.py',str(self.root)):
+            self.assertNotIn(private, hint)
+
+    async def test_invalid_cwd_remains_fatal_and_pairs_remaining_calls(self):
+        illegal = str(self.root/'PRIVATE_CWD_SENTINEL')
+        approval = AsyncMock(side_effect=yes)
+        self.tools.get_tool('run_command').approval_provider = approval
+        with patch('mybot.tools.run_command.run_process') as process, \
+                patch.object(self.tools.get_tool('read_file_range'), 'execute', new_callable=AsyncMock) as read:
+            a, _, requests = await self.run_loop([
+                response(calls=[call('apply_patch', self.patch_args())]),
+                response(calls=[call('run_command', {'argv':COMMAND_ARGV,'cwd':illegal}),
+                    call('read_file_range', {'path':'notes.txt','start_line':1,'end_line':1})])])
+        approval.assert_not_awaited(); process.assert_not_called(); read.assert_not_awaited()
+        report = a.last_coding_report
+        self.assertEqual(report['state'], 'blocked')
+        self.assertEqual(report['stop_reason'], 'invalid_cwd')
+        self.assertEqual(report['current_revision'], 1)
+        self.assertIsNone(report['last_verified_revision'])
+        self.assertEqual(report['test_runs'], 0)
+        self.assertEqual(report['command_attempts'], 1)
+        self.assertEqual(len(requests), 2)  # No host correction, retry or extra model request.
+        self.assertNotIn(illegal, json.dumps(report))
+        self.assertIn('autonomy_stopped', a.session.history()[-2]['content'])
+
+    async def test_explicit_dot_test_keeps_revision_and_hash_checks(self):
+        self.tools = build_default_tool_registry(self.root, coding_enabled=True, patch_mode='write',
+            command={'mode':'macos_readonly'}, command_approval_provider=yes)
+        self.controller = CodingTaskController(AutonomySettings(enabled=True), self.tools)
+        await self.changed()
+        result = await self.native('run_command', {'argv':COMMAND_ARGV,'cwd':'.'})
+        self.assertTrue(result.success, result.to_text())
+        self.assertTrue(result.metadata['sandbox_applied'])
+        self.assertTrue(self.controller.can_verify())
+        self.assertEqual(self.controller.current_revision, self.controller.last_verified_revision)
+        await self.native('apply_patch', self.patch_args('return left + right','return left - right'))
+        self.assertFalse(self.controller.can_verify())
+        self.assertEqual(self.controller.current_revision, 2)
+        self.assertEqual(self.controller.last_verified_revision, 1)
+        await self.native('apply_patch', self.patch_args())
+        await self.native('run_command', {'argv':COMMAND_ARGV,'cwd':'.'})
+        self.assertTrue(self.controller.can_verify())
+        with (self.root/'src/calculator.py').open('a') as f: f.write('\n# external edit\n')
+        self.assertFalse(self.controller.can_verify())
+
     async def test_multifile_preflight_and_revision_remain_atomic(self):
         import hashlib
         other = self.root/'src/formatter.py'; other.write_text('VALUE = 1\n')

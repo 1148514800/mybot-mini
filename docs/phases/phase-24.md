@@ -1,6 +1,6 @@
 # Phase 24：Real-Model Coding Agent Evaluation — 真实模型接口与隐藏测试评测
 
-版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断、Planning预算指引见第15～18节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
+版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断、Planning预算指引和cwd契约说明见第15～19节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
 
 ## 1. 目标、数据来源与当前结论
 
@@ -391,5 +391,68 @@ uv run python -m scripts.check_phase
 ```
 
 专项自主编码94、Planning12、Patch55、Phase24评测132项全部通过，Python编译通过；`uv run python -m scripts.check_phase`全量896项通过（原881+新增15），原Phase1/2断言亦通过，包含命令58项、Git工作流101项及真实TTY/Seatbelt安全回归。全量日志`/tmp/phase24-budget-full.log`。原881项测试保留，未删除或弱化已有断言；涉及两个测试文件的既有211个测试方法通过AST逐项比对保持不变。安全实现、预算配置、Benchmark/Gold/Reference/隐藏测试、Judge、原Tag/ZIP均不改；原有审批输出真实TTY通道保留，离线模拟审批仅用于测试。新增提示会增加每次请求的上下文，尚未测量真实Token净变化；模型也可能忽略提醒。下一轮需用户另行授权，在原12次预算内单次复测，仍同时检查Agent、Judge与当前revision测试证据；本轮离线通过不意味着Hard真实修复成功。
+
+## 19. run_command cwd契约说明与离线安全验证
+
+### 诊断事实与学习目标
+
+基线`f20999c`。既有报告`runs/coding_benchmark/live-20261020T141547-afa40771.json`使用coco2/gpt-6-astra、请求超时90秒：7次请求全部响应，预览1次、提交1次，修改conversion.py、parser.py、service.py；独立Judge公开2/2、隐藏4/4通过。第7次调用run_command却在审批前被cwd校验拒绝，Agent blocked/invalid_cwd、Agent测试0次，revision=1、last_verified_revision=null，不能宣称完整工作流成功。没有出现审批提示或实际启动命令，Codex代输入yes为0次。
+
+报告只保留脱敏状态，不含原始cwd，**不能猜模型传了绝对路径、上级目录、失效路径或其他哪种具体参数**。可以确认的缺口是工具只暴露cwd的string长度约束，没有合法形式或默认根目录说明；Controller也只讲命令超时，未解释cwd。模型传非法参数不等于路径校验实现错误。本轮只修复模型可见契约，不改变安全边界，不做付费Live。
+
+### 原契约与调用顺序
+
+```text
+AgentLoop解析参数
+  → RunCommandTool输入包络、命令超时检查
+  → _cwd(args.get('cwd', '.'))
+      → 拒绝绝对路径和任何..片段
+      → RepositoryTool.resolve → FileTool._resolve，约束Workspace和敏感路径
+      → 检查路径各部分无符号链接，目标是已存在目录
+  → 打开目录描述符、记录身份、解析固定运行时
+  → 单次命令审批
+  → cwd/目录身份/运行时复检
+  → Seatbelt真实隔离自检、创建只读Workspace配置
+  → 再次复检、Controller剩余任务预算检查
+  → 启动真实进程、解析输出和测试证据
+```
+
+cwd原本可省略，默认`.`是工具的Workspace根目录；在Benchmark中是本次隔离案例根目录。显式值只能是已存在的工作区内安全相对目录，如`.`或确实存在的`src`，不是宿主项目路径或临时案例的绝对路径。绝对路径、`..`片段、符号链接、缺失目录和普通文件均拒绝，敏感目录继续由RepositoryTool拦截。跨工作区符号链接也可能在共享解析器处提前拒绝，不能假定所有拒绝都使用同一个错误码。
+
+原参数校验先于审批和启动，审批后复检防止目录或运行时变化；任何未完成原生命令仍由Controller严格blocked或execution_uncertain停止，同响应后续调用获得配对的停止结果，不能自动修正或重试cwd。真实测试成功仍须匹配当前revision和文件SHA，cwd合法本身不会产生验证证据。
+
+### 最小修改与兼容性
+
+生产文件只有`mybot/tools/run_command.py`和`mybot/agent/coding_controller.py`：
+
+| 项目 | 修改前 | 修改后 |
+| --- | --- | --- |
+| 工具description | 无cwd使用建议 | 推荐省略，显式值使用已存在的安全工作区相对目录 |
+| cwd Schema | string、minLength=1、maxLength=4096 | 保留类型/长度，添加description及文档default="."，不新增required或收紧输入包络 |
+| Controller指令 | 无cwd约定 | 紧凑提示省略优先、隔离根目录、禁止绝对宿主/临时路径、..与符号链接 |
+
+JSON Schema的default是文档注解，不注入参数，也不静默纠正非法值。方法仍使用原`args.get('cwd', '.')`，不改变旧模式的默认行为。新测试验证原Schema接受的路径字符串仍可通过同样的JSON类型/长度检查，再由原运行时路径安全规则判断。RunCommandTool全部方法AST与基线一致，含_cwd、execute、failure_result、审批后复检；共享解析器、Loop、审批Provider、Seatbelt、30秒命令上限、command_fatal、自动重试限制和Controller证据规则不改。指令不含具体Benchmark答案或文件名。
+
+### 离线回归与结果边界
+
+新增9项测试：
+
+- 命令4项：Schema说明/default及输入范围不变；省略cwd与`.`各自执行根目录真实Seatbelt unittest；已存在`src`执行真实unittest；非法绝对/..、缺失/文件、内部/外部及中间符号链接和敏感目录均在审批、运行时解析、隔离探测与进程之前拒绝，无执行证据。
+- 自主编码3项：Controller通用提示；非法cwd仍fatal、不自动修正/重试、后续工具停止且ID配对、报告不泄露参数；显式`.`的真实沙盒测试后仍由新revision和外部文件哈希变化使旧证据失效。
+- 评测2项：合成模型省略cwd，经原Loop、逐次审批、真实Seatbelt/unittest、Journal、Judge完整通过；另一路真实Patch通过Judge而非法cwd仍blocked、测试0次，原始cwd敏感哨兵不进入报告。两者均断言不构建真实SDK。
+
+macOS + uv命令（全部离线）：
+
+```bash
+uv run python -m scripts.check_command_execution
+uv run python -m scripts.check_autonomous_coding
+uv run python -m scripts.check_real_coding_eval
+uv run python -m compileall -q mybot scripts
+uv run python -m scripts.check_phase
+```
+
+新增针对性9项、命令62、自主编码97、Phase24评测134项及编译通过；`uv run python -m scripts.check_phase`全量905项通过（原896+新增9），原Phase1/2断言亦通过，包含真实TTY审批、Seatbelt和Git工作流101项安全回归。三个测试文件原有284个测试方法AST比对保持不变，没有删除或弱化已有断言。配置coco2、API Key、端点、模型、既有报告、main、用户文件与原Index、全部Tag/ZIP哈希核对保留；Benchmark/Gold/Reference/隐藏测试、Judge、请求预算不改，旧归档不覆盖。日志`/tmp/phase24-cwd-full.log`。
+
+这是契约说明优化，不会让既有非法cwd变合法，也不能从旧Trace追溯模型具体参数。离线证明默认/相对目录和原安全执行流程可用，**不代表真实模型一定会按提示省略cwd**。下一次Live须用户另行授权，可继续使用gpt-6-astra；本轮不执行、不重跑、不Push/Merge、不进入Phase25。
 
 archive-ready: true

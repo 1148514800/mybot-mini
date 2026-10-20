@@ -352,6 +352,68 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(r['agent_state'],'verified');self.assertEqual(r['judge']['judge_state'],'hidden_fail')
         self.assertEqual(report['hidden_failure_after_agent_verified'],1);self.assertEqual(report['protocol_false_verified_count'],0)
 
+    async def test_cwd_omitted_guidance_reaches_original_loop_and_real_tests(self):
+        check = self
+        class Client(DemoClient):
+            async def create(self, **kwargs):
+                check.assertIn('prefer omitting cwd', kwargs['messages'][0]['content'])
+                spec = next(t['function']['parameters'] for t in kwargs['tools']
+                            if t['function']['name']=='run_command')
+                check.assertEqual(spec['properties']['cwd']['default'], '.')
+                check.assertIn('workspace-relative', spec['properties']['cwd']['description'])
+                result = await super().create(**kwargs)
+                for call in result.choices[0].message.tool_calls or []:
+                    if call.function.name=='run_command':
+                        check.assertNotIn('cwd', json.loads(call.function.arguments))
+                return result
+        approval = AsyncMock(return_value=ApprovalDecision.APPROVE)
+        with patch('mybot.evaluation.coding_live.build_client', side_effect=AssertionError('offline only')) as sdk:
+            report = await self.evaluation(offline_client_factory=lambda public:Client(), command_provider=approval)
+        sdk.assert_not_called(); approval.assert_awaited_once()
+        self.assertEqual(approval.call_args.args[0].cwd, '.')
+        self.assertTrue(approval.call_args.args[0].os_sandbox)
+        r = report['results'][0]
+        self.assertEqual(r['agent_state'], 'verified')
+        self.assertTrue(r['agent_workflow_success'])
+        self.assertTrue(r['judge']['verified_repair_success'])
+        self.assertEqual(r['metrics']['real_test_runs'], 1)
+        self.assertEqual(r['controller']['current_revision'], r['controller']['last_verified_revision'])
+        self.assertTrue(r['metrics']['tool_call_ids_paired'])
+        self.assertEqual(r['metrics']['protocol_false_verified_count'], 0)
+        self.assertEqual(r['judge']['journal_attribution_mismatch'], 0)
+        self.assertFalse(r['judge']['index_changed'])
+
+    async def test_invalid_cwd_judge_pass_is_not_workflow_success_or_parameter_leak(self):
+        illegal = str(self.root/'PRIVATE_CWD_SENTINEL')
+        class Client(DemoClient):
+            async def create(self, **kwargs):
+                result = await super().create(**kwargs)
+                for call in result.choices[0].message.tool_calls or []:
+                    if call.function.name=='run_command':
+                        args = json.loads(call.function.arguments); args['cwd'] = illegal
+                        call.function.arguments = json.dumps(args)
+                return result
+        approval = AsyncMock(return_value=ApprovalDecision.APPROVE)
+        with patch('mybot.evaluation.coding_live.build_client', side_effect=AssertionError('offline only')) as sdk, \
+                patch('mybot.tools.run_command.run_process') as process:
+            report = await self.evaluation(offline_client_factory=lambda public:Client(), command_provider=approval)
+        sdk.assert_not_called(); approval.assert_not_awaited(); process.assert_not_called()
+        r = report['results'][0]
+        self.assertEqual(r['agent_state'], 'blocked')
+        self.assertFalse(r['agent_workflow_success'])
+        self.assertEqual(r['controller']['stop_reason'], 'invalid_cwd')
+        self.assertEqual(r['metrics']['real_test_runs'], 0)
+        self.assertIsNone(r['controller']['last_verified_revision'])
+        self.assertEqual(r['judge']['judge_state'], 'hidden_pass')
+        self.assertTrue(r['judge']['verified_repair_success'])
+        self.assertEqual(r['metrics']['approval_denials'], 0)
+        self.assertTrue(r['metrics']['tool_call_ids_paired'])
+        self.assertEqual(r['metrics']['protocol_false_verified_count'], 0)
+        self.assertNotIn('PRIVATE_CWD_SENTINEL', json.dumps(report))
+        self.assertNotIn(illegal, json.dumps(report))
+        self.assertIsNone(report['actual_tokens'])
+        self.assertIsNone(report['estimated_cost'])
+
     async def test_completed_plan_cannot_mask_independent_hidden_failure(self):
         class PlannedClient(DemoClient):
             async def create(self, **kwargs):

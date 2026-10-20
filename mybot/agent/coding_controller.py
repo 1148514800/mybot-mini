@@ -314,6 +314,9 @@ class CodingTaskController:
                 'Patches require subsequent approved nonzero-count Python tests. Failed tests are feedback; '
                 'For run_command, prefer omitting timeout_seconds to use the configured safe default. '
                 'Explicit values must not exceed command_timeout_seconds below; task/request timeouts do not raise it. '
+                "For run_command, prefer omitting cwd: default '.' is the current task workspace root (isolated in evaluation). "
+                "Explicit cwd must be an existing safe workspace-relative directory, never an absolute host or temporary "
+                "evaluation path, '..' segments or symlinks. "
                 'never repeat a command automatically or infer approval from prose. Denial/uncertain execution stops. '
                 'Plan completion is not task verification. One write OR command per response; budgets cannot increase. '
                 'model_requests_remaining includes the response now being requested. At three or fewer, '

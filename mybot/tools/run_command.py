@@ -39,12 +39,16 @@ class RunCommandTool(RepositoryTool):
     description = ('Run a Python test/check command after separate one-call human approval. argv array, no shell string. '
         'Modes are host_confirm (NO OS isolation) or macos_readonly (verified Seatbelt, workspace read-only, network denied). '
         'Only python/python3, pytest/ruff via validated Python, or uv run --no-sync python ... . '
+        'Prefer omitting optional cwd to run at workspace root; explicit cwd must be an existing safe workspace-relative directory. '
         'Nonzero completed exit is real failure feedback, not a passed test. Output/time/temp limits apply.')
     private_arguments = True
     parameters = {'type': 'object', 'properties': {
         'argv': {'type': 'array', 'minItems': 1, 'maxItems': 32,
                  'items': {'type': 'string', 'minLength': 1, 'maxLength': 2048}},
-        'cwd': {'type': 'string', 'minLength': 1, 'maxLength': 4096},
+        'cwd': {'type': 'string', 'minLength': 1, 'maxLength': 4096, 'default': '.',
+                'description': "Optional; prefer omitting cwd to run at workspace root ('.'). If set, use an existing "
+                    "workspace-relative directory; no absolute paths, '..' segments or symlinks. "
+                    "Do not use the absolute host project or temporary evaluation path."},
         'timeout_seconds': {'type': 'integer', 'minimum': 1, 'maximum': 60}},
         'required': ['argv'], 'additionalProperties': False}
 
