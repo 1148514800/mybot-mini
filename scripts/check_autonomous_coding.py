@@ -144,6 +144,213 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(reply, 'plain'); self.assertIsNone(a.last_coding_report)
         self.assertNotIn('Coding task host constraints', req[0]['messages'][0]['content'])
 
+    @staticmethod
+    def instruction_state(text):
+        return json.loads(text[text.rfind('{'):])
+
+    def test_remaining_requests_include_pending_response(self):
+        c = CodingTaskController(AutonomySettings(enabled=True, max_model_requests=5), self.tools)
+        for used in range(6):
+            state = self.instruction_state(c.instruction())
+            self.assertEqual(state['model_requests_remaining'], 5-used)
+            self.assertEqual(state['budget_priority'], 'conserve_requests' if used >= 2 else 'normal')
+            self.assertFalse(state['current_revision_test_required'])
+            self.assertEqual(c.model_requests, used)  # Building instructions spends no budget.
+            if used < 5: self.assertTrue(c.before_request([]))
+        self.assertFalse(c.before_request([]))
+        self.assertEqual(c.stop_reason, 'max_model_requests')
+
+    async def test_budget_priority_tracks_real_revision_evidence(self):
+        self.controller.model_requests = self.controller.settings.max_model_requests - 3
+        await self.changed()
+        state = self.instruction_state(self.controller.instruction())
+        self.assertEqual(state['budget_priority'], 'verify_current_revision')
+        self.assertTrue(state['current_revision_test_required'])
+        await self.run_tests()
+        state = self.instruction_state(self.controller.instruction())
+        self.assertEqual(state['budget_priority'], 'conserve_requests')
+        self.assertFalse(state['current_revision_test_required'])
+        await self.native('apply_patch', self.patch_args('return left + right', 'return left - right'))
+        self.assertTrue(self.instruction_state(self.controller.instruction())['current_revision_test_required'])
+
+    async def test_direct_repair_within_five_requests(self):
+        approvals = AsyncMock(side_effect=yes)
+        self.tools.get_tool('run_command').approval_provider = approvals
+        a, _, requests = await self.run_loop([
+            response(calls=[call('read_file_range', {'path':'src/calculator.py','start_line':1,'end_line':20})]),
+            lambda: response(calls=[call('apply_patch', self.patch_args(dry=True))]),
+            lambda: response(calls=[call('apply_patch', self.patch_args())]),
+            response(calls=[call('run_command', {'argv':COMMAND_ARGV})]), response('done')],
+            coding_autonomy={'enabled':True,'max_model_requests':5})
+        self.assertEqual(a.plan.mode, 'DIRECT')
+        self.assertEqual(a.last_coding_report['state'], 'verified')
+        self.assertEqual(len(requests), 5)
+        approvals.assert_awaited_once()
+        states = [self.instruction_state(r['messages'][0]['content']) for r in requests]
+        self.assertEqual([s['model_requests_remaining'] for s in states], [5,4,3,2,1])
+        self.assertEqual(states[3]['budget_priority'], 'verify_current_revision')
+
+    async def test_planned_repair_batches_transitions_with_execution(self):
+        start = lambda step: call('update_plan', {'step':step,'status':'in_progress'})
+        done = lambda step: call('update_plan', {'step':step,'status':'completed'})
+        a, _, requests = await self.run_loop([
+            response(calls=[call('create_plan', {'steps':['investigate','repair','test']}), start(1),
+                call('read_file_range', {'path':'src/calculator.py','start_line':1,'end_line':20})]),
+            lambda: response(calls=[done(1), start(2), call('apply_patch', self.patch_args(dry=True))]),
+            lambda: response(calls=[call('apply_patch', self.patch_args())]),
+            response(calls=[done(2), start(3), call('run_command', {'argv':COMMAND_ARGV})]),
+            response(calls=[done(3)]), response('done')],
+            coding_autonomy={'enabled':True,'max_model_requests':6},
+            context_enabled=True, context_max_chars=80000)
+        self.assertEqual(a.plan.mode, 'PLANNED')
+        self.assertEqual([s.status for s in a.plan.steps], ['completed']*3)
+        self.assertEqual(a.last_coding_report['state'], 'verified')
+        self.assertEqual(a.last_coding_report['current_revision'], 1)
+        self.assertEqual(a.last_coding_report['last_verified_revision'], 1)
+        self.assertEqual(len(requests), 6)
+        results = [m['content'] for m in a.session.history() if m['role']=='tool']
+        self.assertEqual(len(results), 11)
+        self.assertTrue(all(not text.startswith('Error:') for text in results))
+
+    async def test_batch_cannot_complete_without_real_evidence(self):
+        a, _, _ = await self.run_loop([response(calls=[
+            call('create_plan', {'steps':['repair','test']}),
+            call('update_plan', {'step':1,'status':'in_progress'}),
+            call('update_plan', {'step':1,'status':'completed'}),
+            call('update_plan', {'step':2,'status':'in_progress'})]), response('done')])
+        self.assertEqual([s.status for s in a.plan.steps], ['in_progress','pending'])
+        self.assertFalse(a.plan.steps[0].verified)
+        self.assertEqual(a.last_coding_report['committed_patches'], 0)
+        self.assertEqual(a.last_coding_report['test_runs'], 0)
+
+    async def test_plan_preview_cannot_complete_repair_step(self):
+        a, _, _ = await self.run_loop([response(calls=[
+            call('create_plan', {'steps':['repair','test']}),
+            call('update_plan', {'step':1,'status':'in_progress'}),
+            call('apply_patch', self.patch_args(dry=True)),
+            call('update_plan', {'step':1,'status':'completed'})]), response('done')])
+        self.assertEqual(a.plan.steps[0].status, 'in_progress')
+        self.assertFalse(a.plan.steps[0].verified)
+        self.assertFalse(a.last_coding_report['committed_patches'])
+
+    async def test_plan_cannot_skip_failed_step_in_batch(self):
+        a, _, _ = await self.run_loop([response(calls=[
+            call('create_plan', {'steps':['investigate','repair']}),
+            call('update_plan', {'step':1,'status':'in_progress'}),
+            call('read_file_range', {'path':'missing.py','start_line':1,'end_line':1}),
+            call('update_plan', {'step':1,'status':'completed'}),
+            call('update_plan', {'step':2,'status':'in_progress'}),
+            call('apply_patch', self.patch_args())]), response('done')])
+        self.assertEqual([s.status for s in a.plan.steps], ['failed','pending'])
+        self.assertEqual(a.last_coding_report['committed_patches'], 0)
+
+    async def test_plan_metadata_cannot_hide_multiple_side_effects(self):
+        before = (self.root/'src/calculator.py').read_bytes()
+        approvals = AsyncMock(side_effect=yes)
+        self.tools.get_tool('run_command').approval_provider = approvals
+        a, _, _ = await self.run_loop([response(calls=[
+            call('create_plan', {'steps':['repair','test']}),
+            call('update_plan', {'step':1,'status':'in_progress'}),
+            call('apply_patch', self.patch_args()), call('run_command', {'argv':COMMAND_ARGV})])])
+        self.assertEqual(a.last_coding_report['stop_reason'], 'multiple_side_effects_in_batch')
+        self.assertEqual(a.plan.mode, 'DIRECT')  # Entire batch rejected before execution.
+        self.assertEqual((self.root/'src/calculator.py').read_bytes(), before)
+        approvals.assert_not_awaited()
+
+    async def test_budget_aware_synthetic_model_prioritizes_test(self):
+        # No hidden benchmark input: a separate calculator fixture and a local client.
+        seen = []
+        async def create(**kwargs):
+            state = self.instruction_state(kwargs['messages'][0]['content']); seen.append(state)
+            if len(seen) == 1:
+                return response(calls=[call('read_file_range', {'path':'src/calculator.py','start_line':1,'end_line':20})])
+            if len(seen) == 2:
+                # Use SHA returned by the actual tool, not a guessed model hash.
+                result = next(m['content'] for m in reversed(kwargs['messages']) if m['role']=='tool')
+                sha = json.loads(result.split('\n\nmetadata=',1)[1])['file_sha256']
+                args = self.patch_args(); args['changes'][0]['expected_sha256'] = sha
+                return response(calls=[call('apply_patch', args)])
+            if state['budget_priority'] == 'verify_current_revision':
+                return response(calls=[call('run_command', {'argv':COMMAND_ARGV})])
+            return response('reviewed test result')
+        cfg = self.cfg(coding_autonomy={'enabled':True,'max_model_requests':4}, context_enabled=True, context_max_chars=80000)
+        a = AgentLoop(N(chat=N(completions=N(create=create))), cfg, self.tools, ContextBuilder(self.root))
+        with contextlib.redirect_stdout(io.StringIO()): await a.handle_message('Repair calculator and verify it')
+        self.assertEqual(a.last_coding_report['state'], 'verified')
+        self.assertEqual(a.last_coding_report['test_runs'], 1)
+        self.assertEqual([s['model_requests_remaining'] for s in seen], [4,3,2,1])
+        self.assertTrue(pair_messages(a.session.history(), complete=True))
+
+    async def test_ignored_budget_warning_cannot_extend_requests(self):
+        a, _, requests = await self.run_loop([
+            response(calls=[call('create_plan', {'steps':['repair','test']})]),
+            response(calls=[call('update_plan', {'step':1,'status':'in_progress'})]),
+            lambda: response(calls=[call('apply_patch', self.patch_args())]),
+            response(calls=[call('update_plan', {'step':1,'status':'completed'})])],
+            coding_autonomy={'enabled':True,'max_model_requests':4})
+        self.assertEqual(len(requests), 4)
+        self.assertEqual(self.instruction_state(requests[-1]['messages'][0]['content'])['budget_priority'], 'verify_current_revision')
+        self.assertEqual(a.last_coding_report['stop_reason'], 'max_model_requests')
+        self.assertEqual(a.last_coding_report['state'], 'budget_exhausted')
+        self.assertEqual(a.last_coding_report['test_runs'], 0)
+        self.assertIsNone(a.last_coding_report['last_verified_revision'])
+
+    async def test_completed_plan_with_patch_but_no_test_is_not_verified(self):
+        a, _, _ = await self.run_loop([
+            response(calls=[call('create_plan', {'steps':['repair','review']}),
+                call('update_plan', {'step':1,'status':'in_progress'}), call('apply_patch', self.patch_args()),
+                call('update_plan', {'step':1,'status':'completed'}),
+                call('update_plan', {'step':2,'status':'in_progress'}),
+                call('read_file_range', {'path':'src/calculator.py','start_line':1,'end_line':20}),
+                call('update_plan', {'step':2,'status':'completed'})]), response('done'), response('done')])
+        self.assertTrue(all(s.status=='completed' for s in a.plan.steps))
+        self.assertEqual(a.last_coding_report['state'], 'edited_unverified')
+        self.assertEqual(a.last_coding_report['test_runs'], 0)
+
+    async def test_failed_test_is_not_masked_by_plan_completion(self):
+        a, _, _ = await self.run_loop([
+            response(calls=[call('create_plan', {'steps':['repair','test']}),
+                call('update_plan', {'step':1,'status':'in_progress'}),
+                call('apply_patch', self.patch_args(new='return left * right')),
+                call('update_plan', {'step':1,'status':'completed'}),
+                call('update_plan', {'step':2,'status':'in_progress'})]),
+            response(calls=[call('run_command', {'argv':COMMAND_ARGV}),
+                call('update_plan', {'step':2,'status':'completed'})]), response('done'), response('done')])
+        self.assertEqual(a.plan.steps[1].status, 'in_progress')
+        self.assertFalse(a.plan.steps[1].verified)
+        self.assertEqual(a.last_coding_report['test_failures'], 1)
+        self.assertEqual(a.last_coding_report['state'], 'edited_unverified')
+
+    def test_coding_guidance_is_general_and_metadata_only(self):
+        hint = self.controller.instruction()
+        for expected in ('DIRECT','PLANNED','sequentially','return paths','not task verification'):
+            self.assertIn(expected, hint)
+        for private in ('validation-chain-001','normalize.py','validation.py','service.py',
+                        str(self.root),'return left - right','expected_patch','hidden_suite'):
+            self.assertNotIn(private, hint)
+
+    async def test_multifile_preflight_and_revision_remain_atomic(self):
+        import hashlib
+        other = self.root/'src/formatter.py'; other.write_text('VALUE = 1\n')
+        first_before = (self.root/'src/calculator.py').read_bytes()
+        args = self.patch_args()
+        args['changes'].append({'op':'update','path':'src/formatter.py','expected_sha256':'0'*64,
+            'edits':[{'old_text':'VALUE = 1','new_text':'VALUE = 2'}]})
+        result = await self.native('apply_patch', args)
+        self.assertEqual(result.error, 'stale_file_hash')
+        self.assertEqual((self.root/'src/calculator.py').read_bytes(), first_before)
+        self.assertEqual(other.read_text(), 'VALUE = 1\n')
+        self.assertEqual(self.controller.current_revision, 0)
+        args['changes'][1]['expected_sha256'] = hashlib.sha256(other.read_bytes()).hexdigest()
+        self.assertTrue((await self.native('apply_patch', {**args,'dry_run':True})).success)
+        self.assertEqual(self.controller.current_revision, 0)
+        self.assertTrue((await self.native('apply_patch', args)).success)
+        self.assertEqual(self.controller.current_revision, 1)
+        self.assertEqual(set(self.controller.expected_hashes), {'src/calculator.py','src/formatter.py'})
+        await self.run_tests()
+        self.assertTrue(self.controller.can_verify())
+        self.assertEqual(self.controller.last_verified_revision, 1)
+
     async def test_model_text_cannot_verify(self):
         a, reply, _ = await self.run_loop([response('Everything fixed; all tests passed.')])
         self.assertEqual(a.last_coding_report['state'], 'completed_without_changes')

@@ -2,28 +2,28 @@
 
 ## 当前目标与状态
 
-Phase24 Medium预览错误诊断与有界恢复完成，离线回归通过。分支codex/phase-24，基线192fcbd；不付费Live、不Push/Merge、不进入25。main3461dc7、用户文件app.py/USER.md、原Index、配置、已有报告及Tag/ZIP哈希核对未变。
+Phase24首次Hard失败诊断与通用Planning预算指引优化完成，基线codex/phase-24 / 5bdfb01，离线回归通过。本轮不付费Live、不Push/Merge、不进入25。生产修改仅CodingTaskController.instruction；Planning、Loop、ContextManager和工具执行语义不改。
 
-## Medium诊断事实与限制
+## 诊断事实与限制
 
-已有报告runs/coding_benchmark/live-20261019T145243-391f3475.json：csv-export-001、coco/deepseek-v4.1-flash，请求5次、工具9次（list_files3/read_file5/apply_patch1），read_file_range0；首个Dry Run失败，无写入/测试，blocked，stop_reason=patch_failed_without_safe_recovery，stale0。原Trace把Patch错误都归other_tool_error且未保留参数，无法还原具体拒绝原因，不能断言一定是Schema/重叠/无效变化，也不能声称本修复必然解决该次具体Patch。
+报告runs/coding_benchmark/live-20261020T044139-f6127fc8.json：validation-chain-001，coco/deepseek-v4.1-flash；请求12/12、工具20、计划管理独占5次响应（4/5/8/9/12），最后update_plan后下一请求被max_model_requests拒绝。2次预览/提交、0次Agent测试，revision2/last_verified_revision=null。仅修改normalize.py、validation.py；独立Judge公开2/2通过、隐藏未全过。必须同时承认工作流预算不足和候选代码未修复完整，不能说仅因预算失败。无API、审批、Seatbelt、Patch、Index或Journal错误。安全Trace不含参数/源码，不能还原模型动机或具体隐藏失败输入。
 
-## 修复与安全边界
+## 改动与架构决定
 
-原_RETRY三项stale_file_hash/anchor_not_found/ambiguous_context保持。新增独立预览纠正集合仅invalid_arguments/overlapping_edits/no_effective_changes，严格要求dry_run is True、validation/preflight阶段、未尝试发布；清理异常覆盖safe_to_retry=false。正式write请求上述三类仍阻断，非法路径/权限/元数据/未知及资源错误不开放恢复。无法解析JSON且无可信模式仍阻断。
+保留Phase4通用Planning和Schema。原Loop已支持顺序批处理，未增加执行权限或宿主伪造计划调用。自主提示明确清晰目标可DIRECT，多依赖可少量Plan步骤；已收到证据后可同响应completed→next in_progress→下一工具，create/start/调查亦可合并；依赖结果的参数和SHA必须等待真实返回。
 
-增加固定failure_phase：参数解析/校验/只读预检/Diff/写入准备/发布/清理/Journal；不能凭preflight_failed就断言从未产生暂存字节。发布失败且回滚成功仍blocked；回滚冲突/状态不确定仍execution_uncertain。Controller原生safe_to_retry判定与预算不变，无宿主自动重放；同一错误重复受max_no_progress等原限制。
+动态model_requests_remaining包含当前待请求响应（instruction先于before_request）；剩余≤3时提示conserve_requests，已提交且当前revision缺测试证据时verify_current_revision。仅建议为必要修复、批准测试、结果审查留请求，不硬性保留配额、不增预算、不自动执行工具。补充通用入口→转换→验证→返回及调用方使用结果的检查，不含案例特定答案。
 
-CodingTrace仅固定白名单代码、状态/阶段枚举和布尔值；未知映射other_patch_error/unknown_patch_failure/unknown_patch_phase，不持久化源码、Patch、参数或异常正文。通用旧Trace不改。自主提示明确任何预览/写入前用read_file_range取真实file_sha256，错误后检查反馈、重新读取再生成，不猜哈希。
-
-此前终端审批/动态命令超时提示和30秒上限、Judge与Agent工作流独立报告保留。Benchmark/Reference/Gold/隐藏测试、Judge及命令/审批/Seatbelt实现未改，未扩大预算。
+真实TTY逐次审批、30秒命令上限、Seatbelt、Patch SHA/原子性/恢复边界、Journal、revision测试证据和协议配对不改。Plan证据只是一般成功工具结果，不能替代Controller代码验证或独立Judge。既有预览错误白名单、审批输出通道和动态命令超时提示保留。
 
 ## 验证
 
-新增11项：预览三类与原stale/anchor错误无写入证明；正式写入/后续阶段不扩恢复；3条重新读取纠正→预览→提交→真实测试→Judge；重复错误预算；非法路径/敏感访问/权限；发布及回滚异常；畸形JSON保守拒绝；白名单/源码参数异常哨兵不泄露。未删除或修改既有安全断言。
+新增15项：请求状态/临界点、测试及后续修订优先级、DIRECT五次与PLANNED六次响应实际修复、有效连续转换、无证据/仅预览/失败步骤拒绝、多副作用整批拒绝、低预算合成模型优先真实测试、忽略提醒仍严格停止、计划完成不能掩盖缺测试/测试失败/隐藏失败、两文件原子预检和单revision、通用提示及报告隐私。原两个测试文件211项既有方法AST比对不变。
 
-针对性11、Phase24专项131、Patch55、自主编码80及编译通过；uv run python -m scripts.check_phase全量881通过（原870+11），原Phase1/2断言通过。日志/tmp/phase24-preview-full.log。
+专项：自主编码94、Planning12、Patch55、Phase24评测132全部通过；Python编译通过。uv run python -m scripts.check_phase全量896项通过（原881+新增15），原Phase1/2断言亦通过；含命令58、Git工作流101及真实TTY/Seatbelt安全回归。日志/tmp/phase24-budget-full.log。
 
-## 归档与下一步
+## 文档、安全与下一步
 
-学习与状态转换见docs/phases/phase-24.md第17节；原phase-24 Tag/ZIP不动且不含后续修复，以当前分支后续Commit为准。等待用户明确授权后才做真实复测，新分类不能追溯旧other_tool_error。区分安全拒绝与可纠正预览输入错误，不为Medium成功率改Gold或评分，不自动推进Phase25。
+学习说明和请求分组证据见docs/phases/phase-24.md第18节。Benchmark/Fixtures/Gold/Reference/隐藏测试、Judge、安全工具及预算未改；main3461dc7、原用户app.py/USER.md修改、原Index、既有报告、配置和全部Tag/ZIP哈希核对未变。旧phase-24归档不包含后续修复，禁止移动Tag或覆盖ZIP。
+
+DIRECT选择、调用链提示仅提高成功机会；批处理可行性与低预算状态驱动测试有离线证据，但未改变安全状态机。新增提示增加上下文，真实Token净变化和模型遵从性未测。等待用户另行授权后才在原预算下单次Hard复测；离线通过不代表Hard真实模型成功。不要重复排查已保留的审批/超时/预览恢复问题，不扩大重试范围或预算。

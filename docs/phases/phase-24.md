@@ -1,6 +1,6 @@
 # Phase 24：Real-Model Coding Agent Evaluation — 真实模型接口与隐藏测试评测
 
-版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断见第15～17节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
+版本说明：第1～14节保留初始`phase-24`归档时的验证事实。归档后Live结果及审批、Patch提示、命令超时、预览错误诊断、Planning预算指引见第15～18节，不能再将“尚未调用模型”的历史描述当作当前状态。现有Tag/ZIP仍是原快照，后续修复不覆盖它们。
 
 ## 1. 目标、数据来源与当前结论
 
@@ -331,5 +331,65 @@ status=preflight_failed原本也可能表示写入准备失败，不能单靠该
 新增11项：三类输入及原stale/anchor错误预览无写入证明；正式写入/非输入阶段不扩恢复；Schema/重叠/无变化分别在原Loop纠正→重新读取→有效预览→提交→真实测试→Judge；重复错误在原预算内停止；非法路径/敏感访问、权限拒绝；真实发布与回滚故障；未解析JSON仍阻断；白名单及任意异常/源码哨兵不泄露。没有删除原有安全断言。针对性11项、Phase24专项131项、Patch55项、自主编码80项及编译全部通过；`uv run python -m scripts.check_phase`全量881项通过（原870项全部保留+新增11项），原Phase1/2断言亦通过。日志`/tmp/phase24-preview-full.log`。main、用户文件、原Index、配置、已有Live报告及全部Tag/ZIP哈希已核对保持不变。
 
 本轮无付费Live，不Push/Merge、不进入25；Gold/评分标准不变，原Tag/ZIP不移动或覆盖。旧Medium错误类型仍未知，不能声称本次必然解决了那个具体模型Patch；后续明确授权的真实运行才可利用新分类诊断。
+
+## 18. 首次Hard失败：Planning开销与请求预算指引
+
+基线`5bdfb01`，本轮只分析既有报告并离线验证，没有付费请求。报告`runs/coding_benchmark/live-20261020T044139-f6127fc8.json`显示validation-chain-001使用coco/deepseek-v4.1-flash：12/12次请求、20次工具、2次预览、2次提交、0次Agent测试，revision=2、last_verified_revision=null，budget_exhausted/max_model_requests。独立Judge公开2/2通过、隐藏未全部通过，hidden_fail、verified_repair_success=false。实际仅修改app/normalize.py与app/validation.py，不能将修改了两个文件等同于调用链修复完整。
+
+### 有代码依据的根因与未知范围
+
+安全Trace按请求分组如下，仅列工具名称，不保留原始参数、Patch或源码：
+
+| 请求 | 工具 |
+| --- | --- |
+| 1 | list_files、git_status |
+| 2 | list_files×2、read_file×2 |
+| 3 | read_file_range×5 |
+| 4、5 | create_plan；update_plan |
+| 6、7 | apply_patch预览；写入 |
+| 8、9 | update_plan；update_plan |
+| 10、11 | apply_patch预览；写入 |
+| 12 | update_plan |
+
+五次响应仅管理计划，占请求预算5/12；最后一次未调用测试，下一次before_request即停止。工具调用没有失败，没有审批拒绝、沙盒错误或版本冲突。这证明请求分配不足以完成工作流；**同时隐藏失败证明候选修复仍不完整，不能归因仅为预算不足**。报告不含模型推理、计划参数或最终源码，不能还原模型选择Planning的心理原因，也不能确定具体隐藏失败输入。本轮不读取隐藏测试或参考实现来设计提示。
+
+`context.SYSTEM_RULES`将多步任务描述为可创建计划，`PlanningTool.description`也以multiple operations作为条件；Coding Controller原来未解释多工具编码仍可DIRECT。这可能促成重复的计划管理，但不是能够从报告证明的模型动机。通用Planning的n步成功路径需要create一次、每步start/completed各一次（1+2n个计划调用），**不要求每个调用独占模型请求**。
+
+`AgentLoop`原本按模型响应中的顺序执行调用；metadata工具走PlanningTool，其他执行先检查Plan.execution_error，再执行真实工具、Plan.observe、Controller.observe。create→start→调查，或已获得证据后completed→next in_progress→下一工具，本来就可在同一响应执行。ContextManager只做本地裁剪/摘录和计划状态视图，不额外请求模型。没有必要增加第二个循环、修改状态机或让宿主代填计划操作。
+
+必须等结果的情况包括搜索决定读取路径、读取决定真实SHA和编辑内容、预览结果决定正式提交、写入完成后的当前revision测试、测试输出决定后续修复和最终结论。尤其正式写入与命令不能放同一批次。批处理不允许猜尚未返回的参数、不跳过失败步骤，也不自动重放失败调用。Plan.update仍只接受真实成功工具证据；这只是一般步骤证据，并不理解步骤文字的语义。代码验证始终由Controller的原生命令、真实非零测试数、文件哈希和revision一致性独立判断，计划完成不生成测试证据。
+
+Controller原提示虽有used/max计数，却没有剩余请求、临界优先级或为测试/结果审查预留的指引。needs_continuation只在模型返回无调用时触发一次，并且同样受原请求预算约束；它既不强制测试，也不能在12次已耗尽后补请求。run_command之后仍需后续响应接收和审查结果；若最后一次请求才发起测试，下一次预算门控仍可能停止任务。这解释了已提交Patch仍可能没有测试机会，或缺少收尾请求。现有finish/can_verify和独立Judge没有把Plan完成当成修复验证；无需改评分。
+
+### 最小优化及证据边界
+
+生产代码只修改`CodingTaskController.instruction()`，不改Tool Schema、通用Planning、Loop、ContextManager或评测器：
+
+| 优化 | 行为与证据 |
+| --- | --- |
+| DIRECT / PLANNED | 明确目标清晰的多工具编码可以DIRECT，复杂依赖仍可少量执行步骤的Plan；离线分别完成实际修复与测试，不能据此证明真实模型选择会改善 |
+| 顺序批处理提示 | 描述现有create/start/调查、completed/start/下一工具组合；合成模型6次响应完成三步Plan、预览、写入、真实测试及收尾，证明现有路径可用，不是新增执行权限 |
+| 动态请求意识 | remaining=max(0,max_model_requests-used)，Loop在before_request前构造提示，因此明确包含当前待请求的响应；剩余≤3且当前revision缺测试证据时优先级verify_current_revision，否则conserve_requests，充足时normal |
+| 测试与收尾 | 提醒保留必要修复、批准测试、结果审查的请求，避免纯计划响应；本地合成模型在剩2次时响应状态执行真实测试、最后1次审查结果，同样4次上限下可verified；忽略提醒仍严格预算停止，不强行调度或额外留配额 |
+| 调用链意识 | 通用说明入口→转换→验证→返回及调用方使用修复结果；不含具体案例文件、答案或隐藏信息，只提高调查机会，尚无真实模型效果证据 |
+
+`current_revision_test_required`仅由已提交Patch、当前verification和last_verified_revision计算；提示不增加证据、不读取隐藏数据、不进入报告。既有verification_required_now的continuation语义保持。未验证补丁、测试失败、预算不足仍不能verified；即使工作流verified和计划全部完成，独立隐藏失败仍是修复失败。
+
+### macOS + uv验证与限制
+
+新增15项离线回归：动态剩余数/临界值/无请求副作用；真实测试和后续写入使优先级随revision变化；DIRECT五次请求修复；三步PLANNED六次响应；无证据/仅预览不能完成步骤；失败不能跳过；计划metadata不能掩盖多副作用批次；合成模型低预算优先测试；忽略提示仍预算停止；已完成Plan有Patch无测试不能verified；失败测试不被完成状态掩盖；提示通用且仅含状态；两文件预检失败无写入及成功提交单revision；计划完成而Judge隐藏失败，报告不含计划敏感哨兵。
+
+运行命令（全部离线，不使用Live参数）：
+
+```bash
+uv run python -m scripts.check_autonomous_coding
+uv run python -m scripts.check_planning
+uv run python -m scripts.check_patch_editing
+uv run python -m scripts.check_real_coding_eval
+uv run python -m compileall -q mybot scripts
+uv run python -m scripts.check_phase
+```
+
+专项自主编码94、Planning12、Patch55、Phase24评测132项全部通过，Python编译通过；`uv run python -m scripts.check_phase`全量896项通过（原881+新增15），原Phase1/2断言亦通过，包含命令58项、Git工作流101项及真实TTY/Seatbelt安全回归。全量日志`/tmp/phase24-budget-full.log`。原881项测试保留，未删除或弱化已有断言；涉及两个测试文件的既有211个测试方法通过AST逐项比对保持不变。安全实现、预算配置、Benchmark/Gold/Reference/隐藏测试、Judge、原Tag/ZIP均不改；原有审批输出真实TTY通道保留，离线模拟审批仅用于测试。新增提示会增加每次请求的上下文，尚未测量真实Token净变化；模型也可能忽略提醒。下一轮需用户另行授权，在原12次预算内单次复测，仍同时检查Agent、Judge与当前revision测试证据；本轮离线通过不意味着Hard真实修复成功。
 
 archive-ready: true

@@ -352,6 +352,45 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(r['agent_state'],'verified');self.assertEqual(r['judge']['judge_state'],'hidden_fail')
         self.assertEqual(report['hidden_failure_after_agent_verified'],1);self.assertEqual(report['protocol_false_verified_count'],0)
 
+    async def test_completed_plan_cannot_mask_independent_hidden_failure(self):
+        class PlannedClient(DemoClient):
+            async def create(self, **kwargs):
+                if self.step == 5:
+                    return N(choices=[N(message=N(content='Reviewed public test results.', tool_calls=None),
+                                        finish_reason='stop')], usage=None)
+                result = await super().create(**kwargs)
+                message = result.choices[0].message
+                def plan_call(name, args, identifier):
+                    return N(id=identifier, function=N(name=name, arguments=json.dumps(args)))
+                if self.step == 1:
+                    message.tool_calls[:0] = [
+                        plan_call('create_plan', {'steps':['PRIVATE_PLAN_SENTINEL repair','execute tests']}, 'plan-create'),
+                        plan_call('update_plan', {'step':1,'status':'in_progress'}, 'plan-start')]
+                elif self.step == 4:
+                    message.tool_calls[:0] = [
+                        plan_call('update_plan', {'step':1,'status':'completed'}, 'plan-repaired'),
+                        plan_call('update_plan', {'step':2,'status':'in_progress'}, 'plan-test')]
+                elif self.step == 5:
+                    message.tool_calls = [plan_call('update_plan', {'step':2,'status':'completed'}, 'plan-finish')]
+                    message.content = None
+                    result.choices[0].finish_reason = 'tool_calls'
+                return result
+        report = await self.evaluation(offline_client_factory=lambda public:PlannedClient('partial'))
+        r = report['results'][0]
+        self.assertEqual(r['agent_state'], 'verified')
+        self.assertTrue(r['agent_workflow_success'])
+        self.assertEqual(r['judge']['judge_state'], 'hidden_fail')
+        self.assertFalse(r['judge']['verified_repair_success'])
+        self.assertEqual(r['metrics']['real_test_runs'], 1)
+        self.assertEqual(r['metrics']['committed_patches'], 1)
+        self.assertTrue(r['metrics']['tool_call_ids_paired'])
+        self.assertEqual(r['judge']['journal_attribution_mismatch'], 0)
+        self.assertFalse(r['judge']['index_changed'])
+        self.assertEqual(sum(e['event']=='tool' and e['name']=='update_plan' and e['success'] for e in r['trace']), 4)
+        self.assertNotIn('PRIVATE_PLAN_SENTINEL', json.dumps(report))
+        self.assertIsNone(report['actual_tokens'])
+        self.assertIsNone(report['estimated_cost'])
+
     async def test_real_patch_and_journal(self):
         report=await self.demo_run();r=report['results'][0]
         self.assertTrue(r['judge']['verified_repair_success']);self.assertEqual(r['judge']['journal_attribution_mismatch'],0)
