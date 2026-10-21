@@ -79,4 +79,6 @@ uv run python -m scripts.check_phase
 
 真实API配置不入档；不得用归档默认配置直接重跑已授权耗尽的Cohort。复查原始证据只读使用inventory/summary，缺失或SHA不符立即报错；旧已完成Cohort不能在新版本继续付费执行。新实验须新建目录、冻结新提交并获得预算授权。原12例/Gold/隐藏测试/Judge不变；未修改main与历史Tag/ZIP。
 
+归档证据子目录中的runs受到原全局忽略规则影响，已显式追踪脱敏后的started/raw/finished JSON；提交前核对SHA清单每项均在Git中，避免仅在本地存在的证据缺失。
+
 archive-ready: true
