@@ -81,4 +81,6 @@ uv run python -m scripts.check_phase
 
 归档证据子目录中的runs受到原全局忽略规则影响，已显式追踪脱敏后的started/raw/finished JSON；提交前核对SHA清单每项均在Git中，避免仅在本地存在的证据缺失。
 
+汇总归因按实际Trace逐项回查：validation-chain第三轮为成功预览、正式提交stale_file_hash安全拒绝、重新读取后max_no_progress；不得把重新读取误说成重复Patch预览。
+
 archive-ready: true

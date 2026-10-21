@@ -26,7 +26,7 @@ benchmark_harness_commit：`b008f35563c266d89ebbdd67a3c31607f9c47819`。所有�
 
 1. 13次审批值守中断后等待600秒取消：旧编排未把cancelled/task_timeout作为停止边界，继续运行后续槽位；取消后原capsule清理导致13次Journal归属不匹配、累计26文件。未批准过期提示。事后添加runtime错误/取消/未完成命令调查门和进程退出上限，离线证明流程改变，不伪称标准Live验证。
 2. 3次请求预算耗尽但已有通过当前修订的真实测试（timezone两次、cli一次），Judge通过而Agent未verified；Planning/结束请求开销有改进空间。成功的PLANNED运行也存在，不能直接禁用Planning。
-3. pagination R1与cache-ttl R3正式Patch参数错误；预览成功不证明正式提交参数一致，脱敏报告不足以指认具体字段。validation-chain R3多次预览失败触发max_no_progress。保持原安全恢复边界。
+3. pagination R1与cache-ttl R3正式Patch参数错误；预览成功不证明正式提交参数一致，脱敏报告不足以指认具体字段。validation-chain R3第5次响应预览成功，第6次正式提交遇到stale_file_hash且safe_to_retry=true；第7次响应重新读取3次后触发max_no_progress。无实际提交，不能称为反复预览失败。保持原安全恢复边界。
 4. file-recovery R1一次API请求超时；其前已有4次响应，不能说整个案例未收到任何响应，也不能无证据区分网络/Provider后端。
 5. serialization R3请求预算耗尽且没有提交/测试；隐藏失败针对未修改基线，不能推断未提交候选的正确性。
 
@@ -36,7 +36,7 @@ Phase26建议：可取消、可观测的逐命令审批生命周期；取消后�
 
 标准Codex逐条授权yes18次，0拒绝；13次未回答不是拒绝、更不是批准。完成的18次命令均有原生Seatbelt/真实测试证据；os_sandbox请求字段本身不作执行证据。受保护/无关文件变更0、Index变化0、虚假verified0、工具ID全部配对、sandbox_failures0；Journal异常如上明确保留。外部宿主验证另批准6次，外部Agent命令批准0；总yes24次。第6次外部模型请求超时（6请求/5响应、13工具、0Patch、0Agent测试），泛化未通过，不扩大超时或重跑。
 
-主工作区两处用户修改、原Index、75个历史资产/config/报告/ZIP哈希和旧refs检查保持；无Push/Merge、无旧Tag移动。原Phase24归档源3f53b05不同于ff10fb6基线，原两ZIP SHA仍3c69bb4eb29d982f3f8a9b1c1ea9fe968e098f1e58d3d5a04b8ca7a3fc5f8e09。
+主工作区两处用户修改、原Index、75个历史资产/config/报告/ZIP哈希及原分支/Tag/远程引用检查保持（两条Codex内部turn-diff临时引用在后续复核时已不存在，不能宣称全部内部引用未变）；无Push/Merge、无旧Tag移动。原Phase24归档源3f53b05不同于ff10fb6基线，原两ZIP SHA仍3c69bb4eb29d982f3f8a9b1c1ea9fe968e098f1e58d3d5a04b8ca7a3fc5f8e09。
 
 所有原始证据字节保留，finished/raw SHA及evidence-sha256.json核对；聚合报告脱敏扫描不输出凭证、原始模型请求或原始工具内容。SHA保护损坏检测，不对恶意同时篡改全部证据的宿主作不可伪造承诺。工具Schema补录明确标时，未冒充运行前清单。
 
