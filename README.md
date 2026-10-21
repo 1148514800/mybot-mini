@@ -16,6 +16,18 @@ cp config/config.example.json config/config.json
 
 编辑 `config/config.json`，填写提供商的 `api_key`、`base_url` 和 `model`。真实配置文件不会提交到 Git。
 
+CLI 自动回退：当 `llm.provider` 为 `coco`，且 `llm.providers.coco2` 已配置有效的
+`api_key`、`base_url`、`model` 时，主模型的 API 错误（包括超时）会最多触发一次备用请求。
+例如 `coco/deepseek-v4.1-flash` 失败后使用 `coco2/glm-5.3-flash`；后续请求在当前进程继续使用
+`coco2`，重启后重新从 `coco` 开始。回退读取配置，不写回 Provider、Model 或凭证。
+只有两个提供商同时配置时启用；主提供商占原请求时限的一半，为备用请求留出时间，整个请求仍受
+原时限和任务截止时间约束。SDK 隐式重试关闭，备用请求计入编码模型请求预算；预算不足、任务取消
+或工具错误不会触发备用请求。备用模型失败后直接上报，不继续轮询、重试或重放工具。
+流式接口不在当前 CLI 的支持范围。专项离线检查：`uv run python -m scripts.check_provider_failover`。
+
+评测入口继续使用原单模型客户端，不启用回退。混合模型行为必须使用独立版本及新评测组，不能
+追加到已有冻结 DeepSeek Campaign；本次开发没有调用真实模型 API。
+
 Windows PowerShell 可使用：
 
 ```powershell

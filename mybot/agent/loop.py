@@ -6,6 +6,7 @@ import time
 from typing import Any
 
 from openai import APITimeoutError, AsyncOpenAI
+from ..provider_failover import FallbackBudgetExceeded
 
 from ..config import GatewayConfig
 from ..tools import ToolRegistry, ToolResult
@@ -206,6 +207,8 @@ class AgentLoop:
                     timeout=(min(self.config.request_timeout_seconds, max(.001, controller.remaining_seconds))
                              if controller is not None else max(1.0, self.config.request_timeout_seconds)),
                 )
+            except FallbackBudgetExceeded:
+                return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             except (TimeoutError, APITimeoutError):
                 if controller is not None:
                     controller.check_time()

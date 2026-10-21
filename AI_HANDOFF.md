@@ -1,27 +1,36 @@
 # AI_HANDOFF
 
-## 当前状态
+## 当前目标与状态
 
-Phase25-R在codex/phase-25、`/Users/godblack/.codex/worktrees/phase-25/mybot-mini`已完成离线后续可靠性修复，基线8acf9ab。功能、42项专项和固定源码最终991项/26套件回归全部通过；原949项/25套件及测试文件保留。只做本地新提交，不归档/Push/Merge，不进入26。
+在独立 `codex/provider-failover` 分支（基于 Phase25-R e35044e）实现 CLI 的 coco → coco2 自动回退。
+原 Phase25 冻结工作区、Campaign 和历史报告保持不变；主工作区的两处用户修改不动。
+这不是 Phase26，也不重写或重新归档 Phase25。
 
-## 历史事实与证据
+## 实现
 
-原标准Harness b008f35563c266d89ebbdd67a3c31607f9c47819，coco2/gpt-6-astra，36次全保留：严格15/36，hidden_pass31/36、Judge repair18/36，取消13次、Journal累计26文件记录。原API元数据没有输入线程栈，审批等待归因结合操作事件及计数，不伪称逐次堆栈证明。外部6请求/5响应、第6次超时、0 Patch/Agent测试，仍未通过。历史异常不重算归属，不排除分母。
+- 新增 mybot/provider_failover.py，app 的客户端工厂启用回退；其他 Provider 或未配置 coco2 时保持原客户端。
+- coco 的 OpenAI APIError/超时最多触发一次 coco2 请求；切换后进程内继续使用备用模型，重启恢复主模型。
+- 主请求使用原时限一半，为备用保留时间；两者受原 Loop 请求/任务截止时间约束。取消不回退，工具不重放，备用失败不重试。
+- 两个客户端关闭 SDK 隐式重试；备用请求先经 Controller.before_request 计数和预算校验。
+  Loop 仅新增预算拒绝异常处理，避免把正常预算停止改记成不确定状态；工具、审批、Seatbelt、Patch、Judge不改。
+- 评测 build_client 不改，冻结 Campaign 不启用混合模型回退；继续评测须独立授权/版本/评测组，不能并入旧 DeepSeek 组。
 
-原170份证据SHA及184项报告/ZIP/config/用户文件保护资产已核对；phase-25仍指向8acf9ab，原ZIP SHA256为2686325f14d47d133e642cb4aeef7db813f3c71771fe224bab43039754beb57c。main、历史Tag/ZIP和用户配置不变。新证据只在docs/reports/phase-25-r，不重写旧报告。
+## 配置与安全
 
-## 实现与安全边界
+独立工作区 config/config.json 是未跟踪、被忽略的本地副本，权限0600。
+主配置保持 coco/deepseek-v4.1-flash，备用为 coco2/glm-5.3-flash，使用用户本轮提供的新备用凭证。
+不在文档、代码或日志保存凭证；原 Phase25 配置及凭证不改。代码与配置副本仅在本工作区生效。
 
-保留29fedef已有停止门与单槽解释器隔离，保留e7a1f39的resolve路径修复。新增评测层Attempt身份/不可逆撤销/5秒有界清理屏障；CodingClient与BenchmarkAgent请求/工具前后检查，取消后不启动后续Case/Repeat/Slot。清理未确认保留临时Workspace并严格execution_uncertain，不自动重试。SDK关闭和重复进程中断不能覆盖取消。
+## 验证与限制
 
-Phase25 Campaign/外部入口使用真实TTY的可取消FD读入和每命令随机挑战`yes <nonce>`，无后台input线程、无授权缓存；原通用cli_command_approval不改。直接旧评测API兼容yes，但新Cohort须走绑定身份的Campaign入口。
+新增17项离线测试：成功不切换、API/超时回退、备用自身模型/凭证、粘性切换、备用失败不重试、取消、工具不重放与ID配对、预算、日志和关闭清理。
+全量 `uv run python -m scripts.check_phase`：1008项、27套件通过（原991/26保留）；Phase1/2兼容断言通过。
+compileall、diff检查通过。写入本地配置后，17项专项及模拟工厂配置绑定检查再次通过。
+没有真实API或Live；缺少真实故障切换运行验证，不能声称模型能力或混合模型稳定性通过。
+全量原始日志仅在 /tmp/mybot-provider-failover-regression.log，不提交生成日志。
 
-工具边界在原Loop关闭Journal前保存公开路径和original/final哈希，校验初始与最终字节后才接受归属；丢失/冲突/pending保持异常。保存Tool Call ID哈希终态账本，不伪造已执行或成功结果。manifest v3冻结实际配置模型和源码/预算/Schema；started/terminal/raw/finished/blocked交叉验证Campaign/Run/Attempt/配置与SHA，已完成不重放，blocked优先于表面verified。
+## 下一步
 
-未修改AgentLoop、Controller、Patch、run_command验证、command_process、Seatbelt、Fixture/Gold/Reference/隐藏测试、Judge、依赖或模型凭证。所有模型均为合成客户端，无真实模型API、付费Live或外部项目模型复测。42项专项包含真实PTY、合成取消/迟到回调、原生Patch+Seatbelt真实测试+Judge、Journal异常和恢复/统计反例。最终回归、编译、diff检查及184项保护资产再次验证通过；回执docs/reports/phase-25-r/validation-summary.json。
-
-## 学习与下一步
-
-完整根因、13次/26文件证据链、状态机、验证与限制见docs/reports/phase-25-r/acceptance-report.md；学习入口docs/phases/phase-25-r.md；只读审计`uv run python -m scripts.audit_phase25r`。
-
-已完成全量、编译、diff及保护资产核对；本轮仅创建一个明确标记Phase25后续修复的本地提交，SHA见Git记录。不得移动phase-25、重新导出ZIP或修改旧36报告。离线通过不等于Live稳定性验收；新coco/deepseek-v4.1-flash重复Cohort须另获费用授权、新目录/提交/冻结配置，不与旧Astra混算，不自动执行。
+从此工作区运行CLI需用户后续明确的真实调用授权。只创建本地代码提交，不Push/Merge、不移动Tag、不导出ZIP。
+原DeepSeek Campaign现有CSV provider_error/blocked证据仍保留，不能删除blocked记录或直接恢复付费运行。
+Phase25-R原学习资料见 docs/phases/phase-25-r.md 和 docs/reports/phase-25-r/acceptance-report.md。

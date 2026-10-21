@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from .agent import AgentLoop, ContextBuilder
-from .config import GatewayConfig, build_client
+from .config import GatewayConfig
+from .provider_failover import build_gateway_client as build_client, ProviderFailoverClient
 from .tools import build_default_tool_registry
 from .workspace import init_workspace
 from .mcp_client.manager import MCPClientManager
@@ -31,6 +32,10 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
                 context=ContextBuilder(config.workspace),
                 undo_approval_provider=cli_undo_approval,
             )
+            if isinstance(llm_client, ProviderFailoverClient):
+                llm_client.before_fallback = lambda definitions: (
+                    agent.coding_controller is None
+                    or agent.coding_controller.before_request(definitions))
 
             print("Gateway started. Channel: cli\n")
             await agent.run()
