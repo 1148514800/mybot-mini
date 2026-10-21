@@ -4,7 +4,7 @@
 
 Provider Failover Harness Integration：Phase25之后的独立可靠性改进，不是Phase26。
 独立codex/provider-failover-harness分支，远程验收基线5490149827cffbc5c75aa6cc1634efeb33344c0a已核对无更新。
-新增49项专项、全量1070项/29套件及Phase1/2兼容断言通过；原1021项不删、不跳过、不弱化。
+新增50项专项、全量1071项/29套件及Phase1/2兼容断言通过；原1021项不删、不跳过、不弱化。
 本轮真实模型API请求0，不使用此前剩余额度，不Push/Merge、不移Tag或生成ZIP。
 
 ## 实现与隔离
@@ -22,7 +22,7 @@ Provider Failover Harness Integration：Phase25之后的独立可靠性改进，
 
 ## 验证与证据
 
-49项新专项、原17项CLI回退、13项smoke、42项生命周期专项以及全量1070/29通过，编译/diff通过。
+50项新专项、原17项CLI回退、13项smoke、42项生命周期专项以及全量1071/29通过，编译/diff通过。
 合成故障后原Loop完成真实Patch、Seatbelt公开测试和Judge：5次逻辑请求=6次物理接口尝试，Revision1/1，ID配对与Journal正确。
 回退后读取不重放；取消、迟到响应、全局/Controller预算、认证协议、异常关闭、历史隔离与防篡改均有反例。
 实际SDK MockTransport验证自己的模型/Key、相同上下文/Schema、禁隐式重试和HTTP计数，无外部模型网络。
@@ -32,8 +32,10 @@ Provider Failover Harness Integration：Phase25之后的独立可靠性改进，
 
 ## 下一步与边界
 
-本轮未复制真实配置到开发区，未改任何已有Key。1592项保护资产需提交后复核保持。
+本轮未复制真实配置到开发区，未改任何已有Key。1592项保护资产已多次复核保持。
 原Phase25/DeepSeek Campaign及CSV blocked证据不变，不允许在新分支继续或拼接旧单模型结果。
 可在本次OFFLINE PASS之后另行授权独立Live Coding Benchmark，必须配置凭证、冻结新版本并单独统计混合模型。
 不能宣称Live PASS、编码成功率提高、真实故障恢复稳定性或取消长期可靠性通过。
 AppleDouble pack索引错误未清理，Git必要读取与完整保护核验可用。
+
+追加离线模型标签隐私反例：清除离线凭证前收集已知Key用于检查，避免误填model的Key进入元数据。已用合成值复现，修复后50专项及1071全量通过；此前1070回归证据保留。

@@ -44,8 +44,11 @@ def settings(base, *, live, backup=None):
     model = raw.get('model') or ('glm-5.3-flash' if not live else None)
     secondary = replace(base,provider='coco2',model=model,api_key=raw.get('api_key') if live else None,
         base_url=raw.get('base_url') if live else None)
+    known_keys=(base.api_key,secondary.api_key,raw.get('api_key'),*(
+        value.get('api_key') for value in (_PROVIDERS.values() if isinstance(_PROVIDERS,dict) else ()) if isinstance(value,dict)))
+    known_keys=tuple(value for value in known_keys if isinstance(value,str))
     for cfg in (base,secondary):
-        if not isinstance(cfg.model,str) or not cfg.model or labels(cfg)['model']=='<unavailable>' or redact(cfg.model,(base.api_key,secondary.api_key))!=cfg.model:
+        if not isinstance(cfg.model,str) or not cfg.model or redact(cfg.model,known_keys)!=cfg.model or labels(cfg)['model']=='<unavailable>':
             raise ValueError('invalid_provider_labels')
         if live and (not isinstance(cfg.api_key,str) or not cfg.api_key or cfg.api_key.startswith('YOUR_') or not isinstance(cfg.base_url,str) or not cfg.base_url):
             raise ValueError('missing_provider_configuration')

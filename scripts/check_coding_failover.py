@@ -347,6 +347,10 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):settings(self.config,live=True,
             backup={'model':'PRIVATE_PRIMARY_KEY','api_key':'PRIVATE_BACKUP_KEY','base_url':'https://offline.invalid'})
 
+    async def test_offline_dropping_credentials_still_rejects_secret_model_label(self):
+        with self.assertRaises(ValueError):settings(self.config,live=False,
+            backup={'model':'PRIVATE_BACKUP_KEY','api_key':'PRIVATE_BACKUP_KEY'})
+
     async def test_attempt_cleanup_failure_persists_blocked_evidence(self):
         def factory(runtime,p):return client([response('claim')]) if p=='coco' else client([response('no')])
         root=self.root/'close-failure';raw=factory(None,'coco');raw.close.side_effect=RuntimeError('PRIVATE_CLOSE')
