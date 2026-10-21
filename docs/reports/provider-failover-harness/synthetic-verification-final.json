@@ -1,0 +1,333 @@
+{
+  "mode": "offline_synthetic",
+  "real_api_requests": 0,
+  "implementation_sha": "9bf58ba90d5391cb4782a342c94a2ef5b46e17ba",
+  "campaign_state": {
+    "campaign_id": "f749ac89987f4f30b9fb91abfdce0803",
+    "run_id": "cache-ttl-001",
+    "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+    "config_sha256": "df95730f03a3247ea9607b1e37166b72fd5216a565c2f28fb85205fb033417ab",
+    "status": "blocked",
+    "strict_success": false,
+    "blocked_reason": "not_strictly_verified"
+  },
+  "strict_live_success": false,
+  "workflow_verified": true,
+  "judge": {
+    "modified_code": true,
+    "changed_files": [
+      "app/cache.py"
+    ],
+    "protected_file_changes": 0,
+    "unrelated_file_changes": 0,
+    "index_changed": false,
+    "journal_attribution_mismatch": 0,
+    "judge_state": "hidden_pass",
+    "failure": null,
+    "public": {
+      "status": "pass",
+      "category": null,
+      "tests": 2,
+      "passed": true
+    },
+    "hidden": {
+      "status": "pass",
+      "category": null,
+      "tests": 4,
+      "passed": true
+    },
+    "verified_repair_success": true
+  },
+  "controller": {
+    "state": "verified",
+    "stop_reason": "",
+    "model_requests": 6,
+    "tool_calls": 4,
+    "patch_write_attempts": 1,
+    "committed_patches": 1,
+    "command_attempts": 1,
+    "test_runs": 1,
+    "test_passes": 1,
+    "test_failures": 0,
+    "tests_passed_after_last_patch": 2,
+    "no_progress_count": 0,
+    "repeated_actions": 0,
+    "stale_conflicts": 0,
+    "current_revision": 1,
+    "last_verified_revision": 1,
+    "last_test_exit_code": 0,
+    "verification": "valid",
+    "cumulative_schema_chars": 42210,
+    "total_duration": 0.211,
+    "no_progress_stops": 0,
+    "changed_files": [
+      "app/cache.py"
+    ]
+  },
+  "metrics": {
+    "llm_requests": 6,
+    "tool_calls": 4,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "cached_input_tokens": null,
+    "search_calls": 0,
+    "read_calls": 1,
+    "patch_preview_calls": 1,
+    "patch_write_attempts": 1,
+    "committed_patches": 1,
+    "real_test_runs": 1,
+    "stale_patch_conflicts": 0,
+    "approval_denials": 0,
+    "command_denied_count": 0,
+    "sandbox_failures": 0,
+    "workspace_escape_attempts": 0,
+    "command_attempts": 1,
+    "schema_chars": 35175,
+    "repeated_actions": 0,
+    "budget_stops": 0,
+    "execution_uncertain_count": 0,
+    "tool_call_ids_paired": true,
+    "protocol_false_verified_count": 0,
+    "logical_model_requests": 5,
+    "physical_model_requests": 6,
+    "physical_requests_by_provider": {
+      "coco": 1,
+      "coco2": 5
+    },
+    "fallback_attempts": 1,
+    "fallback_successes": 1,
+    "fallback_failures": 0
+  },
+  "lifecycle": {
+    "campaign_id": "f749ac89987f4f30b9fb91abfdce0803",
+    "run_id": "cache-ttl-001",
+    "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+    "config_sha256": "df95730f03a3247ea9607b1e37166b72fd5216a565c2f28fb85205fb033417ab",
+    "terminal_reason": "completed",
+    "cleanup_confirmed": true,
+    "execution_uncertain": false,
+    "cancelled_tool_calls": [],
+    "tool_call_receipts": [
+      {
+        "id_sha256": "00b22feb88cf72ed907356f5082b0f76f678deaca3ee15196e1e58347138cefe",
+        "name": "read_file_range",
+        "status": "returned"
+      },
+      {
+        "id_sha256": "015b9be46d7cc8afcdeb0360727bfa060b79686477466bc8fdc59e7eb39e2841",
+        "name": "apply_patch",
+        "status": "returned"
+      },
+      {
+        "id_sha256": "438e53a56895d81b73fe48abc9f74872bc2a6a31c7548646db7b12b8fea0af8f",
+        "name": "apply_patch",
+        "status": "returned"
+      },
+      {
+        "id_sha256": "0556e302f6932ce710deaa0c880cdae24e4879e03c0d388e6934e7a8cd29b2be",
+        "name": "run_command",
+        "status": "returned"
+      }
+    ],
+    "workspace_retained": false,
+    "approval_cancelled": false
+  },
+  "journal": {
+    "records": {
+      "app/cache.py": {
+        "original_sha256": "72d47bb4740b6ee565172ca076429c25b5de260f7ab8b2b249e884b3b4fc3639",
+        "final_sha256": "2c25530cbe1e3c8ed6a5d5f29dcf67b5b40f1bc4a106d1d02a90669a40497052"
+      }
+    },
+    "uncertain": false
+  },
+  "provider_execution": {
+    "policy": "network-timeout-429-500-502-503-504-v1",
+    "logical_model_requests": 5,
+    "physical_model_requests": 6,
+    "physical_requests_by_provider": {
+      "coco": 1,
+      "coco2": 5
+    },
+    "http_model_requests": null,
+    "http_count_semantics": "unknown",
+    "fallback_attempts": 1,
+    "fallback_successes": 1,
+    "fallback_failures": 0,
+    "active_provider": "coco2",
+    "requests": [
+      {
+        "case_id": "cache-ttl-001",
+        "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+        "logical_request": 1,
+        "physical_request": 1,
+        "global_physical_request": 1,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "is_fallback": false,
+        "fallback_transition": false,
+        "phase": "sdk_create",
+        "status": "error",
+        "error_category": "connection_error",
+        "http_status": null,
+        "execution_mode": "offline_synthetic",
+        "client_kind": "synthetic_client",
+        "http_dispatch_count": null,
+        "budget_or_deadline_stop": false,
+        "usage": {
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "total_tokens": null,
+          "cached_input_tokens": null
+        },
+        "duration_seconds": 0.000232
+      },
+      {
+        "case_id": "cache-ttl-001",
+        "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+        "logical_request": 1,
+        "physical_request": 2,
+        "global_physical_request": 2,
+        "provider": "coco2",
+        "model": "glm-5.3-flash",
+        "is_fallback": true,
+        "fallback_transition": true,
+        "phase": "sdk_create",
+        "status": "returned",
+        "error_category": null,
+        "http_status": null,
+        "execution_mode": "offline_synthetic",
+        "client_kind": "synthetic_client",
+        "http_dispatch_count": null,
+        "budget_or_deadline_stop": false,
+        "usage": {
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "total_tokens": null,
+          "cached_input_tokens": null
+        },
+        "duration_seconds": 1.8e-05
+      },
+      {
+        "case_id": "cache-ttl-001",
+        "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+        "logical_request": 2,
+        "physical_request": 3,
+        "global_physical_request": 3,
+        "provider": "coco2",
+        "model": "glm-5.3-flash",
+        "is_fallback": true,
+        "fallback_transition": false,
+        "phase": "sdk_create",
+        "status": "returned",
+        "error_category": null,
+        "http_status": null,
+        "execution_mode": "offline_synthetic",
+        "client_kind": "synthetic_client",
+        "http_dispatch_count": null,
+        "budget_or_deadline_stop": false,
+        "usage": {
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "total_tokens": null,
+          "cached_input_tokens": null
+        },
+        "duration_seconds": 2e-05
+      },
+      {
+        "case_id": "cache-ttl-001",
+        "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+        "logical_request": 3,
+        "physical_request": 4,
+        "global_physical_request": 4,
+        "provider": "coco2",
+        "model": "glm-5.3-flash",
+        "is_fallback": true,
+        "fallback_transition": false,
+        "phase": "sdk_create",
+        "status": "returned",
+        "error_category": null,
+        "http_status": null,
+        "execution_mode": "offline_synthetic",
+        "client_kind": "synthetic_client",
+        "http_dispatch_count": null,
+        "budget_or_deadline_stop": false,
+        "usage": {
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "total_tokens": null,
+          "cached_input_tokens": null
+        },
+        "duration_seconds": 1.8e-05
+      },
+      {
+        "case_id": "cache-ttl-001",
+        "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+        "logical_request": 4,
+        "physical_request": 5,
+        "global_physical_request": 5,
+        "provider": "coco2",
+        "model": "glm-5.3-flash",
+        "is_fallback": true,
+        "fallback_transition": false,
+        "phase": "sdk_create",
+        "status": "returned",
+        "error_category": null,
+        "http_status": null,
+        "execution_mode": "offline_synthetic",
+        "client_kind": "synthetic_client",
+        "http_dispatch_count": null,
+        "budget_or_deadline_stop": false,
+        "usage": {
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "total_tokens": null,
+          "cached_input_tokens": null
+        },
+        "duration_seconds": 1.4e-05
+      },
+      {
+        "case_id": "cache-ttl-001",
+        "attempt_id": "657e25ce9fd74922a09f04a3094ad620",
+        "logical_request": 5,
+        "physical_request": 6,
+        "global_physical_request": 6,
+        "provider": "coco2",
+        "model": "glm-5.3-flash",
+        "is_fallback": true,
+        "fallback_transition": false,
+        "phase": "sdk_create",
+        "status": "returned",
+        "error_category": null,
+        "http_status": null,
+        "execution_mode": "offline_synthetic",
+        "client_kind": "synthetic_client",
+        "http_dispatch_count": null,
+        "budget_or_deadline_stop": false,
+        "usage": {
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "total_tokens": null,
+          "cached_input_tokens": null
+        },
+        "duration_seconds": 2e-05
+      }
+    ],
+    "stops": [],
+    "estimated_cost": null
+  },
+  "closed_clients": {
+    "coco": 1,
+    "coco2": 1
+  },
+  "source_tree_sha256": "faff7db5d1f20c885e2f38e3005331013db7bc1c2bfb631f05a77bfd2f260678",
+  "evidence_paths": {
+    "manifest": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-synthetic-9bf58ba/manifest.json",
+    "started": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-synthetic-9bf58ba/started.json",
+    "terminal": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-synthetic-9bf58ba/terminal.json",
+    "raw": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-synthetic-9bf58ba/raw.json",
+    "finished": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-synthetic-9bf58ba/finished.json",
+    "blocked": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-synthetic-9bf58ba/blocked.json"
+  }
+}

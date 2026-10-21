@@ -1,0 +1,42 @@
+{
+  "result": "OFFLINE PASS",
+  "real_api_requests": 0,
+  "tests": [
+    {
+      "command": "uv run python -m scripts.check_coding_failover",
+      "tests": 49,
+      "suites": 1,
+      "status": "PASS",
+      "log_sha256": "2b6f7322f179140194f391a6a503eb83f1dd07533ce7c0d51eb061c73ad682da"
+    },
+    {
+      "command": "uv run python -m scripts.check_provider_failover",
+      "tests": 17,
+      "suites": 1,
+      "status": "PASS",
+      "log_sha256": "c69eb32cd6bb8b95b29500a7799b0afc368b29fd53fef950a41568da14b8785c"
+    },
+    {
+      "command": "uv run python -m scripts.check_provider_failover_smoke",
+      "tests": 13,
+      "suites": 1,
+      "status": "PASS",
+      "log_sha256": "2c31ed11935af49d821e9fb15bea6d847fb41744ccdb352176772e48ea94fb9c"
+    },
+    {
+      "command": "uv run python -m scripts.check_coding_reliability",
+      "tests": 42,
+      "suites": 1,
+      "status": "PASS",
+      "log_sha256": "7d3286c28381b96ff618d86d301377be0db32dd4d60a285a9d1c426401674f81"
+    },
+    {
+      "command": "uv run python -m scripts.check_phase",
+      "tests": 1070,
+      "suites": 29,
+      "status": "PASS",
+      "log_sha256": "e06ec6e4338543f774d7778b6f7e8aafc1cc9d934e2a6ef312df25622ad5ff45"
+    }
+  ],
+  "operator_yes_inputs": 0
+}

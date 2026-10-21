@@ -36,6 +36,7 @@ http_model_requests仅在所有实际客户端均可观察HTTP发送钩子时给
 HTTP钩子是传输前发送尝试，MockTransport不是外部网络，发送尝试也不是供应商计费确认。
 
 failover模式的llm_requests与Controller模型请求数按物理尝试计；logical_model_requests独立保留。
+successful_responses/api_failures仍表示逻辑请求最终结果；已恢复的主失败完整保留在逐物理记录，不能把legacy api_failures当作物理错误总数。
 physical_requests_by_provider区分coco和coco2。fallback_attempts/successes/failures只统计真正发生切换的那次备用请求，
 不把Sticky后续备用调用重复算为新的切换。预算或时限拒绝会保存在stops，不计为已发送备用请求。
 

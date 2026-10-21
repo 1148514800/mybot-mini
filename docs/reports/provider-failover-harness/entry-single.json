@@ -1,0 +1,10 @@
+{
+  "directory": "/Users/godblack/.codex/worktrees/provider-failover-harness/mybot-mini/runs/coding_failover/acceptance-single-f90434b",
+  "campaign_id": "5e4d0a282e3d48f2b875212c406dba69",
+  "run_id": "cache-ttl-001",
+  "attempt_id": "6571a33ad5ed4e2188d9b7108336e1de",
+  "config_sha256": "946d52cb1aa24a5877cb490c16b54c85b2502e388e3b0648b08521042dbd1ba7",
+  "status": "blocked",
+  "strict_success": false,
+  "blocked_reason": "not_strictly_verified"
+}
