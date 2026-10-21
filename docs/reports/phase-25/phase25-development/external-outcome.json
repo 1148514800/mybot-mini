@@ -1,0 +1,1 @@
+{"at": "2026-10-21T00:48:56.384618+00:00", "failure_category": "model_request_timeout", "generalization_validated": false, "model_requests": 6, "no_further_paid_calls": true, "request_duration_seconds": [4.126676416024566, 2.5397013751789927, 13.326029167044908, 16.190180624835193, 23.66539170895703, 90.00043904222548], "run": "phase25-external-v2", "successful_responses": 5}

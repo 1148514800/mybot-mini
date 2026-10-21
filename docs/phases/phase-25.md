@@ -56,8 +56,27 @@ uv run python -m scripts.evaluate_coding_campaign export --directory runs/p25-of
 
 初版冻结工具Schema清单只有8个原生工具；运行时Loop注册另2个Planning工具。原Git提交已固定实际10工具代码，事后离线补充清单与请求Schema字符数一致，并明确标注补录时间。V2在freeze时注册Loop，预先记录完整10工具及temperature=0.1、max_retries=0。
 
-新增8项离线回归覆盖取消审批等待停止、未完成命令屏障、失败分类不伪造Journal错误、完整工具冻结、子进程继承终端、超时中断与终止不重放以及真实内核PTY证明。原24项保留，专项共32项；全量25套件948项（原916+新增32）全部通过，Python编译通过；日志/tmp/phase25-full-v2.log。
+新增8项离线回归覆盖取消审批等待停止、未完成命令屏障、失败分类不伪造Journal错误、完整工具冻结、子进程继承终端、超时中断与终止不重放以及真实内核PTY证明。原24项保留，停止修复后专项共32项；该版全量25套件948项（原916+新增32）全部通过，Python编译通过；日志/tmp/phase25-full-v2.log。
 
-## 外部入口规范化回归
+## 外部入口路径初始化补充
 
-首次外部运行0模型请求被工作区身份检查阻断，原始记录保留于runs/phase25-external。将宿主创建的临时根路径按原Benchmark方式resolve，模型cwd规则未变；新增真实临时Git/合成客户端集成测试，专项33项、全量949项/25套件通过，编译通过。后续外部任务使用新Run ID，不重放任何标准案例。
+首次外部任务在0模型请求时被git_baseline_or_registry_unavailable阻断，源于宿主临时目录/var与/private/var别名身份不同。入口沿用原Benchmark的Path(temp).resolve()，不改模型cwd校验；新增真实临时Git仓库/合成客户端测试证明可通过注册表身份门、到达模型而不虚假verified。专项33项，全量949项/25套件通过。原0请求失败报告保留，外部任务独立新Run ID和提交，不混入36槽统计。实际外部模型请求6次/成功5次，第6次90秒超时；无Patch与Agent测试，泛化未通过。宿主六次验证审批不冒充Agent测试。
+
+## 实际验收与学习资料
+
+标准实测、完整矩阵、请求分组、资源分布与失败证据见[Benchmark报告](../reports/phase-25/benchmark-report.md)及[最终验收](../reports/phase-25/acceptance-report.md)。[外部项目](../reports/phase-25/external-project-report.md)独立记录测试前后状态。工程资料可归档，三轮稳定性受操作中断影响未验收，不能将阶段资料封存解释为全部能力通过。
+
+### 还原与复现
+
+```bash
+bash scripts/restore_phase.sh 25
+cd ../mybot-mini-learning/phase-25
+uv sync --frozen
+uv run python -m compileall -q mybot scripts
+uv run python -m scripts.check_coding_campaign
+uv run python -m scripts.check_phase
+```
+
+真实API配置不入档；不得用归档默认配置直接重跑已授权耗尽的Cohort。复查原始证据只读使用inventory/summary，缺失或SHA不符立即报错；旧已完成Cohort不能在新版本继续付费执行。新实验须新建目录、冻结新提交并获得预算授权。原12例/Gold/隐藏测试/Judge不变；未修改main与历史Tag/ZIP。
+
+archive-ready: true
