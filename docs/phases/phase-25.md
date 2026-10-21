@@ -4,7 +4,7 @@
 
 从 Phase24 `ff10fb6` 独立开发。固定 coco2/gpt-6-astra 与 Harness 提交，分三轮执行原12例，每例最多3次独立运行；优先 pagination、serialization、file-recovery。不把历史9/12、多次至少成功一次覆盖或 ability_score 当作本轮首次成功率。
 
-当前为开发/离线验证阶段；Live、泛化验证和归档结论在执行后补充。不能将计划或离线脚本当作真实模型能力证明。
+标准Cohort已执行36/36，严格成功15/36。后两轮受到审批值守中断与编排停止边界缺陷混杂，不能作为干净的模型稳定性估计。外部验证及归档结论另见最终验收报告。
 
 ## 架构与 Agent 概念
 
@@ -45,3 +45,15 @@ uv run python -m scripts.evaluate_coding_campaign export --directory runs/p25-of
 ## Checkpoint B：离线基线
 
 新增24项专项：发现/36槽顺序、重复标识、冻结/漂移、独占写入、成本双门、完成后跳过、中断与执行不确定禁止重放、API失败保留、原始证据丢失/篡改、配置损坏、统计缺失/分位数、Revision2/2与逐项严格成功条件、原生审批未替换及外部公开验收/敏感输出。`uv run python -m scripts.check_coding_campaign`24通过；`uv run python -m scripts.check_phase`25套件940项通过（916+24），Phase1/2原断言和编译通过。日志/tmp/phase25-full.log。原Phase24受封印模块/数据资产、Agent和tools没有变化。
+
+## 标准实测与事后停止边界修复
+
+标准36槽冻结在`b008f35563c266d89ebbdd67a3c31607f9c47819`，模型coco2/gpt-6-astra，原12例及评分SHA不变。Round1 9/12、Round2 6/12、Round3 0/12；Judge隐藏通过31/36，严格完整成功15/36。全部报告保留，不追加标准付费重跑。
+
+审批值守中断时，13个槽位等待输入直至600秒任务超时。原Loop将其记为cancelled/task_timeout，旧编排仅检查execution_uncertain，因而继续后续槽位；未退出的input线程另造成约300秒解释器退出等待。没有向过期审批提示发送yes。13次取消后capsule已关闭，评测归属集合缺失，Journal不匹配累计26文件；原Judge严格拒绝计为修复成功。此问题不能归因于模型代码能力，也不能抹去失败分母。
+
+事后仅修改Phase25外层编排：任何runtime_error、cancelled/execution_uncertain或未完成命令结果均进入必须调查的停止门；每个Live槽位由独立解释器执行，stdin/stdout/stderr原样继承真实TTY。父进程清理期限930秒不增加原API/任务/命令预算，超时或中断发SIGINT，仍不退出则终止子进程并停止，不自动重放。原审批Provider、Seatbelt、Loop、Patch、Journal、Revision、Judge保持不变。该修复不追溯改变旧Cohort，也尚无修复后标准Live验证。
+
+初版冻结工具Schema清单只有8个原生工具；运行时Loop注册另2个Planning工具。原Git提交已固定实际10工具代码，事后离线补充清单与请求Schema字符数一致，并明确标注补录时间。V2在freeze时注册Loop，预先记录完整10工具及temperature=0.1、max_retries=0。
+
+新增8项离线回归覆盖取消审批等待停止、未完成命令屏障、失败分类不伪造Journal错误、完整工具冻结、子进程继承终端、超时中断与终止不重放以及真实内核PTY证明。原24项保留，专项共32项；全量25套件948项（原916+新增32）全部通过，Python编译通过；日志/tmp/phase25-full-v2.log。

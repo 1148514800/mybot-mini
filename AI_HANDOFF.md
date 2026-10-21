@@ -1,19 +1,15 @@
 # AI_HANDOFF
 
-## 当前目标
+## 当前目标与边界
 
-Phase25在codex/phase-25从ff10fb6独立开发：固定版本12例×3轮、可靠恢复/统计、独立外部Python项目验证及归档。不Push/Merge，保留main两处用户修改、Phase24全部报告/Tag/ZIP和配置。
+Phase25在codex/phase-25执行。禁止再跑标准付费案例：36槽已全部尝试，保留原始证据；不Push/Merge，不改main用户文件、Phase24归档与配置。
 
-## 已完成与待验证
+## 已完成
 
-新增coding_campaign.py、evaluate_coding_campaign.py及专项测试，复用原evaluate/Loop/Controller/审批/Seatbelt/Judge，不改评分和安全语义；独占started/raw/finished记录和SHA，状态不确定不重放；显式冻结白名单不存凭证。外部入口evaluate_external_coding.py用于固定python-json-pointer的独立URI fragment功能，不安装项目脚本。
+标准benchmark_harness_commit=b008f35563c266d89ebbdd67a3c31607f9c47819。coco2/gpt-6-astra，12例×3轮固定预算。严格成功15/36（9、6、0），Judge隐藏通过31/36。13次审批等待取消受值守中断及编排停止边界缺陷影响，Journal归属不匹配26文件，稳定性未验收；不得解释为模型能力下降。标准Codex批准18次，无过期提示批准、无重跑。
 
-Phase24实际历史20次Live、9/12完整成功、Hard4/4；error-retry在ff10fb6已verified/hidden_pass，原文档未复测描述已失效。原归档仍是3f53b05，不含后续修复。
+新增外层取消/未完成命令停止门与继承真实TTY的单槽子进程；原Loop/Controller/工具/审批/Seatbelt/Judge未修改。原冻结清单漏列Plan工具的事后补录保留原始时间与来源，V2冻结完整10工具。
 
-## 离线验证
+## 测试与下一步
 
-原916+新增24=940项、25套件全部通过，编译通过；原Phase1/2断言、安全审批/Seatbelt/Patch/Revision/Journal测试保持通过。日志/tmp/phase25-full.log。
-
-## 下一步
-
-完成全部离线回归后冻结Harness Commit，执行一次离线Dry Run，再创建36槽Live Cohort（优先三例未测），同一冻结版本分三轮执行；逐条审核真实PTY审批，不自动重跑。完成后分析、外部任务、脱敏证据清单、文档及独立归档/还原验证。检查点与运行进度保存在忽略的runs目录，完成证据将脱敏纳入文档归档。
+冻结初版916+24=940项通过；事后修复专项32项通过，全量25套件948项（原916+新增32）通过，编译通过。完成后提交修复，执行仅一项授权外部python-json-pointer功能验证；汇总脱敏证据、更新学习文档/索引，创建新唯一Tag及双ZIP并独立还原测试。标准失败不能重跑刷分；外部任务与标准Cohort版本分别记录。证据runs/phase25-*，最终归档docs/reports/phase-25。

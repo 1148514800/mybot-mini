@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 import uuid
 
-from mybot.evaluation.coding_campaign import create, run_next, summary, markdown, write_new
+from mybot.evaluation.coding_campaign import create, run_next, summary, markdown, write_new, inventory, pause_reason
 
 
 def main():
@@ -17,6 +17,7 @@ def main():
     p.add_argument('--case-ids')
     p.add_argument('--live',action='store_true');p.add_argument('--confirm-api-cost',action='store_true')
     p.add_argument('--max-runs',type=int,default=1)
+    p.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
     a=p.parse_args()
     if a.confirm_api_cost and not a.live:p.error('cost confirmation requires live')
     if not 1<=a.max_runs<=36:p.error('max-runs must be 1..36')
@@ -27,8 +28,22 @@ def main():
         elif a.action=='run':
             if a.live and (not a.confirm_api_cost or not sys.stdin.isatty() or not sys.stdout.isatty()):
                 p.error('Live requires explicit cost confirmation and real stdin/stdout TTY')
-            for _ in range(a.max_runs):
-                if asyncio.run(run_next(a.directory,live=a.live,confirm_api_cost=a.confirm_api_cost)) is None:break
+            if a.worker and a.max_runs!=1:p.error('worker executes exactly one slot')
+            if a.live and not a.worker:
+                from mybot.evaluation.coding_supervisor import supervise
+                for _ in range(a.max_runs):
+                    _,rows=inventory(a.directory)
+                    if any(r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and pause_reason(r['report'])) for r in rows):
+                        raise ValueError('interrupted_run_requires_audit')
+                    if not any(r['status']=='pending' for r in rows):break
+                    code=supervise([sys.executable,'-m','scripts.evaluate_coding_campaign','run',
+                        '--directory',str(a.directory),'--live','--confirm-api-cost','--worker'])
+                    if code:raise ValueError('worker_failed_no_automatic_replay')
+            else:
+                for _ in range(1 if a.worker else a.max_runs):
+                    result=asyncio.run(run_next(a.directory,live=a.live,confirm_api_cost=a.confirm_api_cost))
+                    if result is None:break
+                    if pause_reason(result):raise ValueError('interrupted_run_requires_audit')
         else:
             d=summary(a.directory)
             if a.action=='export':

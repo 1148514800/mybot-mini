@@ -126,8 +126,14 @@ async def execute(source, dest):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source',type=Path,required=True);p.add_argument('--directory',type=Path,required=True)
-    p.add_argument('--live',action='store_true');p.add_argument('--confirm-api-cost',action='store_true');a=p.parse_args()
+    p.add_argument('--live',action='store_true');p.add_argument('--confirm-api-cost',action='store_true');p.add_argument('--worker',action='store_true',help=argparse.SUPPRESS);a=p.parse_args()
     if not(a.live and a.confirm_api_cost):p.error('both explicit live cost flags required')
+    if not a.worker:
+        if not sys.stdin.isatty() or not sys.stdout.isatty():p.error('real terminal required')
+        from mybot.evaluation.coding_supervisor import supervise
+        code=supervise([sys.executable,'-m','scripts.evaluate_external_coding',*sys.argv[1:],'--worker'])
+        if code:p.exit(2,'External worker stopped; no automatic replay.\n')
+        return
     try:asyncio.run(execute(a.source,a.directory))
     except Exception as exc:
         category=str(exc) if isinstance(exc,ValueError) and str(exc) in ('real_tty_required','unexpected_source','dirty_source','upstream_baseline_failed') else 'external_execution_blocked'

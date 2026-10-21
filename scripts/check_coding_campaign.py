@@ -174,6 +174,72 @@ class CampaignChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(s['coverage'],0)
         self.assertFalse(s['rounds']['1']['round_complete'])
 
+    async def test_cancelled_approval_timeout_stops_next_slot(self):
+        m=self.init();r=self.report(m['slots'][0]);x=r['results'][0]
+        x.update(agent_state='cancelled',runtime_error='task_timeout')
+        x['controller'].update(stop_reason='task_interrupted',command_attempts=1,verification='expired')
+        x['metrics'].update(command_attempts=0,execution_uncertain_count=0,real_test_runs=0)
+        with patch.object(c,'evaluate',AsyncMock(return_value=r)) as e:
+            await c.run_next(self.root,live=True,confirm_api_cost=True)
+            with self.assertRaises(ValueError):await c.run_next(self.root,live=True,confirm_api_cost=True)
+        self.assertEqual(e.call_count,1)
+        self.assertEqual(c.summary(self.root)['pause_required_runs'],[m['slots'][0]['run_id']])
+
+    def test_incomplete_command_pauses_without_uncertain_flag(self):
+        r=self.report();r['results'][0]['controller']['command_attempts']=1
+        r['results'][0]['metrics']['command_attempts']=0
+        self.assertEqual(c.pause_reason(r),'incomplete_command_requires_audit')
+
+    def test_timeout_does_not_invent_journal_mismatch(self):
+        r=self.report();x=r['results'][0];x.update(agent_state='cancelled',runtime_error='task_timeout')
+        x['controller']['verification']='expired'
+        labels=c.classify(r)
+        self.assertIn('task_timeout',labels);self.assertIn('supervisor_audit_required',labels)
+        self.assertNotIn('revision_or_journal_mismatch',labels)
+
+    def test_full_frozen_tools_include_plan_and_sampling(self):
+        self.assertEqual(len(self.freeze['tool_schemas']),10)
+        self.assertTrue({'create_plan','update_plan'}<={t['function']['name'] for t in self.freeze['tool_schemas']})
+        self.assertEqual(self.freeze['temperature'],0.1);self.assertEqual(self.freeze['max_retries'],0)
+
+    def test_supervisor_inherits_terminal_without_pipe_or_input(self):
+        from mybot.evaluation.coding_supervisor import supervise
+        from unittest.mock import Mock
+        child=Mock();child.wait.return_value=0
+        with patch('mybot.evaluation.coding_supervisor.subprocess.Popen',return_value=child) as popen:
+            self.assertEqual(supervise(['trusted-python','-m','worker']),0)
+        popen.assert_called_once_with(['trusted-python','-m','worker'])
+        child.send_signal.assert_not_called()
+
+    def test_supervisor_timeout_signals_and_never_replays(self):
+        from mybot.evaluation.coding_supervisor import supervise
+        from unittest.mock import Mock
+        import subprocess,signal
+        child=Mock();child.wait.side_effect=[subprocess.TimeoutExpired('worker',1),0]
+        with patch('mybot.evaluation.coding_supervisor.subprocess.Popen',return_value=child) as popen:
+            self.assertEqual(supervise(['worker'],timeout=1),124)
+        self.assertEqual(popen.call_count,1);child.send_signal.assert_called_once_with(signal.SIGINT)
+
+    def test_unresponsive_worker_is_stopped_not_replayed(self):
+        from mybot.evaluation.coding_supervisor import supervise
+        from unittest.mock import Mock
+        import subprocess
+        child=Mock();child.wait.side_effect=[subprocess.TimeoutExpired('worker',1),subprocess.TimeoutExpired('worker',1),0]
+        with patch('mybot.evaluation.coding_supervisor.subprocess.Popen',return_value=child):
+            self.assertEqual(supervise(['worker'],timeout=1,grace=1),124)
+        child.kill.assert_called_once()
+
+    def test_real_pty_is_inherited_by_fresh_worker(self):
+        import os,pty,sys,subprocess,select
+        master,slave=pty.openpty()
+        code="from mybot.evaluation.coding_supervisor import supervise; import sys; raise SystemExit(supervise([sys.executable,'-c','import sys; print(\"TTY_PROOF\",sys.stdin.isatty(),sys.stdout.isatty())'],timeout=3))"
+        try:
+            child=subprocess.Popen([sys.executable,'-c',code],stdin=slave,stdout=slave,stderr=slave)
+            self.assertEqual(child.wait(timeout=5),0)
+            ready,_,_=select.select([master],[],[],1);self.assertTrue(ready)
+            self.assertIn(b'TTY_PROOF True True',os.read(master,4096))
+        finally:os.close(master);os.close(slave)
+
     def test_native_approval_not_overridden(self):
         import inspect
         source=inspect.getsource(c.run_next)

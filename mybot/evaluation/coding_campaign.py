@@ -62,7 +62,9 @@ def freeze(base=None):
         'max_completion_tokens','request_timeout_seconds')
     tools = build_default_tool_registry(config.workspace, coding_enabled=True,
         patch_mode='write', command=config.coding_command)
-    return dict(benchmark_harness_commit=git('rev-parse','HEAD'),
+    from ..agent import AgentLoop, ContextBuilder
+    AgentLoop(None, config, tools, ContextBuilder(config.workspace))
+    return dict(campaign_version=2,temperature=0.1,max_retries=0,benchmark_harness_commit=git('rev-parse','HEAD'),
         benchmark_sha256=load_benchmark().sha256,
         grading_code_sha256=hashlib.sha256(json.dumps(trusted_seal()).encode()).hexdigest(), dependency_lock_sha256=file_sha(PROJECT_DIR/'uv.lock'),
         provider=base.provider, model=base.model, python=platform.python_version(),
@@ -84,7 +86,7 @@ def create(directory, *, rounds=3, case_ids=None, live=False):
     if root.exists(): raise ValueError('campaign_exists')
     root.mkdir(parents=True)
     frozen=freeze()
-    manifest=dict(version=1, campaign_id=uuid.uuid4().hex, created_at=now(), live=live,
+    manifest=dict(version=2, campaign_id=uuid.uuid4().hex, created_at=now(), live=live,
         frozen=frozen, config_sha256=sha(frozen), rounds=rounds,
         slots=[dict(run_id=f'r{r}-{c}', round=r, case_id=c) for r in range(1,rounds+1) for c in order])
     write_new(root/'manifest.json',manifest)
@@ -121,6 +123,16 @@ def strict_success(report):
         and type(revision) is int and revision>0 and revision==c.get('last_verified_revision') and safe and evidence)
 
 
+def pause_reason(report):
+    r=report['results'][0]
+    if r.get('runtime_error') is not None:return 'runtime_interruption_requires_audit'
+    if r.get('agent_state') in ('cancelled','execution_uncertain') or r.get('metrics',{}).get('execution_uncertain_count'):
+        return 'execution_interruption_requires_audit'
+    c=r.get('controller',{});m=r.get('metrics',{})
+    if c.get('command_attempts',0)>m.get('command_attempts',0):return 'incomplete_command_requires_audit'
+    return None
+
+
 def classify(report):
     if strict_success(report): return ['success']
     r=report['results'][0];c=r.get('controller',{});m=r.get('metrics',{});j=r.get('judge',{});stop=c.get('stop_reason') or r.get('runtime_error')
@@ -129,7 +141,9 @@ def classify(report):
         'max_model_requests':'request_budget_exhausted','model_request_budget':'request_budget_exhausted',
         'approval_denied':'approval_denied','invalid_cwd':'cwd_or_path_error',
         'timeout_exceeds_configuration':'invalid_tool_arguments',
-        'missing_current_revision_test_evidence':'agent_ended_early'}
+        'missing_current_revision_test_evidence':'agent_ended_early',
+        'task_timeout':'task_timeout', 'task_interrupted':'agent_interrupted',
+        'max_no_progress':'no_progress_budget_exhausted'}
     labels=[]
     if r.get('runtime_error') in mapping: labels.append(mapping[r['runtime_error']])
     if stop in mapping: labels.append(mapping[stop])
@@ -142,7 +156,9 @@ def classify(report):
     if not m.get('real_test_runs'): labels.append('real_test_not_executed')
     if j.get('public',{}).get('passed') is False: labels.append('public_tests_failed')
     if j.get('hidden',{}).get('passed') is False: labels.append('hidden_tests_failed')
-    if j.get('journal_attribution_mismatch') or c.get('verification')=='expired': labels.append('revision_or_journal_mismatch')
+    if j.get('journal_attribution_mismatch') or j.get('stale_final_version'):labels.append('revision_or_journal_mismatch')
+    if c.get('verification')=='expired':labels.append('verification_invalidated')
+    if pause_reason(report):labels.append('supervisor_audit_required')
     if m.get('execution_uncertain_count') or r.get('agent_state')=='execution_uncertain': labels.append('execution_uncertain')
     return list(dict.fromkeys(labels or ['unknown_failure']))
 
@@ -192,7 +208,7 @@ async def run_next(root, *, live=False, confirm_api_cost=False):
         manifest,rows=inventory(root)
         if live!=manifest['live'] or confirm_api_cost!=live:raise ValueError('cost_mode_mismatch')
         if freeze()!=manifest['frozen'] or git('status','--porcelain'):raise ValueError('frozen_environment_changed')
-        if any(r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and r['report']['results'][0].get('agent_state')=='execution_uncertain') for r in rows):raise ValueError('uncertain_run_requires_investigation')
+        if any(r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and pause_reason(r['report'])) for r in rows):raise ValueError('uncertain_run_requires_investigation')
         slot=next((r for r in rows if r['status']=='pending'),None)
         if slot is None:return None
         folder=root/'runs'/slot['run_id'];folder.mkdir()
@@ -206,8 +222,8 @@ async def run_next(root, *, live=False, confirm_api_cost=False):
         except BaseException:
             write_new(folder/'blocked.json',dict(run_id=slot['run_id'],at=now(),category='interrupted_or_evidence_uncommitted'))
             raise
-        uncertain=report['results'][0].get('agent_state')=='execution_uncertain'
-        if uncertain:write_new(folder/'blocked.json',dict(run_id=slot['run_id'],at=now(),category='reported_execution_uncertain'))
+        reason=pause_reason(report)
+        if reason:write_new(folder/'blocked.json',dict(run_id=slot['run_id'],at=now(),category=reason))
         _, after=inventory(root)
         round_rows=[r for r in after if r['round']==slot['round']]
         if all(r['status']=='completed' for r in round_rows):
@@ -278,6 +294,7 @@ def summary(root):
     commands=result['resources']['command_attempts']['total'];tests=result['resources']['real_test_runs']['total']
     if commands:result['real_test_runs_per_command_attempt']=tests/commands
     result['protocol_paired_run_rate']=sum(r['report'].get('tool_call_ids_paired') is True for r in done)/len(done) if done else None
+    result['pause_required_runs']=[r['run_id'] for r in done if pause_reason(r['report'])]
     result['approval_success_rate']=None
     result['approval_note']='Native approval grant count is not retained by Phase24; report denials, not an invented approval denominator.'
     tools={}
