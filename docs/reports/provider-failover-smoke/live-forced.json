@@ -1,0 +1,58 @@
+{
+  "active_provider": "coco2",
+  "backup_model": "glm-5.3-flash",
+  "cleanup_confirmed": true,
+  "cost_status": "unknown; not free",
+  "counting_method": "http_request_hook",
+  "duration_seconds": 4.512549,
+  "estimated_cost": null,
+  "logical_requests": 2,
+  "max_physical_model_requests": 2,
+  "mode": "forced",
+  "model_requests": 2,
+  "physical_model_requests": 2,
+  "physical_requests_by_provider": {
+    "coco": 0,
+    "coco2": 2
+  },
+  "primary_injected_failures": 1,
+  "primary_model": "deepseek-v4.1-flash",
+  "primary_reserve_timeout_seconds": 30,
+  "request_receipts": [
+    {
+      "duration_seconds": 2.548213,
+      "finish_reason": "stop",
+      "model": "glm-5.3-flash",
+      "provider": "coco2",
+      "response_text_chars": 2,
+      "status": "returned",
+      "tokens": {
+        "completion_tokens": 3,
+        "prompt_tokens": 17,
+        "total_tokens": 20
+      }
+    },
+    {
+      "duration_seconds": 1.949796,
+      "finish_reason": "stop",
+      "model": "glm-5.3-flash",
+      "provider": "coco2",
+      "response_text_chars": 2,
+      "status": "returned",
+      "tokens": {
+        "completion_tokens": 3,
+        "prompt_tokens": 17,
+        "total_tokens": 20
+      }
+    }
+  ],
+  "request_timeout_seconds": 60,
+  "sdk_create_calls": {
+    "coco": 0,
+    "coco2": 2
+  },
+  "status": "PASS",
+  "valid_responses": 2,
+  "process_exit_code": 0,
+  "pty_session_id": 10119
+}

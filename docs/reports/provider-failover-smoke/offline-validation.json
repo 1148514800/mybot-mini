@@ -1,0 +1,36 @@
+{
+  "full_tests": 1021,
+  "full_suites": 28,
+  "status": "PASS",
+  "phase1_2_assertions_passed": true,
+  "commands": [
+    {
+      "command": "uv run python -m scripts.check_provider_failover",
+      "tests": 17,
+      "suites": 1,
+      "passed": true,
+      "log_sha256": "43ab52b562a2b9e17a189bbd8038e78bd14deb19adbd7db0e122ec2f3e94825f"
+    },
+    {
+      "command": "uv run python -m scripts.check_provider_failover_smoke",
+      "tests": 13,
+      "suites": 1,
+      "passed": true,
+      "log_sha256": "ca06f8a2a1552c55d6aaa813864a43e3af4f05155124da376792d98ada9cab6b"
+    },
+    {
+      "command": "uv run python -m scripts.smoke_provider_failover",
+      "tests": 17,
+      "suites": 1,
+      "passed": true,
+      "log_sha256": "e950e784015e6baa25da6457d2342d17f683281377f25ae92602c0c14a95001c"
+    },
+    {
+      "command": "uv run python -m scripts.check_phase",
+      "tests": 1021,
+      "suites": 28,
+      "passed": true,
+      "log_sha256": "564ef180e432dca16950e7017b4861e2858220ad1e7bf45f8439e7598e327f19"
+    }
+  ]
+}

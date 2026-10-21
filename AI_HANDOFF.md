@@ -1,36 +1,37 @@
 # AI_HANDOFF
 
-## 当前目标与状态
+## 当前状态
 
-在独立 `codex/provider-failover` 分支（基于 Phase25-R e35044e）实现 CLI 的 coco → coco2 自动回退。
-原 Phase25 冻结工作区、Campaign 和历史报告保持不变；主工作区的两处用户修改不动。
-这不是 Phase26，也不重写或重新归档 Phase25。
+独立 `codex/provider-failover-acceptance` 分支从远程smoke基线ef92f34（原实现d07f64d）完成验收。
+原Phase25冻结工作区、Campaign/CSV blocked证据、main、历史Tag/ZIP和用户修改不动；1115项保护文件SHA一致。
+本轮只创建本地验收提交，不Push/Merge、不进入Phase26、不新归档。
 
-## 实现
+## 本轮修复
 
-- 新增 mybot/provider_failover.py，app 的客户端工厂启用回退；其他 Provider 或未配置 coco2 时保持原客户端。
-- coco 的 OpenAI APIError/超时最多触发一次 coco2 请求；切换后进程内继续使用备用模型，重启恢复主模型。
-- 主请求使用原时限一半，为备用保留时间；两者受原 Loop 请求/任务截止时间约束。取消不回退，工具不重放，备用失败不重试。
-- 两个客户端关闭 SDK 隐式重试；备用请求先经 Controller.before_request 计数和预算校验。
-  Loop 仅新增预算拒绝异常处理，避免把正常预算停止改记成不确定状态；工具、审批、Seatbelt、Patch、Judge不改。
-- 评测 build_client 不改，冻结 Campaign 不启用混合模型回退；继续评测须独立授权/版本/评测组，不能并入旧 DeepSeek 组。
+只改smoke脚本、专项、check_phase及文档；生产CLI/AgentLoop/Controller/审批/Seatbelt/单模型评测不改。
+修复自然回退把2次物理请求误报1次；加入发送前HTTP计数和每probe两次硬上限。
+统一外围与主预留超时，保留失败阶段、次数及关闭回执；不保存正文、原异常、Key或Patch。
+保留原5项smoke，新增8项；SDK实际合成传输检查主备用自己的Key/模型、上下文和Sticky。
 
-## 配置与安全
+## 验证
 
-独立工作区 config/config.json 是未跟踪、被忽略的本地副本，权限0600。
-主配置保持 coco/deepseek-v4.1-flash，备用为 coco2/glm-5.3-flash，使用用户本轮提供的新备用凭证。
-不在文档、代码或日志保存凭证；原 Phase25 配置及凭证不改。代码与配置副本仅在本工作区生效。
+专项17/17、smoke13/13、默认离线入口17/17；全量1021/1021、28套件及Phase1/2断言通过。
+compileall、diff及凭证扫描通过。真实API A/B均PASS，共3/4次授权发送尝试：
+A本地注入1次、主真实0、备用glm-5.3-flash真实2，Sticky成功；B主deepseek-v4.1-flash真实1正常返回，备用0。
+没有自然故障、重跑、额外付费Benchmark、CLI审批提示或人工yes输入；两probe关闭确认。
+费用unknown/null，Token50；不等于免费或编码质量提升。
 
-## 验证与限制
+## 配置与证据
 
-新增17项离线测试：成功不切换、API/超时回退、备用自身模型/凭证、粘性切换、备用失败不重试、取消、工具不重放与ID配对、预算、日志和关闭清理。
-全量 `uv run python -m scripts.check_phase`：1008项、27套件通过（原991/26保留）；Phase1/2兼容断言通过。
-compileall、diff检查通过。写入本地配置后，17项专项及模拟工厂配置绑定检查再次通过。
-没有真实API或Live；缺少真实故障切换运行验证，不能声称模型能力或混合模型稳定性通过。
-全量原始日志仅在 /tmp/mybot-provider-failover-regression.log，不提交生成日志。
+配置是已有工作区安全复制的忽略文件，权限0600；主备用模型和凭证已校验，不提交/回显Key，测试不写回。
+完整中文报告：docs/reports/provider-failover-smoke/acceptance-report.md。
+脱敏JSON含离线统计、Live started/result及汇总；真实报告counting_method=http_request_hook。
+全量原始日志在/tmp/provider-acceptance-full.log，未提交；报告保留日志SHA。
+测试时HEAD=ef92f34加本轮修复，Live确切脚本SHA在started证据；最终提交SHA见Git。
 
-## 下一步
+## 下一步与限制
 
-从此工作区运行CLI需用户后续明确的真实调用授权。只创建本地代码提交，不Push/Merge、不移动Tag、不导出ZIP。
-原DeepSeek Campaign现有CSV provider_error/blocked证据仍保留，不能删除blocked记录或直接恢复付费运行。
-Phase25-R原学习资料见 docs/phases/phase-25-r.md 和 docs/reports/phase-25-r/acceptance-report.md。
+本次验收PASS，具备另获授权后接入独立新版本Harness的工程条件。
+不自动继续旧单模型Campaign，不移除其blocked状态，不把混合模型并入旧DeepSeek组。
+真实取消、备用故障、长期稳定性及编码任务质量未新增Live验证；只有离线合成证据。
+不能重复付费probe补用剩余1次额度。Git仍有AppleDouble pack索引错误，未删除或修复。

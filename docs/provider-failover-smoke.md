@@ -29,3 +29,28 @@ Both modes use a constant, read-only prompt. No agent tools, patches, Campaign c
 **Evidence discipline:** Offline success is not live success. Live calls here are a dedicated connectivity smoke test, *not* a Phase25 evaluation or a coding quality score. If live verification fails, keep error type only in console and diagnose privately; do not print API keys or raw provider errors. Do not append results to any frozen Campaign.
 
 Original `codex/provider-failover` remains unchanged. Run the new smoke files in `codex/provider-failover-smoke`.
+
+## Acceptance hardening
+
+The independent acceptance branch fixes an offline-reproduced reporting bug:
+natural fallback previously reported one request even when both providers were called.
+`model_requests` now counts physical dispatch attempts, with per-provider SDK call
+counts and an HTTP request hook immediately before transport dispatch. The local
+injected primary failure is excluded. Both counters enforce a maximum of two calls
+per invocation, including failure cases; the SDK still has zero implicit retries.
+For in-memory test clients without HTTP transport, reports explicitly label their
+counter as `synthetic_sdk_entry`, never evidence of paid requests.
+
+The smoke wrapper now copies the config and applies the smaller of its configured
+timeout and `--timeout-seconds` to both the outer wait and primary half-timeout.
+This prevents a shorter outer wait from expiring at exactly the point fallback
+should begin. It does not extend the requested deadline or change the CLI wrapper.
+Success and failure produce sanitized JSON with counts, stages, exception classes,
+durations and cleanup receipts. No response body, raw exception, URL, authorization
+header, API key, Patch or conversation transcript is saved. A request hook measures
+dispatch attempts, not the provider's billing confirmation.
+
+The acceptance task permits exactly one forced and one natural invocation, at most
+four physical requests combined. Never rerun a failed probe automatically. A natural
+primary success proves that path only; it does not establish natural failure recovery.
+See `docs/reports/provider-failover-smoke/acceptance-report.md` for actual outcomes.

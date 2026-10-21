@@ -1,0 +1,45 @@
+{
+  "active_provider": "coco",
+  "backup_model": "glm-5.3-flash",
+  "cleanup_confirmed": true,
+  "cost_status": "unknown; not free",
+  "counting_method": "http_request_hook",
+  "duration_seconds": 2.506073,
+  "estimated_cost": null,
+  "logical_requests": 1,
+  "max_physical_model_requests": 2,
+  "mode": "natural",
+  "model_requests": 1,
+  "physical_model_requests": 1,
+  "physical_requests_by_provider": {
+    "coco": 1,
+    "coco2": 0
+  },
+  "primary_injected_failures": 0,
+  "primary_model": "deepseek-v4.1-flash",
+  "primary_reserve_timeout_seconds": 30,
+  "request_receipts": [
+    {
+      "duration_seconds": 2.505506,
+      "finish_reason": "stop",
+      "model": "deepseek-v4.1-flash",
+      "provider": "coco",
+      "response_text_chars": 2,
+      "status": "returned",
+      "tokens": {
+        "completion_tokens": 1,
+        "prompt_tokens": 9,
+        "total_tokens": 10
+      }
+    }
+  ],
+  "request_timeout_seconds": 60,
+  "sdk_create_calls": {
+    "coco": 1,
+    "coco2": 0
+  },
+  "status": "PASS",
+  "valid_responses": 1,
+  "process_exit_code": 0,
+  "pty_session_id": 93514
+}
