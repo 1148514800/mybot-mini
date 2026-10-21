@@ -57,3 +57,7 @@ uv run python -m scripts.evaluate_coding_campaign export --directory runs/p25-of
 初版冻结工具Schema清单只有8个原生工具；运行时Loop注册另2个Planning工具。原Git提交已固定实际10工具代码，事后离线补充清单与请求Schema字符数一致，并明确标注补录时间。V2在freeze时注册Loop，预先记录完整10工具及temperature=0.1、max_retries=0。
 
 新增8项离线回归覆盖取消审批等待停止、未完成命令屏障、失败分类不伪造Journal错误、完整工具冻结、子进程继承终端、超时中断与终止不重放以及真实内核PTY证明。原24项保留，专项共32项；全量25套件948项（原916+新增32）全部通过，Python编译通过；日志/tmp/phase25-full-v2.log。
+
+## 外部入口规范化回归
+
+首次外部运行0模型请求被工作区身份检查阻断，原始记录保留于runs/phase25-external。将宿主创建的临时根路径按原Benchmark方式resolve，模型cwd规则未变；新增真实临时Git/合成客户端集成测试，专项33项、全量949项/25套件通过，编译通过。后续外部任务使用新Run ID，不重放任何标准案例。

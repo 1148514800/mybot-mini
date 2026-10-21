@@ -145,6 +145,27 @@ class CampaignChecks(unittest.IsolatedAsyncioTestCase):
         with patch.object(c,'evaluate',AsyncMock(return_value=r)) as e:await c.run_next(self.root)
         self.assertFalse(e.call_args.kwargs['live']);self.assertFalse(c.summary(self.root)['strict_successes'])
 
+    async def test_external_canonical_root_reaches_synthetic_model(self):
+        # A real disposable Git checkout exercises the unchanged registry/baseline
+        # identity gate. No model API, fake TTY, command or approval is involved.
+        from mybot.tools import build_default_tool_registry
+        from mybot.config import GatewayConfig
+        from mybot.evaluation.coding_benchmark import configuration, OfflineClient
+        from mybot.evaluation.coding_fixtures import create_repository, Image
+        from mybot.evaluation.coding_metrics import BenchmarkAgent, CodingTrace
+        from mybot.evaluation.coding_live import CodingClient, RequestBudget
+        from mybot.agent import ContextBuilder
+        root=create_repository(Path(self.tmp.name).resolve()/'external',{'sample.py':Image(b'x = 1\n',0o644)})
+        config=configuration(GatewayConfig(),root,c.LIMITS)
+        tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command)
+        trace=CodingTrace()
+        agent=BenchmarkAgent(CodingClient(OfflineClient(),trace,RequestBudget(c.LIMITS)),config,tools,ContextBuilder(root),trace=trace)
+        await agent.handle_message('Investigate sample.py, no command required.')
+        self.assertGreater(agent.last_coding_report['model_requests'],0)
+        self.assertNotEqual(agent.last_coding_report['stop_reason'],'git_baseline_or_registry_unavailable')
+        self.assertNotEqual(agent.last_coding_report['state'],'verified')
+        if agent._git_capsule:agent._git_capsule.close()
+
     def test_external_scope_and_public_acceptance(self):
         from scripts.evaluate_external_coding import ACCEPTANCE,PROMPT
         import ast

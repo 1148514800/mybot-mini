@@ -78,7 +78,7 @@ async def execute(source, dest):
     write_new(dest/'started.json',started)
     baseline_result=None;initial_result=None;final_result=None;agent=None;trace=CodingTrace();budget=RequestBudget(LIMITS)
     with tempfile.TemporaryDirectory(prefix='mybot-external-coding-') as temp:
-        parent=Path(temp);root=create_repository(parent/'agent',images)
+        parent=Path(temp).resolve();root=create_repository(parent/'agent',images)
         config=configuration(GatewayConfig(),root,LIMITS)
         provider=partial(cli_command_approval,output=sys.stdout)
         tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=provider)
