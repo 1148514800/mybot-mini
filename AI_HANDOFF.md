@@ -2,36 +2,38 @@
 
 ## 当前状态
 
-独立 `codex/provider-failover-acceptance` 分支从远程smoke基线ef92f34（原实现d07f64d）完成验收。
-原Phase25冻结工作区、Campaign/CSV blocked证据、main、历史Tag/ZIP和用户修改不动；1115项保护文件SHA一致。
-本轮只创建本地验收提交，不Push/Merge、不进入Phase26、不新归档。
+Provider Failover Harness Integration：Phase25之后的独立可靠性改进，不是Phase26。
+独立codex/provider-failover-harness分支，远程验收基线5490149827cffbc5c75aa6cc1634efeb33344c0a已核对无更新。
+新增49项专项、全量1070项/29套件及Phase1/2兼容断言通过；原1021项不删、不跳过、不弱化。
+本轮真实模型API请求0，不使用此前剩余额度，不Push/Merge、不移Tag或生成ZIP。
 
-## 本轮修复
+## 实现与隔离
 
-只改smoke脚本、专项、check_phase及文档；生产CLI/AgentLoop/Controller/审批/Seatbelt/单模型评测不改。
-修复自然回退把2次物理请求误报1次；加入发送前HTTP计数和每probe两次硬上限。
-统一外围与主预留超时，保留失败阶段、次数及关闭回执；不保存正文、原异常、Key或Patch。
-保留原5项smoke，新增8项；SDK实际合成传输检查主备用自己的Key/模型、上下文和Sticky。
+- 新coding_failover适配原run_task，复用ProviderFailoverClient可选recoverable谓词；CLI缺省策略不变。
+- 新evaluate_coding_failover默认single/offline，只有显式failover启用严格策略；旧入口和单模型字段兼容。
+- 严格回退仅网络、超时、429、500/502/503/504；参数、认证、协议、本地异常、取消不回退。
+- 原Loop预占主请求Controller预算；备用前先检查Attempt、时限及全局预算，再预占Controller。
+  TracedClient使用逻辑影子计数，全局物理计数只在SDK接口调用前增加；每Case Controller还受全局剩余额度约束。
+- 同Attempt Sticky、下Attempt从coco开始；逐Attempt延迟创建备用并有界关闭两端。
+- SDK尝试、HTTP发送尝试及离线合成接口明确区分；无HTTP观察或Usage时为null，不假定为0。混合费用未知。
+- 新create-once v4 manifest只写runs/coding_failover，每目录一个Case/Attempt，不提供重放/续跑。
+  冻结实际配置/源码树/模型/策略/预算/依赖/Benchmark/评分，交叉校验身份、SHA和请求模型。
+  失败、中断、不确定清理与缺失证据保留blocked。离线执行不计Live严格成功。
 
-## 验证
+## 验证与证据
 
-专项17/17、smoke13/13、默认离线入口17/17；全量1021/1021、28套件及Phase1/2断言通过。
-compileall、diff及凭证扫描通过。真实API A/B均PASS，共3/4次授权发送尝试：
-A本地注入1次、主真实0、备用glm-5.3-flash真实2，Sticky成功；B主deepseek-v4.1-flash真实1正常返回，备用0。
-没有自然故障、重跑、额外付费Benchmark、CLI审批提示或人工yes输入；两probe关闭确认。
-费用unknown/null，Token50；不等于免费或编码质量提升。
+49项新专项、原17项CLI回退、13项smoke、42项生命周期专项以及全量1070/29通过，编译/diff通过。
+合成故障后原Loop完成真实Patch、Seatbelt公开测试和Judge：5次逻辑请求=6次物理接口尝试，Revision1/1，ID配对与Journal正确。
+回退后读取不重放；取消、迟到响应、全局/Controller预算、认证协议、异常关闭、历史隔离与防篡改均有反例。
+实际SDK MockTransport验证自己的模型/Key、相同上下文/Schema、禁隐式重试和HTTP计数，无外部模型网络。
+无需要Codex代答的CLI审批提示，operator yes输入0；真实PTY/nonce由既有42项合成生命周期测试覆盖。
+验收入口docs/reports/provider-failover-harness/acceptance-report.md；架构/命令docs/provider-failover-harness.md。
+原始测试日志/tmp/failover-harness-*.log，不提交原始日志或配置。
 
-## 配置与证据
+## 下一步与边界
 
-配置是已有工作区安全复制的忽略文件，权限0600；主备用模型和凭证已校验，不提交/回显Key，测试不写回。
-完整中文报告：docs/reports/provider-failover-smoke/acceptance-report.md。
-脱敏JSON含离线统计、Live started/result及汇总；真实报告counting_method=http_request_hook。
-全量原始日志在/tmp/provider-acceptance-full.log，未提交；报告保留日志SHA。
-测试时HEAD=ef92f34加本轮修复，Live确切脚本SHA在started证据；最终提交SHA见Git。
-
-## 下一步与限制
-
-本次验收PASS，具备另获授权后接入独立新版本Harness的工程条件。
-不自动继续旧单模型Campaign，不移除其blocked状态，不把混合模型并入旧DeepSeek组。
-真实取消、备用故障、长期稳定性及编码任务质量未新增Live验证；只有离线合成证据。
-不能重复付费probe补用剩余1次额度。Git仍有AppleDouble pack索引错误，未删除或修复。
+本轮未复制真实配置到开发区，未改任何已有Key。1592项保护资产需提交后复核保持。
+原Phase25/DeepSeek Campaign及CSV blocked证据不变，不允许在新分支继续或拼接旧单模型结果。
+可在本次OFFLINE PASS之后另行授权独立Live Coding Benchmark，必须配置凭证、冻结新版本并单独统计混合模型。
+不能宣称Live PASS、编码成功率提高、真实故障恢复稳定性或取消长期可靠性通过。
+AppleDouble pack索引错误未清理，Git必要读取与完整保护核验可用。

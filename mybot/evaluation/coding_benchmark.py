@@ -63,7 +63,8 @@ def selected_cases(benchmark, ids, maximum, seed=24):
 
 
 async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits, budget, base, raw,
-                   live, offline_client_factory=None, command_provider=None, execution_identity=None, terminal_sink=None):
+                   live, offline_client_factory=None, command_provider=None, execution_identity=None, terminal_sink=None,
+                   _adapter_factory=None):
     result={'case_id':case.runtime.id,'difficulty':case.runtime.difficulty,'repeat':repeat,'attempted':False,
         'agent_state':None,'agent_workflow_success':False,'controller':{},'metrics':{},'runtime_error':None,'multi_file_task':len(case.reference)>1,
         'judge':{'judge_state':'unscored','failure':'not_started','verified_repair_success':False}}
@@ -75,13 +76,16 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
         result['judge']['failure']=exc.category;result['failure']=exc.category;return result
     if not benchmark.unchanged() or trusted_seal()!=seal:
         result['judge'].update(judge_state='grader_error',failure='trusted_assets_changed');result['failure']='grader_error';return result
-    agent=None;reply='';trace=CodingTrace();started=time.monotonic()
+    agent=None;adapter=None;reply='';trace=CodingTrace();started=time.monotonic()
     attempt = Attempt(execution_identity)
     trace.attempt = attempt
     cancelled = None
     root=create_repository(parent/'agent',case.public)
     before=snapshot(root);baseline=await GitBaseline.capture(root)
     config=configuration(base,root,limits)
+    if _adapter_factory is not None:
+        config=replace(config,coding_autonomy={**config.coding_autonomy,
+            'max_model_requests':min(config.coding_autonomy['max_model_requests'],budget.state['maximum']-budget.state['used'])})
     # Keep only approval output on the actual caller channel; raw Agent output
     # remains captured below in both modes. The approval function checks its TTY.
     provider=AttemptApproval(attempt, output=sys.stdout, challenge=execution_identity is not None) if live else (command_provider or synthetic_approval)
@@ -97,11 +101,14 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
         return decision
     tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=tracked_approval)
     # Public fields only cross the client boundary. No Case/private evaluator object.
-    client=raw if live else (offline_client_factory(case.runtime) if offline_client_factory else OfflineClient())
+    client=None if _adapter_factory is not None else (raw if live else (offline_client_factory(case.runtime) if offline_client_factory else OfflineClient()))
     trace.paths=set(before)
     result['attempted']=True
     try:
-        agent=BenchmarkAgent(CodingClient(client,trace,budget),config,tools,ContextBuilder(root),trace=trace)
+        traced = CodingClient(client,trace,budget) if _adapter_factory is None else _adapter_factory(case.runtime,config,trace,budget,attempt)
+        adapter = traced if _adapter_factory is not None else None
+        agent=BenchmarkAgent(traced,config,tools,ContextBuilder(root),trace=trace)
+        if adapter is not None:adapter.controller = lambda: agent.coding_controller
         with contextlib.redirect_stdout(io.StringIO()):
             reply=await attempt.run(agent.handle_message(case.runtime.prompt),
                 timeout=min(limits.task_timeout,max(.001,budget.deadline-time.monotonic())))
@@ -111,6 +118,16 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     except CodingEvaluationStop as exc:result['runtime_error']=exc.category
     except TimeoutError:result['runtime_error']='task_timeout'
     except Exception:result['runtime_error']='agent_error'
+    if adapter is not None:
+        closing = asyncio.create_task(adapter.close())
+        await attempt.settle(closing)
+        if not attempt.cleanup_confirmed or closing.cancelled() or (closing.done() and closing.exception() is not None):
+            attempt.tool_uncertain = True
+            attempt.revoke('provider_cleanup_failed')
+            result['runtime_error'] = 'provider_cleanup_failed'
+        if attempt.reason == 'task_cancelled' and cancelled is None:
+            cancelled = asyncio.CancelledError()
+            result['runtime_error'] = 'task_cancelled'
     # End of all agent execution. Nothing from private validation/Judge is fed back.
     controller=dict(agent.last_coding_report or {}) if agent else {}
     if attempt.reason is not None:
@@ -121,6 +138,9 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     result['controller']={k:v for k,v in controller.items() if k not in ('last_test_command','changed_files')}
     result['controller']['changed_files']=report_paths(controller.get('changed_files',[]),case.public)
     result['metrics']=case_metrics(trace,controller,agent.session.history() if agent else [],live)
+    if adapter is not None:
+        result['provider_execution'] = adapter.summary()
+        result['metrics'].update(adapter.metric_fields())
     result['agent_workflow_success']=(result['agent_state']=='verified' and
         not result['metrics']['protocol_false_verified_count'] and result['metrics']['tool_call_ids_paired'])
     result['premature_completion_count']=sum(e['event']=='llm_response' and not e.get('tool_calls') for e in trace.events) if controller.get('continuation_used') else int(controller.get('stop_reason')=='missing_current_revision_test_evidence')
@@ -185,7 +205,8 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
 
 
 async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None,prices=None,max_estimated_cost=None,
-                   base_config=None,offline_client_factory=None,command_provider=None,benchmark=None,execution_identity=None,terminal_sink=None):
+                   base_config=None,offline_client_factory=None,command_provider=None,benchmark=None,execution_identity=None,terminal_sink=None,
+                   _adapter_factory=None):
     if type(live) is not bool or type(confirm_api_cost) is not bool or live!=confirm_api_cost:
         raise ValueError('live_requires_both_flags')
     if live and (offline_client_factory is not None or command_provider is not None):
@@ -206,7 +227,7 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None
             # An empty synthetic probe root, never base.workspace (which could be a user project).
             probe=parent/'probe';probe.mkdir()
             raw=await live_client(configuration(base,probe,limits),limits,live=live,confirm_api_cost=confirm_api_cost,
-                cases=len(cases),prices=budget.prices)
+                cases=len(cases),prices=budget.prices,**({'gate_only':True} if _adapter_factory is not None else {}))
         by_id={v['case_id']:v for v in validations}
         try:
             stopped = False
@@ -220,7 +241,7 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None
                     result = await run_task(case,by_id[case.runtime.id],benchmark,seal,task,repeat=repeat,
                         limits=limits,budget=budget,base=base,raw=raw,live=live,
                         offline_client_factory=offline_client_factory,command_provider=command_provider,
-                        execution_identity=execution_identity,terminal_sink=receipt)
+                        execution_identity=execution_identity,terminal_sink=receipt,_adapter_factory=_adapter_factory)
                     results.append(result)
                     # A terminal interruption is a cohort boundary, not a case failure
                     # that licenses another model request or a later slot.

@@ -9,6 +9,7 @@ from types import SimpleNamespace as N
 
 from openai import APITimeoutError
 from ..config import build_client
+from ..provider_failover import FallbackBudgetExceeded
 from ..tools.command_process import resolve_launch
 from ..tools import macos_sandbox
 from .trace import TracedClient, RequestLimitError
@@ -114,6 +115,8 @@ class CodingClient:
             raise CodingEvaluationStop('provider_unsupported') from None
         except RequestLimitError:
             raise CodingEvaluationStop('model_request_budget') from None
+        except FallbackBudgetExceeded:
+            raise  # Preserve the Controller's already-recorded budget/time stop.
         except Exception as exc:
             self.budget.api_failures+=1
             unsupported=(getattr(exc,'status_code',None) in (400,404,422) and getattr(exc,'code',None) in
@@ -135,7 +138,7 @@ def labels(config):
     return result
 
 
-async def live_client(config, limits, *, live, confirm_api_cost, cases, prices):
+async def live_client(config, limits, *, live, confirm_api_cost, cases, prices, gate_only=False):
     # No SDK construction, network or silent offline fallback until both explicit gates.
     if live is not True or confirm_api_cost is not True: raise ValueError('live_requires_cost_confirmation')
     if not config.api_key or config.api_key.startswith('YOUR_'): raise ValueError('missing_credentials')
@@ -147,6 +150,8 @@ async def live_client(config, limits, *, live, confirm_api_cost, cases, prices):
         'cases':cases,'repeats':limits.repeats,'global_request_limit':limits.max_requests,
         'total_timeout':limits.total_timeout,'prices_configured':prices is not None,
         'command_approval':'each invocation requires human approval','sandbox':'macos_readonly verified'},ensure_ascii=True))
+    if gate_only:
+        return None  # Explicit failover mode owns fresh clients inside each Attempt.
     # build_client already sets max_retries=0 for autonomy; pin it again explicitly.
     client=None
     try:

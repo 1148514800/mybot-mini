@@ -130,3 +130,7 @@ if Path(__file__).with_name('check_provider_failover.py').exists():
 if Path(__file__).with_name('check_provider_failover_smoke.py').exists():
     from scripts.check_provider_failover_smoke import check_provider_failover_smoke
     check_provider_failover_smoke()
+
+if Path(__file__).with_name('check_coding_failover.py').exists():
+    from scripts.check_coding_failover import check_coding_failover
+    check_coding_failover()

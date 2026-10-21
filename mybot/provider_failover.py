@@ -13,12 +13,13 @@ class FallbackBudgetExceeded(Exception):
 
 
 class ProviderFailoverClient:
-    def __init__(self, primary, config, backup, factory):
+    def __init__(self, primary, config, backup, factory, *, recoverable=None):
         self._primary = primary
         self._config = config
         self._backup_config = backup
         self._factory = factory
         self._backup = None
+        self._recoverable = recoverable
         self.active_provider = 'coco'
         self.before_fallback = lambda definitions: True
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
@@ -30,7 +31,9 @@ class ProviderFailoverClient:
             try:
                 async with asyncio.timeout(self._config.request_timeout_seconds / 2):
                     return await self._primary.chat.completions.create(**kwargs)
-            except (APIError, TimeoutError):
+            except (APIError, TimeoutError) as exc:
+                if self._recoverable is not None and not self._recoverable(exc):
+                    raise
                 if not self.before_fallback(kwargs.get('tools')):
                     raise FallbackBudgetExceeded() from None
                 self.active_provider = 'coco2'

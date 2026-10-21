@@ -25,7 +25,7 @@ CLI 自动回退：当 `llm.provider` 为 `coco`，且 `llm.providers.coco2` 已
 或工具错误不会触发备用请求。备用模型失败后直接上报，不继续轮询、重试或重放工具。
 流式接口不在当前 CLI 的支持范围。专项离线检查：`uv run python -m scripts.check_provider_failover`。
 
-评测入口继续使用原单模型客户端，不启用回退。混合模型行为必须使用独立版本及新评测组，不能
+既有评测入口继续使用原单模型客户端，不启用回退。混合模型行为必须使用独立版本及新评测组，不能
 追加到已有冻结 DeepSeek Campaign；本次开发没有调用真实模型 API。
 
 Windows PowerShell 可使用：
@@ -240,3 +240,7 @@ Live必须同时指定 `--live --confirm-api-cost`、具备凭证与TTY并通过
 ## Phase25-R 离线可靠性修复
 
 取消屏障、逐Attempt执行身份、可取消TTY挑战审批、Journal哈希证据保全和严格恢复检查见[Phase25-R学习记录](docs/phases/phase-25-r.md)。原36次Live结果保留为15/36完整成功；本次离线修复不构成新模型能力或稳定性结论。新的DeepSeek Live须单独授权和独立Cohort。
+
+## Provider Failover Harness Integration
+
+Phase25之后的独立可靠性改进（非Phase26）：新入口 `uv run python -m scripts.evaluate_coding_failover` 默认single和离线，只有显式 `--provider-mode failover` 才使用严格主备策略。新证据只写入 `runs/coding_failover/` 的v4 manifest，不恢复或拼接旧Campaign。每次物理SDK请求在全局及Controller预算允许后才启动，Attempt独立，已完成工具不重放，Usage或HTTP次数未知时记录null。Live须另获授权，本轮未执行。架构、命令及限制见[集成说明](docs/provider-failover-harness.md)。
