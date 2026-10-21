@@ -25,7 +25,9 @@ from mybot.evaluation.coding_fixtures import snapshot, create_repository, Image
 from mybot.evaluation.coding_live import RequestBudget, CodingClient, live_client
 from mybot.evaluation.coding_metrics import CodingTrace, BenchmarkAgent, case_metrics
 from mybot.tools import build_default_tool_registry
-from mybot.tools.command_approval import cli_command_approval
+from mybot.evaluation.coding_approval import AttemptApproval
+from mybot.evaluation.coding_lifecycle import Attempt, WorkspaceDirectory
+from mybot.evaluation.coding_live import labels
 
 ACCEPTANCE='''import unittest
 from jsonpointer import JsonPointer, JsonPointerException
@@ -77,10 +79,12 @@ async def execute(source, dest):
         harness_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),limits=__import__('dataclasses').asdict(LIMITS))
     write_new(dest/'started.json',started)
     baseline_result=None;initial_result=None;final_result=None;agent=None;trace=CodingTrace();budget=RequestBudget(LIMITS)
-    with tempfile.TemporaryDirectory(prefix='mybot-external-coding-') as temp:
-        parent=Path(temp).resolve();root=create_repository(parent/'agent',images)
+    attempt=Attempt({'run_id': __import__('uuid').uuid4().hex})
+    trace.attempt=attempt
+    with WorkspaceDirectory() as workspace:
+        parent=workspace.path;root=create_repository(parent/'agent',images)
         config=configuration(GatewayConfig(),root,LIMITS)
-        provider=partial(cli_command_approval,output=sys.stdout)
+        provider=AttemptApproval(attempt,output=sys.stdout)
         tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=provider)
         baseline_result=await verify(tools)
         write_new(dest/'baseline.json',baseline_result)
@@ -96,13 +100,29 @@ async def execute(source, dest):
         try:
             agent=BenchmarkAgent(CodingClient(raw,trace,budget),config,tools,ContextBuilder(root),trace=trace)
             with contextlib.redirect_stdout(io.StringIO()):
-                await asyncio.wait_for(agent.handle_message(PROMPT),timeout=LIMITS.task_timeout)
-        except Exception:runtime_error='external_agent_interrupted'
-        finally:await raw.close()
+                await attempt.run(agent.handle_message(PROMPT),timeout=LIMITS.task_timeout)
+        except (Exception,asyncio.CancelledError):
+            runtime_error='external_agent_interrupted'
+            attempt.revoke(runtime_error)
+            # An interrupted external run cannot proceed to more approvals/API.
+            workspace.retain = not attempt.cleanup_confirmed or attempt.tool_uncertain
+            write_new(dest/'terminal.json',dict(lifecycle=attempt.metadata(),
+                journal_records=getattr(trace,'journal_records',{}),state='execution_uncertain'))
+            raise ValueError('external_execution_interrupted') from None
+        finally:
+            closing=Attempt();closing_task=asyncio.create_task(raw.close())
+            await closing.settle(closing_task)
+            if not closing.cleanup_confirmed or closing.reason is not None:
+                workspace.retain=True
+                if not (dest/'terminal.json').exists():write_new(dest/'terminal.json',dict(state='execution_uncertain',provider_cleanup_confirmed=False))
+                raise ValueError('external_cleanup_unconfirmed')
+            if closing_task.cancelled() or closing_task.exception() is not None:
+                raise ValueError('external_cleanup_unconfirmed')
+
         control=dict(agent.last_coding_report or {}) if agent else {}
         metrics=case_metrics(trace,control,agent.session.history() if agent else [],True)
         candidate=snapshot(root);changed=sorted(p for p in before.keys()|candidate.keys() if before.get(p)!=candidate.get(p))
-        owned=set(agent._git_capsule.entries) if agent and agent._git_capsule else set()
+        owned=set(agent._git_capsule.entries) if agent and agent._git_capsule else set(getattr(trace,'journal_records',{}))
         if agent and agent._git_capsule:agent._git_capsule.close();agent._git_capsule=None
         # Original tests and public acceptance restored from trusted before snapshot.
         checked=dict(before)
@@ -115,7 +135,7 @@ async def execute(source, dest):
             and metrics['committed_patches'] and metrics['real_test_runs'] and metrics['tool_call_ids_paired']
             and not any(metrics[k] for k in ('protocol_false_verified_count','execution_uncertain_count','sandbox_failures','approval_denials','workspace_escape_attempts')) and final_result['success'] and safe)
         for key in ('last_test_command','changed_files'):control.pop(key,None)
-        report=dict(**started,finished_at=now(),provider='coco2',model='gpt-6-astra',task=PROMPT,
+        report=dict(**started,finished_at=now(),provider=labels(config)['provider'],model=labels(config)['model'],task=PROMPT,
             baseline=baseline_result,initial_feature_tests=initial_result,final_independent_tests=final_result,
             controller=control,metrics=metrics,changed_files=changed,safety_pass=safe,index_changed=not baseline.unchanged(),
             journal_attribution_mismatch=len(set(changed)^owned),strict_success=success,runtime_error=runtime_error,

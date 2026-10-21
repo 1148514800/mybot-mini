@@ -224,3 +224,7 @@ uv run python -m scripts.check_autonomous_coding
 默认离线：`uv run python -m scripts.evaluate_real_coding`；全12项机制检查加 `--max-cases 12`；四条正反演示：`uv run python -m scripts.coding_benchmark_demo`。任务按Easy/Medium/Hard各4项构造，每项2公开/4隐藏测试；Agent只接触公开合成仓库，结束后由独立沙盒Judge重建并评分。复用原Loop、Controller、Patch/命令与Git Journal，Tool Schema不变。
 
 Live必须同时指定 `--live --confirm-api-cost`、具备凭证与TTY并通过沙盒检查；每次模型命令仍需原独立审批。请求/时间/输出/显式估价受限，缺Token/价格保持null；估价不是账单硬限额。`--save`仅保存有界元数据到独立目录，不保存原始对话/源码/隐藏正文。本阶段未调用付费模型，真实模型修复率未测，不能用固定离线策略冒充真实模型成绩。完整数据、用法、学习与防作弊边界见 [Phase24](docs/phases/phase-24.md)。
+
+## Phase25-R 离线可靠性修复
+
+取消屏障、逐Attempt执行身份、可取消TTY挑战审批、Journal哈希证据保全和严格恢复检查见[Phase25-R学习记录](docs/phases/phase-25-r.md)。原36次Live结果保留为15/36完整成功；本次离线修复不构成新模型能力或稳定性结论。新的DeepSeek Live须单独授权和独立Cohort。

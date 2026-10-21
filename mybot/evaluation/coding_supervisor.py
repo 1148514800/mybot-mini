@@ -9,9 +9,14 @@ def supervise(argv, *, timeout=930, grace=10):
     try:
         return child.wait(timeout=timeout)
     except (subprocess.TimeoutExpired, KeyboardInterrupt):
-        child.send_signal(signal.SIGINT)
+        try:child.send_signal(signal.SIGINT)
+        except ProcessLookupError:pass
         try:child.wait(timeout=grace)
-        except subprocess.TimeoutExpired:
-            child.kill();child.wait()
+        except (subprocess.TimeoutExpired, KeyboardInterrupt):
+            try:child.kill()
+            except ProcessLookupError:pass
+            try:child.wait(timeout=grace)
+            except (subprocess.TimeoutExpired, KeyboardInterrupt):
+                return 125  # no trustworthy exit receipt; never replay
         # A timeout/signal is never a successful run or authorization to replay.
         return 124

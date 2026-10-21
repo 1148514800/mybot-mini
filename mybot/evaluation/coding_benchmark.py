@@ -1,6 +1,7 @@
 """Original Coding Agent over public repositories; private Judge runs only after it."""
 import asyncio
 import contextlib
+import copy
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
 from functools import partial
@@ -24,6 +25,8 @@ from ..mcp_client.approval import ApprovalDecision
 from .coding_fixtures import load_benchmark, create_repository, snapshot, report_paths
 from .coding_judge import validate_benchmark, trusted_seal, judge
 from .coding_live import Limits, RequestBudget, CodingClient, CodingEvaluationStop, live_client, labels
+from .coding_lifecycle import Attempt, WorkspaceDirectory
+from .coding_approval import AttemptApproval
 from .coding_metrics import CodingTrace, BenchmarkAgent, case_metrics, summarize, failure_reason
 from .runner import select_cases, save_report as _save_report
 from .tool_agent import safe_label, estimated_cost
@@ -60,7 +63,7 @@ def selected_cases(benchmark, ids, maximum, seed=24):
 
 
 async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits, budget, base, raw,
-                   live, offline_client_factory=None, command_provider=None):
+                   live, offline_client_factory=None, command_provider=None, execution_identity=None, terminal_sink=None):
     result={'case_id':case.runtime.id,'difficulty':case.runtime.difficulty,'repeat':repeat,'attempted':False,
         'agent_state':None,'agent_workflow_success':False,'controller':{},'metrics':{},'runtime_error':None,'multi_file_task':len(case.reference)>1,
         'judge':{'judge_state':'unscored','failure':'not_started','verified_repair_success':False}}
@@ -73,13 +76,26 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     if not benchmark.unchanged() or trusted_seal()!=seal:
         result['judge'].update(judge_state='grader_error',failure='trusted_assets_changed');result['failure']='grader_error';return result
     agent=None;reply='';trace=CodingTrace();started=time.monotonic()
+    attempt = Attempt(execution_identity)
+    trace.attempt = attempt
+    cancelled = None
     root=create_repository(parent/'agent',case.public)
     before=snapshot(root);baseline=await GitBaseline.capture(root)
     config=configuration(base,root,limits)
     # Keep only approval output on the actual caller channel; raw Agent output
     # remains captured below in both modes. The approval function checks its TTY.
-    provider=partial(cli_command_approval,output=sys.stdout) if live else (command_provider or synthetic_approval)
-    tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=provider)
+    provider=AttemptApproval(attempt, output=sys.stdout, challenge=execution_identity is not None) if live else (command_provider or synthetic_approval)
+    chosen_provider = provider
+    async def tracked_approval(request):
+        attempt.check()
+        try:decision = await chosen_provider(request)
+        except asyncio.CancelledError:
+            attempt.approval_cancelled = True
+            raise
+        attempt.check()
+        attempt.command_approved = decision is ApprovalDecision.APPROVE
+        return decision
+    tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=tracked_approval)
     # Public fields only cross the client boundary. No Case/private evaluator object.
     client=raw if live else (offline_client_factory(case.runtime) if offline_client_factory else OfflineClient())
     trace.paths=set(before)
@@ -87,13 +103,20 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     try:
         agent=BenchmarkAgent(CodingClient(client,trace,budget),config,tools,ContextBuilder(root),trace=trace)
         with contextlib.redirect_stdout(io.StringIO()):
-            reply=await asyncio.wait_for(agent.handle_message(case.runtime.prompt),
+            reply=await attempt.run(agent.handle_message(case.runtime.prompt),
                 timeout=min(limits.task_timeout,max(.001,budget.deadline-time.monotonic())))
+    except (asyncio.CancelledError, KeyboardInterrupt, SystemExit) as exc:
+        cancelled = exc
+        result['runtime_error'] = 'task_cancelled'
     except CodingEvaluationStop as exc:result['runtime_error']=exc.category
     except TimeoutError:result['runtime_error']='task_timeout'
     except Exception:result['runtime_error']='agent_error'
     # End of all agent execution. Nothing from private validation/Judge is fed back.
     controller=dict(agent.last_coding_report or {}) if agent else {}
+    if attempt.reason is not None:
+        controller.update(state='execution_uncertain' if not attempt.cleanup_confirmed or attempt.tool_uncertain else 'cancelled',
+            stop_reason=attempt.reason, verification='invalid')
+    attempt.revoke('completed' if result['runtime_error'] is None else result['runtime_error'])
     result['agent_state']=controller.get('state','blocked')
     result['controller']={k:v for k,v in controller.items() if k not in ('last_test_command','changed_files')}
     result['controller']['changed_files']=report_paths(controller.get('changed_files',[]),case.public)
@@ -101,18 +124,36 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     result['agent_workflow_success']=(result['agent_state']=='verified' and
         not result['metrics']['protocol_false_verified_count'] and result['metrics']['tool_call_ids_paired'])
     result['premature_completion_count']=sum(e['event']=='llm_response' and not e.get('tool_calls') for e in trace.events) if controller.get('continuation_used') else int(controller.get('stop_reason')=='missing_current_revision_test_evidence')
-    owned=set(agent._git_capsule.entries) if agent and agent._git_capsule else set()
+    records = getattr(trace, 'journal_records', {})
+    owned=set(agent._git_capsule.entries) if agent and agent._git_capsule else set(records)
+    result['journal_evidence'] = dict(records=copy.deepcopy(records), uncertain=getattr(trace, 'journal_uncertain', False))
+    result['lifecycle'] = attempt.metadata()
     if agent and agent._git_capsule:agent._git_capsule.close();agent._git_capsule=None
     result['final_output']={'chars':len(reply),'sha256':hashlib.sha256(reply.encode()).hexdigest()}
     # Metadata only; never retain message lists, raw arguments, stdout or SDK errors.
     result['trace']=trace.events
     result['estimated_cost']=estimated_cost({'prompt_tokens':result['metrics']['input_tokens'],
         'completion_tokens':result['metrics']['output_tokens'],'cached_input_tokens':result['metrics']['cached_input_tokens']},budget.prices) if live else None
-    try: candidate=snapshot(root)
+    try:
+        if not attempt.cleanup_confirmed:raise ValueError('cleanup_unconfirmed')
+        candidate=snapshot(root)
+        # Captured ownership is valid only for the exact final bytes, never a guess
+        # from trace flags or merely the set of files that changed.
+        if not (agent and agent._git_capsule):
+            owned = {p for p in owned if p in records and p in candidate and
+                hashlib.sha256(candidate[p].data).hexdigest() == records[p]['final_sha256'] and
+                records[p]['original_sha256'] == (hashlib.sha256(before[p].data).hexdigest() if p in before else None)}
+        if result['journal_evidence']['uncertain']:
+            result['lifecycle']['execution_uncertain'] = True
+            result['lifecycle']['workspace_retained'] = True
+            result['agent_state'] = 'execution_uncertain'
+            result['agent_workflow_success'] = False
+            result['metrics']['execution_uncertain_count'] = 1
     except (OSError,ValueError):
         result['judge']={'judge_state':'grader_error','failure':'unsafe_candidate_snapshot','verified_repair_success':False,'unrelated_file_changes':1}
     else:
         try:
+            if cancelled is not None:raise CodingEvaluationStop('task_cancelled')
             remaining=budget.deadline-time.monotonic()
             if remaining<=0:raise CodingEvaluationStop('total_timeout')
             result['judge']=await asyncio.wait_for(judge(case,candidate,validation,benchmark=benchmark,seal=seal,
@@ -121,6 +162,10 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
             if snapshot(root)!=candidate or not baseline.unchanged():
                 result['judge'].update(verified_repair_success=False,failure='candidate_changed_during_grading',
                     index_changed=not baseline.unchanged(),stale_final_version=True)
+        except asyncio.CancelledError as exc:
+            cancelled = exc
+            result.update(agent_state='cancelled', agent_workflow_success=False, runtime_error='task_cancelled')
+            result['judge']={'judge_state':'unscored','failure':'judge_cancelled','verified_repair_success':False}
         except (TimeoutError,CodingEvaluationStop):
             result['judge']={'judge_state':'grader_error','failure':'grader_timeout','verified_repair_success':False}
         except Exception:
@@ -130,12 +175,17 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
     result['duration_seconds']=round(time.monotonic()-started,6)
     result['failure']=failure_reason(result)
     # Drop transient source/transcript/controller references before the next task.
-    if agent:agent.session.clear()
+    if agent and attempt.cleanup_confirmed:agent.session.clear()
+    result = copy.deepcopy(result)
+    if terminal_sink is not None:terminal_sink(result)
+    if cancelled is not None:
+        cancelled.evaluation_evidence = result
+        raise cancelled
     return result
 
 
 async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None,prices=None,max_estimated_cost=None,
-                   base_config=None,offline_client_factory=None,command_provider=None,benchmark=None):
+                   base_config=None,offline_client_factory=None,command_provider=None,benchmark=None,execution_identity=None,terminal_sink=None):
     if type(live) is not bool or type(confirm_api_cost) is not bool or live!=confirm_api_cost:
         raise ValueError('live_requires_both_flags')
     if live and (offline_client_factory is not None or command_provider is not None):
@@ -145,8 +195,8 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None
     seal=trusted_seal();started=time.monotonic();raw=None;results=[]
     neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},skills_enabled=False,session_persist=False,debug=False)
     base=base_config or GatewayConfig(**neutral,**({} if live else dict(provider='offline',model='offline-script',api_key=None,base_url=None)))
-    with tempfile.TemporaryDirectory(prefix='mybot-coding-benchmark-') as folder:
-        parent=Path(folder).resolve()
+    with WorkspaceDirectory() as workspace:
+        parent=workspace.path
         try:
             validations=await asyncio.wait_for(validate_benchmark(benchmark,timeout=limits.judge_timeout),
                 timeout=max(.001,budget.deadline-time.monotonic()))
@@ -159,14 +209,40 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None
                 cases=len(cases),prices=budget.prices)
         by_id={v['case_id']:v for v in validations}
         try:
+            stopped = False
             for repeat in range(1,limits.repeats+1):
                 for index,case in enumerate(cases):
-                    with tempfile.TemporaryDirectory(prefix=f'task-{repeat}-{index}-',dir=parent) as task:
-                        results.append(await run_task(case,by_id[case.runtime.id],benchmark,seal,Path(task),repeat=repeat,
-                            limits=limits,budget=budget,base=base,raw=raw,live=live,
-                            offline_client_factory=offline_client_factory,command_provider=command_provider))
+                    task = parent / f'task-{repeat}-{index}'
+                    task.mkdir()
+                    def receipt(value):
+                        workspace.retain |= value.get('lifecycle', {}).get('workspace_retained', False)
+                        if terminal_sink is not None:terminal_sink(value)
+                    result = await run_task(case,by_id[case.runtime.id],benchmark,seal,task,repeat=repeat,
+                        limits=limits,budget=budget,base=base,raw=raw,live=live,
+                        offline_client_factory=offline_client_factory,command_provider=command_provider,
+                        execution_identity=execution_identity,terminal_sink=receipt)
+                    results.append(result)
+                    # A terminal interruption is a cohort boundary, not a case failure
+                    # that licenses another model request or a later slot.
+                    if result.get('runtime_error') or result.get('agent_state') in ('cancelled','execution_uncertain') or result.get('lifecycle',{}).get('execution_uncertain') or result.get('controller',{}).get('stop_reason') in ('max_task_seconds','task_timeout','task_interrupted'):
+                        stopped = True
+                        break
+                if stopped:break
         finally:
-            if raw is not None:await raw.close()
+            if raw is not None:
+                closing = Attempt()
+                task = asyncio.create_task(raw.close())
+                await closing.settle(task)
+                if not closing.cleanup_confirmed:
+                    workspace.retain = True
+                    for value in results:
+                        value.update(agent_state='execution_uncertain',agent_workflow_success=False)
+                        value['lifecycle'].update(execution_uncertain=True,workspace_retained=True,provider_cleanup_confirmed=False)
+                        value['metrics']['execution_uncertain_count']=1
+                if closing.reason is not None:raise asyncio.CancelledError
+                if task.cancelled() or (task.done() and task.exception() is not None):
+                    raise CodingEvaluationStop('provider_cleanup_failed')
+
     metrics=summarize(results,live=live,budget=budget)
     provenance=GitStatusTool(PROJECT_DIR)
     head=await provenance.git(['rev-parse','--verify','HEAD'],PROJECT_DIR,stdout_limit=256)

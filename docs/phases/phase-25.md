@@ -84,3 +84,5 @@ uv run python -m scripts.check_phase
 汇总归因按实际Trace逐项回查：validation-chain第三轮为成功预览、正式提交stale_file_hash安全拒绝、重新读取后max_no_progress；不得把重新读取误说成重复Patch预览。
 
 archive-ready: true
+
+归档后离线修复单独记录在[Phase25-R](phase-25-r.md)；不修改原phase-25 Tag/ZIP或36份历史结果。

@@ -71,12 +71,15 @@ class CodingClient:
         self.chat=N(completions=N(create=self.create))
 
     async def create(self, **kwargs):
+        attempt = getattr(self.trace, 'attempt', None)
+        if attempt is not None:attempt.check()
         self.budget.check()
         self.trace.paired &= pair_messages(kwargs['messages'],complete=True)
         event_start=len(self.trace.events)
         prior_usage=len(self.trace.usage)
         try:
             response=await self.original.create(**kwargs)
+            if attempt is not None:attempt.check()
             message=response.choices[0].message
             if not hasattr(message,'tool_calls') or not hasattr(message,'content'):
                 raise CodingEvaluationStop('provider_unsupported')
@@ -92,6 +95,7 @@ class CodingClient:
                 raise CodingEvaluationStop('provider_unsupported')
             if (message.content is not None and (not isinstance(message.content,str) or len(message.content)>65536)) or sum(len(c.function.arguments) for c in calls or [])>131072:
                 raise CodingEvaluationStop('provider_unsupported')
+            if attempt is not None:attempt.register_calls(calls,self.trace.names)
             self.ids.update(ids)
             self.budget.successes+=1
             self.trace.events[-1]['output_sha256']=hashlib.sha256((message.content or '').encode()).hexdigest()

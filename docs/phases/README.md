@@ -61,3 +61,5 @@ uv run python mybot/main.py
 优先使用 Tag；找不到 Tag 时使用同级快照。还原到独立目录，默认拒绝覆盖，完全不 checkout 当前分支。ZIP 检查 CRC、必要文件、路径穿越、符号链接及敏感文件。ZIP 来源必须可信，校验结构不等于证明来源。仅有 ZIP 时没有 Git 历史。离线复习可执行 `uv run python -m scripts.check_phase`。
 
 macOS ExFAT 会自行生成 `._*` 元数据文件，脚本通过 `git archive` 避免带入未跟踪文件，并设置 `COPYFILE_DISABLE=1` 减少复制元数据；系统仍可能生成。独立验证使用系统临时目录，以避开 ExFAT。建议学习目录位于 APFS。
+
+Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于原Tag/ZIP；原历史评测与归档保持。

@@ -1,4 +1,5 @@
 """Metadata instrumentation and independent protocol audit, never transcript retention."""
+import asyncio
 import hashlib
 import json
 import re
@@ -80,11 +81,46 @@ class CodingTrace(Trace):
 
 class BenchmarkAgent(TracedAgent):
     """Instrumentation only. All decisions and execution remain in original Loop."""
+    def capture_journal(self):
+        journal = self._active_journal or self._git_capsule
+        if journal is None:
+            return
+        # No original/final source bytes, raw Patch, host paths or command arguments.
+        self.trace.journal_records = {
+            p: {'original_sha256': e.original_sha256, 'final_sha256': e.final_sha256}
+            for p, e in journal.entries.items() if p in self.trace.paths}
+        self.trace.journal_uncertain = not journal.valid or journal._pending is not None
+
     async def _execute(self,name,raw_arguments):
+        attempt = getattr(self.trace, 'attempt', None)
+        receipt = attempt.begin_tool(name) if attempt is not None else None
+        if attempt is not None:
+            attempt.check()
+            attempt.tool = name
+            attempt.command_approved = False
         if name=='run_command':
             try:self.trace.command_start=self.trace.current_hashes()
             except (ValueError,OSError):self.trace.command_start=None
-        return await super()._execute(name,raw_arguments)
+        try:
+            result = await super()._execute(name,raw_arguments)
+            if attempt is not None:
+                attempt.check()
+            if receipt is not None:receipt['status'] = 'returned'
+            return result
+        except asyncio.CancelledError:
+            if attempt is not None:
+                if receipt is not None:receipt['status'] = 'cancelled'
+                attempt.revoke('tool_cancelled')
+                # Native run_process awaits cleanup, but cancellation does not expose
+                # its cleanup status. Never invent a trusted termination receipt.
+                attempt.tool_uncertain |= name == 'apply_patch' or (name == 'run_command' and attempt.command_approved)
+                attempt.cancelled_calls.append({'name': name if name in self.trace.names else '<unknown>', 'status': 'cancelled',
+                    'execution_uncertain': attempt.tool_uncertain})
+            raise
+        finally:
+            self.capture_journal()
+            if attempt is not None:
+                attempt.tool = None
 
 
 def case_metrics(trace,controller,messages,live):

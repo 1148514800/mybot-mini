@@ -33,7 +33,7 @@ def main():
                 from mybot.evaluation.coding_supervisor import supervise
                 for _ in range(a.max_runs):
                     _,rows=inventory(a.directory)
-                    if any(r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and pause_reason(r['report'])) for r in rows):
+                    if any(r.get('blocked') or r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and pause_reason(r['report'])) for r in rows):
                         raise ValueError('interrupted_run_requires_audit')
                     if not any(r['status']=='pending' for r in rows):break
                     code=supervise([sys.executable,'-m','scripts.evaluate_coding_campaign','run',

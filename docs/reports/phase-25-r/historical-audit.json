@@ -1,0 +1,249 @@
+{
+  "historical_campaign_id": "1d3391f2119645c2adeb2a07cf2f2641",
+  "frozen_harness_sha": "b008f35563c266d89ebbdd67a3c31607f9c47819",
+  "config_sha256": "4744178d9d033a202e1b09518c167218309f7b8ceb5031de3357a2967562ca54",
+  "historical_files_verified": 170,
+  "denominator": 36,
+  "strict_successes": 15,
+  "agent_verified": 15,
+  "judge_hidden_pass": 31,
+  "judge_repair_success": 18,
+  "cancelled_runs": 13,
+  "journal_mismatch_files": 26,
+  "cancellations": [
+    {
+      "run_id": "r2-validation-chain-001",
+      "started_at": "2026-10-20T17:15:23.976783+00:00",
+      "finished_at": "2026-10-20T17:25:27.147589+00:00",
+      "raw_sha256": "df84800545bddab5c1f66e0a5df063d551afa2c211917a2aa710077a504be521",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 3,
+      "changed_paths": [
+        "app/normalize.py",
+        "app/service.py",
+        "app/validation.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r2-cache-sync-001",
+      "started_at": "2026-10-20T17:30:27.447215+00:00",
+      "finished_at": "2026-10-20T17:40:28.016287+00:00",
+      "raw_sha256": "3a34bf7a3b583e68294e07a414166969f81690ed8f996ff55a31fcc3d3643ea1",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 2,
+      "changed_paths": [
+        "app/cache.py",
+        "app/service.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r2-parse-convert-001",
+      "started_at": "2026-10-20T17:45:28.138494+00:00",
+      "finished_at": "2026-10-20T17:55:28.691680+00:00",
+      "raw_sha256": "87fe2dda9e311bfaf26b44e01f6f9e52e144ae657165e5ca145789b814640780",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 3,
+      "changed_paths": [
+        "app/conversion.py",
+        "app/parser.py",
+        "app/service.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r2-error-retry-001",
+      "started_at": "2026-10-20T18:00:28.951007+00:00",
+      "finished_at": "2026-10-20T18:10:29.518561+00:00",
+      "raw_sha256": "7c48c2ffcf95ba8635686e08d905d6e16896cd0da91e66a840e6571eefd46290",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 3,
+      "changed_paths": [
+        "app/client.py",
+        "app/policy.py",
+        "app/transport.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-pagination-001",
+      "started_at": "2026-10-20T18:15:29.673436+00:00",
+      "finished_at": "2026-10-20T18:25:30.271717+00:00",
+      "raw_sha256": "d6e24050cd59b58f55473d23960bcd1a9ae5853443981492c62f749a994bfb4c",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 1,
+      "changed_paths": [
+        "app/paging.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-file-recovery-001",
+      "started_at": "2026-10-20T18:32:27.327500+00:00",
+      "finished_at": "2026-10-20T18:42:27.894883+00:00",
+      "raw_sha256": "93abba15f72026a95b0c9f409eca59abb72d160d6fe51672c06933f1cbe56915",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 1,
+      "changed_paths": [
+        "app/storage.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-config-default-001",
+      "started_at": "2026-10-20T18:47:28.029017+00:00",
+      "finished_at": "2026-10-20T18:57:28.565617+00:00",
+      "raw_sha256": "0976f94c77f7cf255e99a8c30e25b7fc11acb273f41e985d15dcb88061c6c1a5",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 1,
+      "changed_paths": [
+        "app/options.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-csv-export-001",
+      "started_at": "2026-10-20T19:03:33.912583+00:00",
+      "finished_at": "2026-10-20T19:13:34.412967+00:00",
+      "raw_sha256": "c66c0290a19fd16a3855e857c43808b5a3d810a4546686bbad466ba3f47eb82a",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 1,
+      "changed_paths": [
+        "app/formatting.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-timezone-day-001",
+      "started_at": "2026-10-20T19:18:34.554738+00:00",
+      "finished_at": "2026-10-20T19:28:35.114225+00:00",
+      "raw_sha256": "a63106a69769f30e9654de5d7238f4c7ad62be6089c4837fed3c88f8f2c67bf9",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 1,
+      "changed_paths": [
+        "app/parsing.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-cli-precedence-001",
+      "started_at": "2026-10-20T19:33:35.293289+00:00",
+      "finished_at": "2026-10-20T19:43:35.859596+00:00",
+      "raw_sha256": "66eda3d516f9d05dc62e25feab97a77c9db403d4a4988493c845afff2daaaa87",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 2,
+      "changed_paths": [
+        "app/cli.py",
+        "app/configuration.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-cache-sync-001",
+      "started_at": "2026-10-20T19:49:44.922838+00:00",
+      "finished_at": "2026-10-20T19:59:45.468856+00:00",
+      "raw_sha256": "b849b7dbc93be778977214edf0a5523e5d3106ef56ec0386107b4f4d38d99605",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 2,
+      "changed_paths": [
+        "app/cache.py",
+        "app/service.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-parse-convert-001",
+      "started_at": "2026-10-20T20:04:45.658590+00:00",
+      "finished_at": "2026-10-20T20:14:46.226780+00:00",
+      "raw_sha256": "07bc07ad6b0ea07bf9fb6eee5f682be77172edc1cf2efc0a1172f0cc36c00255",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 3,
+      "changed_paths": [
+        "app/conversion.py",
+        "app/parser.py",
+        "app/service.py"
+      ],
+      "hidden_state": "hidden_pass"
+    },
+    {
+      "run_id": "r3-error-retry-001",
+      "started_at": "2026-10-20T20:19:46.375460+00:00",
+      "finished_at": "2026-10-20T20:29:46.903408+00:00",
+      "raw_sha256": "25bd3430149ce50cffa3908e9334b8aa1e9f183e4ad8d76cdc0a9aed9846cfd0",
+      "runtime_error": "task_timeout",
+      "stop_reason": "task_interrupted",
+      "controller_command_attempts": 1,
+      "completed_commands": 0,
+      "committed_patches": 1,
+      "journal_mismatch": 3,
+      "changed_paths": [
+        "app/client.py",
+        "app/policy.py",
+        "app/transport.py"
+      ],
+      "hidden_state": "hidden_pass"
+    }
+  ],
+  "external": {
+    "requests": 6,
+    "responses": 5,
+    "stop_reason": "model_request_timeout",
+    "committed_patches": 0,
+    "agent_test_runs": 0,
+    "raw_sha256": "133d8420ecbd9136d6829fc8302a97bc196dbfefba83e8d34db9ef5f830fbd26"
+  },
+  "limits_of_evidence": [
+    "Historical metadata lacks approval stack and input-read receipts; approval wait attribution combines operator incident record and code/command counters.",
+    "The 26 mismatches are cumulative file occurrences, not 26 distinct paths or reconstructed ownership hashes.",
+    "No new live cohort; offline fixes do not establish a model success-rate improvement."
+  ]
+}

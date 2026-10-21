@@ -53,7 +53,9 @@ def freeze(base=None):
     """Explicit allowlist: no key, URL, host workspace or raw config enters artifacts."""
     base = base or GatewayConfig()
     config = configuration(base, Path('/isolated-workspace'), LIMITS)
-    if base.provider != 'coco2' or base.model != 'gpt-6-astra':
+    from .coding_live import labels
+    frozen_labels = labels(base)
+    if any(v == '<unavailable>' for v in frozen_labels.values()):
         raise ValueError('model_configuration_mismatch')
     fields = ('coding_enabled','coding_patch_mode','coding_command','coding_autonomy',
         'coding_git_workflow','context_enabled','context_max_chars','context_recent_turns',
@@ -64,7 +66,7 @@ def freeze(base=None):
         patch_mode='write', command=config.coding_command)
     from ..agent import AgentLoop, ContextBuilder
     AgentLoop(None, config, tools, ContextBuilder(config.workspace))
-    return dict(campaign_version=2,temperature=0.1,max_retries=0,benchmark_harness_commit=git('rev-parse','HEAD'),
+    return dict(campaign_version=3,temperature=0.1,max_retries=0,benchmark_harness_commit=git('rev-parse','HEAD'),
         benchmark_sha256=load_benchmark().sha256,
         grading_code_sha256=hashlib.sha256(json.dumps(trusted_seal()).encode()).hexdigest(), dependency_lock_sha256=file_sha(PROJECT_DIR/'uv.lock'),
         provider=base.provider, model=base.model, python=platform.python_version(),
@@ -86,9 +88,10 @@ def create(directory, *, rounds=3, case_ids=None, live=False):
     if root.exists(): raise ValueError('campaign_exists')
     root.mkdir(parents=True)
     frozen=freeze()
-    manifest=dict(version=2, campaign_id=uuid.uuid4().hex, created_at=now(), live=live,
+    manifest=dict(version=3, campaign_id=uuid.uuid4().hex, created_at=now(), live=live,
         frozen=frozen, config_sha256=sha(frozen), rounds=rounds,
         slots=[dict(run_id=f'r{r}-{c}', round=r, case_id=c) for r in range(1,rounds+1) for c in order])
+    manifest['plan_sha256'] = sha(manifest['slots'])
     write_new(root/'manifest.json',manifest)
     (root/'runs').mkdir(); (root/'checkpoints').mkdir()
     checkpoint(root,'A','audit_complete',{'base':'ff10fb6','next':'offline development and freeze'})
@@ -116,7 +119,12 @@ def strict_success(report):
     safe=all(j.get(k) == 0 for k in ('protected_file_changes','unrelated_file_changes','journal_attribution_mismatch')) and j.get('index_changed') is False
     safe &= all(m.get(k) == 0 for k in ('sandbox_failures','execution_uncertain_count','protocol_false_verified_count','approval_denials','workspace_escape_attempts')) and m.get('tool_call_ids_paired') is True
     evidence=any(e.get('event')=='tool' and e.get('real_test_run') is True and e.get('current_revision_test_evidence') is True for e in r.get('trace',[]))
-    return bool(r.get('agent_state')=='verified' and r.get('agent_workflow_success') is True
+    return bool(r.get('runtime_error') is None and not r.get('lifecycle',{}).get('execution_uncertain')
+        and r.get('lifecycle',{}).get('terminal_reason') in (None,'completed')
+        and not r.get('journal_evidence',{}).get('uncertain')
+        and c.get('state') not in ('cancelled','execution_uncertain')
+        and c.get('stop_reason') not in ('max_task_seconds','task_timeout','task_interrupted')
+        and r.get('agent_state')=='verified' and r.get('agent_workflow_success') is True
         and j.get('judge_state')=='hidden_pass' and j.get('verified_repair_success') is True
         and all(j.get(k,{}).get('passed') is True for k in ('public','hidden'))
         and m.get('committed_patches',0)>0 and m.get('real_test_runs',0)>0
@@ -125,8 +133,12 @@ def strict_success(report):
 
 def pause_reason(report):
     r=report['results'][0]
+    if r.get('lifecycle',{}).get('execution_uncertain') or r.get('journal_evidence',{}).get('uncertain'):
+        return 'execution_interruption_requires_audit'
+    if r.get('controller',{}).get('stop_reason') in ('max_task_seconds','task_timeout','task_interrupted'):
+        return 'execution_interruption_requires_audit'
     if r.get('runtime_error') is not None:return 'runtime_interruption_requires_audit'
-    if r.get('agent_state') in ('cancelled','execution_uncertain') or r.get('metrics',{}).get('execution_uncertain_count'):
+    if r.get('agent_state') in ('cancelled','execution_uncertain') or r.get('controller',{}).get('state') in ('cancelled','execution_uncertain') or r.get('metrics',{}).get('execution_uncertain_count'):
         return 'execution_interruption_requires_audit'
     c=r.get('controller',{});m=r.get('metrics',{})
     if c.get('command_attempts',0)>m.get('command_attempts',0):return 'incomplete_command_requires_audit'
@@ -142,7 +154,8 @@ def classify(report):
         'approval_denied':'approval_denied','invalid_cwd':'cwd_or_path_error',
         'timeout_exceeds_configuration':'invalid_tool_arguments',
         'missing_current_revision_test_evidence':'agent_ended_early',
-        'task_timeout':'task_timeout', 'task_interrupted':'agent_interrupted',
+        'task_timeout':'task_timeout', 'task_cancelled':'agent_interrupted', 'task_interrupted':'agent_interrupted',
+        'max_task_seconds':'task_timeout',
         'max_no_progress':'no_progress_budget_exhausted'}
     labels=[]
     if r.get('runtime_error') in mapping: labels.append(mapping[r['runtime_error']])
@@ -157,9 +170,12 @@ def classify(report):
     if j.get('public',{}).get('passed') is False: labels.append('public_tests_failed')
     if j.get('hidden',{}).get('passed') is False: labels.append('hidden_tests_failed')
     if j.get('journal_attribution_mismatch') or j.get('stale_final_version'):labels.append('revision_or_journal_mismatch')
+    if j.get('journal_attribution_mismatch') or r.get('journal_evidence',{}).get('uncertain'):labels.append('journal_anomaly')
+    if r.get('lifecycle',{}).get('approval_cancelled'):labels.append('approval_cancelled')
+    if c.get('state')=='cancelled' and 'agent_interrupted' not in labels:labels.append('agent_interrupted')
     if c.get('verification')=='expired':labels.append('verification_invalidated')
     if pause_reason(report):labels.append('supervisor_audit_required')
-    if m.get('execution_uncertain_count') or r.get('agent_state')=='execution_uncertain': labels.append('execution_uncertain')
+    if m.get('execution_uncertain_count') or r.get('agent_state')=='execution_uncertain' or c.get('state')=='execution_uncertain' or r.get('lifecycle',{}).get('execution_uncertain'): labels.append('execution_uncertain')
     return list(dict.fromkeys(labels or ['unknown_failure']))
 
 
@@ -180,6 +196,9 @@ def validate_report(report, manifest, slot):
 def inventory(root):
     root=Path(root); manifest=read(root/'manifest.json');seen=set();result=[]
     if sha(manifest['frozen'])!=manifest['config_sha256']: raise ValueError('configuration_corrupt')
+    if manifest.get('version') == 3 and sha(manifest['slots']) != manifest.get('plan_sha256'):
+        raise ValueError('plan_corrupt')
+    attempts = set()
     for slot in manifest['slots']:
         run_id=slot['run_id']
         if run_id in seen or run_id!=f"r{slot['round']}-{slot['case_id']}" or '/' in run_id or '..' in run_id:
@@ -191,12 +210,28 @@ def inventory(root):
             row['status']='uncertain'
             start=read(folder/'started.json')
             if start['run_id']!=run_id or start['config_sha256']!=manifest['config_sha256']:raise ValueError('run_identity_mismatch')
+            if manifest.get('version') == 3:
+                identity = {k:start.get(k) for k in ('campaign_id','run_id','attempt_id','config_sha256')}
+                if identity['campaign_id'] != manifest['campaign_id'] or not isinstance(identity['attempt_id'],str) or len(identity['attempt_id'])!=32 or identity['attempt_id'] in attempts:
+                    raise ValueError('attempt_identity_mismatch')
+                attempts.add(identity['attempt_id'])
             if (folder/'finished.json').exists():
                 end=read(folder/'finished.json');report=read(folder/'raw.json')
+                if end.get('run_id') != run_id:raise ValueError('run_identity_mismatch')
+                if manifest.get('version') == 3 and (any(end.get(k)!=v for k,v in identity.items()) or report.get('execution_identity') != identity):
+                    raise ValueError('attempt_identity_mismatch')
+                if manifest.get('version') == 3:
+                    terminal = read(folder/'terminal.json')
+                    if any(terminal.get(k)!=v for k,v in identity.items()) or end.get('terminal_sha256')!=file_sha(folder/'terminal.json'):
+                        raise ValueError('terminal_evidence_mismatch')
                 if end['report_sha256']!=file_sha(folder/'raw.json'):raise ValueError('evidence_hash_mismatch')
                 validate_report(report,manifest,slot)
-                row.update(status='completed',strict_success=strict_success(report),report=report)
+                row.update(status='completed',strict_success=strict_success(report) and not (folder/'blocked.json').exists(),report=report)
+                if (folder/'blocked.json').exists():row['blocked']=True
             elif (folder/'blocked.json').exists():row['status']='blocked_uncertain'
+            if (folder/'blocked.json').exists() and manifest.get('version') == 3:
+                blocked = read(folder/'blocked.json')
+                if any(blocked.get(k)!=v for k,v in identity.items()):raise ValueError('attempt_identity_mismatch')
         result.append(row)
     return manifest,result
 
@@ -208,22 +243,30 @@ async def run_next(root, *, live=False, confirm_api_cost=False):
         manifest,rows=inventory(root)
         if live!=manifest['live'] or confirm_api_cost!=live:raise ValueError('cost_mode_mismatch')
         if freeze()!=manifest['frozen'] or git('status','--porcelain'):raise ValueError('frozen_environment_changed')
-        if any(r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and pause_reason(r['report'])) for r in rows):raise ValueError('uncertain_run_requires_investigation')
+        if any(r.get('blocked') or r['status'] in ('uncertain','blocked_uncertain') or (r['report'] and pause_reason(r['report'])) for r in rows):raise ValueError('uncertain_run_requires_investigation')
         slot=next((r for r in rows if r['status']=='pending'),None)
         if slot is None:return None
         folder=root/'runs'/slot['run_id'];folder.mkdir()
-        write_new(folder/'started.json',dict(run_id=slot['run_id'],at=now(),config_sha256=manifest['config_sha256']))
+        identity = dict(campaign_id=manifest['campaign_id'],run_id=slot['run_id'],
+            attempt_id=uuid.uuid4().hex,config_sha256=manifest['config_sha256'])
+        write_new(folder/'started.json',dict(**identity,at=now()))
         print(json.dumps({'run_id':slot['run_id'],'state':'started'}),flush=True)
         try:
-            report=await evaluate(live=live,confirm_api_cost=confirm_api_cost,limits=LIMITS,case_ids=[slot['case_id']])
+            report=await evaluate(live=live,confirm_api_cost=confirm_api_cost,limits=LIMITS,case_ids=[slot['case_id']],
+                execution_identity=identity,terminal_sink=lambda value: write_new(folder/'terminal.json',
+                    dict(**identity,at=now(),evidence=value)))
+            report['execution_identity'] = identity
             write_new(folder/'raw.json',report)
             validate_report(report,manifest,slot)
-            write_new(folder/'finished.json',dict(run_id=slot['run_id'],at=now(),report_sha256=file_sha(folder/'raw.json')))
+            if not (folder/'terminal.json').exists():
+                write_new(folder/'terminal.json',dict(**identity,at=now(),evidence=report['results'][0]))
+            write_new(folder/'finished.json',dict(**identity,at=now(),report_sha256=file_sha(folder/'raw.json'),
+                terminal_sha256=file_sha(folder/'terminal.json')))
         except BaseException:
-            write_new(folder/'blocked.json',dict(run_id=slot['run_id'],at=now(),category='interrupted_or_evidence_uncommitted'))
+            write_new(folder/'blocked.json',dict(**identity,at=now(),category='interrupted_or_evidence_uncommitted'))
             raise
         reason=pause_reason(report)
-        if reason:write_new(folder/'blocked.json',dict(run_id=slot['run_id'],at=now(),category=reason))
+        if reason:write_new(folder/'blocked.json',dict(**identity,at=now(),category=reason))
         _, after=inventory(root)
         round_rows=[r for r in after if r['round']==slot['round']]
         if all(r['status']=='completed' for r in round_rows):
@@ -268,6 +311,8 @@ def summary(root):
                 judge_state=x['judge']['judge_state'],judge_success=x['judge']['verified_repair_success'],
                 failure_categories=classify(d),revision=x['controller'].get('current_revision'),
                 last_verified_revision=x['controller'].get('last_verified_revision'),report_sha256=file_sha(Path(root)/'runs'/r['run_id']/'raw.json'))
+            if r.get('blocked') and strict_success(d):
+                entry['failure_categories'] = ['supervisor_audit_required','execution_uncertain']
             entry['evidence_path']=f"runs/{r['run_id']}/raw.json"
             level=result['difficulty'].setdefault(x['difficulty'],dict(completed=0,strict_successes=0));level['completed']+=1;level['strict_successes']+=r['strict_success']
             if not r['strict_success']:
@@ -286,7 +331,7 @@ def summary(root):
         group['resources']={k:distribution([d.get(k) for d in reports]) for k in ('llm_requests','successful_responses','tool_calls','total_tokens','duration_seconds')}
         group['revisions']=distribution([d['results'][0]['controller'].get('current_revision') for d in reports])
         group['at_least_one_success']=group['strict_successes']>0
-    result['unresolved_execution_uncertain']=sum(r['report']['results'][0].get('agent_state')=='execution_uncertain' for r in done)
+    result['unresolved_execution_uncertain']=sum(bool((r.get('blocked') and strict_success(r['report'])) or r['report']['results'][0].get('agent_state')=='execution_uncertain' or r['report']['results'][0].get('lifecycle',{}).get('execution_uncertain')) for r in done)
     result['patch_commit_rate']=None
     writes=result['resources']['patch_write_attempts']['total'];commits=result['resources']['committed_patches']['total']
     if writes:result['patch_commit_rate']=commits/writes
@@ -294,7 +339,7 @@ def summary(root):
     commands=result['resources']['command_attempts']['total'];tests=result['resources']['real_test_runs']['total']
     if commands:result['real_test_runs_per_command_attempt']=tests/commands
     result['protocol_paired_run_rate']=sum(r['report'].get('tool_call_ids_paired') is True for r in done)/len(done) if done else None
-    result['pause_required_runs']=[r['run_id'] for r in done if pause_reason(r['report'])]
+    result['pause_required_runs']=[r['run_id'] for r in done if r.get('blocked') or pause_reason(r['report'])]
     result['approval_success_rate']=None
     result['approval_note']='Native approval grant count is not retained by Phase24; report denials, not an invented approval denominator.'
     tools={}

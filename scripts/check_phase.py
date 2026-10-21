@@ -118,3 +118,7 @@ print("Offline Phase checks passed: loop, logging, content masking, files, error
 if Path(__file__).with_name('check_coding_campaign.py').exists():
     from scripts.check_coding_campaign import check_coding_campaign
     check_coding_campaign()
+
+if Path(__file__).with_name('check_coding_reliability.py').exists():
+    from scripts.check_coding_reliability import check_coding_reliability
+    check_coding_reliability()
