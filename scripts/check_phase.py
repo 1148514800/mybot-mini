@@ -134,3 +134,11 @@ if Path(__file__).with_name('check_provider_failover_smoke.py').exists():
 if Path(__file__).with_name('check_coding_failover.py').exists():
     from scripts.check_coding_failover import check_coding_failover
     check_coding_failover()
+
+if Path(__file__).with_name('check_request_budget_efficiency.py').exists():
+    from scripts.check_request_budget_efficiency import check_request_budget_efficiency
+    check_request_budget_efficiency()
+
+if Path(__file__).with_name('check_coding_failover_batch.py').exists():
+    from scripts.check_coding_failover_batch import check_coding_failover_batch
+    check_coding_failover_batch()

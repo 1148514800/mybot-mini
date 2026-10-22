@@ -1,41 +1,21 @@
 # AI_HANDOFF
 
-## 当前状态
+## 当前任务
 
-Provider Failover Harness Integration：Phase25之后的独立可靠性改进，不是Phase26。
-独立codex/provider-failover-harness分支，远程验收基线5490149827cffbc5c75aa6cc1634efeb33344c0a已核对无更新。
-新增50项专项、全量1071项/29套件及Phase1/2兼容断言通过；原1021项不删、不跳过、不弱化。
-本轮真实模型API请求0，不使用此前剩余额度，不Push/Merge、不移Tag或生成ZIP。
+独立codex/request-budget-full-batch分支，基线3ccd2df。目标：请求效率提示、复用v4的13槽Batch、受控回退、离线回归、授权Live和统一证据报告。不是Phase26，不改旧Canary/Phase25结果。
 
-## 实现与隔离
+## 实现
 
-- 新coding_failover适配原run_task，复用ProviderFailoverClient可选recoverable谓词；CLI缺省策略不变。
-- 新evaluate_coding_failover默认single/offline，只有显式failover启用严格策略；旧入口和单模型字段兼容。
-- 严格回退仅网络、超时、429、500/502/503/504；参数、认证、协议、本地异常、取消不回退。
-- 原Loop预占主请求Controller预算；备用前先检查Attempt、时限及全局预算，再预占Controller。
-  TracedClient使用逻辑影子计数，全局物理计数只在SDK接口调用前增加；每Case Controller还受全局剩余额度约束。
-- 同Attempt Sticky、下Attempt从coco开始；逐Attempt延迟创建备用并有界关闭两端。
-- SDK尝试、HTTP发送尝试及离线合成接口明确区分；无HTTP观察或Usage时为null，不假定为0。混合费用未知。
-- 新create-once v4 manifest只写runs/coding_failover，每目录一个Case/Attempt，不提供重放/续跑。
-  冻结实际配置/源码树/模型/策略/预算/依赖/Benchmark/评分，交叉校验身份、SHA和请求模型。
-  失败、中断、不确定清理与缺失证据保留blocked。离线执行不计Live严格成功。
+Controller仅精简运行时提示：有效当前Revision证据优先最终回复，最后请求如实决定必要操作；不自动verified、不扩预算。保持原Patch、审批、Seatbelt与Judge。
+新Batch固定12自然+1受控槽，204物理上限，单例12/16/20/12。顺序复用v4，先持久预算reservation再SDK，outcome与v4报告交叉审计；既存目录禁止重放。异常/清理不确定立即停止。
+受控首次主接口连接故障不发HTTP但占物理、Controller及Batch预算；备用原机制独立Key/Model且sticky，不重放工具。默认none。
+文档docs/request-budget-full-batch.md。新增18+25测试，所有原1071保留。
 
-## 验证与证据
+## 验证进度
 
-50项新专项、原17项CLI回退、13项smoke、42项生命周期专项以及全量1071/29通过，编译/diff通过。
-合成故障后原Loop完成真实Patch、Seatbelt公开测试和Judge：5次逻辑请求=6次物理接口尝试，Revision1/1，ID配对与Journal正确。
-回退后读取不重放；取消、迟到响应、全局/Controller预算、认证协议、异常关闭、历史隔离与防篡改均有反例。
-实际SDK MockTransport验证自己的模型/Key、相同上下文/Schema、禁隐式重试和HTTP计数，无外部模型网络。
-无需要Codex代答的CLI审批提示，operator yes输入0；真实PTY/nonce由既有42项合成生命周期测试覆盖。
-验收入口docs/reports/provider-failover-harness/acceptance-report.md；架构/命令docs/provider-failover-harness.md。
-原始测试日志/tmp/failover-harness-*.log，不提交原始日志或配置。
+效率18、Batch25、原Failover50、生命周期42、CLI17、smoke13专项已通过。全量1114项/31套件通过，零跳过（原1071+新增43）；编译、diff与281项历史资产保护检查通过。Live尚未执行；本提交冻结implementation，随后只在干净源码运行授权批次。
 
-## 下一步与边界
+## 授权与边界
 
-本轮未复制真实配置到开发区，未改任何已有Key。1592项保护资产已多次复核保持。
-原Phase25/DeepSeek Campaign及CSV blocked证据不变，不允许在新分支继续或拼接旧单模型结果。
-可在本次OFFLINE PASS之后另行授权独立Live Coding Benchmark，必须配置凭证、冻结新版本并单独统计混合模型。
-不能宣称Live PASS、编码成功率提高、真实故障恢复稳定性或取消长期可靠性通过。
-AppleDouble pack索引错误未清理，Git必要读取与完整保护核验可用。
-
-追加离线模型标签隐私反例：清除离线凭证前收集已知Key用于检查，避免误填model的Key进入元数据。已用合成值复现，修复后50专项及1071全量通过；此前1070回归证据保留。
+本轮最多固定13个新Attempt、204物理接口尝试（自然192+受控12，含1合成注入），不是金额上限。用户已授权逐次安全TTY挑战、费用和最终独立分支Push，不需逐例询问。失败不重跑；不作额外Smoke或越权操作。
+忽略配置副本0600，不能打印或提交Key。历史、两个Canary、main、Tag/ZIP和主工作区用户修改保留。旧ExFAT ._pack索引警告不清理。

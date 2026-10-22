@@ -16,7 +16,9 @@ def base_config(live):
     return GatewayConfig(**({} if live else dict(provider='coco',model='deepseek-v4.1-flash',api_key=None,base_url=None)))
 
 
-def freeze(mode, live, limits, case_id):
+def freeze(mode, live, limits, case_id, fault_mode='none'):
+    if fault_mode not in ('none','primary_connection_once') or (fault_mode!='none' and mode!='failover'):
+        raise ValueError('invalid_fault_mode')
     base=base_config(live)
     frozen=legacy.freeze(base)
     from .coding_benchmark import configuration
@@ -25,7 +27,7 @@ def freeze(mode, live, limits, case_id):
         'max_model_requests':min(limits.max_model_requests_per_case,limits.max_requests)})
     frozen['agent']={k:getattr(actual,k) for k in frozen['agent']}
     profiles=(base,) if mode=='single' else settings(base,live=live)
-    frozen.update(campaign_version=4,provider_mode=mode,policy='single' if mode=='single' else POLICY,
+    frozen.update(fault_mode=fault_mode,campaign_version=4,provider_mode=mode,policy='single' if mode=='single' else POLICY,
         providers=[dict(provider=c.provider,model=labels(c)['model'],
             endpoint_sha256=hashlib.sha256(c.base_url.encode()).hexdigest() if c.base_url else None) for c in profiles],
         limits=asdict(limits),case_id=case_id,live=live,cost_authorized=live,
@@ -70,12 +72,20 @@ def inventory(directory):
             e.get('attempt_id')!=identity['attempt_id'] or e.get('case_id')!=manifest['frozen']['case_id']
             for e in requests):
             raise ValueError('physical_request_identity_mismatch')
+        if f.get('fault_mode','none')!=raw.get('fault_mode','none'):raise ValueError('fault_provenance_mismatch')
         if f['provider_mode']=='failover':
             providers={c['provider']:c['model'] for c in f['providers']}
             if len(requests)!=raw.get('physical_model_requests') or len(requests)>f['limits']['max_requests'] or any(
                 r.get('provider') not in providers or r.get('model')!=providers[r['provider']]
                 or r.get('physical_request')!=i for i,r in enumerate(requests,1)):
                 raise ValueError('physical_request_provenance_mismatch')
+            injected=[(n,q) for n,q in enumerate(requests) if q.get('synthetic_injected')]
+            if f.get('fault_mode','none')=='none' and injected:raise ValueError('unexpected_injection')
+            if injected and (len(injected)!=1 or injected[0][0]!=0 or injected[0][1]['provider']!='coco' or
+                injected[0][1].get('http_dispatch_count')!=0 or injected[0][1].get('phase')!='injected_connection'):
+                raise ValueError('invalid_injection_evidence')
+            if requests and f.get('fault_mode')=='primary_connection_once' and not injected:
+                raise ValueError('missing_injection_evidence')
         result.update(status='completed',strict_success=legacy.strict_success(raw))
     if (root/'blocked.json').exists():
         blocked=legacy.read(root/'blocked.json')
@@ -85,7 +95,7 @@ def inventory(directory):
 
 
 async def run(directory, *, provider_mode='single', live=False, confirm_api_cost=False,
-              case_id='cache-ttl-001', limits=None, offline_provider_factory=None):
+              case_id='cache-ttl-001', limits=None, offline_provider_factory=None, fault_mode='none', request_audit=None):
     if provider_mode not in ('single','failover'):raise ValueError('invalid_provider_mode')
     if type(live) is not bool or live!=confirm_api_cost:raise ValueError('live_requires_both_flags')
     if live and offline_provider_factory is not None:raise ValueError('live_forbids_synthetic_overrides')
@@ -95,7 +105,7 @@ async def run(directory, *, provider_mode='single', live=False, confirm_api_cost
     root=Path(directory).resolve()
     if 'coding_campaign' in root.parts or root.exists():raise ValueError('campaign_exists_or_historical_namespace')
     if live and legacy.git('status','--porcelain'):raise ValueError('live_requires_clean_source')
-    frozen=freeze(provider_mode,live,limits,case_id)
+    frozen=freeze(provider_mode,live,limits,case_id,fault_mode)
     identity=dict(campaign_id=uuid.uuid4().hex,run_id=case_id,attempt_id=uuid.uuid4().hex,config_sha256=legacy.sha(frozen))
     root.mkdir(parents=True)
     legacy.write_new(root/'manifest.json',dict(version=4,kind='provider_failover_harness',**identity,frozen=frozen,created_at=legacy.now()))
@@ -105,11 +115,11 @@ async def run(directory, *, provider_mode='single', live=False, confirm_api_cost
     try:
         report=await evaluate(provider_mode=provider_mode,live=live,confirm_api_cost=confirm_api_cost,
             limits=limits,case_ids=[case_id],base_config=base_config(live),execution_identity=identity,
-            terminal_sink=terminal,offline_provider_factory=offline_provider_factory)
+            terminal_sink=terminal,offline_provider_factory=offline_provider_factory,fault_mode=fault_mode,request_audit=request_audit)
         report['execution_identity']=identity
         legacy.write_new(root/'raw.json',report)
         if not (root/'terminal.json').exists():terminal(report['results'][0])
-        if frozen!=freeze(provider_mode,live,limits,case_id):raise ValueError('frozen_environment_changed')
+        if frozen!=freeze(provider_mode,live,limits,case_id,fault_mode):raise ValueError('frozen_environment_changed')
         legacy.write_new(root/'finished.json',dict(**identity,at=legacy.now(),
             report_sha256=legacy.file_sha(root/'raw.json'),terminal_sha256=legacy.file_sha(root/'terminal.json')))
         if not legacy.strict_success(report):

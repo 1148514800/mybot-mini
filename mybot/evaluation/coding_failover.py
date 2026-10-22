@@ -7,6 +7,8 @@ import math
 import time
 from types import SimpleNamespace as N
 
+import httpx
+
 from openai import AsyncOpenAI, APIConnectionError, APITimeoutError, APIStatusError, APIResponseValidationError
 from ..provider_failover import ProviderFailoverClient, FallbackBudgetExceeded
 from ..config import GatewayConfig, build_client
@@ -57,7 +59,9 @@ def settings(base, *, live, backup=None):
 
 class FailoverCodingClient(CodingClient):
     """The existing logical trace plus before-dispatch physical accounting/fences."""
-    def __init__(self, configs, trace, budget, attempt, case_id, factory, *, live=False):
+    def __init__(self, configs, trace, budget, attempt, case_id, factory, *, live=False, fault_mode='none', request_audit=None):
+        if fault_mode not in ('none','primary_connection_once'):raise ValueError('invalid_fault_mode')
+        self.fault_mode=fault_mode;self.injected=False;self.request_audit=request_audit
         self.configs=configs;self.attempt=attempt;self.case_id=case_id;self.factory=factory
         self.controller=lambda:None;self.logical=0;self.records=[];self.stops=[];self.deadline=0
         self.transition=False;self.current=None;self.clients=[]
@@ -121,18 +125,25 @@ class FailoverCodingClient(CodingClient):
         async def create(**kwargs):
             self.fence();self._budget.check()
             if kwargs.get('model')!=cfg.model:raise CodingEvaluationStop('provider_unsupported')
-            self._budget.state['used']+=1
             record=dict(case_id=self.case_id,attempt_id=self.attempt.identity['attempt_id'],
                 logical_request=self.logical,physical_request=len(self.records)+1,
-                global_physical_request=self._budget.state['used'],provider=cfg.provider,model=labels(cfg)['model'],
+                global_physical_request=self._budget.state['used']+1,provider=cfg.provider,model=labels(cfg)['model'],
                 is_fallback=cfg.provider=='coco2',fallback_transition=self.transition and cfg.provider=='coco2',
                 phase='sdk_create',status='started',error_category=None,http_status=None,
                 execution_mode='live' if self.live else 'offline_synthetic',
                 client_kind='openai_sdk' if isinstance(raw,AsyncOpenAI) else 'synthetic_client',
                 http_dispatch_count=0 if observed else None,budget_or_deadline_stop=False,usage=usage_values(None))
+            inject = self.fault_mode=='primary_connection_once' and cfg.provider=='coco' and not self.injected
+            record['synthetic_injected']=inject
+            if inject:record.update(phase='injected_connection',http_dispatch_count=0)
+            if self.request_audit is not None:self.request_audit.before(record)
+            self._budget.state['used']+=1
             self.transition=False
             self.records.append(record);self.current=record;started=time.monotonic()
             try:
+                if inject:
+                    self.injected=True
+                    raise APIConnectionError(request=httpx.Request('POST','https://injected.invalid/chat/completions'))
                 c=self.controller();remaining=min(self.deadline,self._budget.deadline)-time.monotonic()
                 if c is not None:remaining=min(remaining,c.remaining_seconds)
                 async with asyncio.timeout(max(.000001,remaining)):
@@ -149,6 +160,7 @@ class FailoverCodingClient(CodingClient):
             finally:
                 record['duration_seconds']=round(time.monotonic()-started,6)
                 self.current=None
+                if self.request_audit is not None:self.request_audit.after(record)
         async def close():
             closing=getattr(raw,'close',None)
             if closing is not None:await closing()
@@ -172,7 +184,7 @@ class FailoverCodingClient(CodingClient):
         transitions=[r for r in records if r['fallback_transition']]
         counts={p:sum(r['provider']==p for r in records) for p in ('coco','coco2')}
         http=sum(r['http_dispatch_count'] for r in records) if all(r['http_dispatch_count'] is not None for r in records) else None
-        return dict(policy=POLICY,logical_model_requests=self.logical,physical_model_requests=len(records),
+        return dict(fault_mode=self.fault_mode,synthetic_injected_attempts=sum(r['synthetic_injected'] for r in records),policy=POLICY,logical_model_requests=self.logical,physical_model_requests=len(records),
             physical_requests_by_provider=counts,http_model_requests=http,
             http_count_semantics='pre_transport_dispatch_attempts; not billing confirmation' if http is not None else 'unknown',
             fallback_attempts=len(transitions),fallback_successes=sum(r['status']=='returned' for r in transitions),
@@ -187,12 +199,15 @@ class FailoverCodingClient(CodingClient):
             'total_tokens':tokens['total_tokens'],'cached_input_tokens':tokens['cached_input_tokens']}
 
 
-async def evaluate(*, provider_mode='single', offline_provider_factory=None, backup_config=None, **kwargs):
+async def evaluate(*, provider_mode='single', offline_provider_factory=None, backup_config=None,
+                   fault_mode='none', request_audit=None, **kwargs):
     from .coding_benchmark import evaluate as original, OfflineClient
     if provider_mode not in ('single','failover'):raise ValueError('invalid_provider_mode')
     live=kwargs.get('live',False)
     if live and (offline_provider_factory is not None or backup_config is not None):
         raise ValueError('live_forbids_synthetic_overrides')
+    if fault_mode not in ('none','primary_connection_once') or (provider_mode=='single' and (fault_mode!='none' or request_audit is not None)):
+        raise ValueError('fault_requires_explicit_failover')
     if provider_mode=='single':
         if offline_provider_factory is not None or backup_config is not None:raise ValueError('single_forbids_backup_overrides')
         return await original(**kwargs)
@@ -204,11 +219,11 @@ async def evaluate(*, provider_mode='single', offline_provider_factory=None, bac
         secondary=replace(config,provider='coco2',model=backup.model,api_key=backup.api_key,base_url=backup.base_url)
         if live:factory=lambda cfg:build_client(cfg)
         else:factory=lambda cfg:offline_provider_factory(runtime,cfg.provider) if offline_provider_factory else OfflineClient()
-        return FailoverCodingClient((config,secondary),trace,budget,attempt,runtime.id,factory,live=live)
+        return FailoverCodingClient((config,secondary),trace,budget,attempt,runtime.id,factory,live=live,fault_mode=fault_mode,request_audit=request_audit)
     report=await original(base_config=base,_adapter_factory=adapter,**kwargs)
     executions=[r['provider_execution'] for r in report['results'] if 'provider_execution' in r]
     http_count=sum(r['http_model_requests'] for r in executions) if all(r['http_model_requests'] is not None for r in executions) else None
-    report.update(report_type='coding_failover_benchmark',provider_mode='failover',provider_policy=POLICY,
+    report.update(report_type='coding_failover_benchmark',fault_mode=fault_mode,provider_mode='failover',provider_policy=POLICY,
         logical_model_requests=sum(r['logical_model_requests'] for r in executions),
         physical_model_requests=sum(r['physical_model_requests'] for r in executions),
         physical_requests_by_provider={p:sum(r['physical_requests_by_provider'][p] for r in executions) for p in ('coco','coco2')},
