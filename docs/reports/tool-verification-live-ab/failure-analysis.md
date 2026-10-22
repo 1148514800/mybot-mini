@@ -1,0 +1,13 @@
+# 失败与验证证据
+
+只用新Campaign的脱敏元数据解释；不恢复或虚构原始Patch正文/字段。原13例不参与分母，也不作为本轮私有答案来源。
+
+Candidate / bucket：成功Preview后，另一次Patch在argument_parsing阶段invalid_arguments，safe_to_retry=false；Controller blocked，Revision0，未提交，未获得测试证据，Strict Fail。parse_object拒绝的原因可能是JSON对象/重复键/结构/深度等约束，具体unknown；不能断言为某个SHA字段、某次正式Write或某个特定JSON语法错误。Trace默认Preview标记不足以确认意图。保守停机是原约束，不因当前未写文件而自动重放。
+
+Baseline / reservation：一次Preview在validation阶段invalid_arguments且safe_to_retry=true；随后成功Preview；正式Write在validation阶段invalid_arguments、safe_to_retry=false，blocked，Revision0。可以确认Write参数不合约并未提交；不能从脱敏记录确定哪个参数变化，也无法证明Preview/Write的changes逐字段一致。只读哈希命令成功不是测试证据，Trace real_test_run=false、current_revision_test_evidence=false，未导致误verified。
+
+Baseline / quoted：一次stale Preview，safe_to_retry=true；模型后续显式操作后成功Preview/Write并取得当前Revision测试和合法结束。不能把它等同于客户端自动重放，也不依据1例断言stale冲突率。
+
+Candidate / span：两次真实unittest都通过，但第一次在Patch前，没有current_revision_test_evidence；提交后的第二次与Revision1一致，才取得有效证据。没有“测试失败再修复”的真实事件（test_failures=0）；该路径只在离线回归覆盖，不能把双测试误写成一次失败后重试。
+
+本轮没有edited_unverified+Hidden Pass，因此前轮失败分类修复仅保持离线覆盖，不能称获得新的真实Case09复现验证。没有verified+Hidden Fail；这也不证明泛化充分或公开测试覆盖完备。真实结果一胜一负两平，Strict均3/4；总请求差4中，3发生在Candidate提前失败的任务，不构成同质量节费证据。

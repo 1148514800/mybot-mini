@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "per_attempt": [
+    {
+      "slot": "01-baseline-bucket-boundaries-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "04-baseline-quoted-cells-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "05-baseline-reservation-flow-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "08-baseline-span-coverage-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "02-candidate-bucket-boundaries-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "03-candidate-quoted-cells-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "06-candidate-reservation-flow-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    },
+    {
+      "slot": "07-candidate-span-coverage-v1",
+      "cleanup": true,
+      "tool_ids_paired": true,
+      "journal_index_protected_files_valid": true
+    }
+  ],
+  "physical_reservations": 60,
+  "physical_outcomes": 60,
+  "observed_http": 60,
+  "planned_limit": 128,
+  "unused_budget": 68,
+  "request_identity_and_outcomes_valid": true,
+  "real_pty_approvals": 8,
+  "approval_denials": 0,
+  "nonce_reuse": 0,
+  "no_replay": true,
+  "new_attempts": 8,
+  "source_freeze_commit": "553de2d39d0ddab8e54cce79ba69af1db83dfb58",
+  "source_tree_sha256": "d1ea83e58848d6b229f86c95b5fc6b7b32b7c0a9802b5ba8265b2550c71d49ea",
+  "historical_protected_files": 583,
+  "historical_tags": 26,
+  "historical_zips": 53,
+  "main_unchanged": true,
+  "original_config_unchanged": true,
+  "known_credentials_in_reports": 0,
+  "all_calls_coco": true,
+  "glm_calls": 0,
+  "temporary_private_config_copies_removed": true,
+  "scanned_files": 780,
+  "real_configured_keys_matched": 0,
+  "high_confidence_secret_matches": 0,
+  "placeholder_template_matches_exempted": 1,
+  "original_13_raw_hashes_unchanged": true
+}
