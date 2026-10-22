@@ -13,6 +13,8 @@ import json
 import os
 from pathlib import Path
 import secrets
+import re
+import time
 import stat
 import sys
 from dataclasses import dataclass, field
@@ -188,6 +190,23 @@ def version(info):
     return identity(info), info.st_mode, info.st_uid, info.st_gid, info.st_nlink, info.st_mtime_ns, info.st_ctime_ns
 
 
+RECEIPT_ERRORS = frozenset({'malformed_receipt', 'unknown_receipt', 'expired_receipt',
+    'consumed_receipt', 'wrong_attempt', 'stale_file_hash', 'metadata_changed',
+    'patch_write_disabled', 'write_failed', 'cleanup_uncertain'})
+
+
+@dataclass(frozen=True, repr=False)
+class PreviewReceipt:
+    digest: str
+    scope: str
+    workspace: tuple
+    changes: bytes  # immutable, bounded JSON; never persisted
+    fingerprints: tuple
+    summary: str
+    created: float
+    expires: float
+
+
 class ApplyPatchTool(RepositoryTool):
     name = 'apply_patch'
     description = ('Precisely update UTF-8 files using full-file SHA256 and unique non-overlapping old_text, '
@@ -210,11 +229,111 @@ class ApplyPatchTool(RepositoryTool):
                     'items': {'oneOf': [_UPDATE, _ADD]}}},
         'required': ['changes'], 'additionalProperties': False}
 
-    def __init__(self, workspace: Path, *, patch_mode: str):
+    def __init__(self, workspace: Path, *, patch_mode: str, preview_receipt=False, receipt_ttl=300):
         super().__init__(workspace)
         if patch_mode not in ('preview', 'write'): raise ValueError('invalid_patch_mode')
         self.patch_mode = patch_mode
         self.observer = None  # Host-only, opt-in; never a Tool argument.
+        if type(preview_receipt) is not bool: raise ValueError('invalid_receipt_mode')
+        if type(receipt_ttl) not in (int, float) or not 0 < receipt_ttl <= 300:
+            raise ValueError('invalid_receipt_ttl')
+        self.preview_receipt = preview_receipt
+        self.receipt_ttl = receipt_ttl
+        self.receipt_commit_guard = None  # Host controller deadline fence, never a model argument.
+        self._receipt = None
+        self._receipt_scope = None
+        self._receipt_tombstone = None  # one digest + diagnostic, never changes/token
+        if preview_receipt:
+            self.parameters = {'type': 'object', 'properties': {
+                'dry_run': {'type': 'boolean', 'default': True},
+                'changes': {**self.parameters['properties']['changes'],
+                    'description': 'Preview only: bounded update/add changes. Commit with preview_receipt instead.'},
+                'preview_receipt': {'type': 'string', 'pattern': '^[a-f0-9]{64}$',
+                                    'minLength': 64, 'maxLength': 64}},
+                'additionalProperties': False,
+                'oneOf': [
+                    {'required': ['changes'], 'properties': {'dry_run': {'const': True}},
+                     'not': {'required': ['preview_receipt']}},
+                    {'required': ['dry_run', 'preview_receipt'],
+                     'properties': {'dry_run': {'const': False}}, 'not': {'required': ['changes']}}]}
+            self.description = ('Preview with changes and dry_run=true. Use the returned opaque preview_receipt '
+                'to explicitly commit with only dry_run=false and preview_receipt. Never resend changes for commit. '
+                'Receipt expires, is single-use and scoped to this turn. Write permission and all safety checks still apply. '
+                'After commit run approved current-revision tests. Never replay a failed commit.')
+
+    def _revoke_receipt(self, reason='unknown_receipt'):
+        if self._receipt is not None:
+            self._receipt_tombstone = (self._receipt.digest, reason)
+        self._receipt = None
+
+    def begin_receipt_scope(self):
+        self.end_receipt_scope()
+        self._receipt_scope = secrets.token_hex(32)
+
+    def end_receipt_scope(self):
+        self._revoke_receipt('wrong_attempt')
+        self._receipt_scope = None
+
+    def _workspace_stamp(self):
+        return str(self.workspace), identity(os.stat(self.workspace, follow_symlinks=False))
+
+    @staticmethod
+    def _fingerprints(items):
+        return tuple((x.path, identity(os.fstat(x.parent)), sha(x.before) if x.original else None,
+                      version(x.original) if x.original else None, x.attributes, sha(x.after)) for x in items)
+
+    def _consume_receipt(self, token):
+        receipt = self._receipt
+        self._revoke_receipt('consumed_receipt')  # every explicit attempt consumes before any safety/write checks
+        if not isinstance(token, str) or re.fullmatch('[a-f0-9]{64}', token) is None:
+            raise ValueError('malformed_receipt')
+        digest = sha(token.encode('ascii'))
+        if receipt is None or not secrets.compare_digest(receipt.digest, digest):
+            if self._receipt_tombstone and secrets.compare_digest(self._receipt_tombstone[0], digest):
+                raise ValueError(self._receipt_tombstone[1])
+            raise ValueError('unknown_receipt')
+        if not self._receipt_scope or receipt.scope != self._receipt_scope:
+            raise ValueError('wrong_attempt')
+        if receipt.workspace != self._workspace_stamp(): raise ValueError('wrong_attempt')
+        if time.monotonic() >= receipt.expires: raise ValueError('expired_receipt')
+        return receipt
+
+    def _guard_receipt_commit(self, receipt):
+        if receipt.scope != self._receipt_scope or receipt.workspace != self._workspace_stamp():
+            raise ValueError('wrong_attempt')
+        if time.monotonic() >= receipt.expires: raise ValueError('expired_receipt')
+        if self.receipt_commit_guard is not None: self.receipt_commit_guard()
+
+    def _check_receipt_files(self, receipt, items, diff):
+        now = self._fingerprints(items)
+        for old, new in zip(receipt.fingerprints, now):
+            if old[2] != new[2]: raise ValueError('stale_file_hash')
+            if old != new: raise ValueError('metadata_changed')
+        if len(now) != len(receipt.fingerprints) or sha(diff.encode()) != receipt.summary:
+            raise ValueError('metadata_changed')
+
+    def redact_receipt_history(self, messages):
+        # The live request needs the capability; Session/disk must never recover it or its changes.
+        import copy
+        clean = copy.deepcopy(messages)
+        ids = {c.get('id') for m in clean for c in m.get('tool_calls') or []
+               if c.get('function', {}).get('name') == self.name}
+        for message in clean:
+            if message.get('role') == 'tool' and message.get('tool_call_id') in ids:
+                message['content'] = '[Patch result omitted after receipt scope]'
+            for call in message.get('tool_calls') or []:
+                if call.get('function', {}).get('name') == self.name:
+                    call['function']['arguments'] = '{}'
+            if message.get('role') == 'assistant' and isinstance(message.get('content'), str):
+                message['content'] = re.sub(r'(?<![a-f0-9])[a-f0-9]{64}(?![a-f0-9])', '<opaque-id>', message['content'])
+        def scrub(value):
+            if isinstance(value, str):
+                return re.sub(r'(?<![a-f0-9])[a-f0-9]{64}(?![a-f0-9])',
+                    lambda match: '<opaque-id:' + sha(match[0].encode())[:16] + '>', value)
+            if isinstance(value, list): return [scrub(item) for item in value]
+            if isinstance(value, dict): return {key: scrub(item) for key, item in value.items()}
+            return value
+        return scrub(clean)
 
     def _open_parent(self, path):
         # Reuse the Phase19 resolver AND forbid every lexical symlink component.
@@ -399,8 +518,23 @@ class ApplyPatchTool(RepositoryTool):
         # Synchronous local commit: no await/cancellation point within publication.
         items = []; attempted = []; result = None; phase = 'validation'
         dry_run = args.get('dry_run', True)
+        receipt = None
+        receipt_meta = {'patch_protocol': 'receipt' if self.preview_receipt else 'legacy',
+            'receipt_created': False, 'receipt_commit_attempted': self.preview_receipt and dry_run is False,
+            'receipt_commit_success': False, 'receipt_error_category': None,
+            'preview_to_commit_consistent': None, 'file_revision_verified': False}
+        if self.preview_receipt and self._receipt_scope:
+            receipt_meta['receipt_scope_sha256'] = sha(self._receipt_scope.encode())
         try:
+            if self.preview_receipt:
+                if dry_run is False:
+                    receipt = self._consume_receipt(args.get('preview_receipt'))
+                else:
+                    self._revoke_receipt()
+                if not self._receipt_scope: raise ValueError('wrong_attempt')
             bounded_arguments(args); self.validate(args)
+            if receipt is not None:
+                args = {'dry_run': False, 'changes': json.loads(receipt.changes)}
             if sys.platform not in ('darwin', 'linux') or not hasattr(os, 'O_NOFOLLOW'):
                 raise ValueError('unsupported_filesystem')
             if not dry_run and self.patch_mode != 'write': raise ValueError('patch_write_disabled')
@@ -409,12 +543,17 @@ class ApplyPatchTool(RepositoryTool):
             phase = 'preview'
             changed = [x for x in items if x.op == 'add' or x.before != x.after]
             diff, truncated = self._diff(changed)
+            if receipt is not None:
+                self._check_receipt_files(receipt, items, diff)
+                receipt_meta.update(preview_to_commit_consistent=True, file_revision_verified=True)
             if not dry_run:
                 phase = 'write_preparation'
+                if receipt is not None: self._guard_receipt_commit(receipt)
                 if self.observer is not None: self.observer.before_publish(changed)
                 for item in changed: self._stage(item)
                 # Revalidate ALL versions before publishing the first file.
                 for item in items: self._recheck(item)
+                if receipt is not None: self._guard_receipt_commit(receipt)
                 for item in changed:
                     self._recheck(item)
                     phase = 'publication'
@@ -431,6 +570,16 @@ class ApplyPatchTool(RepositoryTool):
                 'after_sha256': {x.path: sha(x.after) for x in changed},
                 'preview_diff': diff if dry_run else None, 'diff_truncated': truncated,
                 'rollback_status': 'not_needed', 'execution_evidence': not dry_run})
+            if self.preview_receipt and dry_run:
+                for item in items: self._recheck(item)
+                token = secrets.token_hex(32)
+                created = time.monotonic()
+                self._receipt = PreviewReceipt(sha(token.encode()), self._receipt_scope,
+                    self._workspace_stamp(), json.dumps(args['changes'], separators=(',', ':')).encode(),
+                    self._fingerprints(items), sha(diff.encode()), created, created + self.receipt_ttl)
+                receipt_meta['receipt_created'] = True
+                result.metadata.update(preview_receipt=token, can_commit=self.patch_mode == 'write',
+                    commit_arguments={'dry_run': False, 'preview_receipt': token})
         except Exception as exc:
             reason = self.failure(exc).error
             status = self._recover(attempted) if attempted else 'preflight_failed'
@@ -471,4 +620,18 @@ class ApplyPatchTool(RepositoryTool):
                     'failure_phase': 'journal', 'applied': False, 'execution_evidence': False, 'safe_to_retry': False})
                 try: self.observer.on_failure(result)
                 except Exception: pass
+        if self.preview_receipt:
+            if not result.success:
+                self._revoke_receipt()
+                category = result.error if result.error in RECEIPT_ERRORS else (
+                    'metadata_changed' if result.error in ('unsupported_metadata', 'unsupported_ownership', 'path_changed') else 'write_failed')
+                if result.metadata.get('status') in ('partial_failure_possible', 'rollback_conflict'):
+                    category = 'cleanup_uncertain'
+                receipt_meta['receipt_error_category'] = category
+                if dry_run is False: result.metadata['safe_to_retry'] = False
+                # Any failed write cannot claim file revision verification.
+                receipt_meta['file_revision_verified'] = False
+            receipt_meta['receipt_commit_success'] = bool(dry_run is False and result.success
+                                                         and result.metadata.get('applied') is True)
+        result.metadata.update(receipt_meta)
         return result

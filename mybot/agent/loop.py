@@ -108,6 +108,17 @@ class AgentLoop:
                 if old_guard is not None: timeout = min(timeout, old_guard(launch, timeout))
                 return controller_guard(launch, timeout)
             command.execution_guard = task_guard
+        from ..tools.patch import ApplyPatchTool
+        receipt_tool = self.tools.get_tool('apply_patch')
+        old_receipt_guard = None
+        if type(receipt_tool) is ApplyPatchTool and receipt_tool.preview_receipt:
+            receipt_tool.begin_receipt_scope()
+            old_receipt_guard = receipt_tool.receipt_commit_guard
+            def receipt_guard():
+                if old_receipt_guard is not None: old_receipt_guard()
+                if self.coding_controller is not None and not self.coding_controller.check_time():
+                    raise ValueError('receipt_controller_stopped')
+            receipt_tool.receipt_commit_guard = receipt_guard
         try:
             reply = await self._handle_message(user_input)
             if self.context_clipped:
@@ -127,6 +138,9 @@ class AgentLoop:
                 print(report)
             raise
         finally:
+            if type(receipt_tool) is ApplyPatchTool and receipt_tool.preview_receipt:
+                receipt_tool.end_receipt_scope()
+                receipt_tool.receipt_commit_guard = old_receipt_guard
             if type(command) is RunCommandTool: command.execution_guard = old_guard
             self.coding_controller = None
             if self._active_journal is not None:
@@ -353,10 +367,15 @@ class AgentLoop:
             self._git_capsule = self._active_journal
             reply += '\n[TASK CHANGE SUMMARY]\n' + self._active_journal.summary_text(4000)
         messages.append({"role": "assistant", "content": reply})
+        from ..tools.patch import ApplyPatchTool
+        patch_tool = self.tools.get_tool('apply_patch')
+        saved_turn = messages[turn_start:]
+        if type(patch_tool) is ApplyPatchTool and patch_tool.preview_receipt:
+            saved_turn = patch_tool.redact_receipt_history(saved_turn)
         if self.store is not None:
-            turns = self.session.export_turns() + [messages[turn_start:]]
+            turns = self.session.export_turns() + [saved_turn]
             self.store.save(turns[-self.session.max_turns:])
-        self.session.add_turn(messages[turn_start:])
+        self.session.add_turn(saved_turn)
         return reply
 
     async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
@@ -387,9 +406,15 @@ class AgentLoop:
             try:
                 arguments = parse_arguments(raw_arguments)
             except ValueError as exc:
+                patch_tool = self.tools.get_tool(name)
+                if patch_tool.preview_receipt: patch_tool._revoke_receipt()
                 return ToolResult(False, error=str(exc), metadata={
                     'status': 'preflight_failed', 'failure_phase': 'argument_parsing', 'applied': False,
                     'execution_evidence': False, 'safe_to_retry': False,
+                    **({'patch_protocol': 'receipt', 'receipt_created': False, 'receipt_commit_attempted': None,
+                        'receipt_commit_success': False, 'receipt_error_category': None,
+                        'preview_to_commit_consistent': None, 'file_revision_verified': False}
+                       if patch_tool.preview_receipt else {}),
                     'input_feedback': {'version': 'patch-input-v1', 'issues': [{'field': '$', 'category': 'invalid_json_object'}],
                         'action': 'supply_bounded_unique_key_json_object; intent_unknown_no_retry'}})
             return await self.tools.execute(name, arguments)

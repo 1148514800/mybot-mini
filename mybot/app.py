@@ -19,7 +19,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     else:
         init_workspace(config.workspace)
 
-    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled, patch_mode=config.coding_patch_mode,
+    tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled, patch_mode=config.coding_patch_mode, preview_receipt=config.coding_preview_receipt,
         command=config.coding_command, command_approval_provider=cli_command_approval)
     llm_client = None
     try:

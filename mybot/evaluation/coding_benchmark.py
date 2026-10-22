@@ -99,7 +99,7 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
         attempt.check()
         attempt.command_approved = decision is ApprovalDecision.APPROVE
         return decision
-    tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=tracked_approval)
+    tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',preview_receipt=config.coding_preview_receipt,command=config.coding_command,command_approval_provider=tracked_approval)
     # Public fields only cross the client boundary. No Case/private evaluator object.
     client=None if _adapter_factory is not None else (raw if live else (offline_client_factory(case.runtime) if offline_client_factory else OfflineClient()))
     trace.paths=set(before)

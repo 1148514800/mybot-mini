@@ -1,25 +1,23 @@
 # AI_HANDOFF
 
-## 当前状态
+## 当前目标与状态
 
-新样本真实A/B已完成：分支codex/tool-verification-live-ab，实验/预注册冻结553de2d39d0ddab8e54cce79ba69af1db83dfb58。用户授权128次总物理请求、接受费用未知；实际8个预注册唯一Attempt、60逻辑/物理/真实HTTP，剩余68不用作新Attempt。OFFLINE PASS / LIVE INFRA PASS；不是Phase26，不合并main，不动历史Tag/ZIP。
+Patch Preview Receipt 离线工程已实现，分支 codex/patch-preview-receipt，基线 cc8f00ad661292da0db433324e2ae2e14143b367。源码/专项/全量/安全审计通过；准备 Implementation Commit 后生成独立验收报告并提交、推送。不是 Phase26，不合并 main，不动历史 Tag/ZIP。
 
-## 结果与证据
+## 实现与决策
 
-Baseline 871510f8a682990da63448ef27ec282c376a8711 与 Candidate 04b6968fdab288d8562447e25c84a6d5cec3df41 均Strict3/4、Controller verified3/4、Hidden Pass3/4；Candidate一赢一输两平，未证明总体成功率提升。Baseline32请求/43工具/144062Token，Candidate28/43/137350；4次请求差中3次来自Candidate提前失败，不当同质量效率收益。合计281412可观察Token、Usage完整，费用unknown/null。
+原生 ApplyPatchTool 新增显式 coding.preview_receipt=true（默认 false，配置为 keyword-only 保留旧位置参数）。Preview 保留一份不可变有界内存快照，返回随机256-bit、最长300秒、单次 Receipt；模型仅用 dry_run=false 与 token 显式提交。消费后重新检查完整内容哈希、inode/版本/元数据、父目录身份、Workspace/turn、权限与时限。复用原 preflight/recheck/stage/publish/recovery/Journal；无新写入器或自动重放。Preview 不增 Revision，成功 Commit 增一次；当前哈希审批测试与 python -c 排除规则保留。
 
-Candidate bucket成功Preview后下一Patch在argument_parsing invalid_arguments停机，意图及字段unknown；Baseline reservation可恢复Preview错误后正式Write validation invalid_arguments停机。两者未提交、不补跑。Baseline quoted一次stale Preview后模型显式恢复；Candidate span第一次Patch前测试无当前证据、Patch后测试才验证Revision1。实时错误不触发自动重放或放宽门。
+Loop finally 清理 scope；Session 写盘前删除 Patch 参数/结果及可能复制的能力值；Trace 仅记录白名单诊断，不存 token/正文。原关键发布/Controller 方法 AST、Journal、命令审批、Strict 评分代码保持一致。
 
-全部60次为coco DeepSeek，GLM0/natural fallback0；没有强制故障、取消或超时。真实PTY审核8次（7次unittest+1次只读公开模块哈希），拒绝0、nonce复用0。所有工具ID、Journal/Index/保护文件、清理/安全审计通过；154份脱敏证据与SHA清单，入口docs/reports/tool-verification-live-ab/acceptance-report.md，原Campaign位于runs/tool_verification_ab/campaign-v1，只读保留，禁止重放。
+修改集中于 patch、Loop/Controller、config/registry/app、benchmark flag 传递、metrics 诊断；新增 scripts/check_patch_preview_receipt.py 并接入 check_phase。
 
-## 实现与验证
+## 验证与合成结果
 
-共享scripts/tool_verification_live_ab.py只编排原Harness，两个冻结源码在独立干净APFS进程运行，不monkeypatch、不改生产代码/审批/评分。4个新自包含任务，每例公开2/私有6，Live前固定，模型不见私有断言。每Attempt16逻辑/物理、输出2048、90/480/600秒，其余原工具/Write/命令/无进展限制保留。全局128先持久预留再SDK，并交叉核对terminal/raw/HTTP。Model标签固定但不可核验供应商不可变后端版本。
+专项53/53；原1187保留，全量1240/1240、34套件、零跳过。单独 Patch61、tool-verification44、live-AB29、failover50、batch25、reliability42 全部通过；compileall/diff通过。12条件×2组均保留失败/取消/预算分母：参数错误 Legacy2 vs Receipt0；两组提交/verified/公开合成合同均4/12；正式尝试均8。原 Strict 只接受 Live，合成不具备资格，计数均0，不将公开合同代理称为Strict。请求33 vs31混有提前停止，不推断真实成功率/节费。权限变化条件 Receipt 更保守，Legacy 可按当前 mode 继续。
 
-新增29/29；全量1187/1187、33套件零跳过，原1158保留；编译/diff通过。两组真实Judge/fixture/live/Strict算法文件一致，整体grading封印因被比较的benchmark/metrics文件不同而不同。实验后只增报告/交接，无源码或任务调参。
+真实模型HTTP0，实际操作员yes/nonce0。1034个保护文件校验不变，含原13个与最近8个Attempt raw、历史Phase/报告、53 ZIP/AppleDouble；main和26 Tag不变。原工作区 mybot/app.py 与 workspace/instructions/USER.md 用户修改未触碰。旧实验入口 docs/reports/tool-verification-live-ab/，禁止重放或猜测未保存参数。
 
-583项旧保护文件、旧13例/Canary/Phase25/前轮闭环报告、main、26个Tag、53个ZIP及原配置保持；临时0600配置副本结束后校验移除，凭证不提交。前轮闭环入口docs/reports/tool-verification-reliability/保持只读。
+## 下一步与限制
 
-## 下一步与边界
-
-本轮授权已按全部预注册槽完成，不用剩余额度补跑，不再发Live。没有真实成功率/成本提升证据；4对新构造任务非生产自然样本，作者并非盲测，不能把它们再称未见。可另行离线研究有限解析诊断，保持Write和未知意图停机；不猜历史非法字段、不基于私有答案调参。任何新Live需新授权、样本和冻结，不自动进入Phase26。GLM、自然回退、长期取消、失败测试修复和edited_unverified归因没有新增充分Live证据。
+生成 docs/reports/patch-preview-receipt/ 验收、架构、离线计数、合成、安全/失败分析与下一阶段方案，完成 Acceptance Commit、独立分支 push、远程 HEAD 核对。供应商 Schema 支持、模型行为、上下文裁剪/TTL、真实 fallback/取消分布未 Live 验证；继承 POSIX 单文件原子发布与多文件 best-effort 回滚限制。下一轮可建议全新8对、同模型/预算、USD5建议硬上限；必须可靠单价、新授权和预注册冻结后另行启动。本轮不消耗旧剩余68次额度。

@@ -46,6 +46,18 @@ class CodingTrace(Trace):
         try: args=json.loads(arguments) if isinstance(arguments,str) else arguments
         except (ValueError,TypeError): args={}
         args=args if isinstance(args,dict) else {}
+        if name == 'apply_patch':
+            from ..tools.patch import RECEIPT_ERRORS
+            event['patch_protocol'] = 'receipt' if meta.get('patch_protocol') == 'receipt' else 'legacy'
+            for key in ('receipt_created', 'receipt_commit_success', 'file_revision_verified'):
+                event[key] = meta.get(key) is True
+            attempted = meta.get('receipt_commit_attempted')
+            event['receipt_commit_attempted'] = attempted if type(attempted) is bool else None
+            event['preview_to_commit_consistent'] = meta.get('preview_to_commit_consistent') if type(meta.get('preview_to_commit_consistent')) is bool else None
+            category = meta.get('receipt_error_category')
+            event['receipt_error_category'] = category if category in RECEIPT_ERRORS else None
+            scope = meta.get('receipt_scope_sha256')
+            event['receipt_scope_sha256'] = scope if isinstance(scope, str) and re.fullmatch('[a-f0-9]{64}', scope) else None
         event.update(patch_preview=name=='apply_patch' and args.get('dry_run',True) is True,
             patch_write=name=='apply_patch' and args.get('dry_run') is False,
             patch_committed=name=='apply_patch' and result.success and meta.get('applied') is True,

@@ -66,8 +66,8 @@ def _skills_value(key: str, default):
 
 def _coding_value(key='enabled', default=False):
     value = _CONFIG.get('coding', {})
-    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command','autonomy','git_workflow'}:
-        raise ValueError('coding must contain only enabled, patch_mode, command, autonomy and git_workflow')
+    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command','autonomy','git_workflow','preview_receipt'}:
+        raise ValueError('coding must contain only enabled, patch_mode, preview_receipt, command, autonomy and git_workflow')
     return value.get(key,default)
 
 
@@ -89,6 +89,7 @@ def _resolve_path(raw_value) -> Path:
 class GatewayConfig:
     coding_enabled: bool = field(default_factory=_coding_value)
     coding_patch_mode: str = field(default_factory=lambda: _coding_value('patch_mode', 'off'))
+    coding_preview_receipt: bool = field(default_factory=lambda: _coding_value('preview_receipt', False), kw_only=True)
     coding_command: dict = field(default_factory=lambda: _coding_value('command', {}))
     coding_autonomy: dict = field(default_factory=lambda: _coding_value('autonomy', {}))
     coding_git_workflow: dict = field(default_factory=lambda: _coding_value('git_workflow', {}))
@@ -123,6 +124,8 @@ class GatewayConfig:
             raise ValueError('coding.patch_mode must be off, preview or write')
         if self.coding_patch_mode != 'off' and not self.coding_enabled:
             raise ValueError('coding.patch_mode requires coding.enabled=true')
+        if type(self.coding_preview_receipt) is not bool or (self.coding_preview_receipt and self.coding_patch_mode == 'off'):
+            raise ValueError('coding.preview_receipt requires an explicit patch mode and boolean')
         from .tools.command_config import validate_command
         from dataclasses import asdict
         self.coding_command = asdict(validate_command(self.coding_command, coding_enabled=self.coding_enabled, patch_mode=self.coding_patch_mode))
