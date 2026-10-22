@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "grading_version": 1,
+  "cases": [
+    {
+      "id": "bucket-boundaries-v1",
+      "difficulty": "easy",
+      "prompt": "修复bucket(value, thresholds)：返回小于等于value的阈值数量。value必须为真正int（bool无效），可为负。thresholds仅限list或tuple，元素必须为真正int，必须严格递增且无重复，空序列合法。不满足任一输入约束抛ValueError；不修改输入。 仅修改app/下已有非__init__.py模块，不改测试、README、文件集合。运行公开unittest。",
+      "fixture": "fixtures/bucket-boundaries-v1",
+      "hidden_suite": "hidden/bucket-boundaries-v1",
+      "reference": "reference/bucket-boundaries-v1",
+      "allowed_paths": [
+        "app/buckets.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "quoted-cells-v1",
+      "difficulty": "medium",
+      "prompt": "修复parse_row(text)：text必须为str，否则ValueError；任何CR/LF字符均拒绝为ValueError。空字符串返回[]。其他输入严格按Python标准库csv.reader([text], delimiter=\";\", quotechar=双引号, doublequote=True, strict=True, skipinitialspace=False)的单行语义解析；保留空字段及空白，双引号内分号不是分隔符，成对双引号转义；csv语法错误统一转为ValueError。 仅修改app/下已有非__init__.py模块，不改测试、README、文件集合。运行公开unittest。",
+      "fixture": "fixtures/quoted-cells-v1",
+      "hidden_suite": "hidden/quoted-cells-v1",
+      "reference": "reference/quoted-cells-v1",
+      "allowed_paths": [
+        "app/cells.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "reservation-flow-v1",
+      "difficulty": "hard",
+      "prompt": "修复reserve(stock, orders)完整调用链。stock必须dict，键为非空且已strip的str，库存为非负真正int（bool无效）。orders仅list/tuple，每项为长度2的list/tuple，sku为strip后非空str，数量为正真正int。按strip后的sku合并重复订单；未知sku或合并数量超过库存抛ValueError。成功返回扣减后的新dict；成功或失败均不得改变stock或orders。validate_stock及normalize_orders应各实现其公开同名校验契约，reserve必须使用它们的校验与归一化结果。其他非法输入抛ValueError。 仅修改app/下已有非__init__.py模块，不改测试、README、文件集合。运行公开unittest。",
+      "fixture": "fixtures/reservation-flow-v1",
+      "hidden_suite": "hidden/reservation-flow-v1",
+      "reference": "reference/reservation-flow-v1",
+      "allowed_paths": [
+        "app/validation.py",
+        "app/service.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    },
+    {
+      "id": "span-coverage-v1",
+      "difficulty": "hard",
+      "prompt": "修复半开区间调用链merge_spans(spans)与coverage(spans)。spans仅list/tuple；每项为长度2的list/tuple，两个端点必须真正int（bool无效），允许负数；start>end或任意非法输入均ValueError，start==end忽略。merge_spans返回按start排序、合并所有重叠或首尾相接区间的list[tuple]；不得修改输入。coverage必须调用merge_spans后返回并集总长度，不能对原区间直接求和；空输入或全空区间返回0。 仅修改app/下已有非__init__.py模块，不改测试、README、文件集合。运行公开unittest。",
+      "fixture": "fixtures/span-coverage-v1",
+      "hidden_suite": "hidden/span-coverage-v1",
+      "reference": "reference/span-coverage-v1",
+      "allowed_paths": [
+        "app/spans.py",
+        "app/service.py"
+      ],
+      "protected_paths": [
+        "README.md",
+        "app/__init__.py",
+        "tests/test_public.py"
+      ],
+      "public_test": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ]
+    }
+  ]
+}

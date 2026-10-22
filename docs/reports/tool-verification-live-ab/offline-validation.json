@@ -1,0 +1,24 @@
+{
+  "status": "OFFLINE PASS before Live",
+  "checks": {
+    "special": {
+      "passed": 29,
+      "total": 29,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "ee98f9e5aa4d761121b08fa0b91fa2a8d22462fef135ce0d4061368e8e7497d1"
+    },
+    "full": {
+      "passed": 1187,
+      "total": 1187,
+      "suites": 33,
+      "skipped": 0,
+      "log_sha256": "24bdeb8d16cd4db09b97c219f6fb1532218e4516549401421a514579d0659809"
+    }
+  },
+  "original_tests_retained": 1158,
+  "new_tests": 29,
+  "compileall": "PASS",
+  "diff_check": "PASS",
+  "real_model_http_at_this_checkpoint": 0
+}

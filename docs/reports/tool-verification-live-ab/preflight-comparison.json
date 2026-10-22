@@ -1,0 +1,23 @@
+{
+  "baseline": {
+    "commit": "871510f8a682990da63448ef27ec282c376a8711",
+    "benchmark": "c64658ae8f555f3cb1b201eb689e82f3212549d79e9b160aba566e271bd185d5",
+    "grading": "0ba4ab34ea7ab45f1517df0603ec3159ae000b4247ff4e43cf60c968fcff82d4",
+    "valid": 4,
+    "mode": "offline"
+  },
+  "candidate": {
+    "commit": "04b6968fdab288d8562447e25c84a6d5cec3df41",
+    "benchmark": "c64658ae8f555f3cb1b201eb689e82f3212549d79e9b160aba566e271bd185d5",
+    "grading": "ae69cb11a15859ef85cac564ee6158fe6312efb6a5c3ca3bbc42765666fe6546",
+    "valid": 4,
+    "mode": "offline"
+  },
+  "common_grading_files": {
+    "coding_judge.py": "e0df1f3651b09787f18000efdec07d55803718600bc735a57c0c5288dcdf55ed",
+    "coding_fixtures.py": "d1cdcd8037d7325c53d8136c794d33ad2a4bf07c7e00a5411a62fec9c0ca7d80",
+    "coding_live.py": "78fe5e0bbc7656816717e5e3217aa3bca4d8bc6d46ff2bf6c969d4690cbafe1d",
+    "coding_campaign.py": "0ebc7e2cb5675d497745e3bb09ecf05de47d99c346e787fecd7d2dd1544b5cea"
+  },
+  "grading_seals_differ_because_they_include_changed_benchmark_and_metrics": true
+}

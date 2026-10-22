@@ -146,3 +146,7 @@ if Path(__file__).with_name('check_coding_failover_batch.py').exists():
 if Path(__file__).with_name('check_tool_verification_reliability.py').exists():
     from scripts.check_tool_verification_reliability import check_tool_verification_reliability
     check_tool_verification_reliability()
+
+if Path(__file__).with_name('check_tool_verification_live_ab.py').exists():
+    from scripts.check_tool_verification_live_ab import check_tool_verification_live_ab
+    check_tool_verification_live_ab()
