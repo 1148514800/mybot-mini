@@ -27,7 +27,7 @@ from .coding_judge import validate_benchmark, trusted_seal, judge
 from .coding_live import Limits, RequestBudget, CodingClient, CodingEvaluationStop, live_client, labels
 from .coding_lifecycle import Attempt, WorkspaceDirectory
 from .coding_approval import AttemptApproval
-from .coding_metrics import CodingTrace, BenchmarkAgent, case_metrics, summarize, failure_reason
+from .coding_metrics import CodingTrace, BenchmarkAgent, case_metrics, summarize, failure_reason, failure_classification
 from .runner import select_cases, save_report as _save_report
 from .tool_agent import safe_label, estimated_cost
 
@@ -110,7 +110,8 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
         agent=BenchmarkAgent(traced,config,tools,ContextBuilder(root),trace=trace)
         if adapter is not None:adapter.controller = lambda: agent.coding_controller
         with contextlib.redirect_stdout(io.StringIO()):
-            reply=await attempt.run(agent.handle_message(case.runtime.prompt),
+            reply=await attempt.run(agent.handle_message(case.runtime.prompt + '\nTrusted public test argv (workspace root): '
+                + json.dumps(list(case.runtime.public_test)) + '. Model must invoke run_command and obtain approval.'),
                 timeout=min(limits.task_timeout,max(.001,budget.deadline-time.monotonic())))
     except (asyncio.CancelledError, KeyboardInterrupt, SystemExit) as exc:
         cancelled = exc
@@ -194,6 +195,7 @@ async def run_task(case, validation, benchmark, seal, parent, *, repeat, limits,
         result['judge'].update(verified_repair_success=False,failure='protocol_verification_error')
     result['duration_seconds']=round(time.monotonic()-started,6)
     result['failure']=failure_reason(result)
+    result['failure_classification'] = failure_classification(result)
     # Drop transient source/transcript/controller references before the next task.
     if agent and attempt.cleanup_confirmed:agent.session.clear()
     result = copy.deepcopy(result)

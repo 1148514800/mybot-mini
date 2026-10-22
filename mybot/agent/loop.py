@@ -389,7 +389,9 @@ class AgentLoop:
             except ValueError as exc:
                 return ToolResult(False, error=str(exc), metadata={
                     'status': 'preflight_failed', 'failure_phase': 'argument_parsing', 'applied': False,
-                    'execution_evidence': False, 'safe_to_retry': False})
+                    'execution_evidence': False, 'safe_to_retry': False,
+                    'input_feedback': {'version': 'patch-input-v1', 'issues': [{'field': '$', 'category': 'invalid_json_object'}],
+                        'action': 'supply_bounded_unique_key_json_object; intent_unknown_no_retry'}})
             return await self.tools.execute(name, arguments)
         try:
             arguments = json.loads(raw_arguments or "{}") if isinstance(raw_arguments, str) else raw_arguments

@@ -142,3 +142,7 @@ if Path(__file__).with_name('check_request_budget_efficiency.py').exists():
 if Path(__file__).with_name('check_coding_failover_batch.py').exists():
     from scripts.check_coding_failover_batch import check_coding_failover_batch
     check_coding_failover_batch()
+
+if Path(__file__).with_name('check_tool_verification_reliability.py').exists():
+    from scripts.check_tool_verification_reliability import check_tool_verification_reliability
+    check_tool_verification_reliability()

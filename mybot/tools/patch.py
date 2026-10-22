@@ -17,6 +17,8 @@ import stat
 import sys
 from dataclasses import dataclass, field
 
+from jsonschema import Draft202012Validator
+
 from .base import ToolResult
 from .repository import RepositoryTool, MAX_FILE_BYTES
 
@@ -32,7 +34,7 @@ _EDIT = {'type': 'object', 'properties': {
     'required': ['old_text', 'new_text'], 'additionalProperties': False}
 _UPDATE = {'type': 'object', 'properties': {
     'op': {'const': 'update'}, 'path': _PATH,
-    'expected_sha256': {'type': 'string', 'pattern': '^[a-fA-F0-9]{64}$', 'minLength': 64, 'maxLength': 64},
+    'expected_sha256': {'description': 'Copy exactly the 64 hexadecimal characters from read_file_range metadata.file_sha256; no prefix, placeholder or excerpt hash.', 'type': 'string', 'pattern': '^[a-fA-F0-9]{64}$', 'minLength': 64, 'maxLength': 64},
     'edits': {'type': 'array', 'minItems': 1, 'maxItems': 16, 'items': _EDIT}},
     'required': ['op', 'path', 'expected_sha256', 'edits'], 'additionalProperties': False}
 _ADD = {'type': 'object', 'properties': {
@@ -76,6 +78,34 @@ def bounded_arguments(args):
 def parse_arguments(raw):
     from .arguments import parse_object
     return parse_object(raw, max_bytes=MAX_PATCH_BYTES, size_error='patch_too_large')
+
+
+def argument_feedback(args):
+    """Bounded schema labels only; never serialize ValidationError/message/instance."""
+    issues = []
+    allowed = {'changes', 'dry_run', 'op', 'path', 'expected_sha256', 'edits',
+               'old_text', 'new_text', 'content'}
+    def record(error, prefix=()):
+        if error.context:
+            # Select only the declared operation's branch; no errors about the other op.
+            op = error.instance.get('op') if isinstance(error.instance, dict) else None
+            branch = 0 if op == 'update' else (1 if op == 'add' else None)
+            if branch is not None:
+                for child in error.context:
+                    if child.schema_path[0] == branch: record(child, (*prefix, *error.path))
+                return
+        path = [str(v) if type(v) is int else (v if v in allowed else '<field>')
+                for v in (*prefix, *error.path)]
+        category = error.validator if error.validator in {
+            'type', 'required', 'additionalProperties', 'pattern', 'minLength',
+            'maxLength', 'minItems', 'maxItems', 'oneOf', 'const'} else 'schema'
+        if len(issues) < 4: issues.append({'field': '.'.join(path) or '$', 'category': category})
+    for error in Draft202012Validator(ApplyPatchTool.parameters).iter_errors(args):
+        record(error)
+        if len(issues) >= 4: break
+    return {'version': 'patch-input-v1', 'issues': issues,
+            'action': ('correct_input_and_preview; preserve_changes_for_write'
+                       if args.get('dry_run', True) is True else 'stop_write_no_replay')}
 
 
 def text_bytes(text):
@@ -165,6 +195,8 @@ class ApplyPatchTool(RepositoryTool):
                    'Write requires patch_mode=write and explicit dry_run=false. No tests or commands run. '
                    'Each update requires op, path, expected_sha256 and edits (each edit: old_text and new_text); '
                    'each add requires op, path and content. No extra fields at any level. '
+                   'expected_sha256 must be exactly 64 hex characters copied from read_file_range metadata.file_sha256. '
+                   'Preview first; after success reuse identical changes, changing only dry_run to false. '
                    'A successful preview does not grant write permission. '
                    'Reread and rebuild on stale_file_hash/anchor conflicts; never replay blindly. Hidden/private paths denied.')
     private_arguments = True
@@ -409,6 +441,8 @@ class ApplyPatchTool(RepositoryTool):
                 'safe_to_retry': not attempted and (reason in _RETRY or
                     (dry_run is True and phase in ('validation', 'preflight') and reason in _PREVIEW_CORRECTABLE))})
         finally:
+            if result is not None and result.error == 'invalid_arguments' and phase == 'validation':
+                result.metadata['input_feedback'] = argument_feedback(args)
             cleanup_failed = False
             for item in items:
                 for name, expected_inode in item.temp_inodes.items():

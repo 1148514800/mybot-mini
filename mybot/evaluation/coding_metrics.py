@@ -144,24 +144,43 @@ def case_metrics(trace,controller,messages,live):
         'protocol_false_verified_count':int(controller.get('state')=='verified' and not trace.protocol_valid())}
 
 
-def failure_reason(result):
-    if result.get('runtime_error'):return result['runtime_error']
-    metrics=result.get('metrics',{});state=result.get('agent_state');judge=result.get('judge',{})
-    if metrics.get('approval_denials'):return 'approval_denied'
-    if metrics.get('sandbox_failures'):return 'sandbox_unavailable'
-    stop=result.get('controller',{}).get('stop_reason','')
-    if stop=='max_model_requests':return 'model_request_budget'
-    if stop=='max_task_seconds':return 'task_timeout'
-    if stop=='max_no_progress':return 'repeated_action_loop'
-    if stop.startswith('max_'):return 'tool_budget'
-    if judge.get('judge_state') in ('invalid_case','grader_error','unscored'):return judge.get('failure') or 'grader_error'
-    if judge.get('failure') in ('unexpected_file_change','index_changed','journal_attribution_mismatch'):return judge['failure']
-    if state=='blocked' and stop:return stop
-    if judge.get('verified_repair_success'):return None
+FAILURE_RULE_VERSION = 'coding-failure-v2'
+
+
+def failure_classification(result):
+    """Explain a failure without modifying Controller, Judge or strict scoring."""
+    def classified(category, source):
+        return {'version': FAILURE_RULE_VERSION, 'category': category, 'source': source}
+    if result.get('runtime_error'): return classified(result['runtime_error'], 'runtime')
+    metrics = result.get('metrics', {}); state = result.get('agent_state'); judge = result.get('judge', {})
+    if metrics.get('approval_denials'): return classified('approval_denied', 'security')
+    if metrics.get('sandbox_failures'): return classified('sandbox_unavailable', 'security')
+    stop = result.get('controller', {}).get('stop_reason', '')
+    budgets = {'max_model_requests': 'model_request_budget', 'max_task_seconds': 'task_timeout',
+               'max_no_progress': 'repeated_action_loop'}
+    if stop.startswith('max_'): return classified(budgets.get(stop, 'tool_budget'), 'controller')
+    if judge.get('judge_state') in ('invalid_case', 'grader_error', 'unscored'):
+        return classified(judge.get('failure') or 'grader_error', 'judge')
+    if judge.get('failure') in ('unexpected_file_change', 'index_changed', 'journal_attribution_mismatch'):
+        return classified(judge['failure'], 'judge')
+    if state == 'blocked' and stop: return classified(stop, 'controller')
+    if state != 'verified':
+        if stop == 'missing_current_revision_test_evidence' or state == 'edited_unverified':
+            return classified('missing_current_revision_test_evidence', 'controller')
+        terminal = {'cancelled': 'task_cancelled', 'execution_uncertain': 'execution_uncertain',
+                    'budget_exhausted': 'controller_budget_exhausted'}
+        if state in terminal: return classified(terminal[state], 'controller')
+        if judge.get('verified_repair_success'): return classified('agent_not_verified', 'controller')
+    if state == 'verified' and judge.get('verified_repair_success'): return classified(None, 'judge')
     if not judge.get('modified_code'):
-        return 'model_did_not_investigate' if not metrics.get('tool_calls') else 'no_code_change'
-    if state=='verified' and judge.get('judge_state')=='hidden_fail':return 'public_tests_only'
-    return judge.get('failure') or 'unknown'
+        return classified('model_did_not_investigate' if not metrics.get('tool_calls') else 'no_code_change', 'outcome')
+    if state == 'verified' and judge.get('judge_state') == 'hidden_fail':
+        return classified('public_tests_only', 'judge')
+    return classified(judge.get('failure') or 'unknown', 'judge')
+
+
+def failure_reason(result):
+    return failure_classification(result)['category']
 
 
 def summarize(results, *, live, budget):
