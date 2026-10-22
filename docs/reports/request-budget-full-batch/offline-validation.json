@@ -1,0 +1,63 @@
+{
+  "efficiency": {
+    "passed": 18,
+    "total": 18,
+    "suites": 1,
+    "skipped": 0,
+    "log_sha256": "d99b64419a2b0f82e4b1da51b014d27073703c7fe50042aac514bde26dc7a071"
+  },
+  "batchtests": {
+    "passed": 25,
+    "total": 25,
+    "suites": 1,
+    "skipped": 0,
+    "log_sha256": "284943ac71bafaacd81e08fccb802c31f5a88dfe06d2defbfd9398bed72555d1"
+  },
+  "failover": {
+    "passed": 50,
+    "total": 50,
+    "suites": 1,
+    "skipped": 0,
+    "log_sha256": "417b7c773ca7fd267dd876645ed8dba96fd5fecfb244cca0ce2149c56e63eaa1"
+  },
+  "reliability": {
+    "passed": 42,
+    "total": 42,
+    "suites": 1,
+    "skipped": 0,
+    "log_sha256": "7a3caf307ca81b0458fc697092a278b19cb15f4669bef85feaf4cce959799bca"
+  },
+  "cli": {
+    "passed": 17,
+    "total": 17,
+    "suites": 1,
+    "skipped": 0,
+    "log_sha256": "c69eb32cd6bb8b95b29500a7799b0afc368b29fd53fef950a41568da14b8785c"
+  },
+  "smoke": {
+    "passed": 13,
+    "total": 13,
+    "suites": 1,
+    "skipped": 0,
+    "log_sha256": "3e2c7cf699cab023fc8d663e8bc691df06f4bec5b3d85028ff99a36b525e24d9"
+  },
+  "phase": {
+    "passed": 1114,
+    "total": 1114,
+    "suites": 31,
+    "skipped": 0,
+    "log_sha256": "199daa1c1e94b3174ee7637005f2a52c0af1c2fc52740ee8ed2eb3427d19df80"
+  },
+  "original_baseline_tests_retained": 1071,
+  "new_tests": 43,
+  "compileall": "PASS",
+  "diff_check": "PASS",
+  "protected_history_files": 281,
+  "synthetic_comparison": {
+    "label": "SYNTHETIC_ONLY",
+    "same_budget": 5,
+    "before_state": "budget_exhausted",
+    "after_state": "verified",
+    "real_model_effect": null
+  }
+}

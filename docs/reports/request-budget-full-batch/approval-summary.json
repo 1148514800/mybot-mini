@@ -1,0 +1,815 @@
+{
+  "approved": 20,
+  "denied": 0,
+  "nonce_saved": false,
+  "records": [
+    {
+      "slot": "01-config-default-001",
+      "attempt_id": "755ad819e3014c649a2aa2768277106f",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "86237599a3d1990dde8170ac1c36b9c934cc6cd6dc1f32a48bdf70186cf00bfe"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/options.py",
+          "sha256": "a6d882c097f9cacf5d5c4ca701fb17e74940a8d575b63ef294439aaaea005e77"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "7ad3a8edc67d4b799e59ab990862c97990b32a6a5d16a0ab161bf54539ca1aba"
+        }
+      ],
+      "number": 1,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "02-cache-ttl-001",
+      "attempt_id": "6bfcd6e49b07486bb797cd723a7d414e",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "d5d621509d23f006221acde44b2102796122a37dd8dfa5b0426e4d4565b89bc7"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/cache.py",
+          "sha256": "bfe38abbb7a650bdf66ad85aad65e1889de683bd1b630c42163aa6247791bc96"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "f21b8c643783709ae4f1359e5f527ec486c4057036b0b0dc13f03942f5f41472"
+        }
+      ],
+      "number": 2,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "03-pagination-001",
+      "attempt_id": "83c28eacc1a1494a934280acc262436b",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "468998b36090561e55238e26882553ada1f405b00534b65bc9b249ecc9d16418"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/paging.py",
+          "sha256": "9cdd3fc29994227539e8aff0e28128b7978187b889cc21477f8c8b6a1fa10d54"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "fad185166cf2c651308755f804833c1e35f426e4c01b397bab43ac774018b2f2"
+        }
+      ],
+      "number": 3,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "python-c-local-app-listing",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "03-pagination-001",
+      "attempt_id": "83c28eacc1a1494a934280acc262436b",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "468998b36090561e55238e26882553ada1f405b00534b65bc9b249ecc9d16418"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/paging.py",
+          "sha256": "9f58ec1f4bc3f50065a15529239c37eb2ece2bbe496b67dbf9cae6406a97f0c0"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "fad185166cf2c651308755f804833c1e35f426e4c01b397bab43ac774018b2f2"
+        }
+      ],
+      "number": 4,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "04-serialization-001",
+      "attempt_id": "1e5eace840ea47ba9fbdcce9ab812aae",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "2e5ff622415a63ae24c667cb446de876d61644a9379691a19f4c1b4f95f85b22"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/records.py",
+          "sha256": "1601d8d66d7cd54aa3fadbdd1c6aeff9771f98d50556567d21753c782bfbf080"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "e6a51604e17e0bc8110d447f45b0a138cccfa90ec0713c688ab9f16eaec8493f"
+        }
+      ],
+      "number": 5,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-module-tests.test_public",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "05-csv-export-001",
+      "attempt_id": "e40377aa1790483580ec638dfc707f79",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "fe7f67d4b77afee3873893b7f8c72120de21f6ed84ed00413764f18423571052"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/export.py",
+          "sha256": "9acea0384cda959fdc302a6dccc4e9f693752d995b2cccb0c3ec406645097a85"
+        },
+        {
+          "path": "app/formatting.py",
+          "sha256": "3619d2a0083b757ae334e87f9df7e3fd519ebc995b89a7876fb9b988d7d7d31e"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "6256a12c4563f6b416f928c20bbabb058e324e30dad3b26d40bfbc1e878f962b"
+        }
+      ],
+      "number": 6,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "python-c-local-file-sha256",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "05-csv-export-001",
+      "attempt_id": "e40377aa1790483580ec638dfc707f79",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "fe7f67d4b77afee3873893b7f8c72120de21f6ed84ed00413764f18423571052"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/export.py",
+          "sha256": "9acea0384cda959fdc302a6dccc4e9f693752d995b2cccb0c3ec406645097a85"
+        },
+        {
+          "path": "app/formatting.py",
+          "sha256": "8367f9a79710ff9a5643cfd287b29d72fea9f12e898b8a7923bb74734d2fc986"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "6256a12c4563f6b416f928c20bbabb058e324e30dad3b26d40bfbc1e878f962b"
+        }
+      ],
+      "number": 7,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "07-file-recovery-001",
+      "attempt_id": "d26b7b2b3ae74823aebbc1e6ab737754",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "a182a3e9f7ee8eacbf3487da799795b8755a1265ac01de0817769235216b39e1"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "1925eb901ad3a20a5112642c68470ab175bc5d25acbd8f5e158df3fa82daa122"
+        },
+        {
+          "path": "app/storage.py",
+          "sha256": "56fc3f52f8581e7130734919119428d32d270ebf84869fc33db88b72b9f20ef9"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "8cfe118b2ae77f7814dbaf9990e77633bad67c2ec5baef558fbd5b6f922d4849"
+        }
+      ],
+      "number": 8,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-scratch-tempfiles",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "08-cli-precedence-001",
+      "attempt_id": "2e2a9498cb854ad4b52eb5cc69f1e937",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "0dff28c0b83e0c72b47511da8a82242fbd92ff91208746f41ebe397709661567"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/cli.py",
+          "sha256": "ba2f4f774e842417da114adde69a163dc3d1ac6ef0568159d8fe9bdb55813d5b"
+        },
+        {
+          "path": "app/configuration.py",
+          "sha256": "6d018407c23337fd08d582ae48b1fc6d7b72ae5a8eb4ff946264402bfac19984"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "1cde2b59b58f258efc52574bb8ad972e92109f5c186781d53ab8306b8c6f3026"
+        }
+      ],
+      "number": 9,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-module-tests.test_public",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "09-validation-chain-001",
+      "attempt_id": "274fc515a05342c69ae04a056c0c5bdf",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "8ced14683a1af554de4d9b73ed96c501e85624f0aec9fc8c82d8a1198c0155f6"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/normalize.py",
+          "sha256": "42622a62e2f9b782d9e5625a23477bdca9830df0e502f95ac435ee1b25cd3fe2"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "f9770696cc9257a28ee61732db8f7fc1afbaeb7f9494eb5a2dd3adbc257b0306"
+        },
+        {
+          "path": "app/validation.py",
+          "sha256": "9bc4c356e052b688de3ce84604af7703896c16c9982d75d5de5c3ea6ef102331"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "d5dc8a8df4b18e38030dd56b58144afda3101c37126dea02266c2217bfdd17a1"
+        }
+      ],
+      "number": 10,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-discover-default-root",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "09-validation-chain-001",
+      "attempt_id": "274fc515a05342c69ae04a056c0c5bdf",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "8ced14683a1af554de4d9b73ed96c501e85624f0aec9fc8c82d8a1198c0155f6"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/normalize.py",
+          "sha256": "42622a62e2f9b782d9e5625a23477bdca9830df0e502f95ac435ee1b25cd3fe2"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "f9770696cc9257a28ee61732db8f7fc1afbaeb7f9494eb5a2dd3adbc257b0306"
+        },
+        {
+          "path": "app/validation.py",
+          "sha256": "9bc4c356e052b688de3ce84604af7703896c16c9982d75d5de5c3ea6ef102331"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "d5dc8a8df4b18e38030dd56b58144afda3101c37126dea02266c2217bfdd17a1"
+        }
+      ],
+      "number": 11,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-discover-tests-top-root",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "09-validation-chain-001",
+      "attempt_id": "274fc515a05342c69ae04a056c0c5bdf",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "8ced14683a1af554de4d9b73ed96c501e85624f0aec9fc8c82d8a1198c0155f6"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/normalize.py",
+          "sha256": "42622a62e2f9b782d9e5625a23477bdca9830df0e502f95ac435ee1b25cd3fe2"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "f9770696cc9257a28ee61732db8f7fc1afbaeb7f9494eb5a2dd3adbc257b0306"
+        },
+        {
+          "path": "app/validation.py",
+          "sha256": "9bc4c356e052b688de3ce84604af7703896c16c9982d75d5de5c3ea6ef102331"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "d5dc8a8df4b18e38030dd56b58144afda3101c37126dea02266c2217bfdd17a1"
+        }
+      ],
+      "number": 12,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "public-test-script-direct",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "09-validation-chain-001",
+      "attempt_id": "274fc515a05342c69ae04a056c0c5bdf",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "8ced14683a1af554de4d9b73ed96c501e85624f0aec9fc8c82d8a1198c0155f6"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/normalize.py",
+          "sha256": "42622a62e2f9b782d9e5625a23477bdca9830df0e502f95ac435ee1b25cd3fe2"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "f9770696cc9257a28ee61732db8f7fc1afbaeb7f9494eb5a2dd3adbc257b0306"
+        },
+        {
+          "path": "app/validation.py",
+          "sha256": "9bc4c356e052b688de3ce84604af7703896c16c9982d75d5de5c3ea6ef102331"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "d5dc8a8df4b18e38030dd56b58144afda3101c37126dea02266c2217bfdd17a1"
+        }
+      ],
+      "number": 13,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "pytest-public-test-module",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "09-validation-chain-001",
+      "attempt_id": "274fc515a05342c69ae04a056c0c5bdf",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "8ced14683a1af554de4d9b73ed96c501e85624f0aec9fc8c82d8a1198c0155f6"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/normalize.py",
+          "sha256": "42622a62e2f9b782d9e5625a23477bdca9830df0e502f95ac435ee1b25cd3fe2"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "f9770696cc9257a28ee61732db8f7fc1afbaeb7f9494eb5a2dd3adbc257b0306"
+        },
+        {
+          "path": "app/validation.py",
+          "sha256": "9bc4c356e052b688de3ce84604af7703896c16c9982d75d5de5c3ea6ef102331"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "d5dc8a8df4b18e38030dd56b58144afda3101c37126dea02266c2217bfdd17a1"
+        }
+      ],
+      "number": 14,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "python-c-local-unittest-discovery",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "09-validation-chain-001",
+      "attempt_id": "274fc515a05342c69ae04a056c0c5bdf",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "8ced14683a1af554de4d9b73ed96c501e85624f0aec9fc8c82d8a1198c0155f6"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/normalize.py",
+          "sha256": "42622a62e2f9b782d9e5625a23477bdca9830df0e502f95ac435ee1b25cd3fe2"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "f9770696cc9257a28ee61732db8f7fc1afbaeb7f9494eb5a2dd3adbc257b0306"
+        },
+        {
+          "path": "app/validation.py",
+          "sha256": "9bc4c356e052b688de3ce84604af7703896c16c9982d75d5de5c3ea6ef102331"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "d5dc8a8df4b18e38030dd56b58144afda3101c37126dea02266c2217bfdd17a1"
+        }
+      ],
+      "number": 15,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "python-c-local-unittest-module",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "10-cache-sync-001",
+      "attempt_id": "b0f9da8b08784eaead079eeab5f8db89",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "73fd7861a502c4331bb93e6c79ec53da5b7777d67e2aa46d8a3660b07ea42e97"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/cache.py",
+          "sha256": "ab9e365811db6fb483fbf03d154a1ca9bdf5d9d5403d71501037e4c9eb2ae2f8"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "b73e57142345ba022c8d3d5953d1393570097c6e8aa0fcf2fd39fb80a789e53a"
+        },
+        {
+          "path": "app/store.py",
+          "sha256": "d0537e218df61bb74d2711d3df0d9773606f4ee555b2bb6bd373a209aac02b84"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "5e00ad58f03bfba96c4b8630e365a8f315443dfdae94386e9ccac105ff72710b"
+        }
+      ],
+      "number": 16,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-module-tests.test_public",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "11-parse-convert-001",
+      "attempt_id": "7131275c2a224676b1bd1dbae00089ad",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "733993afa1ece0ef9c2c8e36e27361571d824c0ea66287fd46428a5d6b7ab20d"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/conversion.py",
+          "sha256": "c9307b0aab8de4737cb42b5a20af1667d000811cf723f36be20c94ffcb4d3c56"
+        },
+        {
+          "path": "app/parser.py",
+          "sha256": "0a165f55973ec90ad88611ec817cab3c4491ad05c79233d11039fa5b6f46736d"
+        },
+        {
+          "path": "app/service.py",
+          "sha256": "e6f2bd7fe31cee248a24c0f527212d35fd929cb21032edbd82fd48f58963e8a2"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "717de4af8bbfbc48b8d5883e2e668e3d141cbb69ebce457764d90957bc8e0cf6"
+        }
+      ],
+      "number": 17,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "12-error-retry-001",
+      "attempt_id": "300fb004b209496e8a0f65f9e15ed399",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "c76d3c3c2fbaba164f022004cc0887cb45f62997f28de4b93fca01b20b16e123"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/client.py",
+          "sha256": "751d45c3509ea8949d914bbcf8ec9723b920b965cdf2d2a822576b8914064cf8"
+        },
+        {
+          "path": "app/policy.py",
+          "sha256": "026d724f8600a8d3a7d49ff7d2a49a1f02829a00defae636ccb3f84cfd30664e"
+        },
+        {
+          "path": "app/transport.py",
+          "sha256": "18bdf4ffad381cad679f306f941c40bb8086482b104338c55ade81232af98810"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "69e8139873f7b3f66ed900a2c9a3ef35e2360f1f51cdf3bfa7eeaf0e80567644"
+        }
+      ],
+      "number": 18,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "13-forced-failover-coding",
+      "attempt_id": "f128c557d3634c6cb5f64b5b9261abbc",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "d5d621509d23f006221acde44b2102796122a37dd8dfa5b0426e4d4565b89bc7"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/cache.py",
+          "sha256": "9385332b0847d0620a7333601e2e4696265247b619ff1e735a84ff689ff788c5"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "f21b8c643783709ae4f1359e5f527ec486c4057036b0b0dc13f03942f5f41472"
+        }
+      ],
+      "number": 19,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest-discover-default-root",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    },
+    {
+      "slot": "13-forced-failover-coding",
+      "attempt_id": "f128c557d3634c6cb5f64b5b9261abbc",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "d5d621509d23f006221acde44b2102796122a37dd8dfa5b0426e4d4565b89bc7"
+        },
+        {
+          "path": "app/__init__.py",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "app/cache.py",
+          "sha256": "9385332b0847d0620a7333601e2e4696265247b619ff1e735a84ff689ff788c5"
+        },
+        {
+          "path": "notes.txt",
+          "sha256": "88a07a971d1e756fec53bf0652e421ce13557f5ae4d1f4278fdc455fa430e81d"
+        },
+        {
+          "path": "tests/test_public.py",
+          "sha256": "f21b8c643783709ae4f1359e5f527ec486c4057036b0b0dc13f03942f5f41472"
+        }
+      ],
+      "number": 20,
+      "tool": "run_command",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "unittest",
+      "decision": "approved",
+      "security_review": "Reviewed effective argv, current candidate and public tests; local verification only; no network, credential access, destructive operations or writes outside sandbox.",
+      "fresh_challenge_same_pty": true
+    }
+  ]
+}
