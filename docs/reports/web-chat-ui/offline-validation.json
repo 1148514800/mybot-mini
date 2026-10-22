@@ -1,0 +1,85 @@
+{
+  "implementation_sha": "027889b6831754f53647de32a82b1e00e9af78f7",
+  "model_http_requests": 0,
+  "original_tests": 1240,
+  "new_tests": 53,
+  "total_tests": 1293,
+  "suites": 35,
+  "skipped": 0,
+  "checks": [
+    {
+      "command": "uv run python -m scripts.check_web_ui",
+      "exit_code": 0,
+      "unittest_counts": [
+        53
+      ],
+      "tests": 53,
+      "suites": 1,
+      "seconds": 4.801,
+      "log_sha256": "44d31daf2208644c2b90461df523d362bbeeb4879079ff10d7510246503f584c"
+    },
+    {
+      "command": "uv run python -m scripts.check_phase",
+      "exit_code": 0,
+      "unittest_counts": [
+        12,
+        12,
+        16,
+        18,
+        16,
+        18,
+        15,
+        7,
+        17,
+        25,
+        28,
+        38,
+        52,
+        39,
+        17,
+        24,
+        30,
+        38,
+        34,
+        61,
+        62,
+        100,
+        101,
+        136,
+        33,
+        42,
+        17,
+        13,
+        50,
+        18,
+        25,
+        44,
+        29,
+        53,
+        53
+      ],
+      "tests": 1293,
+      "suites": 35,
+      "seconds": 359.265,
+      "log_sha256": "ee15d595e038c5fa497e2addd2dd25cba0e2d13d8a5062e25d10e17c74c1568f"
+    },
+    {
+      "command": "uv run python -m compileall -q mybot scripts",
+      "exit_code": 0,
+      "unittest_counts": [],
+      "tests": 0,
+      "suites": 0,
+      "seconds": 0.045,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "unittest_counts": [],
+      "tests": 0,
+      "suites": 0,
+      "seconds": 0.018,
+      "log_sha256": "1ac635970d9d71d3245ef706d5cc1e14f2d12a823c13fa875780cf520f8dbe66"
+    }
+  ]
+}

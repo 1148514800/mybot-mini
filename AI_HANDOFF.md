@@ -4,6 +4,8 @@
 
 Web Chat 已完成实现及离线/真实浏览器验收，分支 `codex/web-chat-ui`，基线 `d4726669464bb83fd86d94e9ef31090dc4e7c782`。正式入口 `uv run python -m mybot.web --port 8765`，访问 http://127.0.0.1:8765。本任务按 Implementation、Acceptance 两个提交交付并推送独立分支，不合并 main，不属于新 Phase，不修改历史 Tag/ZIP。
 
+Implementation `027889b6831754f53647de32a82b1e00e9af78f7`；Acceptance 为本快照所属报告提交。
+
 ## 实现与架构决策
 
 新增 `mybot/web/`：Starlette HTTP/SSE、中文三栏响应式界面、深浅主题、安全 Markdown/代码复制、真实工具卡片/Plan/Diff/测试状态、受控单次浏览器审批、独立 Session 与停止/刷新恢复。正式 runtime 直接使用原 GatewayConfig、build_gateway_client、AgentLoop.handle_message、Registry、Context/Skills、Planning、MCP、Controller、Receipt 与 Journal。Loop 只新增可选白名单观察回调；CLI 缺省行为保留，不解析 print 或启动 CLI 子进程。

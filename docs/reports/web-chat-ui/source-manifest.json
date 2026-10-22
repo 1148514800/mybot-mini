@@ -1,0 +1,21 @@
+{
+  "implementation_sha": "027889b6831754f53647de32a82b1e00e9af78f7",
+  "sha256": {
+    "mybot/agent/loop.py": "7d194c40a6e0a71f635f2627db4e24a147ce376bee6d93720d63471305bf092d",
+    "mybot/agent/planning.py": "810db836072329f29c5614a4fa9ccc9c777ddd037f5beec180908ef759e5ccd2",
+    "mybot/web/__init__.py": "6a689d4856c132f1c954f388cb61e77aae2e3e3c477256ff37521216bdb30ec1",
+    "mybot/web/__main__.py": "f6e6d534d1ed2fce68efc93973d2671c25e079dc51cf039b357b5d10fe658f0e",
+    "mybot/web/approval.py": "7a4c968d56c3bd2fe6d5a10bfc8f632551db73c40de3efd761c948a723a14dbf",
+    "mybot/web/runtime.py": "1cc00201c5f39e9723a2ddc859eb19668c98e0957875be8d6caee6a7c8569e0e",
+    "mybot/web/security.py": "9c12c82b20b482aad07d94152ec82cab11c073fde1701c1f5ede20da26107b6f",
+    "mybot/web/server.py": "4e06773f7f33450f78eccdcda7d95deda6b8af0c64bcfa87595b45db222d6f6e",
+    "mybot/web/static/app.js": "64e82ff53e6d2a7475ab77064a1c27232783fb9910cf1f52e803166f67de80f9",
+    "mybot/web/static/index.html": "8c8e0f03709c960a44adbdce630abc2daa121286237065964aaa3b80e6553262",
+    "mybot/web/static/markdown.js": "7a5917025cc1250eeb7ca8aae65bebd6b41c4d9f2ae8fdb0bacea4b89d7d2a44",
+    "mybot/web/static/style.css": "6c3258e9943a32c429adca0073074538bf9b342d23f2974787d41ea737091885",
+    "pyproject.toml": "02c56d6f30cd4366b9ece028739c59e2f2ad035a06a5d5c00fcde810d8da5770",
+    "scripts/check_phase.py": "6a202c0ff4430116b0e5cf679290f1621ff0104cc3b0fd0ad27a22f011f20f48",
+    "scripts/check_web_ui.py": "eb6d9cfa12084d54b5420ebeddee5b734f6d32118942e07a980cf9dd3179eda4",
+    "uv.lock": "7facb86e136b4014c7c343bb0d71f412cc69992c6cf36fa2f9552d67d4f584fa"
+  }
+}

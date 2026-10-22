@@ -1,0 +1,76 @@
+{
+  "fixture": "real AgentLoop, original native tools; synthetic LLM only; disposable workspace",
+  "production_entry_smoke": {
+    "entry": "uv run python -m mybot.web --port <ephemeral>",
+    "homepage_status": 200,
+    "csp": true,
+    "model_http_requests": 0,
+    "clean_shutdown": true
+  },
+  "model_http_requests": 0,
+  "interactive_browser_approvals": 1,
+  "tty_yes": 0,
+  "desktop_viewport": [
+    1440,
+    960
+  ],
+  "mobile_viewport": [
+    390,
+    844
+  ],
+  "mobile_document_width": 390,
+  "mobile_document_scroll_width": 390,
+  "code_client_width": 339,
+  "code_scroll_width": 1395,
+  "code_observed_scroll_left": 140,
+  "markdown_checks": {
+    "unsafe_script_elements": 0,
+    "unsafe_links": 0,
+    "highlight_keyword_spans": 4,
+    "tables": 1,
+    "raw_html_rendered_as_text": true
+  },
+  "checked": [
+    "dark/light theme",
+    "Enter send / Shift+Enter multiline / empty disabled",
+    "code copy with clipboard equality",
+    "AI reply copy control",
+    "long code horizontal scroll",
+    "new conversation / switching / independent history",
+    "clear via settings",
+    "reload while running / stop and cleanup",
+    "mobile history drawer / activity collapse",
+    "actual pending command modal and manual approval",
+    "native patch preview / explicit receipt commit / unittest exit 0"
+  ],
+  "screenshots": {
+    "approval.jpg": {
+      "sha256": "f428cedb96408a52e003eb20397020ac757c3b2880511ebb22a2ef6eb7ac4680",
+      "bytes": 32074
+    },
+    "desktop-chat.jpg": {
+      "sha256": "1f595cc51e262b8bbe4f930934258ad91a3ba43b0eaae5d0bd381e66810ebd89",
+      "bytes": 43854
+    },
+    "desktop-dark.jpg": {
+      "sha256": "ed3239d441923d8c410539fd7e10241051df10c5ee1681c0637429ceab54aceb",
+      "bytes": 31965
+    },
+    "desktop-light.jpg": {
+      "sha256": "c8f0acb2eac0bfbd163ff7a4720558c94e9576459145a8277360e95047146fed",
+      "bytes": 32498
+    },
+    "mobile-chat.jpg": {
+      "sha256": "ec380e9b0d8866baf7b1bbd5db7ff162717dc1cc4b99c538c7c57de839640f1c",
+      "bytes": 28928
+    },
+    "patch-and-tests.jpg": {
+      "sha256": "18442c56b1a56b1f8a27df92b191f1c4383d0a98156c859817df56e013c49fb3",
+      "bytes": 33335
+    }
+  },
+  "limitations": [
+    "Browser screenshot JPEG compression reduces desktop small-text legibility. DOM observations and backend tests supplement the images.",
+    "No paid provider request or real provider connectivity test."
+  ]
+}

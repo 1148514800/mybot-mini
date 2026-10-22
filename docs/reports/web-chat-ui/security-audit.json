@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "protected_files": 1043,
+  "historical_changes": 0,
+  "main_unchanged": true,
+  "tags_unchanged": true,
+  "tag_count": 26,
+  "zip_including_appledouble_count": 53,
+  "original_live_attempts": 13,
+  "previous_paired_attempts": 8,
+  "critical_sources_unchanged": [
+    "mybot/agent/coding_controller.py",
+    "mybot/tools/patch.py",
+    "mybot/agent/change_journal.py",
+    "mybot/tools/run_command.py",
+    "mybot/tools/command_approval.py",
+    "mybot/tools/undo_approval.py",
+    "mybot/mcp_client/approval.py",
+    "mybot/mcp_client/manager.py",
+    "mybot/evaluation/coding_campaign.py"
+  ],
+  "old_tests_changed": [
+    "check_phase.py append only"
+  ],
+  "files_audited": 813,
+  "forbidden_paths": [],
+  "secret_findings": [],
+  "large_files": [],
+  "model_http_requests": 0,
+  "tty_yes": 0,
+  "interactive_browser_fixture_approvals": 1
+}
