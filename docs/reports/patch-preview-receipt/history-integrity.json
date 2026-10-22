@@ -1,0 +1,22 @@
+{
+  "protected_files": 1034,
+  "protected_file_changes": 0,
+  "main_unchanged": true,
+  "tags_unchanged": true,
+  "tracked_files_audited": 781,
+  "forbidden_paths": [],
+  "unnecessary_large_files": [],
+  "high_confidence_secret_findings": [],
+  "old_test_changes": [
+    "scripts/check_phase.py"
+  ],
+  "actual_http_requests": 0,
+  "actual_operator_yes": 0,
+  "critical_publisher_controller_ast_unchanged": true,
+  "journal_approval_strict_sources_unchanged": true,
+  "protected_manifest_sha256": "9656859b299180731a083b11c3c6d121965e9c20ef96f7154f297d94d99d370f",
+  "archive_files_including_appledouble": 53,
+  "original_attempt_raw_files": 13,
+  "latest_paired_attempt_raw_files": 8,
+  "tag_refs": 26
+}

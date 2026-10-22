@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Patch Preview Receipt 离线工程已实现，分支 codex/patch-preview-receipt，基线 cc8f00ad661292da0db433324e2ae2e14143b367。源码/专项/全量/安全审计通过；准备 Implementation Commit 后生成独立验收报告并提交、推送。不是 Phase26，不合并 main，不动历史 Tag/ZIP。
+Patch Preview Receipt 离线工程已实现，分支 codex/patch-preview-receipt，基线 cc8f00ad661292da0db433324e2ae2e14143b367。OFFLINE PASS；源码、专项、全量、安全审计与验收报告完成。Implementation cd8f856e885d677daa89a38e71539cb638f513e0；Acceptance 为本快照所属 docs 提交，独立分支交付。不是 Phase26，不合并 main，不动历史 Tag/ZIP。
 
 ## 实现与决策
 
@@ -20,4 +20,4 @@ Loop finally 清理 scope；Session 写盘前删除 Patch 参数/结果及可能
 
 ## 下一步与限制
 
-生成 docs/reports/patch-preview-receipt/ 验收、架构、离线计数、合成、安全/失败分析与下一阶段方案，完成 Acceptance Commit、独立分支 push、远程 HEAD 核对。供应商 Schema 支持、模型行为、上下文裁剪/TTL、真实 fallback/取消分布未 Live 验证；继承 POSIX 单文件原子发布与多文件 best-effort 回滚限制。下一轮可建议全新8对、同模型/预算、USD5建议硬上限；必须可靠单价、新授权和预注册冻结后另行启动。本轮不消耗旧剩余68次额度。
+报告入口 docs/reports/patch-preview-receipt/acceptance-report.md；含架构、离线计数、全条件合成对照、安全/失败分析、历史保护及下一阶段方案。保留 Implementation 与 Acceptance 两个提交，不再修改历史实验。供应商 Schema 支持、模型行为、上下文裁剪/TTL、真实 fallback/取消分布未 Live 验证；继承 POSIX 单文件原子发布与多文件 best-effort 回滚限制。下一轮可建议全新8对、同模型/预算、USD5建议硬上限；必须可靠单价、新授权和预注册冻结后另行启动。本轮不消耗旧剩余68次额度。
