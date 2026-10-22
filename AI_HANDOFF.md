@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Tool Reliability & Verification Closure：独立分支codex/tool-verification-reliability，基线871510f8a682990da63448ef27ec282c376a8711。最终离线回归通过；不是Phase26，不合并main，不移动Tag/ZIP。本轮授权Push本分支；实现与验收文档分两次提交，交付入口docs/reports/tool-verification-reliability/acceptance-report.md。
+Tool Reliability & Verification Closure：独立分支codex/tool-verification-reliability，基线871510f8a682990da63448ef27ec282c376a8711。Implementation 04b6968fdab288d8562447e25c84a6d5cec3df41；最终离线回归通过；不是Phase26，不合并main，不移动Tag/ZIP。本轮授权Push本分支；实现与验收文档分两次提交，交付入口docs/reports/tool-verification-reliability/acceptance-report.md。
 
 ## 实现与架构
 

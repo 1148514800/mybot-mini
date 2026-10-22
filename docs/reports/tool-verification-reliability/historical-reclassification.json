@@ -1,0 +1,215 @@
+{
+  "version": "coding-failure-v2",
+  "derived_only": true,
+  "new_model_requests": 0,
+  "results": [
+    {
+      "case": "config-default-001",
+      "source": "request-budget-full-batch/evidence/01-config-default-001/raw.json",
+      "source_sha256": "7330a146fece7451309053d6f6ce12a4a1270f9c7ac8a77542450773f0e636b7",
+      "old_failure": "public_tests_only",
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": "public_tests_only",
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_fail",
+      "original_strict_success": false,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "cache-ttl-001",
+      "source": "request-budget-full-batch/evidence/02-cache-ttl-001/raw.json",
+      "source_sha256": "6a42724e95487d469f9c0b7ab12f4f9fbc84f88e35cc1f9a84a9d9502bc980d6",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "pagination-001",
+      "source": "request-budget-full-batch/evidence/03-pagination-001/raw.json",
+      "source_sha256": "bd2397861f9e4f40f2f375bbc08ff9169444428acdabdf5a2a622181b3f3920a",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "serialization-001",
+      "source": "request-budget-full-batch/evidence/04-serialization-001/raw.json",
+      "source_sha256": "0ad62a3d484e866a606883543f348a86f0b29f87d95b0e58bc4eadc9e23dce01",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "csv-export-001",
+      "source": "request-budget-full-batch/evidence/05-csv-export-001/raw.json",
+      "source_sha256": "223a5742ed1b87ee79af404010b43ec034f451eea9f6bba31d2c2cf93caa4128",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "timezone-day-001",
+      "source": "request-budget-full-batch/evidence/06-timezone-day-001/raw.json",
+      "source_sha256": "1fe52b230c1942d3d6624c2e006a8183fc296aff3efbebaeec34c077f82c3abc",
+      "old_failure": "patch_failed_without_safe_recovery",
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": "patch_failed_without_safe_recovery",
+        "source": "controller"
+      },
+      "agent_state": "blocked",
+      "stop_reason": "patch_failed_without_safe_recovery",
+      "judge_state": "hidden_fail",
+      "original_strict_success": false,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "file-recovery-001",
+      "source": "request-budget-full-batch/evidence/07-file-recovery-001/raw.json",
+      "source_sha256": "1fd8c22fedab5690c752d00b3315d91db7ced34613e9f9e9d2b4dce2750841ee",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "cli-precedence-001",
+      "source": "request-budget-full-batch/evidence/08-cli-precedence-001/raw.json",
+      "source_sha256": "e1125652581ff586a2462246aeea8ad7b5a671c3c7cb733e9918c51fd89d492d",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "validation-chain-001",
+      "source": "request-budget-full-batch/evidence/09-validation-chain-001/raw.json",
+      "source_sha256": "8d16f2709c98d45c2e0ac6dccaba1708c3d53055be336beebd31754785bc4d46",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": "missing_current_revision_test_evidence",
+        "source": "controller"
+      },
+      "agent_state": "edited_unverified",
+      "stop_reason": "missing_current_revision_test_evidence",
+      "judge_state": "hidden_pass",
+      "original_strict_success": false,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "cache-sync-001",
+      "source": "request-budget-full-batch/evidence/10-cache-sync-001/raw.json",
+      "source_sha256": "4876cbf1c2c8c0aeb321e064571d104af80d80e4bec5dc0bbf0c5ae73b99864e",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "parse-convert-001",
+      "source": "request-budget-full-batch/evidence/11-parse-convert-001/raw.json",
+      "source_sha256": "2f835a7f1876bd77e5092ded3ae06c4292fc417c5034688b215504d1563524eb",
+      "old_failure": "public_tests_only",
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": "public_tests_only",
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_fail",
+      "original_strict_success": false,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "error-retry-001",
+      "source": "request-budget-full-batch/evidence/12-error-retry-001/raw.json",
+      "source_sha256": "0cd3277bda86e89081006b03f75e6bef8485ada2a2ca6947bf9e315e2e552671",
+      "old_failure": null,
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": null,
+        "source": "judge"
+      },
+      "agent_state": "verified",
+      "stop_reason": "",
+      "judge_state": "hidden_pass",
+      "original_strict_success": true,
+      "historical_patch_arguments": "unknown"
+    },
+    {
+      "case": "cache-ttl-001",
+      "source": "request-budget-full-batch/evidence/13-forced-failover-coding/raw.json",
+      "source_sha256": "ffab93f1d368e3a086bf76808f83f0e451d9177736e35338f95ee1a459aad8cf",
+      "old_failure": "model_request_budget",
+      "classification": {
+        "version": "coding-failure-v2",
+        "category": "model_request_budget",
+        "source": "controller"
+      },
+      "agent_state": "budget_exhausted",
+      "stop_reason": "max_model_requests",
+      "judge_state": "hidden_pass",
+      "original_strict_success": false,
+      "historical_patch_arguments": "unknown"
+    }
+  ]
+}

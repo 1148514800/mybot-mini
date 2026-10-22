@@ -1,0 +1,132 @@
+{
+  "implementation_sha": "04b6968fdab288d8562447e25c84a6d5cec3df41",
+  "status": "OFFLINE PASS",
+  "baseline_sha": "871510f8a682990da63448ef27ec282c376a8711",
+  "checks": [
+    {
+      "command": "uv run python -m scripts.check_phase (clean 871510f worktree)",
+      "status": "PASS",
+      "passed": 1114,
+      "total": 1114,
+      "suites": 31,
+      "skipped": 0,
+      "log_sha256": "ff7dd2735a216bed8640f83966c0b57ff5a03d07cbaf566b46df266b0cd4f43e"
+    },
+    {
+      "command": "uv run python -m scripts.check_tool_verification_reliability",
+      "status": "PASS",
+      "passed": 44,
+      "total": 44,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "c63390a437ae27bb80c880980976f0de9f7e6f8f6d3e1291eb4e69ed8d28fa51"
+    },
+    {
+      "command": "uv run python -m scripts.check_coding_failover",
+      "status": "PASS",
+      "passed": 50,
+      "total": 50,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "027d7e87bfa8dcfb4a60816491ae55c7c35aad246045a06d3a75a6f0318dd6e5"
+    },
+    {
+      "command": "uv run python -m scripts.check_coding_failover_batch",
+      "status": "PASS",
+      "passed": 25,
+      "total": 25,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "9a1715786af2d8cf87f7bbd4ec4f92ab58be00ec7ea9349441db3c61679c5c21"
+    },
+    {
+      "command": "uv run python -m scripts.check_coding_reliability",
+      "status": "PASS",
+      "passed": 42,
+      "total": 42,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "6c2f00e62a099de48ec142de544bbacf93b324cb0397fd82647998b155d66dcc"
+    },
+    {
+      "command": "uv run python -m scripts.check_patch_editing",
+      "status": "PASS",
+      "passed": 61,
+      "total": 61,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "39a9a320f3ce2b725d0032031d291fc5d2e018f2dccd13cf0ebdf0b07b341aca"
+    },
+    {
+      "command": "uv run python -m scripts.check_command_execution",
+      "status": "PASS",
+      "passed": 62,
+      "total": 62,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "9b814b0c5193ba12d63bde09717fc0e40c7af49a458c2736260082e329992e89"
+    },
+    {
+      "command": "uv run python -m scripts.check_autonomous_coding",
+      "status": "PASS",
+      "passed": 100,
+      "total": 100,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "03e70150d8b3987d518de12d3d7f25103a9dbcdb67f33f718f1bd91a164f78d7"
+    },
+    {
+      "command": "uv run python -m scripts.check_request_budget_efficiency",
+      "status": "PASS",
+      "passed": 18,
+      "total": 18,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "c176f091ebc36c9078da89068a261c99f2451d50648c5cd2dc3ce6442954db06"
+    },
+    {
+      "command": "uv run python -m scripts.check_phase",
+      "status": "PASS",
+      "passed": 1158,
+      "total": 1158,
+      "suites": 32,
+      "skipped": 0,
+      "log_sha256": "cf497f3aaa66215ca72ca0257489457feb7d67f0941006615483338648aa90a4"
+    }
+  ],
+  "new_tests": 44,
+  "original_tests_retained": 1114,
+  "compileall": "PASS",
+  "diff_check": "PASS",
+  "real_model_http_requests": 0,
+  "paid_judge_requests": 0,
+  "codex_yes_approvals": 0,
+  "source_tree_sha256": "59481e6665f419718d7f9dfcd61334d6c44c55194105d58ce9c61d7f55312eb1",
+  "protection": {
+    "status": "PASS",
+    "baseline_tracked_files": 576,
+    "protected_unchanged_files": 569,
+    "tags_unchanged": 26,
+    "zips_unchanged": 53,
+    "main_unchanged": true,
+    "original_attempt_raw_matches": 13,
+    "manifest_sha256": "dad4ebcbee357ec7f8218c57ac3d0448a6143cc2b3f1f2a49d878f5011d3e602"
+  },
+  "credential_scan": {
+    "status": "PASS",
+    "scanned_files": 585,
+    "high_confidence_pattern_matches": 0,
+    "forbidden_paths": 0,
+    "content_review": "changed source, tests and reports reviewed; no raw inputs or credentials retained"
+  },
+  "resolved_validation_findings": [
+    "Restored explicit absolute host/temporary cwd and prefer-omitting-timeout instructions after old regressions caught their omission; no original assertion changed.",
+    "Development-time source edits correctly triggered frozen_environment_changed; rerun on stable source passed."
+  ],
+  "limitations": [
+    "synthetic feedback experiment only; real model improvement unverified",
+    "malformed JSON intent unknown remains fatal",
+    "exact historical Patch arguments unknown",
+    "no Live authorization"
+  ]
+}
