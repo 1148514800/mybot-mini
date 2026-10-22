@@ -17,7 +17,11 @@ class Plan:
     """One task's sequential plan; completion requires real tool evidence."""
 
     def __init__(self):
+        self.silent = False
         self.reset()
+
+    def _print(self, *args):
+        if not self.silent: print(*args)
 
     def reset(self, task: str = "") -> None:
         self.task = task
@@ -40,9 +44,9 @@ class Plan:
         if any(not isinstance(item, str) or not item.strip() for item in steps):
             raise ValueError("Each step must be a non-empty string")
         self.steps = [Step(item.strip()) for item in steps]
-        print("[PLAN] 创建任务计划")
+        self._print("[PLAN] 创建任务计划")
         for number, step in enumerate(self.steps, 1):
-            print(f"[{number}/{len(self.steps)}] pending  {step.description}")
+            self._print(f"[{number}/{len(self.steps)}] pending  {step.description}")
         return "Plan created. Start step 1 with update_plan before executing tools."
 
     def update(self, step: int, status: str) -> str:
@@ -63,7 +67,7 @@ class Plan:
         current.status = status
         if status == "failed":
             current.error = "Model reported failure; task stopped"
-        print(f"[STEP {step}] {status}")
+        self._print(f"[STEP {step}] {status}")
         return f"Step {step}: {status}"
 
     def execution_error(self) -> str | None:
@@ -75,7 +79,7 @@ class Plan:
         step = self.active
         if step is None:
             return
-        print(f"[TOOL] {name}")
+        self._print(f"[TOOL] {name}")
         if (native_command and not result.success and result.metadata.get('completed') is True
                 and result.metadata.get('command_nonzero') is True
                 and type(result.metadata.get('exit_code')) is int and result.metadata['exit_code'] != 0):
@@ -93,7 +97,7 @@ class Plan:
         else:
             step.status = "failed"
             step.error = result.error or "tool execution failed"
-            print(f"[STEP {self.steps.index(step) + 1}] failed")
+            self._print(f"[STEP {self.steps.index(step) + 1}] failed")
 
     def close(self, reason: str = "") -> str:
         self.closed = True

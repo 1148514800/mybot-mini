@@ -1,0 +1,160 @@
+import {markdown, copyText} from './markdown.js';
+const $ = id => document.getElementById(id);
+const node = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
+let boot, selected, stream, current, approvalId = null, approving = false, nearBottom = true;
+const labels = {idle:'准备就绪',running:'正在分析问题',waiting_approval:'正在等待审批',completed:'已完成',failed:'执行失败',cancelled:'已停止',stopped:'已停止',cleanup_uncertain:'清理状态不确定',stopping:'正在停止并清理',settling:'正在完成资源清理'};
+const toolLabels = {list_files:'正在查看项目结构',search_code:'正在查找代码',read_file_range:'正在读取文件',read_file:'正在读取文件',apply_patch:'正在处理代码修改',run_command:'正在执行命令',create_plan:'正在制定计划',update_plan:'正在更新计划'};
+const busy = () => current && ['running','waiting_approval','stopping','settling'].includes(current.status);
+function notice(text) { $('notice').textContent = text; $('notice').hidden = !text; }
+async function api(path, method='GET', data) {
+  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch('/api/' + path, {method, credentials:'same-origin', signal:controller.signal,
+      headers: method === 'GET' ? {} : {'Content-Type':'application/json','X-Mybot-CSRF':boot.csrf},
+      body: data === undefined ? undefined : JSON.stringify(data)});
+    if (!response.ok) { const detail = await response.json().catch(()=>({})); const message = detail.error === 'conversation_limit' ? '本进程最多保留 20 个对话。请保留需要的内容后重启服务。' : detail.error === 'web_control_unsupported' ? 'Web 第一版不支持跨轮 Undo 与 /changes。请使用活动面板查看修改；清空对话请使用设置按钮。' : response.status === 409 ? '工作区正忙，或本次审批已失效。请查看正在运行的对话。' : response.status === 403 ? '连接授权已过期，请刷新页面。' : '请求未完成，请检查输入或本地配置。'; throw Error(message); }
+    return await response.json();
+  } catch(error) { throw Error(error.name === 'AbortError' ? '请求超时；后台状态未确认，请刷新后查看。' : error.message); }
+  finally { clearTimeout(timer); }
+}
+function renderHistory() {
+  $('history').replaceChildren(); $('history-count').textContent = boot.conversations.length;
+  for (const c of [...boot.conversations].reverse()) {
+    const button = node('button', undefined, 'history-item' + (c.id === selected ? ' active' : ''));
+    button.append(node('span', ['running','waiting_approval','stopping','settling'].includes(c.status) ? '◉' : '◌'), node('span', c.title, 'history-title'));
+    button.addEventListener('click', () => select(c.id)); $('history').append(button);
+  }
+}
+function renderMessages() {
+  const container = $('messages'); container.replaceChildren(); $('welcome').hidden = current.messages.length > 0;
+  for (const m of current.messages) {
+    const article = node('article', undefined, 'message ' + m.role), head = node('div', undefined, 'message-head');
+    head.append(node('span', m.role === 'user' ? '你' : '✦', 'message-avatar'), node('span', m.role === 'user' ? '你' : 'mybot-mini'));
+    const time = node('time', new Date(m.time*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})); head.append(time); article.append(head);
+    const body = node('div', undefined, 'message-body'); if (m.role === 'assistant') body.append(markdown(m.content)); else body.textContent = m.content;
+    article.append(body);
+    if (m.role === 'assistant') { const actions = node('div', undefined, 'message-actions'), copy = node('button','⧉ 复制回复','copy-reply'); copy.addEventListener('click', () => copyText(m.content, copy)); actions.append(copy); article.append(actions); }
+    container.append(article);
+  }
+  $('running-indicator').hidden = !busy();
+  if (nearBottom) { $('chat-scroll').scrollTop = $('chat-scroll').scrollHeight; $('new-message').hidden = true; }
+  else if (current.messages.length) $('new-message').hidden = false;
+}
+function renderActivity() {
+  $('request-count').textContent = current.requests; $('token-count').textContent = current.tokens === null ? '未知' : current.tokens.toLocaleString();
+  let latest = current.events.at(-1), status = labels[current.status] || '状态未知';
+  if (current.report?.state === 'edited_unverified') status = '已修改，尚未验证';
+  if (current.report?.state === 'verified') status = '当前修改已验证';
+  if (busy() && latest?.type === 'tool_started') status = toolLabels[latest.tool] || '正在调用工具';
+  $('task-state').replaceChildren(node('span', undefined,'status-orb'), document.createTextNode(status));
+  $('running-label').textContent = status;
+  $('task-detail').textContent = current.report?.state === 'execution_uncertain' ? '执行结果无法确认，文件可能已经变化。请检查工作区并重启服务，切勿盲目重放修改。' : current.report ? `当前版本 ${current.report.current_revision} · 修改 ${current.report.committed_patches} 次 · 有效通过 ${current.report.tests_passed_after_last_patch} 项指定测试。仅代表已执行的测试范围。` : '显示实际阶段进度；完整回复在模型返回后呈现。';
+  const model = [...current.events].reverse().find(e => e.type === 'model_request_finished');
+  $('model-label').textContent = model ? `${model.provider} / ${model.model}` : `${boot.provider || '未配置'} / ${boot.model}`;
+  const cards = new Map(); let plan = [];
+  for (const event of current.events) {
+    if (event.type === 'message_started') plan = [];
+    if (event.type === 'tool_started') cards.set(event.call_id, {...event, running:true});
+    if (event.type === 'tool_finished') { cards.set(event.call_id, event); plan = event.plan || plan; }
+  }
+  $('plan').replaceChildren(); $('plan-count').textContent = plan.length || '—';
+  for (const step of plan) { const li = node('li', step.description + (step.status === 'completed' ? ' ✓' : '')); li.dataset.status = step.status; $('plan').append(li); }
+  $('tool-count').textContent = cards.size;
+  const timeline = $('timeline');
+  if (!cards.size) { if (!timeline.querySelector('.timeline-empty')) { const empty = node('div', undefined,'timeline-empty'); empty.append(node('span','⌁'),node('p','等待第一次行动'),node('small','工具实际执行后会显示在这里')); timeline.replaceChildren(empty); } }
+  else {
+    const opened = new Set([...timeline.querySelectorAll('details[open]')].map(d=>d.dataset.call)); timeline.replaceChildren();
+    for (const [id, event] of cards) {
+      const card = node('details', undefined, 'tool-card'); card.dataset.call = id; card.open = opened.has(id);
+      const summary = node('summary'); summary.append(node('span', event.running ? '◌' : event.success ? '✓' : '×'),node('strong',event.tool),node('small',event.running ? (current.approval ? '待审批' : busy() ? '调用中' : '已中断') : `${event.duration_seconds.toFixed(2)}s`)); card.append(summary);
+      const content = node('div', undefined, 'tool-content'), meta = event.metadata || {};
+      let description = event.running ? (current.approval ? '等待批准；命令尚未执行。' : busy() ? '实际调用正在进行。' : '调用未返回，已停止；不能确认执行完成。') : event.success ? '调用已完成。' : '调用未成功，后端保持原停止策略。';
+      if (event.tool === 'apply_patch' && !event.running) description = meta.dry_run ? 'Patch Preview · 仅预览，尚未写入。' : meta.applied && event.success ? 'Patch Commit · 修改已正式发布。' : 'Patch 未确认成功提交。';
+      if (event.tool === 'run_command' && !event.running) description = `命令退出码：${meta.exit_code ?? '未知'}。测试证据以当前 Revision 的后端报告为准。`;
+      content.append(node('p', description));
+      if (event.changed_files?.length) content.append(node('p','相关文件：' + event.changed_files.join('、')));
+      if (meta.receipt_created) content.append(node('p','已生成当前对话的一次性提交凭据（内容隐藏）。'));
+      if (meta.receipt_error_category) content.append(node('p','安全诊断：' + meta.receipt_error_category));
+      if (meta.diff_truncated || event.display_truncated) content.append(node('p','部分活动或 Diff 已因大小限制省略；不能视为完整审阅。'));
+      if (event.diff) { const pre = node('pre',undefined,'diff'); for (const line of event.diff.split('\n')) pre.append(node('span',line,'diff-line' + (line.startsWith('+') ? ' add' : line.startsWith('-') ? ' remove' : ''))); content.append(pre); }
+      card.append(content); timeline.append(card);
+    }
+  }
+}
+function renderApproval() {
+  const pending = current.approval, dialog = $('approval-dialog');
+  if (!pending) { approvalId = null; if (dialog.open) dialog.close(); return; }
+  approvalId = pending.id;
+  $('approval-title').textContent = pending.kind === 'mcp' ? '等待批准 MCP 工具调用' : '等待批准执行命令';
+  let details; try { details = JSON.parse(pending.display); } catch { details = null; }
+  if (!details) { notice('无法完整展示审批内容；请拒绝或停止任务。'); return; }
+  $('approval-details').textContent = pending.display; // Retain escaped bidi/control characters from inspectable backend JSON.
+  $('approval-warning').textContent = details.execution_mode === 'host_confirm' ? '高权限操作：host_confirm 没有 OS 隔离，可读写外部文件、访问网络或启动其他程序。请逐项审核完整命令。' : pending.kind === 'mcp' ? '远程工具可能有外部副作用。本次确认不授权后续调用。' : 'macOS Seatbelt：工作区只读，网络禁止，仅本次临时目录可写；自检失败会拒绝执行。';
+  $('approval-expiry').textContent = '本次审批到期：' + new Date(pending.expires_at*1000).toLocaleTimeString();
+  $('approve').disabled = $('deny').disabled = approving;
+  if (!dialog.open) dialog.showModal();
+}
+function controls() {
+  const running = busy(); $('send').hidden = running; $('stop').hidden = !running;
+  $('send').disabled = !$('message-input').value.trim() || !!boot.busy || boot.cleanup_uncertain;
+  if (boot.cleanup_uncertain) notice('工作区执行或清理状态无法确认，新任务已禁用。请人工检查并重启服务。');
+  $('clear-chat').disabled = !!boot.busy; $('chat-title').textContent = current?.title || '新对话';
+}
+async function refresh() {
+  if (!selected) return;
+  const id = selected; const state = await api(`conversations/${id}`); if (selected !== id || (current?.id === id && state.sequence < current.sequence)) return;
+  current = state;
+  if (state.status === 'failed') notice('Agent 未完成请求。请检查本地模型、工作区配置或活动面板中的安全停止状态。');
+  if (state.status === 'cleanup_uncertain') notice('资源清理无法确认，已阻止新任务。请检查运行环境并重启服务。');
+  const c = boot.conversations.find(c=>c.id===id); if(c) {c.status=state.status;c.title=state.title;}
+  if (busy()) boot.busy = id; else if (boot.busy === id) boot.busy = null;
+  renderHistory(); renderMessages(); renderActivity(); renderApproval(); controls();
+}
+async function select(id) {
+  selected = id; stream?.close(); $('sidebar').parentElement.classList.remove('nav-open'); nearBottom = true;
+  await refresh();
+  stream = new EventSource(`/api/conversations/${id}/events`);
+  stream.addEventListener('activity', () => refresh().catch(e=>notice(e.message)));
+  stream.addEventListener('reset', () => refresh().catch(e=>notice(e.message)));
+  stream.onopen = () => { $('connection').replaceChildren(node('i'), document.createTextNode('本地连接')); };
+  stream.onerror = () => { $('connection').textContent = '连接断开 · 正在重连'; };
+}
+async function newChat() {
+  try { const c = await api('conversations','POST',{}); boot.conversations.push(c); await select(c.id); notice(''); }
+  catch(error) { notice(error.message); }
+}
+$('composer').addEventListener('submit',async event => {
+  event.preventDefault(); const text = $('message-input').value.trim(); if (!text || boot.busy) return;
+  $('send').disabled = true; notice('');
+  try { await api(`conversations/${selected}/messages`,'POST',{message:text}); $('message-input').value=''; $('message-input').style.height='auto'; nearBottom=true; await refresh(); }
+  catch(error) { notice(error.message); controls(); }
+});
+$('message-input').addEventListener('input',()=>{ $('message-input').style.height='auto'; $('message-input').style.height=Math.min($('message-input').scrollHeight,170)+'px'; controls(); });
+$('message-input').addEventListener('keydown', event => { if(event.key==='Enter' && !event.shiftKey && !event.isComposing) {event.preventDefault(); $('composer').requestSubmit();} });
+$('new-chat').addEventListener('click',newChat);
+$('stop').addEventListener('click',async()=>{ $('stop').disabled=true; try {await api(`conversations/${selected}/stop`,'POST',{});await refresh();}catch(e){notice(e.message);}finally{$('stop').disabled=false;} });
+async function decide(allow) {
+  if(!approvalId || approving) return; approving=true; $('approve').disabled=$('deny').disabled=true;
+  try {await api(`conversations/${selected}/approval`,'POST',{id:approvalId,allow});await refresh();}catch(e){notice(e.message); await refresh();}finally{approving=false;renderApproval();}
+}
+$('approve').addEventListener('click',()=>decide(true)); $('deny').addEventListener('click',()=>decide(false));
+$('approval-dialog').addEventListener('cancel',event=>{event.preventDefault();decide(false);});
+$('settings').addEventListener('click',()=>{
+  const details=$('settings-details');details.replaceChildren();
+  for(const [label,value] of [['模型',`${boot.provider || '未配置'} / ${boot.model}`],['工作区',boot.workspace],['执行模式',boot.command_mode],['Patch 协议',boot.receipt?'Preview Receipt':'Legacy'],['历史存储','仅本次进程内存']]) details.append(node('dt',label),node('dd',value));
+  $('settings-dialog').showModal();
+});
+$('close-settings').addEventListener('click',()=>$('settings-dialog').close());
+$('clear-chat').addEventListener('click',async()=>{try{await api(`conversations/${selected}/clear`,'POST',{});$('settings-dialog').close();await refresh();}catch(e){notice(e.message);}});
+$('theme').addEventListener('click',()=>{const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('mybot-theme',theme);}catch{}});
+$('activity-toggle').addEventListener('click',()=>document.querySelector('.shell').classList.toggle('activity-hidden'));
+$('close-activity').addEventListener('click',()=>document.querySelector('.shell').classList.add('activity-hidden'));
+$('menu').addEventListener('click',()=>document.querySelector('.shell').classList.toggle('nav-open'));
+$('chat-scroll').addEventListener('scroll',()=>{const s=$('chat-scroll');nearBottom=s.scrollHeight-s.scrollTop-s.clientHeight<90;if(nearBottom)$('new-message').hidden=true;});
+$('new-message').addEventListener('click',()=>{nearBottom=true;$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight;$('new-message').hidden=true;});
+for(const button of document.querySelectorAll('[data-prompt]')) button.addEventListener('click',()=>{$('message-input').value=button.dataset.prompt;$('message-input').dispatchEvent(new Event('input'));$('message-input').focus();});
+try {const theme=localStorage.getItem('mybot-theme');if(['light','dark'].includes(theme))document.documentElement.dataset.theme=theme;}catch{}
+if(innerWidth<1180)document.querySelector('.shell').classList.add('activity-hidden');
+try {boot=await api('bootstrap');$('workspace').textContent=boot.workspace;renderHistory();if(boot.conversations.length)await select(boot.busy || boot.conversations.at(-1).id);else await newChat();
+  setInterval(async()=>{try{const b=await api('bootstrap');boot={...boot,...b};renderHistory();controls();}catch{}},3000);
+}catch(error){notice(error.message);$('model-label').textContent='连接不可用';}

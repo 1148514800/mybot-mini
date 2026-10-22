@@ -2,22 +2,24 @@
 
 ## 当前目标与状态
 
-Patch Preview Receipt 离线工程已实现，分支 codex/patch-preview-receipt，基线 cc8f00ad661292da0db433324e2ae2e14143b367。OFFLINE PASS；源码、专项、全量、安全审计与验收报告完成。Implementation cd8f856e885d677daa89a38e71539cb638f513e0；Acceptance 为本快照所属 docs 提交，独立分支交付。不是 Phase26，不合并 main，不动历史 Tag/ZIP。
+Web Chat 已完成实现及离线/真实浏览器验收，分支 `codex/web-chat-ui`，基线 `d4726669464bb83fd86d94e9ef31090dc4e7c782`。正式入口 `uv run python -m mybot.web --port 8765`，访问 http://127.0.0.1:8765。本任务按 Implementation、Acceptance 两个提交交付并推送独立分支，不合并 main，不属于新 Phase，不修改历史 Tag/ZIP。
 
-## 实现与决策
+## 实现与架构决策
 
-原生 ApplyPatchTool 新增显式 coding.preview_receipt=true（默认 false，配置为 keyword-only 保留旧位置参数）。Preview 保留一份不可变有界内存快照，返回随机256-bit、最长300秒、单次 Receipt；模型仅用 dry_run=false 与 token 显式提交。消费后重新检查完整内容哈希、inode/版本/元数据、父目录身份、Workspace/turn、权限与时限。复用原 preflight/recheck/stage/publish/recovery/Journal；无新写入器或自动重放。Preview 不增 Revision，成功 Commit 增一次；当前哈希审批测试与 python -c 排除规则保留。
+新增 `mybot/web/`：Starlette HTTP/SSE、中文三栏响应式界面、深浅主题、安全 Markdown/代码复制、真实工具卡片/Plan/Diff/测试状态、受控单次浏览器审批、独立 Session 与停止/刷新恢复。正式 runtime 直接使用原 GatewayConfig、build_gateway_client、AgentLoop.handle_message、Registry、Context/Skills、Planning、MCP、Controller、Receipt 与 Journal。Loop 只新增可选白名单观察回调；CLI 缺省行为保留，不解析 print 或启动 CLI 子进程。
 
-Loop finally 清理 scope；Session 写盘前删除 Patch 参数/结果及可能复制的能力值；Trace 仅记录白名单诊断，不存 token/正文。原关键发布/Controller 方法 AST、Journal、命令审批、Strict 评分代码保持一致。
+每进程单任务 lease 在 Agent/MCP/client 清理完成后释放，执行或清理不确定则禁止新任务。每轮工具、Controller、Receipt scope、模型客户端独立；同一对话保留真实 Session。fallback sticky 仅该轮。历史仅内存，最多20会话、64条展示消息/会话、128条当前任务事件，不读写 CLI 磁盘历史。浏览器 localStorage 仅主题。
 
-修改集中于 patch、Loop/Controller、config/registry/app、benchmark flag 传递、metrics 诊断；新增 scripts/check_patch_preview_receipt.py 并接入 check_phase。
+仅127.0.0.1；Host/Origin、HttpOnly SameSite cookie、CSRF、授权 SSE、CSP、固定资源路由、输入/事件大小限制与凭证/能力脱敏。命令及 MCP 审批沿用原策略；nonce 单次有时限，无预批准/缓存/自动 yes。Undo 和旧文本控制命令明确拒绝；CLI Undo 不受影响。Preview 不当成写入，测试成功不当成 Strict Success。
 
-## 验证与合成结果
+修改：Web 模块、Loop/Plan 观察适配、显式 Starlette 依赖及 lock、`scripts/check_web_ui.py`、全量入口追加、README、`docs/web-ui.md`。原 Controller、Patch 发布器、Journal、命令/MCP 安全策略及 Strict 评分源码未改。
 
-专项53/53；原1187保留，全量1240/1240、34套件、零跳过。单独 Patch61、tool-verification44、live-AB29、failover50、batch25、reliability42 全部通过；compileall/diff通过。12条件×2组均保留失败/取消/预算分母：参数错误 Legacy2 vs Receipt0；两组提交/verified/公开合成合同均4/12；正式尝试均8。原 Strict 只接受 Live，合成不具备资格，计数均0，不将公开合同代理称为Strict。请求33 vs31混有提前停止，不推断真实成功率/节费。权限变化条件 Receipt 更保守，Legacy 可按当前 mode 继续。
+## 验证与保护
 
-真实模型HTTP0，实际操作员yes/nonce0。1034个保护文件校验不变，含原13个与最近8个Attempt raw、历史Phase/报告、53 ZIP/AppleDouble；main和26 Tag不变。原工作区 mybot/app.py 与 workspace/instructions/USER.md 用户修改未触碰。旧实验入口 docs/reports/tool-verification-live-ab/，禁止重放或猜测未保存参数。
+专项53/53；全量1293/1293、35套件、零跳过，原1240项全部保留；compileall、diff 检查通过。真实 AgentLoop + 合成模型 + 原生 Receipt/Seatbelt/stdio MCP/本地 HTTP/SSE。浏览器实际检查桌面深浅主题、390px手机、Markdown/XSS、复制、长代码滚动、多行输入、切换/清空、停止/刷新及一次人工点击批准临时测试命令。
 
-## 下一步与限制
+真实模型HTTP 0，TTY yes 0，浏览器临时 fixture 交互批准1次；未使用旧 Benchmark 额度。1043保护文件哈希无变化，main、26 Tag、53 ZIP/AppleDouble、原13及最近8 Attempt raw 均保留。原工作区 `mybot/app.py`、`workspace/instructions/USER.md` 用户修改未触碰。不得重跑旧实验或伪称 Live 验证。
 
-报告入口 docs/reports/patch-preview-receipt/acceptance-report.md；含架构、离线计数、全条件合成对照、安全/失败分析、历史保护及下一阶段方案。保留 Implementation 与 Acceptance 两个提交，不再修改历史实验。供应商 Schema 支持、模型行为、上下文裁剪/TTL、真实 fallback/取消分布未 Live 验证；继承 POSIX 单文件原子发布与多文件 best-effort 回滚限制。下一轮可建议全新8对、同模型/预算、USD5建议硬上限；必须可靠单价、新授权和预注册冻结后另行启动。本轮不消耗旧剩余68次额度。
+## 文档、限制与下一步
+
+使用说明 `docs/web-ui.md`；验收报告及6张实际截图位于 `docs/reports/web-chat-ui/`（Acceptance 提交）。不支持公网、多租户、附件、持久化 Web 历史或 Web Undo；Markdown 为基础子集，回复非 Token 流式。单进程 lease 不协调其他 CLI/服务进程。真实供应商连通性与付费聊天按本轮0请求限制未验证；用户配置原本地模型凭证后自行启动使用。后续扩展需保留审批及清理屏障，勿把当前测试范围称为整体 Strict 成功。

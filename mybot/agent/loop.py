@@ -25,7 +25,8 @@ class AgentLoop:
     """Run a simple tool-calling loop for one CLI conversation."""
 
     def __init__(self, client: AsyncOpenAI, config: GatewayConfig, tools: ToolRegistry,
-                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None):
+                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None):
+        self._event_callback = event_callback
         self.client = client
         self.config = config
         self.tools = tools
@@ -47,6 +48,7 @@ class AgentLoop:
         self._undo_provider = undo_approval_provider
         self._undo_notice = False
         self.plan = Plan()
+        self.plan.silent = event_callback is not None
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
         self.discovery = MCPToolCatalog(tools, config.mcp_discovery) if config.mcp_discovery['enabled'] else None
@@ -60,6 +62,12 @@ class AgentLoop:
                 raise ValueError('MCP discovery tool name collision')
             for name in sorted(self.discovery.tool_names):
                 self.tools.register(DiscoveryTool(self.discovery,name))
+
+    def _notify(self, event, **data):
+        # Host-only observer. Never pass raw arguments, full metadata, receipts or SDK errors.
+        if self._event_callback is not None:
+            try: self._event_callback({'type': event, **data})
+            except Exception: pass  # Observation must never authorize/replay/fail a native write.
 
     async def run(self) -> None:
         while True:
@@ -134,7 +142,7 @@ class AgentLoop:
                 self.coding_controller.stop('cancelled' if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt)) else 'execution_uncertain', 'task_interrupted')
                 self.last_coding_report = self.coding_controller.snapshot()
             report = self.plan.close("上下文预算不足" if isinstance(exc, ContextBudgetError) else "任务异常或中断")
-            if report:
+            if report and self._event_callback is None:
                 print(report)
             raise
         finally:
@@ -209,6 +217,8 @@ class AgentLoop:
             if controller is not None and not controller.before_request(definitions):
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             start = time.perf_counter()
+            if self._event_callback is not None:
+                self._notify('model_request_started', model=self.config.model, provider=getattr(self.client, 'active_provider', self.config.provider))
             try:
                 response = await asyncio.wait_for(
                     self.client.chat.completions.create(
@@ -224,6 +234,7 @@ class AgentLoop:
             except FallbackBudgetExceeded:
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             except (TimeoutError, APITimeoutError):
+                self._notify('model_request_failed', reason='timeout')
                 if controller is not None:
                     controller.check_time()
                     controller.stop('blocked', 'model_request_timeout')
@@ -231,6 +242,12 @@ class AgentLoop:
                 report = self.plan.close("模型请求超时")
                 return f"模型请求超时（{self.config.request_timeout_seconds:g} 秒）。" + (f"\n{report}" if report else "")
 
+            if self._event_callback is not None:
+                usage = getattr(response, 'usage', None)
+                active_config = getattr(self.client, '_backup_config', self.config) if getattr(self.client, 'active_provider', None) == 'coco2' else self.config
+                self._notify('model_request_finished', duration_seconds=round(time.perf_counter() - start, 3),
+                    provider=getattr(self.client, 'active_provider', self.config.provider), model=active_config.model,
+                    tokens=getattr(usage, 'total_tokens', None))
             message = response.choices[0].message
             if debug:
                 print(
@@ -281,10 +298,26 @@ class AgentLoop:
                     messages.append({'role': 'tool', 'tool_call_id': call.id, 'content':
                         ToolResult(False, error='autonomy_stopped', metadata={'reason': controller.stop_reason, 'executed': False}).to_text()})
                     continue
+                tool_started_at = time.perf_counter()
+                self._notify('tool_started', tool=call.function.name, call_id=call.id)
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
                           if permission_denied or command_stopped else await self._execute(call.function.name, call.function.arguments))
                 if controller is not None and not was_stopped:
                     controller.observe(call.function.name, call.function.arguments, result)
+                if self._event_callback is not None:
+                    from ..tools.patch import ApplyPatchTool
+                    native_patch = type(self.tools.get_tool(call.function.name)) is ApplyPatchTool
+                    safe_keys = ('dry_run', 'applied', 'status', 'exit_code', 'execution_mode', 'sandbox_applied',
+                                 'receipt_created', 'receipt_commit_success', 'receipt_error_category', 'diff_truncated')
+                    safe_meta = {key: result.metadata[key] for key in safe_keys if key in result.metadata}
+                    preview = result.metadata.get('preview_diff', '') if native_patch and result.success and result.metadata.get('dry_run') is True else ''
+                    if native_patch: safe_meta['diff_truncated'] = bool(safe_meta.get('diff_truncated') or len(preview) > 12000)
+                    self._notify('tool_finished', tool=call.function.name, call_id=call.id, success=result.success,
+                        duration_seconds=round(time.perf_counter() - tool_started_at, 3), metadata=safe_meta,
+                        diff=preview[:12000],
+                        changed_files=result.metadata.get('changed_files', [])[:8] if native_patch else [],
+                        plan=[{'description': step.description[:256], 'status': step.status, 'verified': step.verified} for step in self.plan.steps],
+                        coding_state=controller.state if controller is not None else None)
                 from ..tools.run_command import RunCommandTool
                 native_command = (call.function.name == 'run_command' and type(self.tools.get_tool(call.function.name)) is RunCommandTool)
                 command_stopped = command_stopped or (native_command and not was_stopped and not result.success and result.metadata.get('completed') is not True)

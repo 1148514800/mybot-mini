@@ -153,3 +153,6 @@ if Path(__file__).with_name('check_tool_verification_live_ab.py').exists():
 
 from scripts.check_patch_preview_receipt import check_patch_preview_receipt
 check_patch_preview_receipt()
+
+from scripts.check_web_ui import check_web_ui
+check_web_ui()

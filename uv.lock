@@ -453,6 +453,7 @@ dependencies = [
     { name = "mcp" },
     { name = "openai" },
     { name = "pyyaml" },
+    { name = "starlette" },
     { name = "uvicorn" },
 ]
 
@@ -463,6 +464,7 @@ requires-dist = [
     { name = "mcp", specifier = ">=2.3,<3" },
     { name = "openai", specifier = ">=2.32.0" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "starlette", specifier = ">=1.8,<2" },
     { name = "uvicorn", specifier = ">=0.54,<1" },
 ]
 

@@ -1,6 +1,6 @@
 # MyBot
 
-MyBot 是一个简洁的本地命令行 AI 助手，通过 OpenAI 兼容接口调用模型，并可在指定工作区中读取和写入文件。
+MyBot 是一个支持 CLI 和本地 Web Chat 的 AI 助手，通过 OpenAI 兼容接口调用模型，并可在指定工作区中读取和写入文件。
 
 ## 需要的软件
 
@@ -42,6 +42,14 @@ uv run python -m mybot.main
 ```
 
 输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内默认保留最近 6 个完整用户轮次（含工具请求和结果），默认退出后不保存历史；开启 session.persist 后可跨重启恢复。Agent 可以调用 `read_file` 和 `write_file`，文件操作限制在配置的 `workspace.path` 目录内。
+
+## Web Chat（本地可视化界面）
+
+```bash
+uv run python -m mybot.web --port 8765
+```
+
+访问 **http://127.0.0.1:8765**。支持独立对话、深浅主题、安全 Markdown/代码复制、真实工具活动、Patch Diff、浏览器单次审批、停止及刷新恢复；直接复用现有 AgentLoop。模型凭证和工具权限仍读取本地配置，发送消息后才实际请求模型。Web 历史仅在进程内存中，不共享 CLI 持久化历史；仅监听 loopback，不用于公网部署。完整配置、安全边界与限制见 [Web 使用说明](docs/web-ui.md)。
 
 ## 配置
 
