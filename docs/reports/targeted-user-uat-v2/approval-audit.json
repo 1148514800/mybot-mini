@@ -1,0 +1,40 @@
+{
+  "live_browser_approvals": 0,
+  "live_terminal_yes": 0,
+  "offline_browser_approvals": 1,
+  "offline_terminal_yes": 0,
+  "offline": {
+    "mode": "OFFLINE/SYNTHETIC",
+    "actual_browser": true,
+    "automatic_approval": false,
+    "command_review": {
+      "argv": [
+        "<verified pinned Python>",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": ".",
+      "workspace": "independent disposable T01 rehearsal (not frozen Live fixture)",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "timeout_seconds": 30,
+      "network_allowed": false
+    },
+    "result": {
+      "revision": 1,
+      "committed_patches": 1,
+      "current_revision_passed_tests": 3,
+      "state": "verified"
+    },
+    "nonce_persisted": false,
+    "grant_cached": false
+  },
+  "screenshots": [
+    "offline-browser-verified.jpg",
+    "offline-browser-reply.jpg"
+  ]
+}

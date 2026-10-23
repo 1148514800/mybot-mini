@@ -1,0 +1,455 @@
+{
+  "mode": "OFFLINE",
+  "fixtures": {
+    "T01": {
+      "case": "T01",
+      "mode": "OFFLINE",
+      "actual_root": "[independent APFS fixture]/T01",
+      "uid": 501,
+      "gid": 20,
+      "euid": 501,
+      "egid": 20,
+      "files": [
+        {
+          "path": "pyproject.toml",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469404,
+            1792764759136320170,
+            1792764759136320170
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "5d7299ab0b7ed137f6137cb18e5836beb466cfb4c7e9a45669aacd3615006c86"
+        },
+        {
+          "path": ".gitignore",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469405,
+            1792764759136388546,
+            1792764759136388546
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793"
+        },
+        {
+          "path": "README.md",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469406,
+            1792764759136438963,
+            1792764759136438963
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "b394aae0ceaca084b7f38a87dd79a23f51324da92815c86322fae99ff3925986"
+        },
+        {
+          "path": "src/tag_shelf.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469408,
+            1792764759136521839,
+            1792764759136521839
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "d529bb3901ba031dc2e2d95eac7cbbd6f6f2cd1d187576312800da4fec59fe45"
+        },
+        {
+          "path": "tests/test_tags.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469410,
+            1792764759136589756,
+            1792764759136589756
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "51e6ab3a6f304968cb642888fe7ddcbf6cfb02f53e8f225b335aa74d770c0cd8"
+        }
+      ],
+      "directories": [
+        {
+          "path": ".",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o700"
+        },
+        {
+          "path": "src",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o755"
+        },
+        {
+          "path": "tests",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o755"
+        }
+      ],
+      "native_previews": [
+        {
+          "path": "src/tag_shelf.py",
+          "passed": true,
+          "code": null
+        }
+      ],
+      "issues": [],
+      "filesystem": "apfs",
+      "root_parent": {
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      "git_head": "36d3bb0b364e4b79ca7067d4637860d5fc55b5e9",
+      "git_index_sha256": "1253523c375f3ac0bc23bce067aad3d17900e435612c32a560127de448a4bf70",
+      "git_status": "",
+      "public_tests": {
+        "passed": false,
+        "returncode": 1,
+        "status": "completed",
+        "sandbox_applied": true,
+        "stdout": "",
+        "stderr": "test_input_unchanged (test_tags.Tags.test_input_unchanged) ... ok\ntest_normal (test_tags.Tags.test_normal) ... ok\ntest_whitespace_case_order (test_tags.Tags.test_whitespace_case_order) ... FAIL\n\n======================================================================\nFAIL: test_whitespace_case_order (test_tags.Tags.test_whitespace_case_order)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/T01/tests/test_tags.py\", line 7, in test_whitespace_case_order\n    def test_whitespace_case_order(self):self.assertEqual(normalize_tags([' z ','A','Z',' a ','']),['z','A'])\n                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['', ' a ', ' z ', 'A', 'Z'] != ['z', 'A']\n\nFirst differing element 0:\n''\n'z'\n\nFirst list contains 3 additional elements.\nFirst extra element 2:\n' z '\n\n- ['', ' a ', ' z ', 'A', 'Z']\n+ ['z', 'A']\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nFAILED (failures=1)\n"
+      },
+      "independent_tests": {
+        "passed": false,
+        "returncode": 1,
+        "status": "completed",
+        "sandbox_applied": true,
+        "stdout": "",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 7, in <module>\nAssertionError\n"
+      },
+      "initial_bug_confirmed": true,
+      "unchanged": true,
+      "status": "PASS"
+    },
+    "T02": {
+      "case": "T02",
+      "mode": "OFFLINE",
+      "actual_root": "[independent APFS fixture]/T02",
+      "uid": 501,
+      "gid": 20,
+      "euid": 501,
+      "egid": 20,
+      "files": [
+        {
+          "path": "pyproject.toml",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469525,
+            1792764759549168590,
+            1792764759549168590
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "5d7299ab0b7ed137f6137cb18e5836beb466cfb4c7e9a45669aacd3615006c86"
+        },
+        {
+          "path": ".gitignore",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469526,
+            1792764759549247133,
+            1792764759549247133
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793"
+        },
+        {
+          "path": "README.md",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469527,
+            1792764759549299841,
+            1792764759549299841
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "066583404c67797f294986d9ca5b868d54215481097fa17cc759d06b2360d666"
+        },
+        {
+          "path": "src/parcel_totals/__init__.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469530,
+            1792764759549395800,
+            1792764759549395800
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "fa59c646a5f59f639684ce4778c3b33972b611d0355c435d56d1f48e99795834"
+        },
+        {
+          "path": "src/parcel_totals/models.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469531,
+            1792764759549443801,
+            1792764759549443801
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "e359d7ea1a14392e0b97e5d31f35a3386b57be87c6e5d93e817be3d00d9d3afa"
+        },
+        {
+          "path": "src/parcel_totals/calculations.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469532,
+            1792764759549489176,
+            1792764759549489176
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "8925475cb7926a6a363478579e6797f0a1bfc4fee7ecbad88db01ce9c757272d"
+        },
+        {
+          "path": "src/parcel_totals/service.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469533,
+            1792764759549535926,
+            1792764759549535926
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "2bdf529e0381b62e1e968bf4618e2ec5297644ab1a4c318c84224a17a7f57586"
+        },
+        {
+          "path": "tests/test_totals.py",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469535,
+            1792764759549620302,
+            1792764759549620302
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "1cca7b738f874b14632510d6071463ae3f3650da7862d7e7d63e824edcec02c6"
+        }
+      ],
+      "directories": [
+        {
+          "path": ".",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o700"
+        },
+        {
+          "path": "src/parcel_totals",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o755"
+        },
+        {
+          "path": "src",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o755"
+        },
+        {
+          "path": "tests",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o755"
+        }
+      ],
+      "native_previews": [
+        {
+          "path": "src/parcel_totals/calculations.py",
+          "passed": true,
+          "code": null
+        },
+        {
+          "path": "src/parcel_totals/service.py",
+          "passed": true,
+          "code": null
+        }
+      ],
+      "issues": [],
+      "filesystem": "apfs",
+      "root_parent": {
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      "git_head": "c15b4fba6f5b9b69c9f45bed65358bda0760174e",
+      "git_index_sha256": "72efe40bf401bcba637eaec1981b0cf8186123758f41efd9b9f627598a73afea",
+      "git_status": "",
+      "public_tests": {
+        "passed": false,
+        "returncode": 1,
+        "status": "completed",
+        "sandbox_applied": true,
+        "stdout": "",
+        "stderr": "test_bool_rejected (test_totals.Totals.test_bool_rejected) ... FAIL\ntest_empty (test_totals.Totals.test_empty) ... FAIL\ntest_entry_rounding (test_totals.Totals.test_entry_rounding) ... FAIL\ntest_helper_normal (test_totals.Totals.test_helper_normal) ... ok\n\n======================================================================\nFAIL: test_bool_rejected (test_totals.Totals.test_bool_rejected)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/T02/tests/test_totals.py\", line 14, in test_bool_rejected\n    with self.assertRaises(ValueError):summarize_order([OrderLine('a',True,Decimal('2'))])\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_empty (test_totals.Totals.test_empty)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/T02/tests/test_totals.py\", line 12, in test_empty\n    def test_empty(self):self.assertEqual(summarize_order([]),{'lines':[],'total':'0.00'})\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'lines': [], 'total': '0'} != {'lines': [], 'total': '0.00'}\n- {'lines': [], 'total': '0'}\n+ {'lines': [], 'total': '0.00'}\n?                         +++\n\n\n======================================================================\nFAIL: test_entry_rounding (test_totals.Totals.test_entry_rounding)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/T02/tests/test_totals.py\", line 11, in test_entry_rounding\n    self.assertEqual(summarize_order(rows),{'lines':[{'sku':'a','quantity':1,'subtotal':'0.01'},{'sku':'b','quantity':1,'subtotal':'0.01'}],'total':'0.02'})\nAssertionError: {'lin[45 chars] '0.005'}, {'sku': 'b', 'quantity': 1, 'subtot[28 chars]010'} != {'lin[45 chars] '0.01'}, {'sku': 'b', 'quantity': 1, 'subtota[25 chars].02'}\n- {'lines': [{'quantity': 1, 'sku': 'a', 'subtotal': '0.005'},\n?                                                        ^^\n\n+ {'lines': [{'quantity': 1, 'sku': 'a', 'subtotal': '0.01'},\n?                                                        ^\n\n-            {'quantity': 1, 'sku': 'b', 'subtotal': '0.005'}],\n?                                                        ^^\n\n+            {'quantity': 1, 'sku': 'b', 'subtotal': '0.01'}],\n?                                                        ^\n\n-  'total': '0.010'}\n?               ^^\n\n+  'total': '0.02'}\n?               ^\n\n\n----------------------------------------------------------------------\nRan 4 tests in 0.001s\n\nFAILED (failures=3)\n"
+      },
+      "independent_tests": {
+        "passed": false,
+        "returncode": 1,
+        "status": "completed",
+        "sandbox_applied": true,
+        "stdout": "",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 8, in <module>\nAssertionError\n"
+      },
+      "initial_bug_confirmed": true,
+      "unchanged": true,
+      "status": "PASS"
+    },
+    "T03": {
+      "case": "T03",
+      "mode": "OFFLINE",
+      "actual_root": "[independent APFS fixture]/T03",
+      "uid": 501,
+      "gid": 20,
+      "euid": 501,
+      "egid": 20,
+      "files": [
+        {
+          "path": "pyproject.toml",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469665,
+            1792764759952870944,
+            1792764759952870944
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "5d7299ab0b7ed137f6137cb18e5836beb466cfb4c7e9a45669aacd3615006c86"
+        },
+        {
+          "path": ".gitignore",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469666,
+            1792764759952950944,
+            1792764759952950944
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793"
+        },
+        {
+          "path": "README.md",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o644",
+          "regular": true,
+          "symlink": false,
+          "version": [
+            16777231,
+            12469667,
+            1792764759953012486,
+            1792764759953012486
+          ],
+          "native_acl_xattr_mode_supported": true,
+          "xattr_present": true,
+          "sha256": "54f5c6d99956d0d1e7da4f69ab55170416b16f3acde29cb27073f991b28fa83b"
+        }
+      ],
+      "directories": [
+        {
+          "path": ".",
+          "uid": 501,
+          "gid": 20,
+          "mode": "0o700"
+        }
+      ],
+      "native_previews": [],
+      "issues": [],
+      "filesystem": "apfs",
+      "root_parent": {
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      "git_head": "43dc3024c258bff91c6655460c917390b3143a90",
+      "git_index_sha256": "dc244ecd8710e60f55b1d0a134b6ca04ccf7d09d3c4fae83d406e911873928a5",
+      "git_status": "",
+      "unchanged": true,
+      "status": "PASS"
+    }
+  },
+  "live_api_requests": 0
+}

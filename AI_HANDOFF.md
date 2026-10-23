@@ -1,22 +1,23 @@
 # AI_HANDOFF
 
-## 当前状态
+## 当前目标与状态
 
-UAT可靠性离线修复完成：基线a847884568184fcf5317d11ecfd0ec9a721b9db0，本地/远程核对一致；独立分支codex/uat-reliability-remediation，实现提交9f82d36138527105af0260ad71242bb5b9bfd132。原38套件1354+旧UAT13+新增42=1409项通过，compileall/diff通过，真实浏览器HTTP/SSE诊断通过。验收报告docs/reports/uat-reliability-remediation；验收提交为包含本快照的docs提交。按本次授权Push该分支并核对远程HEAD，最终SHA以Git为准。
+Targeted UAT v2仅离线准备：用户LIVE_AUTHORIZATION明确NOT_GRANTED，真实API/Live Attempt/正式reservation均0。基线92424d080e31cefa2adf3af4c507d8f17a0669c0已本地/远程核对；独立分支codex/targeted-user-uat-v2。新代码与预注册已准备，待本提交后从干净版本冻结；最终Acceptance文档记录确切冻结SHA。生产mybot/、旧scripts/uat/和历史资产未改，不合main、不动Tag/ZIP。
 
-## 实现与边界
+## 新驱动与合同
 
-- Fixture v2只新建根先设当前EGID；原check_metadata+dry_run Preview验证真实UID/GID、ACL/xattr/mode、路径/版本/hash，Git、Seatbelt/unittest与预期初始Bug。新prepare冻结前和服务客户端工厂前BLOCKED；U03/U04/U05新APFS预检PASS，原Fixture不动，不执行预检Write。
-- 原生Patch仅新增固定白名单码/阶段/意图/建议，解析失败意图unknown。safe_to_retry透传原值；成功Commit无失败建议。不改Receipt/发布/Journal/审批。原生读取路径经RepositoryTool.resolve验证相对路径及范围才展示，MCP不复用。
-- 唯一ContextManager按主请求计算available_summary_budget，空间不足零摘要调用；九字段引用v1动态条数、长度、max_tokens上限。先严格验证全部引用，后仅删低优先整项；保护已选goal/constraint，不能适配则明确回退。length单独分类、不额外重试。原Session、Tool ID、权限、Controller/Provider预算不变，CLI/Web状态一致。
-- 通用指令区分用户要求/建议/待确认，代码调查考虑search_code、读实现、区分bool类型判断，未知标unknown。仅证明合同送达；真实模型能力未验证。
+scripts/uat_v2复用原SQLite schema/FULL事务、BudgetClient、HTTP gate/settlement和原生Web/Agent/Controller/Patch。新限额T01=12、T02=14、T03=8，总34；不转移、不重试旧case，一会话/精确冻结消息，clear/第二会话/失败补发拒绝。默认授权门在凭证读取/SDK/账本修改前拒绝；未来只有用户明确GRANTED_34_REQUESTS才能运行Live。
 
-## 验证与风险
+T01新标签strip/空白/casefold去重/稳定顺序/输入不变；T02新Decimal逐行ROUND_HALF_UP/汇总入口/数量拒bool/固定返回结构；公开README与host-only oracle一致。参考修复只在synthetic模块，模型工作区不含答案。三个正式Fixture位于本机$CODEX_HOME/uat-v2/batch-20261023-targeted-v2，不入Git；只新建APFS目录，原metadata+Preview预检均PASS、初始Bug确认、文件/Index未变。
 
-新增预检9、诊断9、自适应14、指令5、合成E2E5项共42通过。完整重测1354项通过；后续长度合同与诊断建议收尾后再次运行所有指定相关专项及旧UAT13项通过。初轮7项safe_to_retry兼容失败已修；旧离线校准1项引用上限过紧已修，原断言未动。完整分母与实际合成数据在报告JSON，不重复累计针对性重跑。
+T03五轮照片设计自然消息，固定input_limit12000，近期1轮，summary_max_chars6000；semantic max_calls=1（每回合）、输出1200、主输出700、fallback deterministic。合成校准前4轮not_needed、第5轮semantic_applied，5主+1摘要，原Session和文件不变，不外推真实摘要质量。
 
-真实DeepSeek/GLM/摘要API/付费Judge均0，真人审批0。原UAT1/6、Coding0/2、摘要0/2及6452Token保持，U05历史根因仍unknown。合法摘要仍可不适配而回退；UTF8估算不是供应商精确保证；真实语义质量、遵循率、Token/费用改善和GLM恢复未验证。
+## 验证与边界
 
-## 下一步与不要重复
+原1354全量+旧UAT13+修复专项42=1409已通过；新增v2专项24通过。真实浏览器OFFLINE/SYNTHETIC逐次批准1条Seatbelt只读无网络unittest，原生Receipt提交、revision1、3项Agent测试通过；正式Live审批0/终端yes0。T01/T02真实工具合成闭环及独立断言均通过，仅允许源码改变。
 
-离线工程前提已准备；下一次Live须新预注册、新独立Attempt、每个真实Fixture预检PASS与单独预算授权。优先单文件/跨文件Coding闭环和长对话真实摘要。不得重跑旧六例、挪用剩余22次或重判旧结论；不进入新Phase、不合main、不移动历史Tag/ZIP。主目录用户两文件保留。ExFAT确认AppleDouble伪idx移到本机临时可恢复备份，实际Git pack/index未动，后续仍可能生成元数据。
+离线跨文件演练曾因合成Client解析已裁剪JSON异常，Controller保守execution_uncertain、停在Preview无提交；已仅修正合成Client从可见完整Receipt字段取值，原测试/产品未改，专项重测通过。真正Live Coding、摘要保真、实际Usage/费用及API认证未验证。
+
+## 下一步与禁止重复
+
+从本次干净Preregistration Commit执行prepare.freeze并验证源/配置/Fixture内容+元数据/账本身份，完成验收报告、Acceptance Commit、Push并核对远程HEAD。本轮只交付OFFLINE READY/BLOCKED，不擅自Live、不重跑旧六例、不使用旧22次余额。若未来明确授权，验证同一冻结包后唯一Attempt执行；源/环境/预算/审批/清理不合规则BLOCKED，不边修生产边跑本批。完整合同/消息/评分与证据在docs/reports/targeted-user-uat-v2/。

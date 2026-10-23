@@ -1,0 +1,36 @@
+{
+  "mode": "LIVE_NOT_RUN",
+  "cases": {
+    "T01": {
+      "status": "NOT_RUN_NOT_AUTHORIZED",
+      "preview_success": 0,
+      "receipt_generated": 0,
+      "commit_success": 0,
+      "agent_unittest": null,
+      "public_oracle": null,
+      "independent_oracle": null,
+      "current_revision": null,
+      "controller_verified": 0,
+      "normal_end": null
+    },
+    "T02": {
+      "status": "NOT_RUN_NOT_AUTHORIZED",
+      "preview_success": 0,
+      "receipt_generated": 0,
+      "commit_success": 0,
+      "agent_unittest": null,
+      "public_oracle": null,
+      "independent_oracle": null,
+      "current_revision": null,
+      "controller_verified": 0,
+      "normal_end": null
+    }
+  },
+  "offline_browser_rehearsal": {
+    "synthetic_client": true,
+    "verified": 1,
+    "revision": 1,
+    "tests": 3,
+    "not_live_evidence": true
+  }
+}
