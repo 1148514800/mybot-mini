@@ -1,0 +1,16 @@
+{
+  "acceptance-report.md": "93c185662abf61d29072a62145e944e6adf0f3ce8780d3ec8d1abc2db8114124",
+  "browser-complete.jpg": "449cae5233c28bab9b0950c23dc88fbef0782d61021be60ae52f3eaa1c742c2c",
+  "browser-output.jpg": "20a1f799d6c28651a528b99ec7fd9ca472b9332bbd530c8db3bd76cf3182b888",
+  "browser-partial.jpg": "95662714fc3d1813bae6dc63a0b1ddb1748684d0cdaeac3b5f6de7333dcca788",
+  "coding-contract-quality.md": "e5001e25c0f69218f4807ddd0261206394ff5c2116a14e924c59cdd72cfec647",
+  "compaction-integrity.md": "652af4e0fd278f20ce2a5b71325b94f84d136902993ce8cfa19f78a3cd292f6e",
+  "live-root-cause-analysis.md": "f916da0400b54bda6f4bcb6f116d5f9dc08912f8d875fb6d98b4c07b082af491",
+  "next-step-readiness.md": "8307aeb80796024867f84278ad66bccb365f750a94f283b17ec858de66dc88ed",
+  "offline-validation.json": "f11be2618237466e75896305b2d9cd815b74cc14833cfbc3b9f093b9964d076a",
+  "output-completeness.md": "6ed2a4ed7224e4cf38031002bf41d7bcb19464fb02524cde15b1756eddb60320",
+  "remaining-risks.md": "65ac4516a789fcad1138a431318cd5d402b1a63674eba7f713ae234c08c34902",
+  "security-audit.md": "8fdc74917c78bbd8159f6888f09c4020eb2fab6ba9c09f91eb1558cd0e6c5456",
+  "source-sha256.json": "7c4892c854fbd4788171fb54348f0fcf3550fe686d532d903dd5ee49beb9320a",
+  "synthetic-comparison.json": "2390b857b6b25d94860322842f22cb1d1bc6d9a29f834cf0b658e7a3a50deda3"
+}

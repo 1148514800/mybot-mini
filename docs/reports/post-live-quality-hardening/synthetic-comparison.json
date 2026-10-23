@@ -1,0 +1,73 @@
+{
+  "mode": "OFFLINE/SYNTHETIC",
+  "baseline": "58725ca77cfa88ca41f661f1dd343f9f20c1f482",
+  "real_model_requests": 0,
+  "comparison": {
+    "baseline": {
+      "output": {
+        "outcome": "completed",
+        "partial_preserved": true,
+        "explicit_truncation": false,
+        "requests": 1
+      },
+      "one_invalid_ancillary": {
+        "status": "fallback_invalid_or_failed_response",
+        "requests": 1,
+        "constraint_kept": false,
+        "latest_decision_kept": false,
+        "unknown_kept": false,
+        "invalid_quote_present": false
+      },
+      "changed_decision_coverage": {
+        "status": "semantic_applied_pruned",
+        "requests": 1,
+        "constraint_kept": true,
+        "latest_decision_kept": false,
+        "unknown_kept": true,
+        "invalid_quote_present": false
+      },
+      "source_budget_fit": {
+        "status": "fallback_token_budget",
+        "requests": 0,
+        "constraint_kept": false,
+        "latest_decision_kept": false,
+        "unknown_kept": false,
+        "invalid_quote_present": false
+      }
+    },
+    "hardened": {
+      "output": {
+        "outcome": "output_truncated",
+        "partial_preserved": true,
+        "explicit_truncation": true,
+        "requests": 1
+      },
+      "one_invalid_ancillary": {
+        "status": "semantic_applied_partial",
+        "requests": 1,
+        "constraint_kept": true,
+        "latest_decision_kept": true,
+        "unknown_kept": true,
+        "invalid_quote_present": false
+      },
+      "changed_decision_coverage": {
+        "status": "semantic_applied_pruned",
+        "requests": 1,
+        "constraint_kept": true,
+        "latest_decision_kept": true,
+        "unknown_kept": true,
+        "invalid_quote_present": false
+      },
+      "source_budget_fit": {
+        "status": "semantic_applied",
+        "requests": 1,
+        "constraint_kept": true,
+        "latest_decision_kept": true,
+        "unknown_kept": true,
+        "invalid_quote_present": false
+      }
+    }
+  },
+  "method": "Load baseline AgentLoop/ContextCompactor class source from Git in isolated namespaces; current shared context/accounting/tools and identical fresh synthetic sources held constant. No old UAT task replay, network model or quality-rate inference.",
+  "limits": "Mechanism demonstration only. Source fitting can permit one previously blocked summary call within the unchanged explicit semantic cap; no retries or claim of cost reduction."
+}

@@ -1,0 +1,26 @@
+{
+  "implementation": "bc0784920c6978ef642f1ea6efe19fa8176e5dea",
+  "sha256": {
+    "mybot/agent/coding_controller.py": "2ab4c3db3f7b29e275539feedb67bb9888ed0375ce291d06f2751a933f08c6ae",
+    "mybot/agent/context.py": "a60a0543b2f7797cc14c0d89836d00180cf63c1e4cd8a1c795bb02f065228b1b",
+    "mybot/agent/context_compactor.py": "a541c0586ac48e385578a09789c223ccf9f508280c652d2cfd56ace4afc0e45f",
+    "mybot/agent/context_manager.py": "0a097352b9c115432893b9555c516a29f29534cbef8457cf20f37b3e032073c3",
+    "mybot/agent/loop.py": "83593a6470f0a05217ebce993ab8a66607362e49774c7a683d3f78959f275317",
+    "mybot/evaluation/coding_agent.py": "48916f6f35437e7e1ffc4f9cdc9a8335e263243f6c074b6a80335e205d4bafff",
+    "mybot/evaluation/git_workflow.py": "87ac321e4aae67e0f66a8614584a3549000be5a300ff3782f5929b160bc5ab7a",
+    "mybot/evaluation/runner.py": "8d90f6315c43f97463f84bc045961c09ebc3de8c2fbde367849bb007476a6689",
+    "mybot/evaluation/tool_agent.py": "0d5810dbb3609b124d180bc24d8bd6e2e88b61b2386e2c22ae11b51ac07b28cc",
+    "mybot/runtime_accounting.py": "92385dc3d4929cf9fc71e2292336d9f1c815bf2fc687778c78ff337996b445bf",
+    "mybot/web/runtime.py": "2ea58a58b19e4a21c70571e7a87418636c71a19f570288b2e7acc682ba3be554",
+    "mybot/web/static/app.js": "8ed9c18ec10827dcbda85953717127899a40a2a2fa6ac7d80bafcb05d6f38b11",
+    "scripts/check_coding_contract_quality.py": "b590901ccb601153ffc0058c2d3d12982fee1e564dcba51f570d54fa3ccbef32",
+    "scripts/check_compaction_evidence.py": "0aeed27921eba32997104606c73611b7e0465cae5eea8ce735ac022310fb1579",
+    "scripts/check_list_files.py": "1042c350c90d07cb8aeb165527878edfefefa06d4ca819723ec8e3e272d4c5e7",
+    "scripts/check_output_completeness.py": "0c493e5a71eb82164a5126f263359927f2e58942440f100281e68f65bd2ac43b",
+    "scripts/check_phase.py": "2afda0fa7865eb5ade7dd0552bbc281911592f1281a562a2cc4474977556d4fd",
+    "scripts/check_session.py": "b4c30a2aea7a1bf04540909728adc9ca1222b35b761bbfaa3ab54f0b833f316a",
+    "scripts/coding_repo_demo.py": "fcd358e3d0d942f47c9b6c371fb294cb7e61cddb307680e568e7ed2392b98ed0",
+    "scripts/compare_tool_discovery.py": "d2f3be39116f3b147baaac01ed5fe6b287b141d36b0de4b789d54652f95f7a99",
+    "scripts/quality_hardening_demo.py": "ae5305dafbfb6b439f2f132235c7a860a725762e25cec146030ed32c95bc7040"
+  }
+}

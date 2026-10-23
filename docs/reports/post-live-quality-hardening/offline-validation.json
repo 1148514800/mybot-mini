@@ -1,0 +1,151 @@
+{
+  "status": "OFFLINE_PASS",
+  "baseline": "58725ca77cfa88ca41f661f1dd343f9f20c1f482",
+  "branch": "codex/post-live-quality-hardening",
+  "phase": {
+    "command": "uv run python -m scripts.check_phase",
+    "exit_code": 0,
+    "seconds": 352.72,
+    "tests": 1390,
+    "suites": 41,
+    "log_sha256": "fcb244ed5218a09c4d2532b23deb7c088fa7202d10e915218398122f8852a51e"
+  },
+  "extra_suites": [
+    {
+      "module": "scripts.check_uat_preflight",
+      "exit_code": 0,
+      "tests": 9,
+      "seconds": 2.78,
+      "log_sha256": "39cfa3e44c8871c0eb09a07a58cb978b4d4b80bb316e0f158fbbae0fb02cd4e5"
+    },
+    {
+      "module": "scripts.check_patch_diagnostics",
+      "exit_code": 0,
+      "tests": 9,
+      "seconds": 1.06,
+      "log_sha256": "7feaaaafa4a9f00c02741cf75772d317c67413a476bb88444be4805c018f8acb"
+    },
+    {
+      "module": "scripts.check_adaptive_compaction",
+      "exit_code": 0,
+      "tests": 14,
+      "seconds": 0.5,
+      "log_sha256": "ccb26e2804bae9d0dee9c0516b3935c4fcf25f29804d6890a2716643dbafddbf"
+    },
+    {
+      "module": "scripts.check_remediation_e2e",
+      "exit_code": 0,
+      "tests": 5,
+      "seconds": 1.51,
+      "log_sha256": "0f81218fd616b3a7d3c88d9f0b81664131332a142b44ec093ee1254ad05cd5c1"
+    },
+    {
+      "module": "scripts.check_agent_instruction_quality",
+      "exit_code": 0,
+      "tests": 5,
+      "seconds": 0.49,
+      "log_sha256": "8391f308d8effff6bcc9f8c54db9767083f932ea1a8409465f29cb336612b7c9"
+    },
+    {
+      "module": "scripts.check_real_user_uat",
+      "exit_code": 0,
+      "tests": 13,
+      "seconds": 1.46,
+      "log_sha256": "76e635c40e2deee21adab1d501d74bc7dd539450b84a3443ff438527028d400c"
+    },
+    {
+      "module": "scripts.check_targeted_user_uat_v2",
+      "exit_code": 0,
+      "tests": 24,
+      "seconds": 6.5,
+      "log_sha256": "fd22011fe99857851f3185c2fc98356695f265f613a9dff0a31c2ebe14b1aad1"
+    }
+  ],
+  "original_tests_retained_and_passed": 1433,
+  "new_tests": 36,
+  "total_nonduplicated_tests": 1469,
+  "skipped": 0,
+  "specialized_suites": [
+    {
+      "module": "scripts.check_output_completeness",
+      "tests": 15,
+      "passed": true,
+      "log_sha256": "e51dd67fabee1e9efd4c720918e069fff5d480fdb74ce6479981ac9d6e2dd75a"
+    },
+    {
+      "module": "scripts.check_compaction_evidence",
+      "tests": 15,
+      "passed": true,
+      "log_sha256": "c70892162bb4e0cb97b6cb341c1fe9fce872952d7963f84e9b98498a71e2589d"
+    },
+    {
+      "module": "scripts.check_coding_contract_quality",
+      "tests": 6,
+      "passed": true,
+      "log_sha256": "3453b9515476b88c3740368d46e41067d14540cf3cc6ba1e0c36c5eee69b67e1"
+    }
+  ],
+  "specialized_tests_already_in_phase": true,
+  "compileall_exit_code": 0,
+  "diff_check_exit_code": 0,
+  "browser": {
+    "status": "BROWSER_PASS",
+    "type": "real in-app browser against loopback OFFLINE/SYNTHETIC app",
+    "scenarios": [
+      "length warning with retained partial text",
+      "partial semantic application and valid/invalid citation counts",
+      "complete response control"
+    ],
+    "automatic_continuation": false,
+    "model_sdk": false,
+    "real_model_requests": 0,
+    "synthetic_usage_per_turn": 20,
+    "usage_note": "Two in-memory synthetic invocations per turn, artificial usage only, not supplier tokens or billing",
+    "screenshots": [
+      "browser-output.jpg",
+      "browser-partial.jpg",
+      "browser-complete.jpg"
+    ],
+    "server_exit_code": 0
+  },
+  "real_model_requests": 0,
+  "deepseek_requests": 0,
+  "glm_requests": 0,
+  "real_semantic_requests": 0,
+  "old_budget_reused": false,
+  "old_uat_rerun": false,
+  "historical_raw_sha256_verified": 47,
+  "original_task_results_unchanged": {
+    "T01": "PASS",
+    "T02": "FAIL",
+    "T03": "FAIL",
+    "historical_uat": "1/6"
+  },
+  "security": {
+    "tracked_and_new_files_reviewed": 937,
+    "forbidden_paths": [],
+    "large_files": [],
+    "exact_private_credential_matches": [],
+    "historical_asset_changes": [],
+    "new_report_host_paths": [],
+    "original_assertions_preserved": true,
+    "old_fixture_metadata_only_updates": [
+      "scripts/check_session.py",
+      "scripts/check_list_files.py",
+      "scripts/check_phase.py",
+      "scripts/coding_repo_demo.py",
+      "scripts/compare_tool_discovery.py",
+      "mybot/evaluation/runner.py",
+      "mybot/evaluation/coding_agent.py",
+      "mybot/evaluation/tool_agent.py",
+      "mybot/evaluation/git_workflow.py"
+    ],
+    "original_assertions_checked": 47,
+    "old_function_ast_equal_after_finish_metadata_normalization": true,
+    "controller_methods_except_instruction_unchanged": true,
+    "native_safety_implementations_unchanged": true
+  },
+  "regression_findings": "Original instruction length and generic boundary guidance assertions caught prompt growth/omission; merged redundant text, preserved assertions, focused suites and final full rerun passed. Earlier incomplete regression runs are not counted as final evidence.",
+  "quality_claim": "Mechanisms validated offline; real model task quality/cost improvement NOT_VERIFIED",
+  "implementation_commit": "bc0784920c6978ef642f1ea6efe19fa8176e5dea"
+}
