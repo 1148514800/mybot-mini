@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+import unicodedata
 from typing import Any
 
 from openai import APITimeoutError, AsyncOpenAI
@@ -226,11 +227,16 @@ class AgentLoop:
             from ..runtime_accounting import find_gateway
             gateway = find_gateway(self.client)
             secrets = (self.config.api_key, getattr(effective,'api_key',None), getattr(getattr(gateway,'_backup_config',None),'api_key',None))
-            summary,status = await self.compactor.compact(turns[:count], effective, summarize, secrets)
+            base = view[:1] + view[2 if stats['summary_present'] else 1:]
+            room = self.context_manager.summary_budget(base, definitions)
+            stats['available_summary_budget'] = room
+            summary,status = await self.compactor.compact(turns[:count], effective, summarize, secrets,
+                available_summary_budget=room,
+                fits=lambda item: self.context_manager.accepts(base[:1]+[item]+base[1:], definitions))
             if summary:
                 projected = view[:1]+[summary]+view[2 if stats['summary_present'] else 1:]
                 if self.context_manager.accepts(projected,definitions):
-                    view=projected;stats['history_turns_summarized']=count;stats['history_turns_summarized_indices']=list(range(1,count+1));stats['history_omitted']=False
+                    view=projected;stats['summary_present']=True;stats['history_turns_summarized']=count;stats['history_turns_summarized_indices']=list(range(1,count+1));stats['history_omitted']=False
                 else:
                     status='fallback_summary_does_not_fit'
                     if self.config.context_compaction['on_failure']=='stop':raise ContextBudgetError(status)
@@ -391,6 +397,15 @@ class AgentLoop:
                     safe_keys = ('dry_run', 'applied', 'status', 'exit_code', 'execution_mode', 'sandbox_applied',
                                  'receipt_created', 'receipt_commit_success', 'receipt_error_category', 'diff_truncated')
                     safe_meta = {key: result.metadata[key] for key in safe_keys if key in result.metadata}
+                    if native_patch:
+                        for key in ('error_category', 'safe_error_code', 'failure_phase', 'safe_to_retry',
+                                    'operation_intent', 'file_metadata_supported', 'guidance_code'):
+                            if key in result.metadata: safe_meta[key] = result.metadata[key]
+                    from ..tools.read_file_range import ReadFileRangeTool
+                    from ..tools.file import ReadFileTool
+                    native_read = type(self.tools.get_tool(call.function.name)) in (ReadFileRangeTool, ReadFileTool)
+                    if native_read and result.success:
+                        safe_meta.update(safe_read_metadata(self.tools.get_tool(call.function.name), call.function.arguments, result))
                     preview = result.metadata.get('preview_diff', '') if native_patch and result.success and result.metadata.get('dry_run') is True else ''
                     if native_patch: safe_meta['diff_truncated'] = bool(safe_meta.get('diff_truncated') or len(preview) > 12000)
                     self._notify('tool_finished', tool=call.function.name, call_id=call.id, success=result.success,
@@ -517,14 +532,14 @@ class AgentLoop:
             except ValueError as exc:
                 return RunCommandTool.failure_result(str(exc))
             return await self.tools.execute(name, arguments)
-        from ..tools.patch import ApplyPatchTool, parse_arguments
+        from ..tools.patch import ApplyPatchTool, parse_arguments, patch_diagnostics
         if name == 'apply_patch' and type(self.tools.get_tool(name)) is ApplyPatchTool:
             try:
                 arguments = parse_arguments(raw_arguments)
             except ValueError as exc:
                 patch_tool = self.tools.get_tool(name)
                 if patch_tool.preview_receipt: patch_tool._revoke_receipt()
-                return ToolResult(False, error=str(exc), metadata={
+                result = ToolResult(False, error=str(exc), metadata={
                     'status': 'preflight_failed', 'failure_phase': 'argument_parsing', 'applied': False,
                     'execution_evidence': False, 'safe_to_retry': False,
                     **({'patch_protocol': 'receipt', 'receipt_created': False, 'receipt_commit_attempted': None,
@@ -533,6 +548,8 @@ class AgentLoop:
                        if patch_tool.preview_receipt else {}),
                     'input_feedback': {'version': 'patch-input-v1', 'issues': [{'field': '$', 'category': 'invalid_json_object'}],
                         'action': 'supply_bounded_unique_key_json_object; intent_unknown_no_retry'}})
+                result.metadata.update(patch_diagnostics(result))
+                return result
             return await self.tools.execute(name, arguments)
         try:
             arguments = json.loads(raw_arguments or "{}") if isinstance(raw_arguments, str) else raw_arguments
@@ -553,3 +570,23 @@ class AgentLoop:
             if expected == "string" and not isinstance(value, str):
                 return ToolResult(success=False, error=f"field '{key}' must be a string")
         return await self.tools.execute(name, arguments)
+
+
+def safe_read_metadata(tool, raw, result):
+    """Validate a local path with repository policy; MCP never calls this helper."""
+    from ..tools.repository import RepositoryTool
+    try:
+        args = json.loads(raw) if isinstance(raw, str) else raw
+        target = RepositoryTool.resolve(tool, args['path'])
+        relative = target.relative_to(tool.workspace).as_posix()
+        if not relative or any(unicodedata.category(c) in ('Cc', 'Cf', 'Cs') for c in relative): return {}
+        data = {'relative_path': relative}
+        for key in ('requested_start_line', 'returned_start_line', 'returned_end_line',
+                    'truncated', 'next_start_line'):
+            value = result.metadata.get(key)
+            if type(value) in (int, bool) or value is None: data[key] = value
+        if type(args.get('end_line')) is int: data['requested_end_line'] = args['end_line']
+        data['has_more_lines'] = type(result.metadata.get('next_start_line')) is int
+        return data
+    except (ValueError, OSError, TypeError, KeyError):
+        return {}

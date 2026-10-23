@@ -132,9 +132,12 @@ def fingerprint(root):
     return {str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*')
             if p.is_file() and '__pycache__' not in p.parts and not p.name.startswith('._')}
 
-def create(case,root):
+def create(case,root, *, _supported_metadata=False):
     root=Path(root)
     root.mkdir(parents=True,exist_ok=False)
+    if _supported_metadata:
+        import os
+        os.chown(root, -1, os.getegid())
     files={**COMMON,**PROJECTS.get(case,{'README.md':'# Disposable UAT notes\nNo code changes requested.\n'})}
     for name,text in files.items():
         path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text)
@@ -168,3 +171,11 @@ async def assess(case,root,*,hidden=True):
 def changes(root,before):
     after=fingerprint(root)
     return sorted(k for k in before.keys()|after.keys() if before.get(k)!=after.get(k))
+
+
+def create_v2(case, root):
+    """New disposable version only; set root group before creating descendants.
+
+    Never repairs or normalizes existing frozen fixtures. Product policy unchanged.
+    """
+    return create(case, root, _supported_metadata=True)

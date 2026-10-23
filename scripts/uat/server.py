@@ -91,6 +91,9 @@ def make_app(case,batch,config_path,port=8878,preview=False):
     from contextlib import asynccontextmanager
     @asynccontextmanager
     async def lifespan(application):
+        if not preview and case in ('U03','U04','U05'):
+            from .check_environment import require_environment
+            await require_environment(case, root)
         async with old_lifespan(application):
             watcher=asyncio.create_task(monitor())
             try:yield

@@ -183,6 +183,20 @@ class ContextManager:
             history_omitted=bool(omitted and not summary),history_turns_kept=len(kept),history_turns_summarized=omitted if summary else 0,
             history_turns_omitted=omitted,summary_present=bool(summary))
 
+    def summary_budget(self, base, tools):
+        """Room for an inserted summary, including JSON framing and output reserve.
+
+        Units follow the active policy; UTF-8 estimates are not provider tokens.
+        """
+        empty = base[:1] + [{'role': 'assistant', 'content': ''}] + base[1:]
+        if self.config.context_token_budget['mode'] == 'legacy_chars':
+            return max(0, min(self.config.context_summary_max_chars,
+                              self.config.context_max_chars - self.count(empty, tools)))
+        request = TokenCounter.request(self.config, empty, tools)
+        measured = TokenCounter.inspect(self.config, request)
+        return max(0, min(self.config.context_summary_max_chars,
+                          measured['input_token_limit'] - measured['estimated_input_tokens']))
+
     def accepts(self, view, tools):
         if self.config.context_token_budget['mode']=='legacy_chars':
             return not self.config.context_enabled or self.count(view,tools)<=self.config.context_max_chars

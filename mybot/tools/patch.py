@@ -634,4 +634,37 @@ class ApplyPatchTool(RepositoryTool):
             receipt_meta['receipt_commit_success'] = bool(dry_run is False and result.success
                                                          and result.metadata.get('applied') is True)
         result.metadata.update(receipt_meta)
+        result.metadata.update(patch_diagnostics(result, dry_run))
         return result
+
+
+SAFE_PATCH_ERRORS = frozenset({
+    'invalid_arguments', 'malformed_json', 'stale_file_hash', 'unsupported_ownership',
+    'unsupported_metadata', 'path_changed', 'receipt_expired', 'receipt_invalid',
+    'write_failed', 'execution_uncertain', 'unknown', 'anchor_not_found',
+    'ambiguous_context', 'no_effective_changes', 'invalid_path', 'path_outside_workspace',
+    'symlink_denied', 'not_regular_file', 'expired_receipt', 'invalid_receipt',
+    'consumed_receipt', 'wrong_attempt', 'metadata_changed', 'unknown_receipt',
+    'malformed_receipt', 'patch_write_disabled', 'hardlink_denied', 'target_exists'})
+
+
+def patch_diagnostics(result, dry_run=None):
+    """Only constant codes; never exception prose, paths, patch or capabilities."""
+    phase = result.metadata.get('failure_phase')
+    if phase not in ('argument_parsing', 'validation', 'preflight', 'preview',
+                     'write_preparation', 'publication', 'cleanup', 'journal'):
+        phase = 'unknown'
+    code = result.error if result.error in SAFE_PATCH_ERRORS else 'unknown'
+    uncertain = result.metadata.get('status') in ('partial_failure_possible', 'rollback_conflict')
+    if uncertain: code = 'execution_uncertain'
+    intent = 'preview' if dry_run is True else 'write' if dry_run is False else 'unknown'
+    if phase == 'argument_parsing': intent = 'unknown'
+    return dict(error_category=code if not result.success else None,
+        safe_error_code=code if not result.success else None, failure_phase=phase,
+        operation_intent=intent,
+        file_metadata_supported=False if code in ('unsupported_ownership', 'unsupported_metadata') else None,
+        guidance_code=(None if result.success else 'check_workspace_metadata' if code in ('unsupported_ownership', 'unsupported_metadata')
+                       and (intent == 'preview' or phase in ('validation', 'preflight'))
+                       else 'inspect_state_no_replay' if intent == 'write' or uncertain
+                       else 'review_patch_input' if not result.success else None),
+        safe_to_retry=bool(result.metadata.get('safe_to_retry')))

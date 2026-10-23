@@ -43,7 +43,7 @@ function renderMessages() {
 function renderActivity() {
   const r = current.resources || {}, context = r.context || {};
   const compact = context.context_compaction_status || 'not_needed';
-  const compactLabel = ({not_needed:'无需压缩',deterministic:'规则摘录',semantic_applied:'语义摘要已应用',semantic_reused:'复用本轮摘要',call_limit:'压缩次数用尽，使用规则摘录'})[compact] || (compact.startsWith('fallback_') ? '语义压缩未应用，已回退规则摘录' : '未触发');
+  const compactLabel = ({not_needed:'无需压缩',deterministic:'规则摘录',semantic_applied:'语义摘要已应用',semantic_applied_pruned:'语义摘要删减后已应用，部分历史可能遗漏',semantic_skipped_insufficient_room:'空间不足，未请求语义摘要；规则摘录可能遗漏历史',fallback_output_truncated:'摘要输出被截断，已回退规则摘录',fallback_timeout:'摘要超时，已回退规则摘录',semantic_reused:'复用本轮摘要',call_limit:'压缩次数用尽，使用规则摘录'})[compact] || (compact.startsWith('fallback_') ? '语义压缩未应用，已回退规则摘录' : '未触发');
   $('request-count').textContent = r.logical_requests ?? current.requests;
   const reported = r.provider_reported_total_tokens ?? null;
   $('token-count').textContent = reported === null ? '未知' : reported.toLocaleString();
@@ -78,11 +78,16 @@ function renderActivity() {
       const summary = node('summary'); summary.append(node('span', event.running ? '◌' : event.success ? '✓' : '×'),node('strong',event.tool),node('small',event.running ? (current.approval ? '待审批' : busy() ? '调用中' : '已中断') : `${event.duration_seconds.toFixed(2)}s`)); card.append(summary);
       const content = node('div', undefined, 'tool-content'), meta = event.metadata || {};
       let description = event.running ? (current.approval ? '等待批准；命令尚未执行。' : busy() ? '实际调用正在进行。' : '调用未返回，已停止；不能确认执行完成。') : event.success ? '调用已完成。' : '调用未成功，后端保持原停止策略。';
-      if (event.tool === 'apply_patch' && !event.running) description = meta.dry_run ? 'Patch Preview · 仅预览，尚未写入。' : meta.applied && event.success ? 'Patch Commit · 修改已正式发布。' : 'Patch 未确认成功提交。';
+      if (event.tool === 'apply_patch' && !event.running) description = meta.operation_intent === 'preview' ? 'Patch Preview · 仅预览，尚未写入。' : meta.applied && event.success ? 'Patch Commit · 修改已正式发布。' : 'Patch 未确认成功提交。';
       if (event.tool === 'run_command' && !event.running) description = `命令退出码：${meta.exit_code ?? '未知'}。测试证据以当前 Revision 的后端报告为准。`;
       content.append(node('p', description));
       if (event.changed_files?.length) content.append(node('p','相关文件：' + event.changed_files.join('、')));
       if (meta.receipt_created) content.append(node('p','已生成当前对话的一次性提交凭据（内容隐藏）。'));
+      if (meta.safe_error_code) content.append(node('p','安全诊断：' + meta.safe_error_code + ' · ' + meta.failure_phase + ' · ' + meta.operation_intent));
+      if (meta.guidance_code === 'check_workspace_metadata') content.append(node('p',meta.safe_error_code === 'unsupported_metadata' ? '文件扩展元数据不符合安全写入前提。请检查 ACL、xattr 和文件 mode；本次没有执行写入。' : '文件所有权或属组不符合安全写入前提。请检查当前测试工作区的文件元数据；本次没有执行写入。'));
+      else if (meta.guidance_code) content.append(node('p',meta.guidance_code === 'inspect_state_no_replay' ? '请检查当前文件和执行状态，不要自动重放 Patch。本次没有确认任何修改已提交。' : 'Patch 输入未通过验证，具体原因尚未确认。本次没有确认任何修改已提交。'));
+      if (meta.relative_path) content.append(node('p','已读文件：' + meta.relative_path));
+      if (meta.requested_start_line != null) content.append(node('p',`请求行 ${meta.requested_start_line}–${meta.requested_end_line ?? '?'}；返回行 ${meta.returned_start_line ?? '?'}–${meta.returned_end_line ?? '?'}；截断：${!!meta.truncated}；还有更多行：${!!meta.has_more_lines}`));
       if (meta.receipt_error_category) content.append(node('p','安全诊断：' + meta.receipt_error_category));
       if (meta.diff_truncated || event.display_truncated) content.append(node('p','部分活动或 Diff 已因大小限制省略；不能视为完整审阅。'));
       if (event.diff) { const pre = node('pre',undefined,'diff'); for (const line of event.diff.split('\n')) pre.append(node('span',line,'diff-line' + (line.startsWith('+') ? ' add' : line.startsWith('-') ? ' remove' : ''))); content.append(pre); }
