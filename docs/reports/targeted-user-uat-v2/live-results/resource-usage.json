@@ -1,0 +1,558 @@
+{
+  "mode": "LIVE",
+  "authorization": "GRANTED_34_REQUESTS",
+  "acceptance_head": "34f5227c7ff9c1c51cff5b1aa050e28f31fdbdc8",
+  "preregistration_commit": "67b3ed09cb57f2b35e3c530fde70c35a6abb8bd6",
+  "plan_sha256": "ad3ed66af1d84dba40c1c065f6ef8d9aad774676800ae22360c059c2cd675526",
+  "global_limit": 34,
+  "physical_requests": 25,
+  "http_dispatch_attempts": 25,
+  "input_tokens": 102183,
+  "output_tokens": 5788,
+  "total_tokens": 107971,
+  "missing_usage_requests": 0,
+  "case_usage": {
+    "T01": {
+      "limit": 12,
+      "physical_requests": 8,
+      "http_dispatch_attempts": 8,
+      "input_tokens": 34170,
+      "output_tokens": 862,
+      "total_tokens": 35032,
+      "missing_usage_requests": 0
+    },
+    "T02": {
+      "limit": 14,
+      "physical_requests": 10,
+      "http_dispatch_attempts": 10,
+      "input_tokens": 53841,
+      "output_tokens": 1845,
+      "total_tokens": 55686,
+      "missing_usage_requests": 0
+    },
+    "T03": {
+      "limit": 8,
+      "physical_requests": 7,
+      "http_dispatch_attempts": 7,
+      "input_tokens": 14172,
+      "output_tokens": 3081,
+      "total_tokens": 17253,
+      "missing_usage_requests": 0
+    }
+  },
+  "provider_usage": {
+    "coco": {
+      "physical_requests": 25,
+      "http_dispatch_attempts": 25,
+      "input_tokens": 102183,
+      "output_tokens": 5788,
+      "total_tokens": 107971,
+      "missing_usage_requests": 0
+    },
+    "coco2": {
+      "physical_requests": 0,
+      "http_dispatch_attempts": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "missing_usage_requests": 0
+    }
+  },
+  "model_distribution": {
+    "deepseek-v4.1-flash": 25,
+    "glm-5.3-flash": 0
+  },
+  "semantic_usage": {
+    "physical_requests": 2,
+    "http_dispatch_attempts": 2,
+    "input_tokens": 3144,
+    "output_tokens": 738,
+    "total_tokens": 3882,
+    "missing_usage_requests": 0
+  },
+  "states": {
+    "returned": 25,
+    "failed": 0,
+    "cancelled": 0,
+    "reserved": 0
+  },
+  "actual_approvals": 2,
+  "cases": [
+    {
+      "id": "T01",
+      "status": "finished"
+    },
+    {
+      "id": "T02",
+      "status": "finished"
+    },
+    {
+      "id": "T03",
+      "status": "finished"
+    }
+  ],
+  "halt": [],
+  "stop_reason": "All three preregistered single attempts finished; no reruns or additional requests authorized.",
+  "task_success": {
+    "T01": true,
+    "T02": false,
+    "T03": false
+  },
+  "cost": null,
+  "cost_certainty": "No trustworthy applicable unit price or supplier billing statement; usage is supplier-reported, not a billing audit.",
+  "http_count_semantics": "request hook pre-transport dispatch attempts; not independently confirmed supplier receipt or billed requests",
+  "unused_requests": 9,
+  "unused_not_efficiency_claim": true,
+  "requests": [
+    {
+      "id": 1,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767481.585027,
+      "finished": 1792767484.930052,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3146,
+        "completion_tokens": 49,
+        "total_tokens": 3195
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 2,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767484.934747,
+      "finished": 1792767487.076851,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3254,
+        "completion_tokens": 94,
+        "total_tokens": 3348
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 3,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767487.08289,
+      "finished": 1792767489.1594932,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3529,
+        "completion_tokens": 73,
+        "total_tokens": 3602
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 4,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767489.165693,
+      "finished": 1792767490.974389,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3795,
+        "completion_tokens": 77,
+        "total_tokens": 3872
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 5,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767490.9807281,
+      "finished": 1792767493.176568,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4010,
+        "completion_tokens": 276,
+        "total_tokens": 4286
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 6,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767493.183773,
+      "finished": 1792767495.4259012,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 5010,
+        "completion_tokens": 92,
+        "total_tokens": 5102
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 7,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767495.436286,
+      "finished": 1792767497.322056,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 5572,
+        "completion_tokens": 66,
+        "total_tokens": 5638
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 8,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767512.6778162,
+      "finished": 1792767514.993044,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 5854,
+        "completion_tokens": 135,
+        "total_tokens": 5989
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 9,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767578.366986,
+      "finished": 1792767581.039077,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3178,
+        "completion_tokens": 70,
+        "total_tokens": 3248
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 10,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767581.047678,
+      "finished": 1792767583.0689569,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3594,
+        "completion_tokens": 65,
+        "total_tokens": 3659
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 11,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767583.076738,
+      "finished": 1792767585.046525,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3712,
+        "completion_tokens": 76,
+        "total_tokens": 3788
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 12,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767585.053317,
+      "finished": 1792767587.931975,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4102,
+        "completion_tokens": 158,
+        "total_tokens": 4260
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 13,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767587.939801,
+      "finished": 1792767590.78015,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4465,
+        "completion_tokens": 135,
+        "total_tokens": 4600
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 14,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767590.786853,
+      "finished": 1792767593.616968,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4891,
+        "completion_tokens": 159,
+        "total_tokens": 5050
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 15,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767593.6241112,
+      "finished": 1792767596.9803169,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 5385,
+        "completion_tokens": 623,
+        "total_tokens": 6008
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 16,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767596.991102,
+      "finished": 1792767599.2361732,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7383,
+        "completion_tokens": 102,
+        "total_tokens": 7485
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 17,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767599.252544,
+      "finished": 1792767602.1657548,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 8412,
+        "completion_tokens": 67,
+        "total_tokens": 8479
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 18,
+      "case_id": "T02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767618.5738182,
+      "finished": 1792767623.992836,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 8719,
+        "completion_tokens": 390,
+        "total_tokens": 9109
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 19,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767693.864556,
+      "finished": 1792767699.164397,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 1319,
+        "completion_tokens": 474,
+        "total_tokens": 1793
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 20,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767737.151058,
+      "finished": 1792767741.622828,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 2127,
+        "completion_tokens": 414,
+        "total_tokens": 2541
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 21,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "compaction",
+      "created": 1792767787.0285811,
+      "finished": 1792767790.415346,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 1151,
+        "completion_tokens": 364,
+        "total_tokens": 1515
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 22,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767790.4192371,
+      "finished": 1792767794.784811,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 2582,
+        "completion_tokens": 428,
+        "total_tokens": 3010
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 23,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "compaction",
+      "created": 1792767812.478543,
+      "finished": 1792767815.951176,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 1993,
+        "completion_tokens": 374,
+        "total_tokens": 2367
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 24,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767815.953713,
+      "finished": 1792767820.0781288,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 2486,
+        "completion_tokens": 327,
+        "total_tokens": 2813
+      },
+      "error_type": null,
+      "status_code": null
+    },
+    {
+      "id": 25,
+      "case_id": "T03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "created": 1792767847.464963,
+      "finished": 1792767853.923489,
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 2514,
+        "completion_tokens": 700,
+        "total_tokens": 3214
+      },
+      "error_type": null,
+      "status_code": null
+    }
+  ]
+}

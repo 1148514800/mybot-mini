@@ -1,0 +1,96 @@
+{
+  "frozen_verified_before_and_after": true,
+  "acceptance_head": "34f5227c7ff9c1c51cff5b1aa050e28f31fdbdc8",
+  "preregistration_commit": "67b3ed09cb57f2b35e3c530fde70c35a6abb8bd6",
+  "original_ledger_cases_before": 0,
+  "original_reservations_before": 0,
+  "budget_limits": {
+    "T01": 12,
+    "T02": 14,
+    "T03": 8,
+    "global": 34
+  },
+  "same_config_bytes": true,
+  "workspace_leases_available_before_and_after": true,
+  "server_exit_codes": {
+    "T01": 0,
+    "T02": 0,
+    "T03": 0
+  },
+  "final_port_8881_listening": false,
+  "final_cases": [
+    {
+      "id": "T01",
+      "status": "finished"
+    },
+    {
+      "id": "T02",
+      "status": "finished"
+    },
+    {
+      "id": "T03",
+      "status": "finished"
+    }
+  ],
+  "unsettled_reservations": 0,
+  "halt": [],
+  "cases": [
+    {
+      "case": "T01",
+      "status": "PASS",
+      "filesystem": "apfs",
+      "uid": 501,
+      "gid": 20,
+      "euid": 501,
+      "egid": 20,
+      "issues": [],
+      "native_previews": [
+        {
+          "path": "src/tag_shelf.py",
+          "passed": true,
+          "code": null
+        }
+      ],
+      "initial_bug_confirmed": true,
+      "unchanged": true
+    },
+    {
+      "case": "T02",
+      "status": "PASS",
+      "filesystem": "apfs",
+      "uid": 501,
+      "gid": 20,
+      "euid": 501,
+      "egid": 20,
+      "issues": [],
+      "native_previews": [
+        {
+          "path": "src/parcel_totals/calculations.py",
+          "passed": true,
+          "code": null
+        },
+        {
+          "path": "src/parcel_totals/service.py",
+          "passed": true,
+          "code": null
+        }
+      ],
+      "initial_bug_confirmed": true,
+      "unchanged": true
+    },
+    {
+      "case": "T03",
+      "status": "PASS",
+      "filesystem": "apfs",
+      "uid": 501,
+      "gid": 20,
+      "euid": 501,
+      "egid": 20,
+      "issues": [],
+      "native_previews": [],
+      "initial_bug_confirmed": null,
+      "unchanged": true
+    }
+  ],
+  "note": "Read-only environment probes reused the frozen formal implementation; not live Agent success. First attempt to save preflight evidence found private directory absent; private output directory then created and read-only checks saved; frozen assets were never changed."
+}

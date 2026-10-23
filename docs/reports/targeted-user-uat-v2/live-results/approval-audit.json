@@ -1,0 +1,71 @@
+{
+  "actual_approvals": 2,
+  "denials": 0,
+  "unknown_commands": 0,
+  "automatic_approvals": 0,
+  "terminal_yes": 0,
+  "T03_approvals": 0,
+  "entries": [
+    {
+      "case": "T01",
+      "decision": "approved_once",
+      "operator": "Codex via real Web approval button",
+      "audit_time": 1792767512.511869,
+      "argv": [
+        "<pinned-project-venv>/bin/python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": ".",
+      "cwd_scope": "original frozen T01 Fixture",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "timeout_seconds": 30,
+      "network": "denied by Seatbelt",
+      "workspace": "read-only during command",
+      "reviewed_individually": true,
+      "nonce_published": false,
+      "terminal_yes": false,
+      "cached_approval": false,
+      "event_sequence": {
+        "requested": 49,
+        "resolved": 50
+      }
+    },
+    {
+      "case": "T02",
+      "decision": "approved_once",
+      "operator": "Codex via real Web approval button",
+      "audit_time": 1792767618.420789,
+      "argv": [
+        "<pinned-project-venv>/bin/python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": ".",
+      "cwd_scope": "original frozen T02 Fixture",
+      "execution_mode": "macos_readonly",
+      "os_sandbox": true,
+      "timeout_seconds": 30,
+      "network": "denied by Seatbelt",
+      "workspace": "read-only during command",
+      "reviewed_individually": true,
+      "nonce_published": false,
+      "terminal_yes": false,
+      "cached_approval": false,
+      "event_sequence": {
+        "requested": 69,
+        "resolved": 70
+      }
+    }
+  ],
+  "raw_host_argv": "Reviewed in real UI; host path replaced with stable placeholder in public report. No Receipt or nonce exported."
+}
