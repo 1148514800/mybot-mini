@@ -1,0 +1,13 @@
+# 输出完整性与统一状态
+
+runtime_accounting.response_status根据供应商协议区分stop+非空文本、length、content_filter、空文本、异常结构/冲突tool_calls、缺失或未知finish_reason。完成是模型交付状态，task_correctness始终unknown，不等于用户任务验收成功。异常choices或error不回显供应商私有错误。
+
+length返回output_truncated，保留已返回文本、合法用户输入、历史Tool ID配对；可能截断的tool_calls不执行，不自动发第二次请求。未完成计划也不覆盖部分文本。CLI输出[OUTPUT]与资源字段，Web状态output_truncated/SSE message_incomplete，并显示长度限制与手动后续选项。正常stop文本仍completed。未知或缺失结束字段的文本标response_unconfirmed。
+
+旧进程内合成Client的tool_calls未带finish_reason时保留工具调用兼容，仅允许走原工具校验/审批；这不建立完整文本回复。已有测试桩只补stop/tool_calls协议元数据，不修改原断言。真实供应商缺失文本结束状态不会被归为完成。SDK异常、过滤、空回复不被合并为任务成功。
+
+CodingTaskController的can_verify、Revision、文件哈希、原生命令识别和Receipt规则不变。即使最后文字截断，真实已提交Patch、通过测试及verified报告仍保留；交付不完整单独标识。Web使用安全白名单版Host报告，不把原内部报告的命令参数或主机路径直接输出到活动面板。
+
+新增通用系统指令要求先简洁覆盖用户所需全部部分、未决与未完成项，再展开细节。不识别照片主题、不估算字符数来保证Token完整性。协议stop也不能证明语义上回答了每个要求。
+
+工具失败计数、请求预算不足标志、历史覆盖未验证、完整/部分摘要和fallback均来自后端结构化证据；前端不靠回复关键词猜测。CLI/Web资源快照来自同一RuntimeAccounting。

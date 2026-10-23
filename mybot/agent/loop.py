@@ -9,6 +9,7 @@ from typing import Any
 from openai import APITimeoutError, AsyncOpenAI
 from ..provider_failover import FallbackBudgetExceeded
 
+from ..runtime_accounting import OUTPUT_NOTICES, response_status
 from ..config import GatewayConfig
 from ..tools import ToolRegistry, ToolResult
 from ..storage.session_store import SessionStore
@@ -29,6 +30,7 @@ class AgentLoop:
                  context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None):
         from ..runtime_accounting import RuntimeAccounting
         self.resources = RuntimeAccounting()
+        self.partial_reply = ""
         self.last_runtime_report = self.resources.snapshot()
         self._event_callback = event_callback
         self.client = client
@@ -101,8 +103,15 @@ class AgentLoop:
                   f"reported_tokens={r['provider_reported_total_tokens'] if r['usage_complete'] else 'unknown'} "
                   f"http_attempts={r['http_dispatch_attempts']} fallback={r['fallback_used']} "
                   f"compaction={r['compaction_requests']} outcome={r['outcome']}")
+            if r.get('request_budget_exhausted'): print('[BUDGET] 请求预算不足，本轮未完整完成。')
+            if r.get('output'):
+                print(f"[OUTPUT] status={r['output']['status']} complete={r['output']['complete']} task_correctness=unknown tool_failures={r['tool_failures']}")
             c = r['context']
             if c:
+                if c.get('history_information_incomplete'): print('[CONTEXT] 历史仅为节选，覆盖未验证；原会话保留。')
+                if c.get('compaction_evidence'):
+                    evidence = c['compaction_evidence']
+                    print(f"[EVIDENCE] valid={evidence.get('valid_entries',0)} invalid={evidence.get('invalid_entries',0)} removed={evidence.get('removed_entries',0)} coverage=unverified")
                 print(f"[CONTEXT] estimated_tokens={c['estimated_input_tokens']} chars={c['request_chars']} "
                       f"utf8_bytes={c['request_utf8_bytes']} window={c['model_window_tokens'] or 'unknown'} "
                       f"output_reserve={c['output_reserved_tokens']} mode={c['context_budget_mode']} "
@@ -113,6 +122,7 @@ class AgentLoop:
         from ..runtime_accounting import RuntimeAccounting
         from .context_compactor import ContextCompactor
         self.resources = RuntimeAccounting()
+        self.partial_reply = ""
         self.compactor = ContextCompactor(self.config)
         self.last_runtime_report = self.resources.snapshot()
         if self.config.coding_git_workflow['enabled']:
@@ -168,10 +178,13 @@ class AgentLoop:
                 reply = "[CONTEXT] 本轮部分工具结果仅提供节选，未验证全文阅读或分析。以下模型回复不能视为完整任务结论：\n" + reply
             if self.context_history_omitted:
                 reply = "[CONTEXT] 部分历史已省略，预算不足以提供其摘要。\n" + reply
-            self.resources.outcome = self.last_coding_report['state'] if self.last_coding_report else ('completed' if self.resources.outcome == 'running' else self.resources.outcome)
+            self.resources.outcome = (self.resources.output['status'] if self.resources.output.get('status') in OUTPUT_NOTICES else
+                self.last_coding_report['state'] if self.last_coding_report else
+                'completed' if self.resources.outcome == 'running' else self.resources.outcome)
             return reply
         except BaseException as exc:
-            self.resources.outcome = 'cancelled' if isinstance(exc, asyncio.CancelledError) else 'failed'
+            if isinstance(exc, ContextBudgetError): self.resources.request_budget_exhausted = True
+            self.resources.outcome = 'context_budget_exhausted' if isinstance(exc, ContextBudgetError) else 'cancelled' if isinstance(exc, asyncio.CancelledError) else 'failed'
             if self._active_journal is not None:
                 self._active_journal.close()
                 self._git_capsule = None
@@ -242,9 +255,12 @@ class AgentLoop:
                     if self.config.context_compaction['on_failure']=='stop':raise ContextBudgetError(status)
             stats['context_compaction_status']=status
             stats['compaction_input_truncated']=self.compactor.input_truncated
+            stats['compaction_evidence']=dict(self.compactor.diagnostics)
         from .token_counter import TokenCounter
         stats.update(TokenCounter.inspect(effective,TokenCounter.request(effective,view,definitions)))
         stats['after']=self.context_manager.count(view,definitions)
+        stats['history_information_incomplete']=bool(stats['history_turns_omitted'])
+        stats['history_coverage']='unverified' if stats['history_turns_omitted'] else 'full_request_view'
         self.resources.context = dict(stats)
         self._notify('resource_update', resources=self.resources.snapshot())
         return view,stats
@@ -318,6 +334,7 @@ class AgentLoop:
                              if controller is not None else max(1.0, self.config.request_timeout_seconds)),
                 )
             except FallbackBudgetExceeded:
+                self.resources.request_budget_exhausted = True
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason if controller else 'model_request_budget')
             except (TimeoutError, APITimeoutError):
                 self.resources.outcome = 'timeout'
@@ -335,6 +352,16 @@ class AgentLoop:
                 self._notify('model_request_finished', duration_seconds=round(time.perf_counter() - start, 3),
                     provider=getattr(self.client, 'active_provider', self.config.provider), model=active_config.model,
                     tokens=getattr(usage, 'total_tokens', None))
+            delivery = response_status(response)
+            self.resources.output = delivery
+            self._notify('output_status', **delivery)
+            if delivery['status'] not in ('complete', 'tool_calls'):
+                choices = getattr(response, 'choices', None) or []
+                content = getattr(getattr(choices[0], 'message', None), 'content', None) if choices else None
+                reply = content.strip() if isinstance(content, str) else ''
+                self.partial_reply = reply
+                # No automatic continuation or execution of possibly partial tool arguments.
+                return await self._complete_turn(messages, turn_start, reply)
             message = response.choices[0].message
             if debug:
                 print(
@@ -389,6 +416,7 @@ class AgentLoop:
                 self._notify('tool_started', tool=call.function.name, call_id=call.id)
                 result = (ToolResult(success=False,error="approval_cancelled: earlier call denied")
                           if permission_denied or command_stopped else await self._execute(call.function.name, call.function.arguments))
+                if not result.success: self.resources.tool_failures += 1
                 if controller is not None and not was_stopped:
                     controller.observe(call.function.name, call.function.arguments, result)
                 if self._event_callback is not None:
@@ -486,17 +514,23 @@ class AgentLoop:
     def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: str,
                      reason: str = "") -> str:
         controller = self.coding_controller
+        partial = reply
+        delivery_status = self.resources.output.get('status')
         if controller is not None:
             reply = controller.finish(reason)
+            if delivery_status in OUTPUT_NOTICES and partial:
+                reply += '\n[模型部分回复]\n' + partial
             self.last_coding_report = controller.snapshot()
         report = self.plan.close(reason)
         if controller is None and (reason or any(s.status != 'completed' for s in self.plan.steps)):
             self.resources.outcome = 'stopped' if reason else 'failed'
         if report and controller is None:
-            reply = f"{reply}\n{report}" if reason else report
+            reply = f"{reply}\n{report}" if reason or delivery_status in OUTPUT_NOTICES else report
         if self._active_journal is not None:
             self._git_capsule = self._active_journal
             reply += '\n[TASK CHANGE SUMMARY]\n' + self._active_journal.summary_text(4000)
+        if delivery_status in OUTPUT_NOTICES:
+            reply = '[OUTPUT] ' + OUTPUT_NOTICES[delivery_status] + '\n' + reply
         messages.append({"role": "assistant", "content": reply})
         from ..tools.patch import ApplyPatchTool
         patch_tool = self.tools.get_tool('apply_patch')

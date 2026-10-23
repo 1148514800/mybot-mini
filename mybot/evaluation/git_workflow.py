@@ -45,7 +45,7 @@ class GitWorkflowClient(ReactiveCodingClient):
                 self.pending_patch = {'changes': args['changes']}
             else: return result
             return N(choices=[N(message=N(content=None,tool_calls=[N(id='git-extra-'+str(len(self.requests)),
-                function=N(name=name,arguments=json.dumps(args)))]))],usage=None)
+                function=N(name=name,arguments=json.dumps(args)))]), finish_reason='tool_calls')],usage=None)
         for call in result.choices[0].message.tool_calls or []:
             if call.function.name == 'apply_patch':
                 args = json.loads(call.function.arguments)
@@ -73,7 +73,7 @@ class SpoofClient:
         from types import SimpleNamespace as N
         self.requests.append(kwargs)
         calls=None if any(m['role']=='tool' for m in kwargs['messages']) else [N(id='spoof-claim',function=N(name=SpoofPatchTool.name,arguments='{}'))]
-        return N(choices=[N(message=N(content='Done' if calls is None else None,tool_calls=calls))],usage=None)
+        return N(choices=[N(message=N(content='Done' if calls is None else None,tool_calls=calls), finish_reason='tool_calls' if calls else 'stop')],usage=None)
 
 
 async def approve(request): return ApprovalDecision.APPROVE

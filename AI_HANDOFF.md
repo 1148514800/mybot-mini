@@ -2,24 +2,20 @@
 
 ## 当前目标与状态
 
-Targeted UAT v2 Live已在用户明确授权GRANTED_34_REQUESTS后完成，三个Case各唯一Attempt，T03五轮冻结消息完整。Task Success为1/3：T01 PASS、T02 FAIL、T03 FAIL。独立分支codex/targeted-user-uat-v2，Acceptance HEAD 34f5227c7ff9c1c51cff5b1aa050e28f31fdbdc8，预注册67b3ed09cb57f2b35e3c530fde70c35a6abb8bd6。未重新prepare/freeze，未改生产代码、测试驱动、合同、配置、Fixture或额度；源码默认NOT_GRANTED保持原样。
+真实用户任务质量优化已完成实现和离线验收，独立分支codex/post-live-quality-hardening，基线58725ca77cfa88ca41f661f1dd343f9f20c1f482。最终check_phase 41组1390项、独立UAT补充79项，共1469项通过（旧1433+新36），无跳过；compileall与diff检查通过。BROWSER PASS仅指真实浏览器合成验收。此Implementation提交包含源码、测试和技术报告；随后Acceptance提交最终证据并按用户授权Push。未合main、不改Tag/ZIP，主工作区用户修改保留。
 
-## 已完成与实际结果
+## 实现与可信边界
 
-T01原生源码调查→Preview/Receipt→Commit→Agent unittest3项通过，Revision1 verified，公开与独立验收PASS，仅tag_shelf.py改变。
+- RuntimeAccounting/AgentLoop按finish_reason区分完整、截断、过滤、空回复、异常/未知。截断保留文字、用户输入与Tool配对，不续请求、不执行部分Tool参数；CLI/Web/SSE明确不完整。Coding已提交Patch及真实Revision测试证据独立保留。
+- 语义压缩默认关闭，沿用精确引用v1、原超时/取消/Controller/主备物理预算。全部条目先校验；关键目标/约束/完成证据失效仍fallback，其他失效在合法锚点下明确partial，仅保留有效引用。节选与脱敏原文双检查，统计无正文。按真实来源位置排序，已选决定/未知/待办/失败设覆盖下限；空间不足fallback，历史覆盖未验证，Session不改写。来源1024→64有界缩减并反复走原TokenCounter。
+- Coding紧凑合同提示覆盖按需边界、README、入口追踪、测试覆盖与未验证披露；合并重复提示，保留旧长度/边界断言。除instruction外Controller方法AST及原工具/权限/Failover/Session/工作区锁实现不变。旧合成Client仅补finish_reason元数据，原函数AST归一化与47条原assert均一致。
 
-T02两模块真实修改、service调用line_subtotal，Preview/Receipt Commit成功，Agent unittest4项通过，Revision1 verified；独立验收在零数量负单价处失败：-0.00应为0.00。首次断言失败后其余独立断言未执行，不能算通过。Workflow与Safety通过，Task失败。
+## 证据与结果
 
-T03真实摘要2次：第3轮semantic_applied_pruned，第4轮精确引用失效后fallback_invalid_or_failed_response，第5轮fallback_token_budget（无新增摘要HTTP）。最终主回复finish_reason=length、700输出Token，已定字典序规则丢失，明确未知与未实现清单截断。早期5限制、最新批量重命名限制、目标及三职责保留；无虚构实现、测试或照片修改。原Session5轮用户SHA完整、配对合法，无摘要写回或文件副作用。
+新增output 15、compaction 15、contract 6项已接入check_phase。真实浏览器合成检查截断保留、部分摘要及引用统计、正常回复对照，临时服务正常关闭。真实模型/DeepSeek/GLM/真实语义摘要均0，旧9次额度未用。原Live47项SHA含账本只读核对一致；旧T01 PASS、T02/T03 FAIL、旧Task 1/3和更早1/6不改判，历史Harness/Fixture/规则/报告/Phase资产未改。
 
-## 资源、验证与证据
-
-原SQLite总25/34物理请求，T01=8/12、T02=10/14、T03=7/8；DeepSeek25、GLM0，HTTP发送尝试25、失败请求0、Usage缺失0。输入102183、输出5788、总107971 Token；摘要2次3882 Token。真实Web逐次审批2次，均只读无网络Seatbelt unittest；无自动yes。cost=null，无可信适用单价，剩余9次不授权补跑。
-
-Live前后verify_frozen通过，APFS/原metadata/Preview/Seatbelt/初始Bug/空账本/工作区锁均核对。三个服务正常退出0，case finished，无reserved/halt，锁释放、8881无监听。公开与独立oracle仅作为操作员Task验证，不补算Agent测试。Live结果失败如实保留；历史UAT 1/6不改。原离线1409+新增24测试结论只代表此前离线验证。
-
-新增脱敏报告/证据在docs/reports/targeted-user-uat-v2/live-results/，含逐请求Usage、四轴评分、语义逐轮状态、审批、失败分析和SHA256。原始响应/事件/环境/Session哈希及账本保留本机原冻结包；不提交私有配置、Receipt、nonce或完整原始对话。本阶段仅报告与交接变更，不合main、不动Tag/ZIP；完成报告一致性/脱敏/冻结检查后提交并按用户授权Push同一分支。
+报告在docs/reports/post-live-quality-hardening/，含根因、输出/摘要/Coding技术说明、新域合成前后对照、完整测试结果、截图、安全审计、剩余风险。没有提交原始私有响应、凭证、Receipt、nonce或主机路径。扫描通过；原回归发现提示长度/边界词问题后已合并修复并从最终代码全量重测。
 
 ## 下一步与禁止重复
 
-本批已关闭，不重启Case、不补消息、不用剩余额度、不修冻结Fixture或事后修改条件。后续只能另起明确修复任务处理Decimal负零、摘要引用诊断/规则保留、输入门与输出长度协同及截断UX；新Live必须重新预注册冻结授权。当前没有实施这些修复。不要把Controller verified或语义一次应用替代独立端到端成功。
+完成Acceptance文档提交及Push、核对远程HEAD与干净工作树；不需要额外Push授权。后续真实质量改善仍未验证：精确引用可能漏选/误分类、类别下限不是全历史保真、来源缩减可能遗漏中段，stop不证明语义完整，合同提示不保证模型遵守。后续Live必须另行预注册冻结授权，不重跑旧任务、不改历史结论、不用旧额度。当前没有新的Live授权或下一Phase。

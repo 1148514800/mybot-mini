@@ -67,8 +67,8 @@ class InvestigationClient:
                 assert any(r['path']==hit['path'] and r['unstaged'] for r in status['files'])
                 assert 'return left - right' in self.outputs['investigate-3']
                 assert '# Unstaged investigation note.' in self.outputs['investigate-4']
-                return N(choices=[N(message=N(content=f"{hit['path']}:{hit['line']} add uses subtraction; related file is modified. No repair or tests performed.",tool_calls=None))],usage=None)
-        return N(choices=[N(message=N(content=None,tool_calls=[N(id=f'investigate-{step}',function=N(name=name,arguments=json.dumps(args)))]))],usage=None)
+                return N(choices=[N(message=N(content=f"{hit['path']}:{hit['line']} add uses subtraction; related file is modified. No repair or tests performed.",tool_calls=None), finish_reason='stop')],usage=None)
+        return N(choices=[N(message=N(content=None,tool_calls=[N(id=f'investigate-{step}',function=N(name=name,arguments=json.dumps(args)))]), finish_reason='tool_calls')],usage=None)
 
 
 async def investigate(root):
@@ -110,9 +110,9 @@ class EditingClient(InvestigationClient):
             else:
                 assert 'return left + right' in self.outputs['edit-6']
                 assert '+    return left + right' in self.outputs['edit-7']
-                return N(choices=[N(message=N(content='Applied precise edit and reread actual file/diff; no tests executed by Agent.', tool_calls=None))], usage=None)
+                return N(choices=[N(message=N(content='Applied precise edit and reread actual file/diff; no tests executed by Agent.', tool_calls=None), finish_reason='stop')], usage=None)
         return N(choices=[N(message=N(content=None, tool_calls=[N(id=f'edit-{step}',
-            function=N(name=name, arguments=json.dumps(args)))]))], usage=None)
+            function=N(name=name, arguments=json.dumps(args)))]), finish_reason='tool_calls')], usage=None)
 
 
 async def edit_demo(root):
@@ -191,9 +191,10 @@ class CommandClient(InvestigationClient):
             elif step == 11:calls = [('update_plan', {'step': 2, 'status': 'completed'})]
             else:
                 assert '+    return left + right' in self.outputs['command-10']
-                return N(choices=[N(message=N(content=f"真实 unittest：修复前 exit_code={metadata(3)['exit_code']}，精确 Patch 后 exit_code={metadata(9)['exit_code']}，1 项测试通过。", tool_calls=None))], usage=None)
+                return N(choices=[N(message=N(content=f"真实 unittest：修复前 exit_code={metadata(3)['exit_code']}，精确 Patch 后 exit_code={metadata(9)['exit_code']}，1 项测试通过。", tool_calls=None), finish_reason='stop')], usage=None)
         return N(choices=[N(message=N(content=None, tool_calls=[N(id=f'command-{step}' if i == 0 else f'command-{step}-{i}',
-            function=N(name=name, arguments=json.dumps(args))) for i, (name, args) in enumerate(calls)]))], usage=None)
+            function=N(name=name, arguments=json.dumps(args))) for i, (name, args) in enumerate(calls)]), finish_reason='tool_calls' if [N(id=f'command-{step}' if i == 0 else f'command-{step}-{i}',
+            function=N(name=name, arguments=json.dumps(args))) for i, (name, args) in enumerate(calls)] else 'stop')], usage=None)
 
 
 async def command_demo(root, *, mode='macos_readonly'):

@@ -81,7 +81,7 @@ class OfflineClient:
         if self.actions:
             action = self.actions.pop(0)
             calls = [N(id=f'offline-{self.step}', function=N(name=action['tool'], arguments=json.dumps(action['args'])))]
-        return N(choices=[N(message=N(content=None if calls else self.reply, tool_calls=calls))], usage=None)
+        return N(choices=[N(message=N(content=None if calls else self.reply, tool_calls=calls), finish_reason='tool_calls' if calls else 'stop')], usage=None)
 
 
 def normalize_group(group):

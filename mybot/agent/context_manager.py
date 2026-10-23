@@ -140,6 +140,8 @@ class ContextManager:
         stats.update(context_compaction_mode=self.config.context_compaction['mode'],
                      context_compaction_triggered=stats['history_turns_omitted']>0,
                      context_compaction_status='deterministic' if stats['history_turns_omitted'] else 'not_needed',
+                     history_information_incomplete=stats['history_turns_omitted']>0,
+                     history_coverage='unverified' if stats['history_turns_omitted'] else 'full_request_view',
                      context_truncated=stats['current_clipped'] or stats['history_turns_omitted']>0 or any(self.marker in (m.get('content') or '') for m in view))
         return view, stats
 

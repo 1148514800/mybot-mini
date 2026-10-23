@@ -14,7 +14,7 @@ async def check(debug):
         workspace = Path(folder)
         tools = build_default_tool_registry(workspace)
         calls = [N(id="1", function=N(name="write_file", arguments='{"path":"note.txt","content":"PRIVATE_BODY"}'))]
-        responses = iter([N(choices=[N(message=N(content=None, tool_calls=calls))], usage=N(total_tokens=42)), N(choices=[N(message=N(content="done", tool_calls=None))], usage=None)])
+        responses = iter([N(choices=[N(message=N(content=None, tool_calls=calls), finish_reason='tool_calls' if calls else 'stop')], usage=N(total_tokens=42)), N(choices=[N(message=N(content="done", tool_calls=None), finish_reason='stop')], usage=None)])
         async def create(**kwargs):
             if len(kwargs["messages"]) > 2:
                 assert kwargs["messages"][-1]["role"] == "tool"
@@ -163,3 +163,10 @@ from scripts.check_context_compaction import check_context_compaction
 check_context_compaction()
 from scripts.check_runtime_accounting import check_runtime_accounting
 check_runtime_accounting()
+
+from scripts.check_output_completeness import check_output_completeness
+check_output_completeness()
+from scripts.check_compaction_evidence import check_compaction_evidence
+check_compaction_evidence()
+from scripts.check_coding_contract_quality import check_coding_contract_quality
+check_coding_contract_quality()

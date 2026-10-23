@@ -2,7 +2,7 @@ import {markdown, copyText} from './markdown.js';
 const $ = id => document.getElementById(id);
 const node = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
 let boot, selected, stream, current, approvalId = null, approving = false, nearBottom = true;
-const labels = {idle:'准备就绪',running:'正在分析问题',waiting_approval:'正在等待审批',completed:'已完成',failed:'执行失败',cancelled:'已停止',stopped:'已停止',cleanup_uncertain:'清理状态不确定',stopping:'正在停止并清理',settling:'正在完成资源清理'};
+const labels = {output_truncated:'输出截断，回答不完整',content_filtered:'回复被过滤',empty_response:'空回复，未完成',provider_error:'供应商状态异常',response_unconfirmed:'结束状态未确认',idle:'准备就绪',running:'正在分析问题',waiting_approval:'正在等待审批',completed:'模型回复已返回',failed:'执行失败',cancelled:'已停止',stopped:'已停止',cleanup_uncertain:'清理状态不确定',stopping:'正在停止并清理',settling:'正在完成资源清理'};
 const toolLabels = {list_files:'正在查看项目结构',search_code:'正在查找代码',read_file_range:'正在读取文件',read_file:'正在读取文件',apply_patch:'正在处理代码修改',run_command:'正在执行命令',create_plan:'正在制定计划',update_plan:'正在更新计划'};
 const busy = () => current && ['running','waiting_approval','stopping','settling'].includes(current.status);
 function notice(text) { $('notice').textContent = text; $('notice').hidden = !text; }
@@ -43,21 +43,25 @@ function renderMessages() {
 function renderActivity() {
   const r = current.resources || {}, context = r.context || {};
   const compact = context.context_compaction_status || 'not_needed';
-  const compactLabel = ({not_needed:'无需压缩',deterministic:'规则摘录',semantic_applied:'语义摘要已应用',semantic_applied_pruned:'语义摘要删减后已应用，部分历史可能遗漏',semantic_skipped_insufficient_room:'空间不足，未请求语义摘要；规则摘录可能遗漏历史',fallback_output_truncated:'摘要输出被截断，已回退规则摘录',fallback_timeout:'摘要超时，已回退规则摘录',semantic_reused:'复用本轮摘要',call_limit:'压缩次数用尽，使用规则摘录'})[compact] || (compact.startsWith('fallback_') ? '语义压缩未应用，已回退规则摘录' : '未触发');
+  const compactLabel = ({not_needed:'无需压缩',deterministic:'规则摘录',semantic_applied:'语义摘要已应用',semantic_applied_partial:'语义摘要部分应用：无效引用已拒绝，历史覆盖未验证',semantic_applied_pruned:'语义摘要删减后已应用，部分历史可能遗漏',semantic_skipped_insufficient_room:'空间不足，未请求语义摘要；规则摘录可能遗漏历史',fallback_output_truncated:'摘要输出被截断，已回退规则摘录',fallback_timeout:'摘要超时，已回退规则摘录',semantic_reused:'复用本轮摘要',call_limit:'压缩次数用尽，使用规则摘录'})[compact] || (compact.startsWith('fallback_') ? '语义压缩未应用，已回退规则摘录' : '未触发');
   $('request-count').textContent = r.logical_requests ?? current.requests;
   const reported = r.provider_reported_total_tokens ?? null;
   $('token-count').textContent = reported === null ? '未知' : reported.toLocaleString();
   $('resource-detail').textContent = `物理调用 ${r.physical_requests ?? 0} · HTTP 尝试 ${r.http_dispatch_attempts ?? '未知'} · 备用模型 ${r.fallback_used ? '已使用' : '未使用'}。` +
     (context.estimated_input_tokens !== undefined ? `当前输入估算 ${context.estimated_input_tokens} Token（保守估算，非账单）；${context.request_chars} 字符 / ${context.request_utf8_bytes} 字节。窗口 ${context.model_window_tokens ?? '未知'}；输出预留 ${context.output_reserved_tokens}。` : '') +
     ` 压缩请求 ${r.compaction_requests ?? 0}；${compactLabel}；保留 ${context.history_turns_kept ?? 0} 轮 / 摘要 ${context.history_turns_summarized ?? 0} 轮。` +
+    ` 工具失败 ${r.tool_failures ?? 0} 次；用户任务正确性未知。` +
+    (r.request_budget_exhausted ? '请求预算不足，本轮未完整完成。' : '') +
+    (context.compaction_evidence ? ` 引用有效 ${context.compaction_evidence.valid_entries ?? 0} / 无效 ${context.compaction_evidence.invalid_entries ?? 0} / 已删除 ${context.compaction_evidence.removed_entries ?? 0}。` : '') +
+    (context.history_information_incomplete ? '历史仅为节选，决定或未知事项可能遗漏；原会话保留。' : '') +
     (context.context_truncated ? '部分上下文已裁剪或摘要，不能视为完整阅读。' : '');
   let latest = current.events.at(-1), status = labels[current.status] || '状态未知';
-  if (current.report?.state === 'edited_unverified') status = '已修改，尚未验证';
-  if (current.report?.state === 'verified') status = '当前修改已验证';
+  if (current.status === 'completed' && current.report?.state === 'edited_unverified') status = '已修改，尚未验证';
+  if (current.status === 'completed' && current.report?.state === 'verified') status = '当前修改已验证';
   if (busy() && latest?.type === 'tool_started') status = toolLabels[latest.tool] || '正在调用工具';
   $('task-state').replaceChildren(node('span', undefined,'status-orb'), document.createTextNode(status));
   $('running-label').textContent = status;
-  $('task-detail').textContent = current.report?.state === 'execution_uncertain' ? '执行结果无法确认，文件可能已经变化。请检查工作区并重启服务，切勿盲目重放修改。' : current.report ? `当前版本 ${current.report.current_revision} · 修改 ${current.report.committed_patches} 次 · 有效通过 ${current.report.tests_passed_after_last_patch} 项指定测试。仅代表已执行的测试范围。` : '显示实际阶段进度；完整回复在模型返回后呈现。';
+  $('task-detail').textContent = current.report?.state === 'execution_uncertain' ? '执行结果无法确认，文件可能已经变化。请检查工作区并重启服务，切勿盲目重放修改。' : current.report ? `当前版本 ${current.report.current_revision} · 修改 ${current.report.committed_patches} 次 · 有效通过 ${current.report.tests_passed_after_last_patch} 项指定测试。仅代表已执行的测试范围。` : '显示后端实际状态；回复完整性与任务正确性分别报告。';
   const model = [...current.events].reverse().find(e => e.type === 'model_request_finished');
   $('model-label').textContent = model ? `${model.provider} / ${model.model}` : `${boot.provider || '未配置'} / ${boot.model}`;
   const cards = new Map(); let plan = [];
@@ -118,6 +122,7 @@ async function refresh() {
   if (!selected) return;
   const id = selected; const state = await api(`conversations/${id}`); if (selected !== id || (current?.id === id && state.sequence < current.sequence)) return;
   current = state;
+  if (state.status === 'output_truncated') notice('模型达到本轮输出长度限制，以下回答可能不完整。可以要求继续回答，或在下一轮调整允许的输出长度。');
   if (state.status === 'failed') notice('Agent 未完成请求。请检查本地模型、工作区配置或活动面板中的安全停止状态。');
   if (state.status === 'cleanup_uncertain') notice('资源清理无法确认，已阻止新任务。请检查运行环境并重启服务。');
   const c = boot.conversations.find(c=>c.id===id); if(c) {c.status=state.status;c.title=state.title;}

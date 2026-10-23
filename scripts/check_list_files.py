@@ -42,7 +42,7 @@ async def check_list_files():
         limited = await tools.execute("list_files", {"path": "many"})
         assert limited.success and limited.metadata == {"total": 105, "shown": 100}
         assert len(limited.output.splitlines()) == 100 and limited.output.splitlines()[-1] == "[FILE] 099.txt"
-        responses = iter([N(choices=[N(message=N(content=None, tool_calls=[N(id="list-1", function=N(name="list_files", arguments='{"path":"empty"}'))]))], usage=None), N(choices=[N(message=N(content="目录为空", tool_calls=None))], usage=None)])
+        responses = iter([N(choices=[N(message=N(content=None, tool_calls=[N(id="list-1", function=N(name="list_files", arguments='{"path":"empty"}'))]), finish_reason='tool_calls')], usage=None), N(choices=[N(message=N(content="目录为空", tool_calls=None), finish_reason='stop')], usage=None)])
         requests = []
         async def create(**kwargs):
             requests.append(kwargs)

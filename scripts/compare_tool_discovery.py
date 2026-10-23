@@ -57,13 +57,13 @@ class FixedDiscoveryClient:
             elif expected is not None and expected not in result:
                 raise AssertionError('Actual synthetic tool result did not satisfy case')
         if self.index == len(self.actions):
-            return N(choices=[N(message=N(content='Synthetic task complete.',tool_calls=None))],usage=None)
+            return N(choices=[N(message=N(content='Synthetic task complete.',tool_calls=None), finish_reason='stop')],usage=None)
         name,arguments,expected=self.actions[self.index]
         if name not in visible:raise AssertionError('Fixed script attempted an invisible tool')
         self.index+=1;self.last=(name,arguments,expected)
         self.search_calls+=name=='search_mcp_tools';self.activate_calls+=name=='activate_mcp_tools'
         call=N(id=f'call-{self.index}',function=N(name=name,arguments=json.dumps(arguments)))
-        return N(choices=[N(message=N(content=None,tool_calls=[call]))],usage=None)
+        return N(choices=[N(message=N(content=None,tool_calls=[call]), finish_reason='tool_calls')],usage=None)
 
 
 async def compare_case(case_id, mode):

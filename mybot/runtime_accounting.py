@@ -13,6 +13,42 @@ PHYSICAL = ContextVar('mybot_physical_request', default=None)
 TOKEN_KEYS = ('prompt_tokens', 'completion_tokens', 'total_tokens')
 
 
+# Delivery status is independent of revision verification and task correctness.
+OUTPUT_NOTICES = {
+    'output_truncated': '模型达到本轮输出长度限制，以下回答可能不完整。可以要求继续回答，或在下一轮调整允许的输出长度。',
+    'content_filtered': '供应商过滤了本轮回复，不能确认回答完整。',
+    'empty_response': '模型未返回有效文本，本轮回答未完成。',
+    'provider_error': '供应商回复状态异常，本轮回答未完成。',
+    'response_unconfirmed': '供应商未提供可确认的结束状态，不能确认回答完整。',
+}
+
+
+def response_status(response):
+    """Only protocol evidence; never infer completion from prose or its length."""
+    choices = getattr(response, 'choices', None)
+    if getattr(response, 'error', None) or not choices or len(choices) != 1:
+        return dict(status='provider_error', finish_reason='invalid', complete=False)
+    choice = choices[0]
+    message = getattr(choice, 'message', None)
+    finish = getattr(choice, 'finish_reason', None)
+    calls = getattr(message, 'tool_calls', None)
+    text = getattr(message, 'content', None)
+    if finish == 'length': status = 'output_truncated'
+    elif finish == 'content_filter': status = 'content_filtered'
+    elif message is None or getattr(message, 'function_call', None): status = 'provider_error'
+    elif finish == 'tool_calls': status = 'tool_calls' if calls else 'provider_error'
+    elif finish == 'stop':
+        status = ('provider_error' if calls or (text is not None and not isinstance(text, str)) else
+                  'complete' if isinstance(text, str) and text.strip() else 'empty_response')
+    elif finish is None and calls:
+        # Legacy in-process clients omit the finish field. Tool permissions still
+        # apply; this does not establish a complete natural-language response.
+        status = 'tool_calls'
+    else: status = 'response_unconfirmed'
+    return dict(status=status, finish_reason=finish if finish in ('stop','tool_calls','length','content_filter') else 'unknown',
+                complete=status == 'complete')
+
+
 def usage_values(usage):
     def get(key):
         value = usage.get(key) if isinstance(usage, dict) else getattr(usage, key, None)
@@ -93,6 +129,9 @@ class RuntimeAccounting:
     purpose: str = 'agent'
     outcome: str = 'running'
     observation_errors: int = 0
+    output: dict = field(default_factory=dict)
+    tool_failures: int = 0
+    request_budget_exhausted: bool = False
 
     async def request(self, client, config, request, *, purpose='agent'):
         effective = active_config(client, config)
@@ -131,4 +170,6 @@ class RuntimeAccounting:
             reported_token_subtotal=reported['total_tokens'], usage_complete=complete['total_tokens'],
             missing_usage_requests=sum(r['usage']['total_tokens'] is None for r in rows),
             fallback_used=any(r['is_fallback'] for r in rows), estimated_cost=None,
-            outcome=self.outcome, observation_errors=self.observation_errors, context=context)
+            outcome=self.outcome, observation_errors=self.observation_errors, context=context,
+            output=dict(self.output), tool_failures=self.tool_failures, task_correctness='unknown',
+            request_budget_exhausted=self.request_budget_exhausted)

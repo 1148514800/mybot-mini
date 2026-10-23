@@ -65,11 +65,11 @@ paths, hashes and anchors must be discovered from actual tool output.
                 body, meta = decode_result(m['content'])
                 self.results.append((call_names[m['tool_call_id']], body, meta))
         def final():
-            return N(choices=[N(message=N(content='Fixed; all tests passed.', tool_calls=None))], usage=None)
+            return N(choices=[N(message=N(content='Fixed; all tests passed.', tool_calls=None), finish_reason='stop')], usage=None)
         def call(name, args):
             if name not in available: return final()
             return N(choices=[N(message=N(content=None, tool_calls=[N(id='reactive-' + str(len(self.requests)),
-                function=N(name=name, arguments=json.dumps(args)))]))], usage=None)
+                function=N(name=name, arguments=json.dumps(args)))]), finish_reason='tool_calls')], usage=None)
         def test():
             if self.policy == 'timeout': return call('run_command', {'argv': ['python', '-c', 'import time;time.sleep(4)'], 'timeout_seconds': 1})
             if self.policy == 'output_limit': return call('run_command', {'argv': ['python', '-c', 'print("x"*140000)']})

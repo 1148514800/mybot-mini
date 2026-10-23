@@ -7,6 +7,7 @@ from dataclasses import dataclass, field, replace
 import secrets
 import time
 
+from ..runtime_accounting import OUTPUT_NOTICES
 from ..agent import AgentLoop, ContextBuilder
 from ..agent.session import Session
 from ..config import GatewayConfig
@@ -142,6 +143,14 @@ class ChatRuntime:
                 else:
                     outcome = agent.last_runtime_report['outcome']
                     c.status = 'failed' if c.failed_request or outcome == 'failed' else 'stopped' if outcome in ('timeout','stopped') else 'completed'
+                delivery = agent.last_runtime_report.get('output', {})
+                if delivery.get('status') in OUTPUT_NOTICES:
+                    if c.status not in ('failed','stopped'): c.status = delivery['status']
+                    # Coding report is independent; retain the model's partial text
+                    # as well as the actual host revision report.
+                    if report:
+                        reply = '[OUTPUT] ' + OUTPUT_NOTICES[delivery['status']] + '\n' + reply
+                        if agent.partial_reply: reply += '\n[模型部分回复]\n' + agent.partial_reply
                 reply = redact(reply, c.secret_values)
                 c.messages.append({'role': 'assistant', 'content': reply, 'time': time.time()})
                 c.messages[:] = c.messages[-64:]
@@ -176,7 +185,8 @@ class ChatRuntime:
             if not cleanup_ok:
                 c.status = 'cleanup_uncertain'; self.cleanup_uncertain = True
             c.emit({'type': {'cancelled': 'message_cancelled', 'failed': 'message_failed',
-                            'stopped': 'message_cancelled', 'cleanup_uncertain': 'message_failed'}.get(c.status, 'message_completed'),
+                            'stopped': 'message_cancelled', 'cleanup_uncertain': 'message_failed',
+                            **{k:'message_incomplete' for k in OUTPUT_NOTICES}}.get(c.status, 'message_completed'),
                     'status': c.status, 'report': c.report})
             # Lease remains held until MCP __aexit__, Agent finally and client close settle.
             lease.release(confirmed=cleanup_ok and not self.cleanup_uncertain)

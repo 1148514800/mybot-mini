@@ -19,7 +19,7 @@ from mybot.tools import build_default_tool_registry
 
 
 def response(content=None, calls=None):
-    return N(choices=[N(message=N(content=content, tool_calls=calls))], usage=None)
+    return N(choices=[N(message=N(content=content, tool_calls=calls), finish_reason="tool_calls" if calls else "stop")], usage=None)
 
 
 def call(identifier, name="list_files", arguments='{"path":"."}'):

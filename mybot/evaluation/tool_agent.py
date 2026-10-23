@@ -261,7 +261,7 @@ class FixedClient:
                     self.actions=[]; self.index=0; self.reply='unavailable'; self.last=None
             elif name.startswith('mcp__') and not all(f in text for f in expect):
                 raise AssertionError('Real MCP result does not satisfy fixture')
-        if self.index==len(self.actions):return N(choices=[N(message=N(content=self.reply,tool_calls=None))],usage=None)
+        if self.index==len(self.actions):return N(choices=[N(message=N(content=self.reply,tool_calls=None), finish_reason='stop')],usage=None)
         name,args,expect=self.actions[self.index]
         if self.adaptive and name=='search_mcp_tools' and expect in visible:
             # Explicit offline fixture only; decide from THIS actual request, never edit Router.
@@ -269,7 +269,7 @@ class FixedClient:
             name,args,expect=self.actions[self.index]
         if name not in visible:raise AssertionError('Offline script attempted invisible tool')
         self.index+=1;self.last=(name,args,expect)
-        return N(choices=[N(message=N(content=None,tool_calls=[N(id=f'synthetic-{self.index}',function=N(name=name,arguments=json.dumps(args)))]))],usage=None)
+        return N(choices=[N(message=N(content=None,tool_calls=[N(id=f'synthetic-{self.index}',function=N(name=name,arguments=json.dumps(args)))]), finish_reason='tool_calls')],usage=None)
 
 
 def contains_fact(text, fact):
