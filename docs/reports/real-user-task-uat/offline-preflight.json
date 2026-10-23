@@ -1,0 +1,44 @@
+{
+  "tests_passed": 222,
+  "suites": {
+    "check_web_ui": {
+      "passed": true,
+      "tests": 53,
+      "log_sha256": "4ceca0373ed22ddf28c7793f385388de2658b5c6515188ed0fb199165b95a2cd"
+    },
+    "check_token_budget": {
+      "passed": true,
+      "tests": 16,
+      "log_sha256": "867347677b677cc96eff2cc9a967c710fc173d195e517504fc76c7e57089d48a"
+    },
+    "check_context_compaction": {
+      "passed": true,
+      "tests": 22,
+      "log_sha256": "b4397ff21f5db758d33e5e1031d51f3ba101d13d929f485ecb345b1562af3b21"
+    },
+    "check_runtime_accounting": {
+      "passed": true,
+      "tests": 23,
+      "log_sha256": "50ab73e322b7648500a74a9b04eb81805a73a4e1c187ea5c0879fecf551b0db0"
+    },
+    "check_patch_preview_receipt": {
+      "passed": true,
+      "tests": 53,
+      "log_sha256": "7e70d2b1aa34e545f0e762149d3fb18857da2a26ac60cb406c995a58441ad0bb"
+    },
+    "check_coding_reliability": {
+      "passed": true,
+      "tests": 42,
+      "log_sha256": "f5e88088a571d283f5f1ca5909b3600924d47a2ba07bf5cdf904ddc838c40430"
+    },
+    "uat-preflight": {
+      "passed": true,
+      "tests": 13,
+      "log_sha256": "194bdb6a97be1a398d2cf7a841b6d5efa22aba38898d6de77445b434ef42e3b8"
+    }
+  },
+  "compileall": "PASS",
+  "diff_check": "PASS",
+  "production_full_baseline_tests": 1354,
+  "full_suite_rerun_this_task": false
+}

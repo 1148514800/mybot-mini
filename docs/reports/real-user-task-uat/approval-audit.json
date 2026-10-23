@@ -1,0 +1,8 @@
+{
+  "actual_browser_approval_count": 0,
+  "actual_browser_denial_count": 0,
+  "agent_command_calls": 0,
+  "entries": [],
+  "explanation": "Both Coding cases stopped before run_command; no actual pending approval or nonce was issued. Browser approval flow NOT_VERIFIED in this live batch.",
+  "host_only_scoring": "Public and independent assertions ran under original Seatbelt after Live, without model calls; not Agent workflow or browser approvals."
+}

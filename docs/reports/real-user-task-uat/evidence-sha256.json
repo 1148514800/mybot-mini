@@ -1,0 +1,45 @@
+{
+  "algorithm": "SHA256",
+  "private_payloads_not_committed": true,
+  "evidence": {
+    "U01-chat.jpg": "977f2de336380a91ce3dc761caa80b5d90f381954ec122603cb9169b08eb59be",
+    "U02-checklist.jpg": "1aace107913722c046b709fe9d3440dd45f23cf15c923769ccd5747d9218a1e4",
+    "U02-isolation.jpg": "9ed8dbcbc0361c1518b0c19ea901aa45dcb210e366255ba92aef6d30c3ff9c8e",
+    "U03-project-reading.jpg": "12d2d693f05dc9c27111cdb9da8a5ca31c67ae2c33d930abcdea002a79b5310e",
+    "U04-preview-blocked.jpg": "b8c86bcb82e697dac05796fa51a78986ec0999f3ae7772f1cd508b54f72f1642",
+    "U05-preview-blocked.jpg": "28a033139483adca49ebd98a268db4196246ddcffb680768c8979afced1cca47",
+    "U06-final.jpg": "689dbf358f6ae34b5ec3f4337359de50b76088030900306bd87a618234e72c04",
+    "U06-summary-fallback.jpg": "8e1ef968614f09e621950a143e72f67a8fd5bb7b8aeab0c26b41e371ba244de9",
+    "U01-private-evidence-sha256": {
+      "U01-turn-01.json": "dab5f422c0c5eb5f3db66d8b2a0d44ffd0176c5bba7b9f31ef44a8d8f6622f81"
+    },
+    "U01-workspace-content-sha256": "f260f610838d8a3da37a371d263c0d18ee7d2e4679c99571a51f18d9494e4825",
+    "U02-private-evidence-sha256": {
+      "U02-turn-01.json": "a6d5405cb26a2981afee77d8ea63dd3f3bfec9a05919e330bdc0eef1fcd63d55",
+      "U02-turn-02.json": "85feb6f0d50dd77ed218a32920db79b98bdc5ba737828b7e7321af11e486d28f",
+      "U02-turn-03.json": "74c4269ef6296f5bed8e6e41ba5e75dcb17909c2b7f212421bba51994612240e"
+    },
+    "U02-workspace-content-sha256": "1306642cb51ed9f35e610c3143f4c5d6857c7ba1c13c9785d4f5024029fed171",
+    "U03-private-evidence-sha256": {
+      "U03-turn-01.json": "42d3146863338103231ca28f82b807b585e8b785a10a6cc4010520abeeb162c4"
+    },
+    "U03-workspace-content-sha256": "564be545b39d7c385446e0c5320dbbdb857fd4b8d069dad67255b9975003553e",
+    "U04-private-evidence-sha256": {
+      "U04-turn-01.json": "495d5d0663878c4a3e096552b0f30d2abc94f0987828056635526f9c23e73c11"
+    },
+    "U04-workspace-content-sha256": "91b71b70e1e1fdea15058f9cf1f648c3c82c76b803dad2cc09a85e17f28bab32",
+    "U05-private-evidence-sha256": {
+      "U05-turn-01.json": "fc163a3f0bf34531851a433eff838b5182444a629929d0a74643216fe19df7c0"
+    },
+    "U05-workspace-content-sha256": "39f772ab35eec7735835b0c1f31cd37cbabb9f0ab663d75c53edbad0e6dc54e5",
+    "U06-private-evidence-sha256": {
+      "U06-turn-01.json": "2e7410677cd22a9ca099a283b58ce235510d15297f06e266160262ece3f43500",
+      "U06-turn-02.json": "01f77960bbd94cc5c416a48209bac825bf97e70fcfffefbfd6edf632d4ec7117",
+      "U06-turn-03.json": "c480246d0ad468e6139da23e4e7703d52301ad3b3d7da29d8b70afbdd1ba57dc",
+      "U06-turn-04.json": "8084d547f0c3a4d4abab03ed780f9d13209daaf584bd447325b9727fed4795a5",
+      "U06-turn-05.json": "aa46c689b9dc5a10ce225a448fad434efd61116cad9e65b1cba76cbde53542b4",
+      "U06-turn-06.json": "88c82d1778cf265c5d2f25ae819598e0feeb6316a2b01a967ee7dcc8f03c9ade"
+    },
+    "U06-workspace-content-sha256": "d1a0c54576e8283e1ea764c480bb49911937a42ac891b6a17daf424b21882288"
+  }
+}
