@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Targeted UAT v2仅离线准备：用户LIVE_AUTHORIZATION明确NOT_GRANTED，真实API/Live Attempt/正式reservation均0。基线92424d080e31cefa2adf3af4c507d8f17a0669c0已本地/远程核对；独立分支codex/targeted-user-uat-v2。新代码与预注册已准备，待本提交后从干净版本冻结；最终Acceptance文档记录确切冻结SHA。生产mybot/、旧scripts/uat/和历史资产未改，不合main、不动Tag/ZIP。
+Targeted UAT v2仅离线准备：用户LIVE_AUTHORIZATION明确NOT_GRANTED，真实API/Live Attempt/正式reservation均0。基线92424d080e31cefa2adf3af4c507d8f17a0669c0已本地/远程核对；独立分支codex/targeted-user-uat-v2。预注册提交67b3ed09cb57f2b35e3c530fde70c35a6abb8bd6已从干净版本冻结并verify通过；Acceptance为包含最终验收报告的后续docs提交。生产mybot/、旧scripts/uat/和历史资产未改，不合main、不动Tag/ZIP。
 
 ## 新驱动与合同
 
@@ -20,4 +20,4 @@ T03五轮照片设计自然消息，固定input_limit12000，近期1轮，summar
 
 ## 下一步与禁止重复
 
-从本次干净Preregistration Commit执行prepare.freeze并验证源/配置/Fixture内容+元数据/账本身份，完成验收报告、Acceptance Commit、Push并核对远程HEAD。本轮只交付OFFLINE READY/BLOCKED，不擅自Live、不重跑旧六例、不使用旧22次余额。若未来明确授权，验证同一冻结包后唯一Attempt执行；源/环境/预算/审批/清理不合规则BLOCKED，不边修生产边跑本批。完整合同/消息/评分与证据在docs/reports/targeted-user-uat-v2/。
+冻结与verify已完成，正式账本仍0个Attempt/0个reservation；完整报告和SHA清单已生成，Acceptance Commit后按本次授权Push独立分支并核对远程HEAD。本轮只交付OFFLINE READY/BLOCKED，不擅自Live、不重跑旧六例、不使用旧22次余额。若未来明确授权，验证同一冻结包后唯一Attempt执行；源/环境/预算/审批/清理不合规则BLOCKED，不边修生产边跑本批。完整合同/消息/评分与证据在docs/reports/targeted-user-uat-v2/。

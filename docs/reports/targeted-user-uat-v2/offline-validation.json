@@ -1,0 +1,100 @@
+{
+  "status": "OFFLINE_READY",
+  "authorization": "NOT_GRANTED",
+  "baseline": "92424d080e31cefa2adf3af4c507d8f17a0669c0",
+  "preregistration_commit": "67b3ed09cb57f2b35e3c530fde70c35a6abb8bd6",
+  "production_changes": 0,
+  "original_product_tests": 1354,
+  "original_product_suites": 38,
+  "old_uat_tests": 13,
+  "remediation_tests": 42,
+  "original_total": 1409,
+  "new_v2_tests": 24,
+  "total_nonduplicated_tests": 1433,
+  "skipped": 0,
+  "phase_exit_code": 0,
+  "phase_log_sha256": "b46e02736976e771c4603811d4e9df09faeae37a550c833597c2495f7610c3c8",
+  "new_suite_log_sha256": "1f36702af778cce2186d8c21df4ffaecd83af639883f02657d354426dd4b35b9",
+  "targeted_commands": [
+    {
+      "module": "scripts.check_uat_preflight",
+      "exit_code": 0,
+      "tests": 9,
+      "seconds": 2.79
+    },
+    {
+      "module": "scripts.check_patch_diagnostics",
+      "exit_code": 0,
+      "tests": 9,
+      "seconds": 1.0
+    },
+    {
+      "module": "scripts.check_adaptive_compaction",
+      "exit_code": 0,
+      "tests": 14,
+      "seconds": 0.48
+    },
+    {
+      "module": "scripts.check_web_ui",
+      "exit_code": 0,
+      "tests": 53,
+      "seconds": 4.62
+    },
+    {
+      "module": "scripts.check_patch_preview_receipt",
+      "exit_code": 0,
+      "tests": 53,
+      "seconds": 7.66
+    },
+    {
+      "module": "scripts.check_remediation_e2e",
+      "exit_code": 0,
+      "tests": 5,
+      "seconds": 1.49
+    },
+    {
+      "module": "scripts.check_agent_instruction_quality",
+      "exit_code": 0,
+      "tests": 5,
+      "seconds": 0.45
+    },
+    {
+      "module": "scripts.check_real_user_uat",
+      "exit_code": 0,
+      "tests": 13,
+      "seconds": 1.48
+    },
+    {
+      "module": "scripts.check_targeted_user_uat_v2",
+      "exit_code": 0,
+      "tests": 24,
+      "seconds": 2.46,
+      "log": "post-freeze 24-test rerun"
+    }
+  ],
+  "compileall_exit_code": 0,
+  "diff_check_exit_code": 0,
+  "frozen_verify": "PASS",
+  "actual_live_ledger_attempts": 0,
+  "actual_live_ledger_reservations": 0,
+  "real_model_requests": 0,
+  "browser_offline_approvals": 1,
+  "browser_live_approvals": 0,
+  "terminal_yes": 0,
+  "api_authentication": "NOT_VERIFIED",
+  "model_capability": "NOT_VERIFIED; offline and synthetic success cannot replace Live",
+  "audit": {
+    "tracked_files_reviewed": 906,
+    "forbidden_paths": [],
+    "large_files": [],
+    "credential_pattern_files": [
+      "scripts/check_web_ui.py"
+    ],
+    "credential_review": "Only the unchanged historical SyntheticClient error fixture in scripts/check_web_ui.py; not a real credential.",
+    "unchanged_baseline_files": 877,
+    "baseline_manifest_sha256": "53dce14bbe39d7efdb0555575017a6c72d91291dbf6a1dbfa5987eaff8748671",
+    "production_source_changes": [],
+    "old_harness_changes": [],
+    "historical_assets_changes": []
+  }
+}

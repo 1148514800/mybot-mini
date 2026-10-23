@@ -1,0 +1,22 @@
+{
+  "algorithm": "SHA256",
+  "scope": "All public report artifacts except this self-referential manifest",
+  "files": {
+    "acceptance-report.md": "d26e52a4a3bf065cdcd4586743c0e32924187f142dca501836298f7a57d8429b",
+    "approval-audit.json": "40441f6e9b06f789016a0cd619269f7853a4c6d7615b607a6f61bca74669d463",
+    "case-results.md": "8b3c02bbbd1d209733662e6a7152f1367091ac7589da4a7470d1594b1466587c",
+    "coding-evidence.json": "4f05da65725529bc1d1388f783f6c3279a024f350f0d3ecd8879d2b04943a9ea",
+    "failure-analysis.md": "391f6c47d8d1b7002a43488d8c68fedbf2acad8bf0cb535c588c8943901d988b",
+    "fixture-preflight.json": "5103af741464a6bf2d2c8c995bf0d7049371d7df2070af6aaf487a4a1d7a21ce",
+    "freeze-summary.json": "c3898d33fed1c87c16e3313e52b42e18e8ba7b54a867d70d38706c3b10aa66e0",
+    "next-step-recommendations.md": "19f66603848cf923358df84b6d56496075bc931a551026bc278e49e7651220dd",
+    "offline-browser-reply.jpg": "0fb9989a9ae5371f296eb25e162bd56d4a93e0040047ff7552faf6611ec83b3d",
+    "offline-browser-verified.jpg": "6c7cfec051bc3b03ff0df165713ec77765f33cc2f1017de1c0891ba6b9bbf644",
+    "offline-validation.json": "290d86d5fc8d038436dcf184eda879c292d4aadcf64c1df8abb797d4ce204955",
+    "preregistration.json": "d7bea849a0aacfa126495b930ec7f7591b39416383a38aeda2804ee06a05273d",
+    "preregistration.md": "694a92fc99177e17b9e562da45f350367e153a2dfa23ef076291cf3ac716e9a2",
+    "resource-usage.json": "15ace501ae7d873fb506601e19ec91674d83f68d1c154759d623aabb21ce02d7",
+    "security-audit.md": "89a74ecdc9ce1b9f87bba0f4da4b0b5b305a2b108cd7f81b1e4bcc126472100a",
+    "semantic-compaction-evidence.json": "e625d81e11fcd0d8e426f509c18734384794ed33807aded30a52c8f636e144fb"
+  }
+}
