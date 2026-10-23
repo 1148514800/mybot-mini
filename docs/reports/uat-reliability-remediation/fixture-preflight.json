@@ -1,0 +1,523 @@
+{
+  "U03": {
+    "mode": "OFFLINE/SYNTHETIC",
+    "fixture_version": 2,
+    "actual_root": "[new disposable APFS fixture]",
+    "uid": 501,
+    "euid": 501,
+    "gid": 20,
+    "egid": 20,
+    "files": [
+      {
+        "path": "README.md",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313647,
+          1792761912614824338,
+          1792761912614824338
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "4046acbcfe0349cd81e978eaf9b191188260d073867e7a996ad34c6e5ee8fb40"
+      },
+      {
+        "path": "src/orderdesk/__init__.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313650,
+          1792761912614923921,
+          1792761912614935379
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "src/orderdesk/models.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313651,
+          1792761912615000546,
+          1792761912615000546
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "2036956bc92762fabab464dd57937fadda381417258c62e1784b0a56e8e2108a"
+      },
+      {
+        "path": "src/orderdesk/money.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313652,
+          1792761912615064504,
+          1792761912615064504
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "3c0d17065601852608597962ddc408c70f3001b477bdd8c01ddce6e2ae5ab1b3"
+      },
+      {
+        "path": "src/orderdesk/pricing.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313653,
+          1792761912615125796,
+          1792761912615125796
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "7fd999cd6e6bc59b7c55e81776bc1cf28a94a7b5a18b16c15d366271c2ff4d03"
+      },
+      {
+        "path": "src/orderdesk/service.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313654,
+          1792761912615186088,
+          1792761912615186088
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "b96c3ead8c71b1d0aac18e14f39a46a2ec417f4464d7200a1689ca8fdf5b62a6"
+      },
+      {
+        "path": "tests/test_orders.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313656,
+          1792761912615272171,
+          1792761912615272171
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "432dfc1efb98f9d875994d69f31ccbc5640e6bed0fadc1601bda009990c66785"
+      }
+    ],
+    "directories": [
+      {
+        "path": ".",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "src/orderdesk",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "src",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "tests",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      }
+    ],
+    "issues": [],
+    "root_parent": {
+      "uid": 501,
+      "gid": 20,
+      "mode": "0o700"
+    },
+    "git_head": "a8430950dbf44a83a20b171086d98c1c10ba597f",
+    "git_index_sha256": "3592e08f4345453efbe87463aaac0572c0806b1815366bac345f40380fbc2d3d",
+    "git_status": "",
+    "native_previews": [],
+    "public_tests": {
+      "passed": true,
+      "returncode": 0,
+      "status": "completed",
+      "sandbox_applied": true,
+      "stdout": "",
+      "stderr": "test_total (test_orders.Orders.test_total) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nOK\n"
+    },
+    "independent_tests": null,
+    "seatbelt_available": true,
+    "unchanged": true,
+    "status": "PASS"
+  },
+  "U04": {
+    "mode": "OFFLINE/SYNTHETIC",
+    "fixture_version": 2,
+    "actual_root": "[new disposable APFS fixture]",
+    "uid": 501,
+    "euid": 501,
+    "gid": 20,
+    "egid": 20,
+    "files": [
+      {
+        "path": "README.md",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313777,
+          1792761912829865159,
+          1792761912829865159
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "83e9aa7bda8a583f42322eb046a288ba5ffcd7b44102a39a6874b18c46d32c7b"
+      },
+      {
+        "path": "src/clockcache/__init__.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313780,
+          1792761912830016075,
+          1792761912830016075
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "302f471f5c6f17460c9af956f8330b01dc86d6ea5360be75d51e48674ef65a82"
+      },
+      {
+        "path": "src/clockcache/cache.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313781,
+          1792761912830091575,
+          1792761912830091575
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "cffe1ff96a9d5685621ca15cb4feb45c5e7218df6eecdf29c4db1e812d8437fd"
+      },
+      {
+        "path": "tests/test_cache.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313783,
+          1792761912830202742,
+          1792761912830202742
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "92961fe5a912fdc59ab88e9a1cad53173b21187ba0d43ec7de48302957547472"
+      }
+    ],
+    "directories": [
+      {
+        "path": ".",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "src/clockcache",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "src",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "tests",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      }
+    ],
+    "issues": [],
+    "root_parent": {
+      "uid": 501,
+      "gid": 20,
+      "mode": "0o700"
+    },
+    "git_head": "e77ae27859fdfd4ec2245924e6c53550072e7f00",
+    "git_index_sha256": "0dc151bb2e7b5d27e167a5e0afa3780d36c8de7dae56d6452bba8e660c7a5f3a",
+    "git_status": "",
+    "native_previews": [
+      {
+        "path": "src/clockcache/cache.py",
+        "passed": true,
+        "code": null
+      }
+    ],
+    "public_tests": {
+      "passed": false,
+      "returncode": 1,
+      "status": "completed",
+      "sandbox_applied": true,
+      "stdout": "",
+      "stderr": "test_before_expiry (test_cache.CacheTests.test_before_expiry) ... ok\ntest_exact_expiry (test_cache.CacheTests.test_exact_expiry) ... FAIL\ntest_missing_default (test_cache.CacheTests.test_missing_default) ... ok\n\n======================================================================\nFAIL: test_exact_expiry (test_cache.CacheTests.test_exact_expiry)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/U04/tests/test_cache.py\", line 10, in test_exact_expiry\n    self.cache.set('x','v',2);self.now=12.0;self.assertIsNone(self.cache.get('x'))\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'v' is not None\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nFAILED (failures=1)\n"
+    },
+    "independent_tests": {
+      "passed": false,
+      "returncode": 1,
+      "status": "completed",
+      "sandbox_applied": true,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 7, in <module>\nAssertionError\n"
+    },
+    "seatbelt_available": true,
+    "expected_initial_bug": true,
+    "unchanged": true,
+    "status": "PASS"
+  },
+  "U05": {
+    "mode": "OFFLINE/SYNTHETIC",
+    "fixture_version": 2,
+    "actual_root": "[new disposable APFS fixture]",
+    "uid": 501,
+    "euid": 501,
+    "gid": 20,
+    "egid": 20,
+    "files": [
+      {
+        "path": "README.md",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313907,
+          1792761913147825037,
+          1792761913147825037
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "45f48b98cd611ea4e874901006257f7f8c5c76a82d019c18e3368f73075b5c77"
+      },
+      {
+        "path": "src/orderexport/__init__.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313910,
+          1792761913147954578,
+          1792761913147954578
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "984d5825838c944e1c8c541dd2984a7658adc8c66b4d3e33d0405750c44010d1"
+      },
+      {
+        "path": "src/orderexport/models.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313911,
+          1792761913148026287,
+          1792761913148026287
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "d06ec748ddb443ac8685a16081bc69ee638ccc857e6a1867460293eb683bd5e0"
+      },
+      {
+        "path": "src/orderexport/csv_export.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313912,
+          1792761913148084328,
+          1792761913148084328
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "7089b0396b7e5a862985414b82f3ae00b71e2566de00854124da661844ec7721"
+      },
+      {
+        "path": "src/orderexport/business.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313913,
+          1792761913148141578,
+          1792761913148141578
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "89394a7ffa346aec9ebda1e2089476240d80a9819146e9438bfb03951801f67e"
+      },
+      {
+        "path": "tests/test_export.py",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o644",
+        "regular": true,
+        "symlink": false,
+        "version": [
+          16777231,
+          12313915,
+          1792761913148233453,
+          1792761913148233453
+        ],
+        "xattr_present": true,
+        "metadata_supported": true,
+        "acl_supported": true,
+        "sha256": "a89f0450045ae4f84cc3fcd9eb64b544758d17f708ee25e3a58c5b3584976566"
+      }
+    ],
+    "directories": [
+      {
+        "path": ".",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "src/orderexport",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "src",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      },
+      {
+        "path": "tests",
+        "uid": 501,
+        "gid": 20,
+        "mode": "0o755"
+      }
+    ],
+    "issues": [],
+    "root_parent": {
+      "uid": 501,
+      "gid": 20,
+      "mode": "0o700"
+    },
+    "git_head": "3e6d93569c0ebc7575c05c3c081cc5c21d9bc91f",
+    "git_index_sha256": "1e86e51bc3e8c260ec6351e9817548e7b1788d701598072512c2e0c5667e5b69",
+    "git_status": "",
+    "native_previews": [
+      {
+        "path": "src/orderexport/models.py",
+        "passed": true,
+        "code": null
+      },
+      {
+        "path": "src/orderexport/csv_export.py",
+        "passed": true,
+        "code": null
+      },
+      {
+        "path": "src/orderexport/business.py",
+        "passed": true,
+        "code": null
+      }
+    ],
+    "public_tests": {
+      "passed": false,
+      "returncode": 1,
+      "status": "completed",
+      "sandbox_applied": true,
+      "stdout": "",
+      "stderr": "test_business_amount (test_export.Exports.test_business_amount) ... FAIL\ntest_header (test_export.Exports.test_header) ... FAIL\ntest_helper_quoting (test_export.Exports.test_helper_quoting) ... FAIL\n\n======================================================================\nFAIL: test_business_amount (test_export.Exports.test_business_amount)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/U05/tests/test_export.py\", line 11, in test_business_amount\n    self.assertEqual(rows,[['id','name','amount'],['1','Coffee','2.00']])\nAssertionError: Lists differ: [['id', 'name'], ['1', 'Coffee']] != [['id', 'name', 'amount'], ['1', 'Coffee', '2.00']]\n\nFirst differing element 0:\n['id', 'name']\n['id', 'name', 'amount']\n\n- [['id', 'name'], ['1', 'Coffee']]\n+ [['id', 'name', 'amount'], ['1', 'Coffee', '2.00']]\n?               ++++++++++                 ++++++++\n\n\n======================================================================\nFAIL: test_header (test_export.Exports.test_header)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/U05/tests/test_export.py\", line 8, in test_header\n    def test_header(self):self.assertEqual(next(csv.reader(io.StringIO(export_orders([])))),['id','name','amount'])\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['id', 'name'] != ['id', 'name', 'amount']\n\nSecond list contains 1 additional elements.\nFirst extra element 2:\n'amount'\n\n- ['id', 'name']\n+ ['id', 'name', 'amount']\n\n======================================================================\nFAIL: test_helper_quoting (test_export.Exports.test_helper_quoting)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"[fixture]/U05/tests/test_export.py\", line 14, in test_helper_quoting\n    self.assertEqual(rows[1],['2','A,\"B\"\\nC','3.50'])\nAssertionError: Lists differ: ['2', 'A', 'B'] != ['2', 'A,\"B\"\\nC', '3.50']\n\nFirst differing element 1:\n'A'\n'A,\"B\"\\nC'\n\n- ['2', 'A', 'B']\n+ ['2', 'A,\"B\"\\nC', '3.50']\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nFAILED (failures=3)\n"
+    },
+    "independent_tests": {
+      "passed": false,
+      "returncode": 1,
+      "status": "completed",
+      "sandbox_applied": true,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 11, in <module>\nAssertionError\n"
+    },
+    "seatbelt_available": true,
+    "expected_initial_bug": true,
+    "unchanged": true,
+    "status": "PASS"
+  }
+}

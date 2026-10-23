@@ -1,0 +1,128 @@
+{
+  "mode": "OFFLINE/SYNTHETIC",
+  "real_model_api_requests": 0,
+  "original_uat_regraded": false,
+  "patch_cases": [
+    {
+      "synthetic": true,
+      "scenario": "normal",
+      "mode": "receipt",
+      "state": "verified",
+      "patch_committed": 1,
+      "formal_commit_attempts": 1,
+      "invalid_arguments": 0,
+      "tool_calls": 3,
+      "logical_model_requests": 4,
+      "physical_model_requests_synthetic": 4,
+      "actual_http_requests": 0,
+      "controller_verified": 1,
+      "strict_success": 0,
+      "strict_eligible": false,
+      "synthetic_contract_success": 1,
+      "security_rejections": 0,
+      "tool_failures": 0,
+      "execution_uncertain": 0,
+      "receipt_destroyed": true,
+      "tool_ids_paired": true
+    },
+    {
+      "synthetic": true,
+      "scenario": "multi_file",
+      "mode": "receipt",
+      "state": "verified",
+      "patch_committed": 1,
+      "formal_commit_attempts": 1,
+      "invalid_arguments": 0,
+      "tool_calls": 3,
+      "logical_model_requests": 4,
+      "physical_model_requests_synthetic": 4,
+      "actual_http_requests": 0,
+      "controller_verified": 1,
+      "strict_success": 0,
+      "strict_eligible": false,
+      "synthetic_contract_success": 1,
+      "security_rejections": 0,
+      "tool_failures": 0,
+      "execution_uncertain": 0,
+      "receipt_destroyed": true,
+      "tool_ids_paired": true
+    },
+    {
+      "synthetic": true,
+      "scenario": "metadata",
+      "mode": "receipt",
+      "state": "blocked",
+      "patch_committed": 0,
+      "formal_commit_attempts": 1,
+      "invalid_arguments": 0,
+      "tool_calls": 2,
+      "logical_model_requests": 2,
+      "physical_model_requests_synthetic": 2,
+      "actual_http_requests": 0,
+      "controller_verified": 0,
+      "strict_success": 0,
+      "strict_eligible": false,
+      "synthetic_contract_success": 0,
+      "security_rejections": 1,
+      "tool_failures": 1,
+      "execution_uncertain": 0,
+      "receipt_destroyed": true,
+      "tool_ids_paired": true
+    },
+    {
+      "synthetic": true,
+      "scenario": "publication_uncertain",
+      "mode": "receipt",
+      "state": "execution_uncertain",
+      "patch_committed": 0,
+      "formal_commit_attempts": 1,
+      "invalid_arguments": 0,
+      "tool_calls": 2,
+      "logical_model_requests": 2,
+      "physical_model_requests_synthetic": 2,
+      "actual_http_requests": 0,
+      "controller_verified": 0,
+      "strict_success": 0,
+      "strict_eligible": false,
+      "synthetic_contract_success": 0,
+      "security_rejections": 0,
+      "tool_failures": 1,
+      "execution_uncertain": 1,
+      "receipt_destroyed": true,
+      "tool_ids_paired": true
+    }
+  ],
+  "semantic_comparison": {
+    "historical_live": {
+      "attempts": 2,
+      "applied": 0,
+      "reported_tokens": 6452,
+      "unchanged": true
+    },
+    "new_synthetic": {
+      "applied": {
+        "status": "semantic_applied",
+        "available_summary_budget": 3000,
+        "estimated_input_tokens": 5161,
+        "input_limit": 8000,
+        "dynamic_max_tokens": 1200,
+        "model_requests": 2,
+        "summary_requests": 1,
+        "canonical_preserved": true
+      },
+      "skipped": {
+        "status": "semantic_skipped_insufficient_room",
+        "model_requests": 1,
+        "summary_requests": 0
+      },
+      "pruning": {
+        "unpruned_fits": false,
+        "status": "semantic_applied_pruned",
+        "pruned_fits": true,
+        "summary_requests": 1,
+        "constraint_retained": true
+      }
+    },
+    "comparable_model_success_rate": false
+  }
+}

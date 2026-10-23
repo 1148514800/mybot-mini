@@ -1,0 +1,9 @@
+# 指令质量与范围控制
+
+ContextBuilder.SYSTEM_RULES增加通用要求：区分用户指定要求、可选建议、待确认事项；不把实现建议当验收条件；只分析不得改文件。保留普通聊天/简单单步不规划规则。
+
+代码调查先考虑search_code，找到入口再读实现，不凭名称推测；区分type(x) is int与isinstance(x,int)对bool的行为；回答前后一致，未观察行为标unknown，避免重复搜索。工具选择仍由模型决定，没有新增强制调工具的代码或样例答案。只有明确工具要求/任务合同才把工具证据作为必要条件；Task Success与Workflow Compliance分别表达。
+
+合成Client检查真实AgentLoop请求的System合同和Coding工具Schema，确认search_code/read_file_range确实提供，非Coding聊天仍一次请求且不创建Plan，新增System内容计入原预算。CLI与Web共享ContextBuilder和AgentLoop，本轮还通过同一历史/配置比较两入口语义状态和最终输入估算一致。
+
+这些测试证明指令已送达和预算仍有效，不证明模型能够输出正确分类、没有矛盾或会选对工具。U02/U03原失败保留，下一次真实测试才可验证遵循率。

@@ -1,0 +1,244 @@
+{
+  "mode": "OFFLINE/SYNTHETIC",
+  "status": "PASS",
+  "baseline": "a847884568184fcf5317d11ecfd0ec9a721b9db0",
+  "implementation_commit": "9f82d36138527105af0260ad71242bb5b9bfd132",
+  "branch": "codex/uat-reliability-remediation",
+  "real_model_api_requests": {
+    "deepseek": 0,
+    "glm": 0,
+    "semantic": 0,
+    "paid_judge": 0
+  },
+  "real_user_approvals": 0,
+  "approval_note": "Regression uses existing synthetic approval fixtures; no Live/human command approvals.",
+  "product_regression": {
+    "command": "uv run python -m scripts.check_phase",
+    "exit_code": 0,
+    "suites": 38,
+    "tests": 1354,
+    "skipped": 0,
+    "log_sha256": "8c05089041cee6bf8408daa15039b261cb6eda1949ddf28e15b8529d675db5e8"
+  },
+  "targeted_commands": [
+    {
+      "module": "scripts.check_context",
+      "exit_code": 0,
+      "tests": 18,
+      "passed": true,
+      "seconds": 0.53
+    },
+    {
+      "module": "scripts.check_context_compaction",
+      "exit_code": 0,
+      "tests": 22,
+      "passed": true,
+      "seconds": 0.62
+    },
+    {
+      "module": "scripts.check_token_budget",
+      "exit_code": 0,
+      "tests": 16,
+      "passed": true,
+      "seconds": 0.55
+    },
+    {
+      "module": "scripts.check_runtime_accounting",
+      "exit_code": 0,
+      "tests": 23,
+      "passed": true,
+      "seconds": 1.34
+    },
+    {
+      "module": "scripts.check_web_ui",
+      "exit_code": 0,
+      "tests": 53,
+      "passed": true,
+      "seconds": 5.13
+    },
+    {
+      "module": "scripts.check_patch_editing",
+      "exit_code": 0,
+      "tests": 61,
+      "passed": true,
+      "seconds": 4.99
+    },
+    {
+      "module": "scripts.check_patch_preview_receipt",
+      "exit_code": 0,
+      "tests": 53,
+      "passed": true,
+      "seconds": 8.95
+    },
+    {
+      "module": "scripts.check_coding_reliability",
+      "exit_code": 0,
+      "tests": 42,
+      "passed": true,
+      "seconds": 13.99
+    },
+    {
+      "module": "scripts.check_coding_failover",
+      "exit_code": 0,
+      "tests": 50,
+      "passed": true,
+      "seconds": 20.33
+    },
+    {
+      "module": "scripts.check_real_user_uat",
+      "exit_code": 0,
+      "tests": 13,
+      "passed": true,
+      "seconds": 1.64
+    },
+    {
+      "module": "scripts.check_uat_preflight",
+      "exit_code": 0,
+      "tests": 9,
+      "passed": true,
+      "seconds": 3.28
+    },
+    {
+      "module": "scripts.check_patch_diagnostics",
+      "exit_code": 0,
+      "tests": 9,
+      "passed": true,
+      "seconds": 1.25
+    },
+    {
+      "module": "scripts.check_adaptive_compaction",
+      "exit_code": 0,
+      "tests": 14,
+      "passed": true,
+      "seconds": 0.63
+    },
+    {
+      "module": "scripts.check_agent_instruction_quality",
+      "exit_code": 0,
+      "tests": 5,
+      "passed": true,
+      "seconds": 0.61
+    },
+    {
+      "module": "scripts.check_remediation_e2e",
+      "exit_code": 0,
+      "tests": 5,
+      "passed": true,
+      "seconds": 1.82
+    }
+  ],
+  "new_suites": [
+    {
+      "module": "scripts.check_uat_preflight",
+      "exit_code": 0,
+      "tests": 9,
+      "passed": true,
+      "seconds": 3.28
+    },
+    {
+      "module": "scripts.check_patch_diagnostics",
+      "exit_code": 0,
+      "tests": 9,
+      "passed": true,
+      "seconds": 1.25
+    },
+    {
+      "module": "scripts.check_adaptive_compaction",
+      "exit_code": 0,
+      "tests": 14,
+      "passed": true,
+      "seconds": 0.63
+    },
+    {
+      "module": "scripts.check_agent_instruction_quality",
+      "exit_code": 0,
+      "tests": 5,
+      "passed": true,
+      "seconds": 0.61
+    },
+    {
+      "module": "scripts.check_remediation_e2e",
+      "exit_code": 0,
+      "tests": 5,
+      "passed": true,
+      "seconds": 1.82
+    }
+  ],
+  "new_tests": 42,
+  "old_uat_offline_tests": 13,
+  "total_nonduplicated_unittest_tests": 1409,
+  "compilation": {
+    "command": "uv run python -m compileall -q mybot scripts",
+    "exit_code": 0
+  },
+  "diff_check": {
+    "command": "git diff --check",
+    "exit_code": 0
+  },
+  "browser": {
+    "status": "PASS",
+    "engine": "real in-app browser",
+    "transport": "real local HTTP/SSE",
+    "model": "synthetic-browser-client",
+    "actions": [
+      "send OFFLINE/SYNTHETIC task",
+      "open activity panel",
+      "expand native Patch card"
+    ],
+    "observed": {
+      "safe_error_code": "unsupported_ownership",
+      "failure_phase": "preflight",
+      "operation_intent": "preview",
+      "state": "failed",
+      "revision": 0,
+      "committed_patches": 0,
+      "verified_tests": 0
+    },
+    "screenshot": "patch-diagnostic-browser.jpg",
+    "chrome_limitation": "extension navigation marked cross-site and was refused by unchanged origin boundary; IAB used instead"
+  },
+  "fixture_evidence": "fixture-preflight.json",
+  "synthetic_comparison": "synthetic-comparison.json",
+  "history": {
+    "original_live_reruns": 0,
+    "original_uat_regraded": false,
+    "historical_tags_or_zip_modified": false,
+    "main_modified": false
+  },
+  "intermediate_failures": [
+    {
+      "scope": "initial full regression",
+      "reason": "diagnostic overwrote legacy safe_to_retry",
+      "tests_failed": 7,
+      "resolution": "preserve original value; 61 Patch tests and 1354 full tests pass"
+    },
+    {
+      "scope": "old offline UAT calibration",
+      "reason": "quote length cap coupled too tightly to maximum entry count",
+      "tests_failed": 1,
+      "resolution": "independent dynamic bounds; unchanged 13-test suite passes"
+    },
+    {
+      "scope": "new E2E harness development",
+      "reason": "invalid config test value and waiting for message_completed on failed SSE",
+      "resolution": "use valid 128 char config and actual message_failed terminal event"
+    }
+  ],
+  "limitations": [
+    "No real model capability, semantic quality or cost improvement claim",
+    "Legal summaries may still fall back if protected citations do not fit",
+    "Budget is conservative UTF8 estimation, not exact provider tokens"
+  ],
+  "security_audit": {
+    "tracked_files_scanned": 878,
+    "forbidden_paths": [],
+    "large_files": [],
+    "credential_pattern_files": [
+      "scripts/check_web_ui.py"
+    ],
+    "protected_files_unchanged": 545,
+    "credential_pattern_review": "Only unchanged pre-existing SyntheticClient error fixture in scripts/check_web_ui.py; not a real credential.",
+    "main_head_unchanged": "3461dc7031bb9542070b034bed0be47f61760f75",
+    "historical_test_assertions_modified": false
+  }
+}
