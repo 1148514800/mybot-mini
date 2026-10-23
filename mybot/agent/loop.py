@@ -26,6 +26,9 @@ class AgentLoop:
 
     def __init__(self, client: AsyncOpenAI, config: GatewayConfig, tools: ToolRegistry,
                  context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None):
+        from ..runtime_accounting import RuntimeAccounting
+        self.resources = RuntimeAccounting()
+        self.last_runtime_report = self.resources.snapshot()
         self._event_callback = event_callback
         self.client = client
         self.config = config
@@ -42,6 +45,11 @@ class AgentLoop:
         if self.store is not None:
             self.session.restore(self.store.load())
         self.coding_controller = None
+        from ..provider_failover import ProviderFailoverClient
+        if isinstance(client, ProviderFailoverClient):
+            previous_fallback_gate = client.before_fallback
+            client.before_fallback = lambda definitions: previous_fallback_gate(definitions) and (
+                self.coding_controller is None or self.coding_controller.before_request(definitions))
         self.last_coding_report = None
         self._git_capsule = None
         self._active_journal = None
@@ -67,7 +75,7 @@ class AgentLoop:
         # Host-only observer. Never pass raw arguments, full metadata, receipts or SDK errors.
         if self._event_callback is not None:
             try: self._event_callback({'type': event, **data})
-            except Exception: pass  # Observation must never authorize/replay/fail a native write.
+            except Exception: self.resources.observation_errors += 1  # Observation never grants authority.
 
     async def run(self) -> None:
         while True:
@@ -84,15 +92,41 @@ class AgentLoop:
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception as exc:
-                print(f"\nBot: 运行时错误: {type(exc).__name__}: {exc}\n")
-                continue
-            print(f"\nBot: {reply}\n")
+                print(f"\nBot: 运行时错误: {type(exc).__name__}；请求未完成，请检查配置或资源状态。\n")
+            else:
+                print(f"\nBot: {reply}\n")
+            r = self.last_runtime_report
+            print(f"[RESOURCES] logical={r['logical_requests']} physical={r['physical_requests']} "
+                  f"reported_tokens={r['provider_reported_total_tokens'] if r['usage_complete'] else 'unknown'} "
+                  f"http_attempts={r['http_dispatch_attempts']} fallback={r['fallback_used']} "
+                  f"compaction={r['compaction_requests']} outcome={r['outcome']}")
+            c = r['context']
+            if c:
+                print(f"[CONTEXT] estimated_tokens={c['estimated_input_tokens']} chars={c['request_chars']} "
+                      f"utf8_bytes={c['request_utf8_bytes']} window={c['model_window_tokens'] or 'unknown'} "
+                      f"output_reserve={c['output_reserved_tokens']} mode={c['context_budget_mode']} "
+                      f"summary={c['context_compaction_status']} kept={c['history_turns_kept']} "
+                      f"summarized={c['history_turns_summarized']} truncated={c['context_truncated']}")
 
     async def handle_message(self, user_input: str) -> str:
+        from ..runtime_accounting import RuntimeAccounting
+        from .context_compactor import ContextCompactor
+        self.resources = RuntimeAccounting()
+        self.compactor = ContextCompactor(self.config)
+        self.last_runtime_report = self.resources.snapshot()
         if self.config.coding_git_workflow['enabled']:
             command = user_input.strip()
             if command in ('/changes', '/undo'):
-                return await self._git_cli(command)
+                try:
+                    reply = await self._git_cli(command)
+                    self.resources.outcome = 'completed'
+                    return reply
+                except BaseException as exc:
+                    self.resources.outcome = 'cancelled' if isinstance(exc, asyncio.CancelledError) else 'failed'
+                    raise
+                finally:
+                    self.last_runtime_report = self.resources.snapshot()
+                    self._notify('resource_update', resources=self.last_runtime_report)
             if self._git_capsule is not None: self._git_capsule.close()
             self._git_capsule = None
             if command == '/clear': self._undo_notice = False
@@ -133,8 +167,10 @@ class AgentLoop:
                 reply = "[CONTEXT] 本轮部分工具结果仅提供节选，未验证全文阅读或分析。以下模型回复不能视为完整任务结论：\n" + reply
             if self.context_history_omitted:
                 reply = "[CONTEXT] 部分历史已省略，预算不足以提供其摘要。\n" + reply
+            self.resources.outcome = self.last_coding_report['state'] if self.last_coding_report else ('completed' if self.resources.outcome == 'running' else self.resources.outcome)
             return reply
         except BaseException as exc:
+            self.resources.outcome = 'cancelled' if isinstance(exc, asyncio.CancelledError) else 'failed'
             if self._active_journal is not None:
                 self._active_journal.close()
                 self._git_capsule = None
@@ -157,6 +193,55 @@ class AgentLoop:
             if self.discovery is not None:self.discovery.reset()
             self._request_visible_names = frozenset()
             self.routing_decision = None
+            self.last_runtime_report = self.resources.snapshot()
+            self._notify('resource_update', resources=self.last_runtime_report)
+
+    async def _request_model(self, request, *, purpose='agent'):
+        response = await self.resources.request(self.client, self.config, request, purpose=purpose)
+        self._notify('resource_update', resources=self.resources.snapshot())
+        return response
+
+    async def _prepare_context(self, messages, definitions, turns):
+        from ..runtime_accounting import active_config
+        from dataclasses import replace
+        effective = active_config(self.client, self.config)
+        if not isinstance(effective, GatewayConfig):
+            effective = replace(self.config, model=effective.model, provider='coco2')
+        self.context_manager.config = effective
+        view, stats = self.context_manager.prepare(messages, definitions, turns, self.plan)
+        count = stats['history_turns_omitted']
+        if count and self.config.context_compaction['mode']=='semantic':
+            controller = self.coding_controller
+            async def summarize(request):
+                # Keep at least one request for the actual task. The same original
+                # Controller and Evaluation client budget gates remain authoritative.
+                if controller is not None:
+                    if controller.settings.max_model_requests-controller.model_requests <= 1:
+                        raise ContextBudgetError('compaction_request_reserve')
+                    if not controller.before_request(None):raise ContextBudgetError('compaction_controller_stopped')
+                request_call = self._request_model(request, purpose='compaction')
+                if controller is not None:
+                    return await asyncio.wait_for(request_call, max(.001, controller.remaining_seconds))
+                return await request_call
+            from ..runtime_accounting import find_gateway
+            gateway = find_gateway(self.client)
+            secrets = (self.config.api_key, getattr(effective,'api_key',None), getattr(getattr(gateway,'_backup_config',None),'api_key',None))
+            summary,status = await self.compactor.compact(turns[:count], effective, summarize, secrets)
+            if summary:
+                projected = view[:1]+[summary]+view[2 if stats['summary_present'] else 1:]
+                if self.context_manager.accepts(projected,definitions):
+                    view=projected;stats['history_turns_summarized']=count;stats['history_turns_summarized_indices']=list(range(1,count+1));stats['history_omitted']=False
+                else:
+                    status='fallback_summary_does_not_fit'
+                    if self.config.context_compaction['on_failure']=='stop':raise ContextBudgetError(status)
+            stats['context_compaction_status']=status
+            stats['compaction_input_truncated']=self.compactor.input_truncated
+        from .token_counter import TokenCounter
+        stats.update(TokenCounter.inspect(effective,TokenCounter.request(effective,view,definitions)))
+        stats['after']=self.context_manager.count(view,definitions)
+        self.resources.context = dict(stats)
+        self._notify('resource_update', resources=self.resources.snapshot())
+        return view,stats
 
     def _route_initial_tools(self, user_input, messages, turns):
         decision = self.router.route(user_input,messages=messages,turns=turns,plan=self.plan,context_manager=self.context_manager)
@@ -209,11 +294,11 @@ class AgentLoop:
             definitions = self.tools.get_definitions(visible) or None
             # Freeze what THIS response may execute; activation cannot change it mid-batch.
             self._request_visible_names = frozenset(item['function']['name'] for item in definitions or [])
-            llm_messages, stats = self.context_manager.prepare(messages, definitions, turns, self.plan)
+            llm_messages, stats = await self._prepare_context(messages, definitions, turns)
             self.context_clipped = self.context_clipped or stats["current_clipped"]
             self.context_history_omitted = self.context_history_omitted or stats.get("history_omitted", False)
             if debug and self.config.context_enabled:
-                print(f"[CONTEXT] chars={stats['before']}->{stats['after']} max={self.config.context_max_chars}")
+                print(f"[CONTEXT] chars={stats['before']}->{stats['after']} estimated_tokens={stats['estimated_input_tokens']} mode={stats['context_budget_mode']}")
             if controller is not None and not controller.before_request(definitions):
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             start = time.perf_counter()
@@ -221,19 +306,15 @@ class AgentLoop:
                 self._notify('model_request_started', model=self.config.model, provider=getattr(self.client, 'active_provider', self.config.provider))
             try:
                 response = await asyncio.wait_for(
-                    self.client.chat.completions.create(
-                        model=self.config.model,
-                        messages=llm_messages,
-                        tools=definitions,
-                        temperature=0.1,
-                        max_tokens=self.config.max_completion_tokens,
-                    ),
+                    self._request_model(dict(model=self.config.model, messages=llm_messages, tools=definitions,
+                        temperature=0.1, max_tokens=self.config.max_completion_tokens)),
                     timeout=(min(self.config.request_timeout_seconds, max(.001, controller.remaining_seconds))
                              if controller is not None else max(1.0, self.config.request_timeout_seconds)),
                 )
             except FallbackBudgetExceeded:
-                return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
+                return await self._complete_turn(messages, turn_start, '', controller.stop_reason if controller else 'model_request_budget')
             except (TimeoutError, APITimeoutError):
+                self.resources.outcome = 'timeout'
                 self._notify('model_request_failed', reason='timeout')
                 if controller is not None:
                     controller.check_time()
@@ -252,7 +333,7 @@ class AgentLoop:
             if debug:
                 print(
                     f"[LLM {step}] time={time.perf_counter() - start:.2f}s "
-                    f"tokens={response.usage.total_tokens if response.usage else '?'} "
+                    f"provider_reported_tokens={response.usage.total_tokens if response.usage else '?'} "
                     f"tool_calls={len(message.tool_calls or [])}"
                 )
             if not message.tool_calls:
@@ -394,6 +475,8 @@ class AgentLoop:
             reply = controller.finish(reason)
             self.last_coding_report = controller.snapshot()
         report = self.plan.close(reason)
+        if controller is None and (reason or any(s.status != 'completed' for s in self.plan.steps)):
+            self.resources.outcome = 'stopped' if reason else 'failed'
         if report and controller is None:
             reply = f"{reply}\n{report}" if reason else report
         if self._active_journal is not None:

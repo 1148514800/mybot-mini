@@ -40,7 +40,7 @@ if not isinstance(_PROVIDER_CONFIG, dict):
 
 def _llm_value(key: str, default):
     """Read a key from the llm section, falling back to the active provider."""
-    return (_LLM or _PROVIDER_CONFIG).get(key, default)
+    return _LLM.get(key, _PROVIDER_CONFIG.get(key, default))
 
 
 def _session_value(key: str, default):
@@ -103,6 +103,8 @@ class GatewayConfig:
     context_recent_turns: int = field(default_factory=lambda: _context_value("recent_turns", 2))
     context_summary_max_chars: int = field(default_factory=lambda: _context_value("summary_max_chars", 1500))
     context_tool_result_max_chars: int = field(default_factory=lambda: _context_value("tool_result_max_chars", 4000))
+    context_token_budget: dict = field(default_factory=lambda: _context_value('token_budget', {}), kw_only=True)
+    context_compaction: dict = field(default_factory=lambda: _context_value('compaction', {}), kw_only=True)
     debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
     session_max_turns: int = field(default_factory=lambda: _session_value("max_turns", 6))
     session_persist: bool = field(default_factory=lambda: _session_value("persist", False))
@@ -149,6 +151,14 @@ class GatewayConfig:
         if self.skills_enabled and raw.is_symlink():
             raise ValueError("skills.path cannot be a symlink")
         self.skills_path = raw.resolve()
+        from .agent.token_counter import validate_token_budget
+        from .agent.context_compactor import validate_compaction
+        self.context_token_budget = validate_token_budget(self.context_token_budget)
+        self.context_compaction = validate_compaction(self.context_compaction)
+        if self.context_token_budget['mode'] != 'legacy_chars' and not self.context_enabled:
+            raise ValueError('context.token_budget requires context.enabled=true')
+        if self.context_compaction['mode'] == 'semantic' and not self.context_enabled:
+            raise ValueError('context.compaction requires context.enabled=true')
         if type(self.context_enabled) is not bool:
             raise ValueError("context.enabled must be a boolean")
         for name, minimum in (("max_chars", 1), ("recent_turns", 0), ("summary_max_chars", 128), ("tool_result_max_chars", 128)):
@@ -179,7 +189,12 @@ def build_client(config: GatewayConfig) -> AsyncOpenAI:
         "timeout": config.request_timeout_seconds,
     }
     if config.coding_autonomy['enabled']:
-        kwargs['max_retries'] = 0  # One counted create call must not hide SDK retry requests.
+        kwargs['max_retries'] = 0
+
     if config.base_url:
         kwargs["base_url"] = config.base_url
-    return AsyncOpenAI(**kwargs)
+    client = AsyncOpenAI(**kwargs)
+    # Preserve the established constructor adapter contract, but configure every
+    # returned SDK client before it can send requests (including non-Coding CLI).
+    client.max_retries = 0
+    return client

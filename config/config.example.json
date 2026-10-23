@@ -56,7 +56,21 @@
     "max_chars": 40000,
     "recent_turns": 2,
     "summary_max_chars": 1500,
-    "tool_result_max_chars": 4000
+    "tool_result_max_chars": 4000,
+    "token_budget": {
+      "mode": "legacy_chars",
+      "input_limit": 16000,
+      "model_windows": {}
+    },
+    "compaction": {
+      "mode": "deterministic",
+      "allow_extra_requests": false,
+      "max_calls": 1,
+      "input_tokens": 12000,
+      "output_tokens": 1200,
+      "timeout_seconds": 15,
+      "on_failure": "deterministic"
+    }
   },
   "skills": {
     "enabled": false,
@@ -104,7 +118,9 @@
       "demo-http": {
         "transport": "streamable_http",
         "url": "http://127.0.0.1:8765/mcp",
-        "auth": {"type": "none"},
+        "auth": {
+          "type": "none"
+        },
         "allowed_tools": [
           "add",
           "echo",

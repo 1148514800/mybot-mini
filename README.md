@@ -74,7 +74,7 @@ uv run python -m mybot.web --port 8765
 }
 ```
 
-将 `config/config.json` 顶层的 `debug` 设置为 `true` 开启调试日志，设置为 `false` 关闭，默认关闭。修改后重启程序生效。日志包含模型耗时、token 数、工具参数及执行结果摘要；写入参数 `content` 仅显示字符数。调试开关统一由配置文件控制，不再读取 `MYBOT_DEBUG` 环境变量。
+将 `config/config.json` 顶层的 `debug` 设置为 `true` 开启调试日志，设置为 `false` 关闭，默认关闭。修改后重启程序生效。日志包含模型耗时、供应商已报告 Token（缺失为未知）、工具参数及执行结果摘要；写入参数 `content` 仅显示字符数。调试开关统一由配置文件控制，不再读取 `MYBOT_DEBUG` 环境变量。
 
 
 ## Phase 学习归档
@@ -96,7 +96,7 @@ bash scripts/restore_phase.sh 1
 
 Session 持久化默认关闭。配置 `session.persist=true` 并重启后，完整历史轮次保存到 `session.path`（默认项目根 `.mybot_state/session.json`，必须在 workspace 外）。`/clear` 同时清空磁盘历史；JSON 损坏会报错并保留原文件。恢复不会重放旧工具或恢复 Plan 状态。详见 [Phase 05](docs/phases/phase-05.md)。自定义状态目录也应加入 `.gitignore`；ExFAT 无法保证 POSIX 私有权限，聊天历史以明文保存。
 
-Context Management 默认关闭。配置 `context.enabled=true` 并重启后，每次请求检查消息及工具 Schema 的字符预算。默认 max_chars=40000、recent_turns=2、summary_max_chars=1500、tool_result_max_chars=4000。只压缩请求副本，Session/磁盘仍保存原文；无法满足预算时停止并报错。字符数不是精确 Token 数，需为 max_completion_tokens 预留模型窗口。详见 [Phase 06](docs/phases/phase-06.md)。
+Context Management 默认关闭。配置 `context.enabled=true` 并重启后，默认兼容模式每次请求检查消息及工具 Schema 的字符预算；可按 [Context 配置](docs/context.md) 显式选择估算 Token 预算。默认 max_chars=40000、recent_turns=2、summary_max_chars=1500、tool_result_max_chars=4000。只压缩请求副本，Session/磁盘仍保存原文；无法满足预算时停止并报错。字符数不是精确 Token 数，需为 max_completion_tokens 预留模型窗口。详见 [Phase 06](docs/phases/phase-06.md)。
 
 Skills 默认关闭。设置 `skills.enabled=true`（path 默认 ./skills）并重启后，模型获得 name/description 索引，可通过 load_skill/read_skill_reference 按需读取说明和参考资料，再使用原有文件工具。示例为 file-summary 与 code-review。没有脚本执行或额外模型分类调用；Context 开启时技能正文不裁剪、超预算明确失败。详见 [Phase 07](docs/phases/phase-07.md)。
 
@@ -252,3 +252,9 @@ Live必须同时指定 `--live --confirm-api-cost`、具备凭证与TTY并通过
 ## Provider Failover Harness Integration
 
 Phase25之后的独立可靠性改进（非Phase26）：新入口 `uv run python -m scripts.evaluate_coding_failover` 默认single和离线，只有显式 `--provider-mode failover` 才使用严格主备策略。新证据只写入 `runs/coding_failover/` 的v4 manifest，不恢复或拼接旧Campaign。每次物理SDK请求在全局及Controller预算允许后才启动，Attempt独立，已完成工具不重放，Usage或HTTP次数未知时记录null。Live须另获授权，本轮未执行。架构、命令及限制见[集成说明](docs/provider-failover-harness.md)。
+
+## Context 与资源预算现代化
+
+[配置与计量说明](docs/context.md) 提供估算 Token 预算、可选语义摘要和旧字符模式的配置。旧配置默认行为保留；精确本地 Tokenizer 尚未验证，严格模式会拒绝请求。CLI/Web 统一显示已报告 Usage、估算输入、逻辑/物理调用、摘要和裁剪状态。语义模式默认关闭，生产启用会增加模型调用与潜在费用；本轮真实模型请求为0。
+
+CLI/Web 现在按规范化工作区路径共享进程锁；CLI 等待输入时也持锁，结束一个入口后再用另一个操作同一目录。清理不确定时锁保持到进程退出，禁止通过删锁文件绕过。完整证据见 [项目审计验收](docs/reports/project-debt-modernization/acceptance-report.md)。

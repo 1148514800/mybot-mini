@@ -2,26 +2,30 @@
 
 ## 当前目标与状态
 
-Web Chat 已完成实现及离线/真实浏览器验收，分支 `codex/web-chat-ui`，基线 `d4726669464bb83fd86d94e9ef31090dc4e7c782`。正式入口 `uv run python -m mybot.web --port 8765`，访问 http://127.0.0.1:8765。本任务按 Implementation、Acceptance 两个提交交付并推送独立分支，不合并 main，不属于新 Phase，不修改历史 Tag/ZIP。
+全项目技术债审计、Token/Context现代化完成离线验收：OFFLINE PASS。基线远程 `codex/web-chat-ui` 的 `1de96420122daf0d75a650952613a05d1ace99ac`；独立分支 `codex/project-debt-modernization`。按Implementation、Acceptance两个提交交付；本任务不属于新Phase，不合并main，不创建Tag/ZIP。
 
-Implementation `027889b6831754f53647de32a82b1e00e9af78f7`；Acceptance 为本快照所属报告提交。
+## 已实现与架构决策
 
-## 实现与架构决策
+TokenCounter对真正可见请求区分JSON字符/UTF8字节/保守估算/供应商Usage/unknown。保留legacy_chars与旧max_chars语义；estimate显式限额+输出预留+主备窗口分别重验；没有已验证网关Tokenizer映射，strict拒绝未验证请求，不用GPT编码替代。费用未知。
 
-新增 `mybot/web/`：Starlette HTTP/SSE、中文三栏响应式界面、深浅主题、安全 Markdown/代码复制、真实工具卡片/Plan/Diff/测试状态、受控单次浏览器审批、独立 Session 与停止/刷新恢复。正式 runtime 直接使用原 GatewayConfig、build_gateway_client、AgentLoop.handle_message、Registry、Context/Skills、Planning、MCP、Controller、Receipt 与 Journal。Loop 只新增可选白名单观察回调；CLI 缺省行为保留，不解析 print 或启动 CLI 子进程。
+ContextCompactor默认关闭：semantic需allow_extra_requests=true，选取九字段来源原文引用，低信任assistant参考；不恢复授权/Receipt/Plan完成/当前Revision测试证据，不改原Session。输入/输出/次数/超时/取消受限，复用Controller与Evaluation预算；短期缓存仅同次handle_message完全相同历史可复用。
 
-每进程单任务 lease 在 Agent/MCP/client 清理完成后释放，执行或清理不确定则禁止新任务。每轮工具、Controller、Receipt scope、模型客户端独立；同一对话保留真实 Session。fallback sticky 仅该轮。历史仅内存，最多20会话、64条展示消息/会话、128条当前任务事件，不读写 CLI 磁盘历史。浏览器 localStorage 仅主题。
+RuntimeAccounting统一CLI/Web/Trace的logical、physical、HTTP尝试、Usage、压缩与裁剪状态；缺失不补零，最后实际备用请求策略可观察。Trace只加观察属性，不改冻结评分。额外修复11项确认缺陷：SDK隐式重试、非暂时错误切备、指标口径、跨进程锁、配置继承、读取静默裁剪、UTF8字节数、Web失败状态、CLI异常载荷、capsule清理和会话切换竞态。
 
-仅127.0.0.1；Host/Origin、HttpOnly SameSite cookie、CSRF、授权 SSE、CSP、固定资源路由、输入/事件大小限制与凭证/能力脱敏。命令及 MCP 审批沿用原策略；nonce 单次有时限，无预批准/缓存/自动 yes。Undo 和旧文本控制命令明确拒绝；CLI Undo 不受影响。Preview 不当成写入，测试成功不当成 Strict Success。
+CLI/Web合作式flock按规范化工作区路径隔离：CLI整个会话持锁，Web每任务清理后释放；不确定清理保锁至进程退出，不删除未知锁。仅协调合作入口，不隔离外部编辑器/恶意同UID进程/不同workspace共用Session路径。
 
-修改：Web 模块、Loop/Plan 观察适配、显式 Starlette 依赖及 lock、`scripts/check_web_ui.py`、全量入口追加、README、`docs/web-ui.md`。原 Controller、Patch 发布器、Journal、命令/MCP 安全策略及 Strict 评分源码未改。
+修改集中在agent Context/Loop、config/provider、runtime_accounting/workspace_lease、app、基础file工具、Web观察、evaluation/trace；三套新增专项及check_phase追加。用户说明README、docs/context.md、docs/web-ui.md、config/config.example.json；审计报告在 docs/reports/project-debt-modernization/。
 
 ## 验证与保护
 
-专项53/53；全量1293/1293、35套件、零跳过，原1240项全部保留；compileall、diff 检查通过。真实 AgentLoop + 合成模型 + 原生 Receipt/Seatbelt/stdio MCP/本地 HTTP/SSE。浏览器实际检查桌面深浅主题、390px手机、Markdown/XSS、复制、长代码滚动、多行输入、切换/清空、停止/刷新及一次人工点击批准临时测试命令。
+基线1293/1293、35套件；最终1354/1354、38套件、零跳过，新增61项（Token16、Compaction22、Accounting23）。7组必需重点专项、repository34、autonomy100分别通过；compileall/diff检查通过。真实AgentLoop合成A长对话、B长工具、C搜索→读取→Preview→Receipt→原生测试，C只称指定范围verified，不称Strict Success。
 
-真实模型HTTP 0，TTY yes 0，浏览器临时 fixture 交互批准1次；未使用旧 Benchmark 额度。1043保护文件哈希无变化，main、26 Tag、53 ZIP/AppleDouble、原13及最近8 Attempt raw 均保留。原工作区 `mybot/app.py`、`workspace/instructions/USER.md` 用户修改未触碰。不得重跑旧实验或伪称 Live 验证。
+真实浏览器HTTP/SSE验证新指标，截图随Acceptance报告；合成Usage300与输入估算5067分别显示，窗口unknown。真实模型API0，实际人工TTY/浏览器审批0；自动测试中的既有合成审批回调不计人工批准。不得使用旧A/B剩余额度。
 
-## 文档、限制与下一步
+1560个保护文件哈希未变；main与Tag不变，历史Phase文档/报告/raw/ZIP、原工作区mybot/app.py与workspace/instructions/USER.md的用户修改保留。旧1293项断言没有删改；Controller、Patch发布器、审批、Strict评分未放宽。原Git对象目录的ExFAT AppleDouble索引警告未通过改历史文件“修复”。
 
-使用说明 `docs/web-ui.md`；验收报告及6张实际截图位于 `docs/reports/web-chat-ui/`（Acceptance 提交）。不支持公网、多租户、附件、持久化 Web 历史或 Web Undo；Markdown 为基础子集，回复非 Token 流式。单进程 lease 不协调其他 CLI/服务进程。真实供应商连通性与付费聊天按本轮0请求限制未验证；用户配置原本地模型凭证后自行启动使用。后续扩展需保留审批及清理屏障，勿把当前测试范围称为整体 Strict 成功。
+## 已知问题与下一步
+
+剩余P1：实际网关Tokenizer/template/window映射未验证；legacy基础文件工具TOCTOU潜在风险；跨workspace共用Session路径仍只支持单写者；真实语义质量与供应商费用/可靠性未验证。P2：Web内存历史限制、慢IO取消风险、特殊MCP短名称检索风险、Agent复用web.security脱敏的层次依赖。详见remaining-debt与readiness。
+
+下一步是在另行授权下进行受控真实日常验证，先保持独占工作区/独立Session路径；semantic生产启用会增加费用。不能宣称全项目全部READY。不要重复历史Benchmark、移动Tag/覆盖ZIP、迁移Session格式或把摘要当当前文件事实。CLI/Web修改配置后重启；原字符/规则模式仍可继续使用。

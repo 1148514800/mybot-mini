@@ -156,3 +156,10 @@ check_patch_preview_receipt()
 
 from scripts.check_web_ui import check_web_ui
 check_web_ui()
+
+from scripts.check_token_budget import check_token_budget
+check_token_budget()
+from scripts.check_context_compaction import check_context_compaction
+check_context_compaction()
+from scripts.check_runtime_accounting import check_runtime_accounting
+check_runtime_accounting()

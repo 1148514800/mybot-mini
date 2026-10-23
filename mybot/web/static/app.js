@@ -41,7 +41,16 @@ function renderMessages() {
   else if (current.messages.length) $('new-message').hidden = false;
 }
 function renderActivity() {
-  $('request-count').textContent = current.requests; $('token-count').textContent = current.tokens === null ? '未知' : current.tokens.toLocaleString();
+  const r = current.resources || {}, context = r.context || {};
+  const compact = context.context_compaction_status || 'not_needed';
+  const compactLabel = ({not_needed:'无需压缩',deterministic:'规则摘录',semantic_applied:'语义摘要已应用',semantic_reused:'复用本轮摘要',call_limit:'压缩次数用尽，使用规则摘录'})[compact] || (compact.startsWith('fallback_') ? '语义压缩未应用，已回退规则摘录' : '未触发');
+  $('request-count').textContent = r.logical_requests ?? current.requests;
+  const reported = r.provider_reported_total_tokens ?? null;
+  $('token-count').textContent = reported === null ? '未知' : reported.toLocaleString();
+  $('resource-detail').textContent = `物理调用 ${r.physical_requests ?? 0} · HTTP 尝试 ${r.http_dispatch_attempts ?? '未知'} · 备用模型 ${r.fallback_used ? '已使用' : '未使用'}。` +
+    (context.estimated_input_tokens !== undefined ? `当前输入估算 ${context.estimated_input_tokens} Token（保守估算，非账单）；${context.request_chars} 字符 / ${context.request_utf8_bytes} 字节。窗口 ${context.model_window_tokens ?? '未知'}；输出预留 ${context.output_reserved_tokens}。` : '') +
+    ` 压缩请求 ${r.compaction_requests ?? 0}；${compactLabel}；保留 ${context.history_turns_kept ?? 0} 轮 / 摘要 ${context.history_turns_summarized ?? 0} 轮。` +
+    (context.context_truncated ? '部分上下文已裁剪或摘要，不能视为完整阅读。' : '');
   let latest = current.events.at(-1), status = labels[current.status] || '状态未知';
   if (current.report?.state === 'edited_unverified') status = '已修改，尚未验证';
   if (current.report?.state === 'verified') status = '当前修改已验证';
@@ -113,6 +122,7 @@ async function refresh() {
 async function select(id) {
   selected = id; stream?.close(); $('sidebar').parentElement.classList.remove('nav-open'); nearBottom = true;
   await refresh();
+  if (selected !== id) return;
   stream = new EventSource(`/api/conversations/${id}/events`);
   stream.addEventListener('activity', () => refresh().catch(e=>notice(e.message)));
   stream.addEventListener('reset', () => refresh().catch(e=>notice(e.message)));

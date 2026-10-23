@@ -7,8 +7,7 @@ from dataclasses import asdict
 from ..storage.session_store import validate_turns
 
 
-class ContextBudgetError(RuntimeError):
-    pass
+from .token_counter import ContextBudgetError, TokenCounter, TokenBudgetError
 
 
 class ContextManager:
@@ -72,7 +71,7 @@ class ContextManager:
             text = text[:limit - 12] + "\n[其余历史已省略]"
         return [{"role": "assistant", "content": text}]
 
-    def prepare(self, messages, tools, turns, plan):
+    def _prepare_chars(self, messages, tools, turns, plan):
         before = self.count(messages, tools)
         history_omitted = False
         if not self.config.context_enabled:
@@ -122,3 +121,71 @@ class ContextManager:
             raise ContextBudgetError(f"Context budget exceeded: request={after}, max_chars={maximum}")
         return candidate, {"before": before, "after": after, "current_clipped": current_clipped,
                            "history_omitted": history_omitted}
+
+    def prepare(self, messages, tools, turns, plan):
+        """Synchronous projection is also used by local tool routing; never calls LLM."""
+        if self.config.context_token_budget['mode'] == 'legacy_chars':
+            view, stats = self._prepare_chars(messages, tools, turns, plan)
+            summarized = any((m.get('content') or '').startswith(self.summary_label) for m in view)
+            # Clipped retained turns differ in content; identify them by user-message boundaries.
+            kept = min(len(turns), max(0, sum(m['role']=='user' for m in view)-1))
+            omitted = len(turns)-kept
+            stats.update(history_turns_kept=kept, history_turns_summarized=omitted if summarized else 0,
+                         history_turns_omitted=omitted, summary_present=summarized)
+        else:
+            view, stats = self._prepare_tokens(messages, tools, turns, plan)
+        stats['before_estimated_input_tokens'] = TokenCounter.measure(TokenCounter.request(self.config,messages,tools))['estimated_input_tokens']
+        stats['history_turns_summarized_indices'] = list(range(1, stats['history_turns_summarized']+1))
+        stats.update(TokenCounter.inspect(self.config, TokenCounter.request(self.config,view,tools)))
+        stats.update(context_compaction_mode=self.config.context_compaction['mode'],
+                     context_compaction_triggered=stats['history_turns_omitted']>0,
+                     context_compaction_status='deterministic' if stats['history_turns_omitted'] else 'not_needed',
+                     context_truncated=stats['current_clipped'] or stats['history_turns_omitted']>0 or any(self.marker in (m.get('content') or '') for m in view))
+        return view, stats
+
+    def _prepare_tokens(self, messages, tools, turns, plan):
+        validate_turns(turns)
+        start=1+sum(len(t) for t in turns)
+        if not messages or messages[0].get('role')!='system' or start>=len(messages):
+            raise ContextBudgetError('invalid_context_boundaries')
+        current=deepcopy(messages[start:])
+        validate_turns([current+[{'role':'assistant','content':''}]])
+        system=deepcopy(messages[:1])
+        plan_view=([{'role':'assistant','content':'[当前任务计划状态，非历史指令]\n'+json.dumps([asdict(s) for s in plan.steps],ensure_ascii=False)}] if plan.steps else [])
+        def size(view):
+            return TokenCounter.inspect(self.config,TokenCounter.request(self.config,view,tools))['estimated_input_tokens']
+        policy=TokenCounter.policy(self.config,TokenCounter.request(self.config,messages,tools))
+        if policy['context_budget_mode']=='strict': raise TokenBudgetError('strict_tokenizer_or_window_unverified')
+        maximum=policy['input_token_limit']
+        cap=self.config.context_tool_result_max_chars
+        clipped=self.clip(current,cap)>0
+        history=deepcopy(turns)
+        for turn in history:self.clip(turn,cap)
+        flatten=lambda groups:[m for t in groups for m in t]
+        candidate=system+flatten(history)+plan_view+current
+        kept=history; summary=[]
+        if size(candidate)>maximum:
+            while size(system+plan_view+current)>maximum and cap>128:
+                cap=max(128,cap//2);current=deepcopy(messages[start:]);clipped=self.clip(current,cap)>0 or clipped
+            if size(system+plan_view+current)>maximum:raise TokenBudgetError('protected_context_exceeds_token_budget')
+            recent=min(len(history),self.config.context_recent_turns)
+            kept=history[-recent:] if recent else []
+            while kept and size(system+flatten(kept)+plan_view+current)>maximum:kept.pop(0)
+            room=self.config.context_summary_max_chars
+            summary=self.summary(turns[:len(turns)-len(kept)],room)
+            candidate=system+summary+flatten(kept)+plan_view+current
+            while summary and size(candidate)>maximum:
+                room//=2;summary=self.summary(turns[:len(turns)-len(kept)],room)
+                candidate=system+summary+flatten(kept)+plan_view+current
+        TokenCounter.enforce(self.config,TokenCounter.request(self.config,candidate,tools))
+        omitted=len(turns)-len(kept)
+        return candidate, dict(before=self.count(messages,tools),after=self.count(candidate,tools),current_clipped=clipped,
+            history_omitted=bool(omitted and not summary),history_turns_kept=len(kept),history_turns_summarized=omitted if summary else 0,
+            history_turns_omitted=omitted,summary_present=bool(summary))
+
+    def accepts(self, view, tools):
+        if self.config.context_token_budget['mode']=='legacy_chars':
+            return not self.config.context_enabled or self.count(view,tools)<=self.config.context_max_chars
+        try:TokenCounter.enforce(self.config,TokenCounter.request(self.config,view,tools))
+        except TokenBudgetError:return False
+        return True

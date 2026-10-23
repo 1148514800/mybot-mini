@@ -16,6 +16,7 @@ from ..mcp_client.manager import MCPClientManager
 from ..workspace import init_workspace
 from .approval import WebApproval
 from .security import redact
+from ..workspace_lease import WorkspaceLease, WorkspaceBusy
 
 
 @dataclass
@@ -34,6 +35,7 @@ class Conversation:
     requests: int = 0
     tokens: int = 0
     usage_known: bool = True
+    resources: dict = field(default_factory=dict)
     report: dict | None = None
     failed_request: bool = False
     secret_values: tuple = ()
@@ -50,6 +52,7 @@ class Conversation:
             clean['display_truncated'] = True
         self.sequence += 1
         self.events.append({'sequence': self.sequence, 'time': time.time(), **clean})
+        if event['type'] == 'resource_update': self.resources = clean.get('resources', {})
         if event['type'] == 'model_request_started': self.requests += 1
         if event['type'] == 'model_request_failed': self.failed_request = True; self.usage_known = False
         if event['type'] == 'model_request_finished':
@@ -63,7 +66,7 @@ class Conversation:
     def state(self):
         return {'id': self.id, 'title': self.title, 'status': self.status, 'messages': self.messages,
                 'events': list(self.events), 'sequence': self.sequence, 'requests': self.requests,
-                'tokens': self.tokens if self.usage_known else None, 'report': self.report,
+                'tokens': self.resources.get('provider_reported_total_tokens') if self.resources else (self.tokens if self.usage_known else None), 'report': self.report, 'resources': self.resources,
                 'approval': self.approval.public_pending() if self.approval else None}
 
 
@@ -87,7 +90,7 @@ class ChatRuntime:
         if text.strip() in ('/undo', '/changes', '/clear'): raise ValueError('use_web_controls')
         self.owner = c.id  # No await between checking and reserving the process-wide lease.
         c.status = 'running'; c.started.clear(); c.failed_request = False; c.report = None
-        c.events.clear(); c.requests = c.tokens = 0; c.usage_known = True
+        c.events.clear(); c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
         c.messages.append({'role': 'user', 'content': redact(text, c.secret_values), 'time': time.time()})
         c.messages[:] = c.messages[-64:]
         if c.title == '新对话': c.title = redact(text.strip()[:32], c.secret_values)
@@ -97,11 +100,12 @@ class ChatRuntime:
         return True
 
     async def _run(self, c, text):
-        client = None; agent = None; manager = None
+        client = None; agent = None; manager = None; lease = WorkspaceLease(self.config.workspace)
         c.started.set()
         c.emit({'type': 'message_started'})
         try:
             async with asyncio.timeout(self.task_timeout):
+                lease.acquire()
                 # Web histories are memory-only and never load/share the CLI disk Session.
                 config = replace(self.config, session_persist=False, debug=False)
                 if config.coding_enabled:
@@ -135,10 +139,15 @@ class ChatRuntime:
                     reply = (f"任务状态：{state_label}。已提交 {report['committed_patches']} 次修改，当前版本 {report['current_revision']}。\n\n"
                         f"当前修改之后的有效通过测试数：{report['tests_passed_after_last_patch']}。"
                         + ('指定测试范围已验证；这不代表整个项目或 Strict Success。' if state == 'verified' else '尚不能宣称当前修改已验证。'))
-                else: c.status = 'failed' if c.failed_request else 'completed'
+                else:
+                    outcome = agent.last_runtime_report['outcome']
+                    c.status = 'failed' if c.failed_request or outcome == 'failed' else 'stopped' if outcome in ('timeout','stopped') else 'completed'
                 reply = redact(reply, c.secret_values)
                 c.messages.append({'role': 'assistant', 'content': reply, 'time': time.time()})
                 c.messages[:] = c.messages[-64:]
+        except WorkspaceBusy:
+            c.status = 'failed'
+            c.emit({'type':'workspace_busy', 'reason':'another_process_or_unsafe_lock'})
         except asyncio.CancelledError:
             c.status = 'cancelled'; c.usage_known = False
         except TimeoutError:
@@ -154,7 +163,9 @@ class ChatRuntime:
             outcome = c.status
             c.status = 'stopping' if outcome in ('cancelled', 'stopped') else 'settling'
             c.emit({'type': 'task_status_changed', 'status': c.status})
-            if agent is not None and agent._git_capsule is not None: agent._git_capsule.close()
+            if agent is not None and agent._git_capsule is not None:
+                try: agent._git_capsule.close()
+                except BaseException: cleanup_ok = False
             if manager is not None:
                 try: await manager.__aexit__(None, None, None)
                 except BaseException: cleanup_ok = False
@@ -168,6 +179,7 @@ class ChatRuntime:
                             'stopped': 'message_cancelled', 'cleanup_uncertain': 'message_failed'}.get(c.status, 'message_completed'),
                     'status': c.status, 'report': c.report})
             # Lease remains held until MCP __aexit__, Agent finally and client close settle.
+            lease.release(confirmed=cleanup_ok and not self.cleanup_uncertain)
             if cleanup_ok: self.owner = None
 
     async def stop(self, c):
@@ -179,7 +191,7 @@ class ChatRuntime:
     async def clear(self, c):
         if self.owner is not None: return False
         c.session.clear(); c.messages.clear(); c.events.clear(); c.report = None; c.title = '新对话'; c.status = 'idle'
-        c.requests = c.tokens = 0; c.usage_known = True
+        c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
         c.emit({'type': 'conversation_cleared'})
         return True
 

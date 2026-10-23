@@ -1,11 +1,18 @@
-"""Bounded CLI-only coco -> coco2 failover; evaluation clients stay single-model."""
+"""Bounded gateway failover shared by CLI/Web and opt-in evaluation adapters."""
 from __future__ import annotations
 
 import asyncio
 from dataclasses import replace
 from types import SimpleNamespace
 
-from openai import APIError
+from openai import APIError, APIConnectionError, APIStatusError, APITimeoutError
+
+
+def recoverable_error(exc):
+    if isinstance(exc, APIConnectionError) and isinstance(exc.__cause__, (TypeError, ValueError, RuntimeError)):
+        return False
+    return (isinstance(exc, (APIConnectionError, APITimeoutError, TimeoutError))
+            or isinstance(exc, APIStatusError) and exc.status_code in (429,500,502,503,504))
 
 
 class FallbackBudgetExceeded(Exception):
@@ -19,7 +26,7 @@ class ProviderFailoverClient:
         self._backup_config = backup
         self._factory = factory
         self._backup = None
-        self._recoverable = recoverable
+        self._recoverable = recoverable or recoverable_error
         self.active_provider = 'coco'
         self.before_fallback = lambda definitions: True
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
@@ -30,10 +37,13 @@ class ProviderFailoverClient:
         if self.active_provider == 'coco':
             try:
                 async with asyncio.timeout(self._config.request_timeout_seconds / 2):
-                    return await self._primary.chat.completions.create(**kwargs)
+                    from .runtime_accounting import dispatch
+                    return await dispatch(self._primary, self._config, kwargs)
             except (APIError, TimeoutError) as exc:
                 if self._recoverable is not None and not self._recoverable(exc):
                     raise
+                from .agent.token_counter import TokenCounter
+                TokenCounter.enforce(self._backup_config, {**kwargs, 'model':self._backup_config.model})
                 if not self.before_fallback(kwargs.get('tools')):
                     raise FallbackBudgetExceeded() from None
                 self.active_provider = 'coco2'
@@ -41,8 +51,8 @@ class ProviderFailoverClient:
         if self._backup is None:
             self._backup = self._factory(self._backup_config)
         # Never reuse coco's model name on the backup endpoint. No tool is replayed.
-        return await self._backup.chat.completions.create(
-            **{**kwargs, 'model': self._backup_config.model})
+        from .runtime_accounting import dispatch
+        return await dispatch(self._backup, self._backup_config, {**kwargs, 'model': self._backup_config.model}, is_fallback=True)
 
     async def close(self):
         results = await asyncio.gather(

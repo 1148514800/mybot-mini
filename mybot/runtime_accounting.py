@@ -1,0 +1,134 @@
+"""Shared per-turn accounting; no prompts, payloads, keys or raw SDK errors retained."""
+from __future__ import annotations
+
+import asyncio
+from contextvars import ContextVar
+from dataclasses import dataclass, field
+
+from .agent.token_counter import TokenCounter
+
+CURRENT = ContextVar('mybot_accounting', default=None)
+CURRENT_CONFIG = ContextVar('mybot_accounting_config', default=None)
+PHYSICAL = ContextVar('mybot_physical_request', default=None)
+TOKEN_KEYS = ('prompt_tokens', 'completion_tokens', 'total_tokens')
+
+
+def usage_values(usage):
+    def get(key):
+        value = usage.get(key) if isinstance(usage, dict) else getattr(usage, key, None)
+        return value if type(value) is int and value >= 0 else None
+    return {key:get(key) for key in TOKEN_KEYS}
+
+
+def find_gateway(client):
+    # Existing adapters have explicit ownership links, never infer from model text.
+    from .provider_failover import ProviderFailoverClient
+    pending, seen = [client], set()
+    while pending:
+        item = pending.pop()
+        if item is None or id(item) in seen: continue
+        seen.add(id(item))
+        if isinstance(item, ProviderFailoverClient): return item
+        pending.extend(getattr(item, name, None) for name in ('client', 'original', 'gateway'))
+    return None
+
+
+def owns_dispatch(client):
+    if find_gateway(client) is not None: return True
+    pending,seen=[client],set()
+    while pending:
+        item=pending.pop()
+        if item is None or id(item) in seen:continue
+        seen.add(id(item))
+        if getattr(item,'runtime_dispatch',False) is True:return True
+        pending.extend(getattr(item,name,None) for name in ('client','original'))
+    return False
+
+
+def active_config(client, default):
+    gateway = find_gateway(client)
+    return gateway._backup_config if gateway is not None and gateway.active_provider == 'coco2' else default
+
+
+async def observe_http(request):
+    record = PHYSICAL.get()
+    if record is None: return
+    if asyncio.current_task().cancelling(): raise asyncio.CancelledError()
+    if record['http_dispatch_attempts']:
+        raise RuntimeError('unexpected_sdk_retry')
+    record['http_dispatch_attempts'] = 1
+
+
+async def dispatch(client, config, request, *, is_fallback=False):
+    measurement = TokenCounter.enforce(config, request)
+    if asyncio.current_task().cancelling(): raise asyncio.CancelledError()
+    ledger = CURRENT.get()
+    if ledger is None: return await client.chat.completions.create(**request)
+    hooks = getattr(getattr(client, '_client', None), 'event_hooks', None)
+    observable = isinstance(hooks, dict)
+    if observable and observe_http not in hooks.setdefault('request', []): hooks['request'].append(observe_http)
+    record = {'provider':getattr(config,'provider','unknown'), 'model':getattr(config,'model','unknown'),
+              'purpose':ledger.purpose, 'status':'started', 'is_fallback':is_fallback, 'http_dispatch_attempts':0 if observable else None,
+              'usage':usage_values(None), **measurement}
+    ledger.records.append(record)
+    token = PHYSICAL.set(record)
+    try:
+        response = await client.chat.completions.create(**request)
+        record.update(status='returned', usage=usage_values(getattr(response, 'usage', None)))
+        return response
+    except asyncio.CancelledError:
+        record['status'] = 'cancelled'; raise
+    except BaseException:
+        record['status'] = 'failed'; raise
+    finally:
+        PHYSICAL.reset(token)
+
+
+@dataclass
+class RuntimeAccounting:
+    logical_requests: int = 0
+    compaction_requests: int = 0
+    records: list = field(default_factory=list)
+    context: dict = field(default_factory=dict)
+    purpose: str = 'agent'
+    outcome: str = 'running'
+    observation_errors: int = 0
+
+    async def request(self, client, config, request, *, purpose='agent'):
+        effective = active_config(client, config)
+        if getattr(effective, 'model', None): request = {**request, 'model':effective.model}
+        TokenCounter.enforce(effective, request)
+        self.logical_requests += 1
+        self.compaction_requests += int(purpose == 'compaction')
+        self.purpose = purpose
+        token = CURRENT.set(self)
+        config_token = CURRENT_CONFIG.set(effective)
+        try:
+            if owns_dispatch(client):
+                return await client.chat.completions.create(**request)
+            return await dispatch(client, effective, request)
+        finally:
+            CURRENT.reset(token)
+            CURRENT_CONFIG.reset(config_token)
+            self.purpose = 'agent'
+
+    def snapshot(self):
+        rows = self.records
+        reported = {k:sum(r['usage'][k] for r in rows if r['usage'][k] is not None) for k in TOKEN_KEYS}
+        complete = {k:bool(rows) and all(r['usage'][k] is not None for r in rows) for k in TOKEN_KEYS}
+        http = sum(r['http_dispatch_attempts'] for r in rows) if rows and all(r['http_dispatch_attempts'] is not None for r in rows) else None
+        context = dict(self.context)
+        # Report the latest actual agent dispatch, including the backup policy.
+        # A summarizer has its own limits and must not replace the task context.
+        last_agent = next((r for r in reversed(rows) if r['purpose'] == 'agent'), None)
+        if last_agent is not None:
+            context.update({key:value for key,value in last_agent.items() if key in context})
+        return dict(logical_requests=self.logical_requests, physical_requests=len(rows), http_dispatch_attempts=http,
+            http_count_semantics='pre_transport_attempts_not_billing', compaction_requests=self.compaction_requests,
+            provider_reported_input_tokens=reported['prompt_tokens'] if complete['prompt_tokens'] else None,
+            provider_reported_output_tokens=reported['completion_tokens'] if complete['completion_tokens'] else None,
+            provider_reported_total_tokens=reported['total_tokens'] if complete['total_tokens'] else None,
+            reported_token_subtotal=reported['total_tokens'], usage_complete=complete['total_tokens'],
+            missing_usage_requests=sum(r['usage']['total_tokens'] is None for r in rows),
+            fallback_used=any(r['is_fallback'] for r in rows), estimated_cost=None,
+            outcome=self.outcome, observation_errors=self.observation_errors, context=context)

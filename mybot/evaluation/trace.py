@@ -46,6 +46,7 @@ class Trace:
         self.reads = Counter()
         self.plan_created = False
         self.pre_plan_files = 0
+        self.runtime_accounting = None
 
     def tool(self, name, arguments, result, duration):
         safe_name = name if name in self.names else "<unknown>"
@@ -115,6 +116,7 @@ class Trace:
 
 class TracedClient:
     def __init__(self, client, trace, budget):
+        self.runtime_dispatch = True
         self.client, self.trace, self.budget = client, trace, budget
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
@@ -132,7 +134,11 @@ class TracedClient:
                                  "tool_result_clipped": any(ContextManager.marker in (m.get("content") or "") for m in kwargs["messages"])})
         start = time.perf_counter()
         try:
-            response = await self.client.chat.completions.create(**kwargs)
+            from ..runtime_accounting import CURRENT, CURRENT_CONFIG, dispatch, find_gateway
+            if CURRENT.get() is not None and find_gateway(self.client) is None:
+                response = await dispatch(self.client, CURRENT_CONFIG.get(), kwargs)
+            else:
+                response = await self.client.chat.completions.create(**kwargs)
         except BaseException as exc:
             # Never persist SDK errors: they can contain URLs, payloads or secrets.
             self.trace.error = "llm_timeout_or_cancelled" if isinstance(exc, (TimeoutError, asyncio.CancelledError)) else "llm_error"
@@ -156,6 +162,13 @@ class TracedAgent(AgentLoop):
         super().__init__(*args, **kwargs)
         self.trace.workspace = self.config.workspace.resolve()
         self.trace.names = {item["function"]["name"] for item in self.tools.get_definitions()}
+
+    async def handle_message(self, user_input):
+        try:
+            return await super().handle_message(user_input)
+        finally:
+            # Additive observation; frozen grading and legacy metrics are unchanged.
+            self.trace.runtime_accounting = self.last_runtime_report
 
     async def _execute(self, name, raw_arguments):
         start = time.perf_counter()

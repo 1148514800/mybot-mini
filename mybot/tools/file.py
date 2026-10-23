@@ -43,7 +43,12 @@ class ReadFileTool(FileTool):
             target = self._resolve(path)
             if not target.is_file():
                 return ToolResult(success=False, error=f"not found: {path}")
-            return ToolResult(success=True, output=target.read_text(encoding="utf-8")[:50000])
+            with target.open(encoding="utf-8") as stream:
+                text = stream.read(50001)
+            truncated = len(text)>50000
+            marker = "\n[文件内容已裁剪，不能据此声称完整读取或分析]"
+            return ToolResult(success=True, output=text[:50000]+(marker if truncated else ""),
+                              metadata={'truncated':True} if truncated else {})
         except Exception as exc:
             return ToolResult(success=False, error=f"{type(exc).__name__}: {exc}")
 
@@ -73,6 +78,7 @@ class WriteFileTool(FileTool):
             target = self._resolve(path)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
-            return ToolResult(success=True, output=f"wrote {len(content)} bytes to {path}")
+            size = len(content.encode("utf-8"))
+            return ToolResult(success=True, output=f"wrote {size} bytes to {path}")
         except Exception as exc:
             return ToolResult(success=False, error=f"{type(exc).__name__}: {exc}")
