@@ -1,0 +1,317 @@
+{
+  "status": "OFFLINE PASS",
+  "baseline_commit": "1de96420122daf0d75a650952613a05d1ace99ac",
+  "baseline": {
+    "tests": 1293,
+    "suites": 35,
+    "exit_code": 0,
+    "skipped": 0
+  },
+  "full": {
+    "tests": 1354,
+    "suites": 38,
+    "suite_counts": [
+      12,
+      12,
+      16,
+      18,
+      16,
+      18,
+      15,
+      7,
+      17,
+      25,
+      28,
+      38,
+      52,
+      39,
+      17,
+      24,
+      30,
+      38,
+      34,
+      61,
+      62,
+      100,
+      101,
+      136,
+      33,
+      42,
+      17,
+      13,
+      50,
+      18,
+      25,
+      44,
+      29,
+      53,
+      53,
+      16,
+      22,
+      23
+    ],
+    "ok_markers": 38,
+    "failures": [],
+    "skipped": 0,
+    "log_sha256": "c7058e1d568c2fe96218380bef8539a17bed87c693d6dc664fbe44f14720491c",
+    "exit_code": 0
+  },
+  "standalone": {
+    "check_context": {
+      "tests": 18,
+      "suites": 1,
+      "suite_counts": [
+        18
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "9e0f3c3f5d67388c0a011d1f00b337354491e351bc296bba065988b8699d81ad"
+    },
+    "check_session": {
+      "tests": 12,
+      "suites": 1,
+      "suite_counts": [
+        12
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "7905a034bd79f073262498ca72bd9e7278e883670e0a028235b5e8844f82e556"
+    },
+    "check_persistence": {
+      "tests": 16,
+      "suites": 1,
+      "suite_counts": [
+        16
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "0e63c4ad8a24bb8f3ddb1f1e81002e7e52e3926298fed6ff333a06998d1d64e0"
+    },
+    "check_web_ui": {
+      "tests": 53,
+      "suites": 1,
+      "suite_counts": [
+        53
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "a6a8f2cfcbe338df15e28398479f8d1261c10ef0948bb532cae5d8cd3f990f1d"
+    },
+    "check_coding_failover": {
+      "tests": 50,
+      "suites": 1,
+      "suite_counts": [
+        50
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "cebb6a226530062eea7e89cc712b7d7b2565dbc284b99f721aaec1113fa54976"
+    },
+    "check_coding_reliability": {
+      "tests": 42,
+      "suites": 1,
+      "suite_counts": [
+        42
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "776b94e41f20d36ff8d92fd0f76cc69190d14ac5fcc13b055cee67ba687675fe"
+    },
+    "check_patch_preview_receipt": {
+      "tests": 53,
+      "suites": 1,
+      "suite_counts": [
+        53
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "9bffc4228f7a7bf14103ce0780077e7f07e04432db85fdd054444c4c72f5b9fa"
+    },
+    "token-final": {
+      "tests": 16,
+      "suites": 1,
+      "suite_counts": [
+        16
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "1bc4c092bd7602b690602b2b1f8c69996c94ee3ef0d5a4e5ffadb436b49ce5a8"
+    },
+    "compaction-final": {
+      "tests": 22,
+      "suites": 1,
+      "suite_counts": [
+        22
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "7bb5ed1085f5fdf5a3c77fb4fd9284bbfe83e6a28054a4c7b418ecfe7c153971"
+    },
+    "accounting-final": {
+      "tests": 23,
+      "suites": 1,
+      "suite_counts": [
+        23
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "cbc3097691e433cbf433042d8432790e3cd6311b8dfb1937b22ed0d92409fc4f"
+    },
+    "repository-final": {
+      "tests": 34,
+      "suites": 1,
+      "suite_counts": [
+        34
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "31e5afde4288e4d61415534fc10963066c6a67edb717f38b5d9957bc4691489f"
+    },
+    "autonomy-final": {
+      "tests": 100,
+      "suites": 1,
+      "suite_counts": [
+        100
+      ],
+      "ok_markers": 1,
+      "failures": [],
+      "skipped": 0,
+      "log_sha256": "bef8318a5044cf11d8ec8ee022bb9c03ca46ee5cc542fbba2af4c13598277b01"
+    }
+  },
+  "new_tests": 61,
+  "old_tests_preserved": 1293,
+  "real_model_api_requests": 0,
+  "human_approvals": {
+    "tty": 0,
+    "browser": 0
+  },
+  "synthetic_test_callbacks_are_not_human_approvals": true,
+  "browser": {
+    "url": "http://127.0.0.1:8876",
+    "transport": "real local HTTP and SSE",
+    "client": "synthetic, injected",
+    "logical_requests": 2,
+    "physical_requests": 2,
+    "compaction_requests": 1,
+    "synthetic_reported_tokens": 300,
+    "estimated_input_tokens": 5067,
+    "model_window": "unknown",
+    "screenshot": "browser-metrics.jpg"
+  },
+  "compileall": "PASS",
+  "diff_check": "PASS",
+  "history_protection": {
+    "file_count": 1560,
+    "changed": [],
+    "tags_unchanged": true,
+    "main_unchanged": true,
+    "allowed_source_exception": "mybot/evaluation/trace.py additive observability; grading unchanged"
+  },
+  "debts": {
+    "confirmed": {
+      "P0": 0,
+      "P1": 9,
+      "P2": 2
+    },
+    "fixed_confirmed": 11,
+    "capability_improvements": 2,
+    "remaining": [
+      {
+        "id": "D14",
+        "priority": "P1",
+        "classification": "已知限制",
+        "status": "未修复",
+        "location": "token_counter.TokenCounter / gateway deployment",
+        "finding": "官方Tokenizer资源存在，但coco/coco2实际部署映射不可验证；精确计数不可用。",
+        "reason": "无真实请求授权；须供应商版本与模板证据及后续独立授权对照，strict失败关闭"
+      },
+      {
+        "id": "D15",
+        "priority": "P1",
+        "classification": "可能风险",
+        "status": "未修复",
+        "location": "tools.file.FileTool._resolve / WriteFileTool.execute",
+        "finding": "resolve检查和后续open/write之间的外部路径替换存在TOCTOU窗口。",
+        "reason": "源码风险；本轮未构造利用，不列已确认漏洞。Coding使用原硬化Repository/Patch；遗留简单工具需后续descriptor相对IO"
+      },
+      {
+        "id": "D16",
+        "priority": "P1",
+        "classification": "已知限制",
+        "status": "未修复",
+        "location": "storage.session_store.SessionStore.save",
+        "finding": "原文声明不支持并发写；不同workspace若配置同一session.path仍可能最后写覆盖。",
+        "reason": "本轮工作区锁不覆盖共享Session路径；保持单写者约束，后续增加存储路径锁/版本冲突检测，不擅改格式"
+      },
+      {
+        "id": "D17",
+        "priority": "P2",
+        "classification": "已知限制",
+        "status": "未修复",
+        "location": "web.runtime.ChatRuntime / Conversation",
+        "finding": "Web重启丢历史、20会话/64展示消息/128事件上限。",
+        "reason": "现有产品范围，非Bug；持久化需能力脱敏和恢复协议单独设计"
+      },
+      {
+        "id": "D18",
+        "priority": "P1",
+        "classification": "已知限制",
+        "status": "未修复",
+        "location": "agent.context_compactor.ContextCompactor",
+        "finding": "合成测试无法证明真实模型引用选择质量或成本收益；工具成功文本也非当前验证。",
+        "reason": "继续低信任/原生Controller判断；需单独授权实际日常验证"
+      },
+      {
+        "id": "D19",
+        "priority": "P2",
+        "classification": "可能风险",
+        "status": "未修复",
+        "location": "tools.file / skills.registry / storage.session_store",
+        "finding": "部分磁盘IO同步，慢磁盘可延迟事件循环取消。",
+        "reason": "静态风险，未做慢设备实验；新read_file有界但不能保证硬实时；后续线程化需取消与写屏障设计"
+      },
+      {
+        "id": "D20",
+        "priority": "P2",
+        "classification": "可能风险",
+        "status": "未修复",
+        "location": "mcp_client.relevance / retrieval tool-name handling",
+        "finding": "部分检索逻辑按 __ 分割短名称，特殊远端名称可能降低匹配质量。",
+        "reason": "非授权碰撞结论；不重调冻结路由基准；新增专门案例后再判断"
+      },
+      {
+        "id": "D21",
+        "priority": "P2",
+        "classification": "维护债",
+        "status": "未修复",
+        "location": "agent.context_compactor → web.security.redact",
+        "finding": "复用原脱敏函数形成Agent对Web安全模块的方向依赖。",
+        "reason": "无新依赖/副作用；后续可迁共享安全模块，需保持所有历史脱敏合同"
+      }
+    ]
+  },
+  "failed_development_runs": [
+    "CLI cleanup optional adapter attributes: fixed without changing original assertions",
+    "legacy SDK constructor kwargs contract: preserved; returned SDK max_retries set to 0 and verified with real SDK instance"
+  ],
+  "limitations": [
+    "no verified deployment tokenizer",
+    "no live model reliability/quality/cost evidence",
+    "remaining P1 risks documented"
+  ],
+  "implementation_sha": "b0346bdfca3451101c8af65be7beeaf2c17baaa6",
+  "final_source_manifest_sha256": "70ad338a4f55ebe158887e2a3078cc83cdffed155001d33b7adb575848337468",
+  "final_source_files_checked": 166
+}

@@ -4,6 +4,8 @@
 
 全项目技术债审计、Token/Context现代化完成离线验收：OFFLINE PASS。基线远程 `codex/web-chat-ui` 的 `1de96420122daf0d75a650952613a05d1ace99ac`；独立分支 `codex/project-debt-modernization`。按Implementation、Acceptance两个提交交付；本任务不属于新Phase，不合并main，不创建Tag/ZIP。
 
+Implementation：`b0346bdfca3451101c8af65be7beeaf2c17baaa6`；Acceptance为本快照所属报告提交。
+
 ## 已实现与架构决策
 
 TokenCounter对真正可见请求区分JSON字符/UTF8字节/保守估算/供应商Usage/unknown。保留legacy_chars与旧max_chars语义；estimate显式限额+输出预留+主备窗口分别重验；没有已验证网关Tokenizer映射，strict拒绝未验证请求，不用GPT编码替代。费用未知。
