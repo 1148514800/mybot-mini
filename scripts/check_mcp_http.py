@@ -22,6 +22,7 @@ from mybot.mcp_client.approval import ApprovalDecision as D
 from mybot.mcp_client.config import validate_http_url
 from mybot.mcp_client.manager import MCPClientManager, MCPStartupError
 from mybot.mcp_client.transport import HTTPBoundary, HTTPTransportError
+from scripts.legacy_write_fixture import legacy_registry
 from mybot.tools import build_default_tool_registry
 from scripts.check_mcp import MCPChecks
 from scripts.check_session import call, response, assert_pairs
@@ -143,7 +144,7 @@ class HTTPChecks(unittest.IsolatedAsyncioTestCase):
         return replace(self.config,mcp_enabled=True,mcp_servers={'web':server})
 
     def manager(self,provider=None,**policies):
-        self.tools=build_default_tool_registry(self.workspace)
+        self.tools=legacy_registry(self.workspace)
         return MCPClientManager(self.cfg(**policies),self.tools,provider)
 
     def events(self):
@@ -223,7 +224,7 @@ class HTTPChecks(unittest.IsolatedAsyncioTestCase):
             for name in ('mcp__local__add','mcp__web__add'):
                 self.assertTrue((await self.tools.execute(name,{'a':1,'b':2})).success)
         self.assertIsNone(self.process.poll())
-        self.tools=build_default_tool_registry(self.workspace)
+        self.tools=legacy_registry(self.workspace)
         cfg.mcp_servers['web']['url']=self.url+'/missing'
         with self.assertRaises(MCPStartupError):
             async with MCPClientManager(cfg,self.tools):pass

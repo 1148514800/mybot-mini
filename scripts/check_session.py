@@ -16,6 +16,7 @@ from mybot.agent import AgentLoop, ContextBuilder, Session
 import mybot.config as config_module
 from mybot.config import GatewayConfig
 from mybot.tools import build_default_tool_registry
+from scripts.legacy_write_fixture import legacy_registry
 
 
 def response(content=None, calls=None):
@@ -51,7 +52,7 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace, session_max_turns=6), build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace, session_max_turns=6), legacy_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_configured_history_window(self):
         with patch.object(config_module, "_CONFIG", {"session": {"max_turns": 2}}):

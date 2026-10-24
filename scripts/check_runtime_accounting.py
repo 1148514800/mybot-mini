@@ -105,7 +105,8 @@ class AccountingChecks(Base):
         with patch('builtins.input',side_effect=['hello','exit']),contextlib.redirect_stdout(io.StringIO()) as out:await self.agent.run()
         self.assertNotIn('PRIVATE_SDK_PAYLOAD',out.getvalue());self.assertIn('RuntimeError',out.getvalue())
     async def test_basic_file_bounded_read_and_utf8_write(self):
-        tools=build_default_tool_registry(self.root);(self.root/'large').write_text('a'*60000)
+        from scripts.legacy_write_fixture import legacy_registry
+        tools=legacy_registry(self.root);(self.root/'large').write_text('a'*60000)
         read=await tools.execute('read_file',{'path':'large'});self.assertTrue(read.metadata['truncated']);self.assertIn('不能据此声称完整读取',read.output)
         write=await tools.execute('write_file',{'path':'utf8','content':'中文'});self.assertIn('6 bytes',write.output)
     async def test_usage_invalid_values_unknown(self):

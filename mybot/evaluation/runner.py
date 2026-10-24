@@ -18,9 +18,16 @@ from ..agent.planning import Plan
 from ..agent.context import ContextBuilder
 from ..config import GatewayConfig, PROJECT_DIR, build_client
 from ..tools import build_default_tool_registry
+from ..tools.file_approval import cli_file_approval
+from ..mcp_client.approval import ApprovalDecision
+
 from .grader import grade, summarize
 from .artifacts import retain_outputs
 from .trace import Trace, TracedAgent, TracedClient
+
+
+async def offline_file_approval(request):
+    return ApprovalDecision.APPROVE
 
 
 def safe_path(path):
@@ -162,7 +169,7 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
                             try:
                                 raw_client = client if live else (client_factory(config, case) if client_factory else OfflineClient(case, group))
                                 agent = TracedAgent(TracedClient(raw_client, trace, budget), config,
-                                                    build_default_tool_registry(workspace), ContextBuilder(workspace), trace=trace)
+                                                    build_default_tool_registry(workspace, file_access='legacy_confirm', file_approval_provider=cli_file_approval if live else offline_file_approval), ContextBuilder(workspace), trace=trace)
                                 # Plan output may contain task-derived text: never write it to terminal/report.
                                 with contextlib.redirect_stdout(io.StringIO()):
                                     reply = await asyncio.wait_for(agent.handle_message(prompt), timeout)

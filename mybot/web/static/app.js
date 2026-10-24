@@ -41,6 +41,20 @@ function renderMessages() {
   else if (current.messages.length) $('new-message').hidden = false;
 }
 function renderActivity() {
+  const contract = current.contract;
+  $('contract-panel').hidden = !contract;
+  if (contract) {
+    $('contract-summary').textContent = `合同${contract.established ? '已建立' : '未建立'} · 当前 Revision ${contract.current_revision} · 用户明确要求 ${contract.user_explicit_count} · 测试记录关联 ${contract.test_evidence_count} · 缺少独立验收 ${contract.missing_acceptance_count} · 需求覆盖 ${contract.requirement_coverage} · 任务正确性 unknown`;
+    const rows = $('contract-rows'); rows.replaceChildren();
+    const sources = {user_explicit:'用户原文已核对', project_documented:'版本化文件读取', agent_suggestion:'模型建议', unresolved:'待确认'};
+    const states = {identified:'已识别，未验证', implementation_claimed:'模型声称实现', test_evidence_observed:'真实测试记录关联，覆盖未知', independently_verified:'独立断言通过', unverified:'来源未确证', blocked:'执行受阻，未验证'};
+    for (const r of contract.requirements || []) {
+      const user = [...current.messages].reverse().find(m => m.role === 'user');
+      const source = r.source_type === 'user_explicit' && user && [...user.content].length === r.source_message_chars && r.source_span;
+      const brief = source ? [...user.content].slice(...r.source_span).join('').slice(0, 100) : r.requirement_text;
+      rows.append(node('p', `${r.requirement_id}: ${brief} · ${r.category} · ${sources[r.source_type]} · ${states[r.status]} · Revision ${r.current_revision} · ${r.reason}`));
+    }
+  }
   const r = current.resources || {}, context = r.context || {};
   const compact = context.context_compaction_status || 'not_needed';
   const compactLabel = ({not_needed:'无需压缩',deterministic:'规则摘录',semantic_applied:'语义摘要已应用',semantic_applied_partial:'语义摘要部分应用：无效引用已拒绝，历史覆盖未验证',semantic_applied_pruned:'语义摘要删减后已应用，部分历史可能遗漏',semantic_skipped_insufficient_room:'空间不足，未请求语义摘要；规则摘录可能遗漏历史',fallback_output_truncated:'摘要输出被截断，已回退规则摘录',fallback_timeout:'摘要超时，已回退规则摘录',semantic_reused:'复用本轮摘要',call_limit:'压缩次数用尽，使用规则摘录'})[compact] || (compact.startsWith('fallback_') ? '语义压缩未应用，已回退规则摘录' : '未触发');
@@ -84,6 +98,7 @@ function renderActivity() {
       let description = event.running ? (current.approval ? '等待批准；命令尚未执行。' : busy() ? '实际调用正在进行。' : '调用未返回，已停止；不能确认执行完成。') : event.success ? '调用已完成。' : '调用未成功，后端保持原停止策略。';
       if (event.tool === 'apply_patch' && !event.running) description = meta.operation_intent === 'preview' ? 'Patch Preview · 仅预览，尚未写入。' : meta.applied && event.success ? 'Patch Commit · 修改已正式发布。' : 'Patch 未确认成功提交。';
       if (event.tool === 'run_command' && !event.running) description = `命令退出码：${meta.exit_code ?? '未知'}。测试证据以当前 Revision 的后端报告为准。`;
+      if (meta.authority_denied) description = '权限拒绝：工具未执行，没有本次写入副作用。';
       content.append(node('p', description));
       if (event.changed_files?.length) content.append(node('p','相关文件：' + event.changed_files.join('、')));
       if (meta.receipt_created) content.append(node('p','已生成当前对话的一次性提交凭据（内容隐藏）。'));
@@ -103,11 +118,11 @@ function renderApproval() {
   const pending = current.approval, dialog = $('approval-dialog');
   if (!pending) { approvalId = null; if (dialog.open) dialog.close(); return; }
   approvalId = pending.id;
-  $('approval-title').textContent = pending.kind === 'mcp' ? '等待批准 MCP 工具调用' : '等待批准执行命令';
+  $('approval-title').textContent = pending.kind === 'file' ? '等待批准兼容文件覆盖' : pending.kind === 'mcp' ? '等待批准 MCP 工具调用' : '等待批准执行命令';
   let details; try { details = JSON.parse(pending.display); } catch { details = null; }
   if (!details) { notice('无法完整展示审批内容；请拒绝或停止任务。'); return; }
   $('approval-details').textContent = pending.display; // Retain escaped bidi/control characters from inspectable backend JSON.
-  $('approval-warning').textContent = details.execution_mode === 'host_confirm' ? '高权限操作：host_confirm 没有 OS 隔离，可读写外部文件、访问网络或启动其他程序。请逐项审核完整命令。' : pending.kind === 'mcp' ? '远程工具可能有外部副作用。本次确认不授权后续调用。' : 'macOS Seatbelt：工作区只读，网络禁止，仅本次临时目录可写；自检失败会拒绝执行。';
+  $('approval-warning').textContent = pending.kind === 'file' ? '兼容写入：完整覆盖指定文件，无 OS 沙盒；本次批准不授权后续写入。' : details.execution_mode === 'host_confirm' ? '高权限操作：host_confirm 没有 OS 隔离，可读写外部文件、访问网络或启动其他程序。请逐项审核完整命令。' : pending.kind === 'mcp' ? '远程工具可能有外部副作用。本次确认不授权后续调用。' : 'macOS Seatbelt：工作区只读，网络禁止，仅本次临时目录可写；自检失败会拒绝执行。';
   $('approval-expiry').textContent = '本次审批到期：' + new Date(pending.expires_at*1000).toLocaleTimeString();
   $('approve').disabled = $('deny').disabled = approving;
   if (!dialog.open) dialog.showModal();

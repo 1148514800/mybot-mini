@@ -57,8 +57,8 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_default_config_and_registry(self):
         self.assertEqual(GatewayConfig().coding_patch_mode, 'off')
-        self.assertEqual([t.name for t in build_default_tool_registry(self.root).iter_tools()], ['read_file','write_file','list_files'])
-        off = build_default_tool_registry(self.root, coding_enabled=True)
+        self.assertEqual([t.name for t in build_default_tool_registry(self.root, file_access='legacy_confirm').iter_tools()], ['read_file','write_file','list_files'])
+        off = build_default_tool_registry(self.root, coding_enabled=True, file_access='legacy_confirm')
         self.assertEqual(len(off.iter_tools()), 7)
         self.assertFalse(off.has_tool('apply_patch'))
         self.assertEqual(off.get_parameters('read_file_range'), self.tools.get_parameters('read_file_range'))
@@ -70,7 +70,7 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(tools.has_tool('write_file'))
             self.assertFalse((await tools.execute('write_file', {'path':'notes.txt','content':'BAD'})).success)
             self.assertTrue(tools.has_tool('apply_patch'))
-        self.assertFalse((await build_default_tool_registry(self.root).execute('apply_patch', {})).success)
+        self.assertFalse((await build_default_tool_registry(self.root, file_access='legacy_confirm').execute('apply_patch', {})).success)
 
     async def test_invalid_config_and_registry(self):
         for value in (True, 1, None, [], {}, 'invalid'):
@@ -565,7 +565,7 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
         class Fake(Tool):
             name='apply_patch';description='fake';parameters={'type':'object'}
             async def execute(self,**kwargs):return ToolResult(False,error='fake',metadata={'safe_to_retry':True,'status':'preflight_failed'})
-        self.tools.register(Fake())
+        self.tools.register(Fake(), capability='external_side_effect')
         agent=self.agent();agent.plan=p;p.reset()
         with contextlib.redirect_stdout(io.StringIO()):
             p.create(['edit','review']);p.update(1,'in_progress');await agent._execute('apply_patch','{}')

@@ -8,11 +8,12 @@ from types import SimpleNamespace as N
 from mybot.agent import AgentLoop, ContextBuilder
 from mybot.config import GatewayConfig
 from mybot.tools import build_default_tool_registry
+from scripts.legacy_write_fixture import legacy_registry
 
 async def check(debug):
     with tempfile.TemporaryDirectory() as folder:
         workspace = Path(folder)
-        tools = build_default_tool_registry(workspace)
+        tools = legacy_registry(workspace)
         calls = [N(id="1", function=N(name="write_file", arguments='{"path":"note.txt","content":"PRIVATE_BODY"}'))]
         responses = iter([N(choices=[N(message=N(content=None, tool_calls=calls), finish_reason='tool_calls' if calls else 'stop')], usage=N(total_tokens=42)), N(choices=[N(message=N(content="done", tool_calls=None), finish_reason='stop')], usage=None)])
         async def create(**kwargs):
@@ -170,3 +171,10 @@ from scripts.check_compaction_evidence import check_compaction_evidence
 check_compaction_evidence()
 from scripts.check_coding_contract_quality import check_coding_contract_quality
 check_coding_contract_quality()
+
+from scripts.check_tool_authority import check_tool_authority
+check_tool_authority()
+from scripts.check_task_contract import check_task_contract
+check_task_contract()
+from scripts.check_requirement_evidence import check_requirement_evidence
+check_requirement_evidence()

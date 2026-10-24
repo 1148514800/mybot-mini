@@ -19,6 +19,7 @@ from mybot.mcp_client.adapter import MCPToolAdapter
 from mybot.mcp_client.discovery import MCPToolCatalog, DiscoveryTool, MAX_DESCRIPTION_CHARS
 from mybot.mcp_client.manager import MCPClientManager
 from mybot.tools import build_default_tool_registry
+from scripts.legacy_write_fixture import legacy_registry
 from scripts.check_mcp import MCPChecks
 from scripts.check_mcp_http import HTTPChecks, approve, deny
 from scripts.check_session import call, response, assert_pairs
@@ -256,7 +257,7 @@ class DiscoveryChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
             agent=self.agent(cfg,[response(calls=[activate(PROJECT)]),RuntimeError('synthetic failure')])
             with self.assertRaisesRegex(RuntimeError,'synthetic'):await self.handle(agent)
             self.assertFalse(agent.discovery.active)
-        self.tools=build_default_tool_registry(self.workspace);cfg=replace(cfg,max_react_steps=1)
+        self.tools=legacy_registry(self.workspace);cfg=replace(cfg,max_react_steps=1)
         async with MCPClientManager(cfg,self.tools):
             agent=self.agent(cfg,[response(calls=[activate(PROJECT)])])
             self.assertIn('1 步上限',await self.handle(agent));self.assertEqual(len(self.requests),1)

@@ -66,7 +66,7 @@ class MCPToolCatalog:
         self.entries = {}
         self.active = frozenset()
         for tool in registry.iter_tools():
-            if not isinstance(tool, MCPToolAdapter):continue
+            if not isinstance(tool, MCPToolAdapter) or not registry.permitted(tool.name):continue
             server = tool.manager.servers.get(tool.server, {})
             if (tool.remote_name not in server.get('allowed_tools', [])
                     or server.get('tool_policies', {}).get(tool.remote_name, 'confirm') == 'deny'):
@@ -132,6 +132,8 @@ class MCPToolCatalog:
             return ToolResult(success=False,error='activation_unknown_or_disallowed_tool')
         if len(selected)>self.config['max_active_tools']:
             return ToolResult(success=False,error='activation_tool_limit')
+        if any(not self.registry.permitted(name) for name in selected):
+            return ToolResult(success=False,error='tool_authority_denied')
         size = self.schema_chars(selected)
         if size>self.config['max_active_schema_chars']:
             return ToolResult(success=False,error='activation_schema_limit')

@@ -8,6 +8,7 @@ from types import SimpleNamespace as N
 from mybot.agent import AgentLoop, ContextBuilder
 from mybot.config import GatewayConfig
 from mybot.tools import build_default_tool_registry
+from scripts.legacy_write_fixture import legacy_registry
 
 async def check_list_files():
     with tempfile.TemporaryDirectory() as folder:
@@ -21,7 +22,7 @@ async def check_list_files():
         outside.mkdir()
         (workspace / "external").symlink_to(outside, target_is_directory=True)
         (workspace / "internal").symlink_to(workspace / "Beta", target_is_directory=True)
-        tools = build_default_tool_registry(workspace)
+        tools = legacy_registry(workspace)
         definitions = {item["function"]["name"]: item["function"] for item in tools.get_definitions()}
         assert set(definitions) == {"read_file", "write_file", "list_files"}
         schema = definitions["list_files"]["parameters"]

@@ -134,7 +134,7 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
 
     def test_no_new_tool_schema(self):
         before = self.tools.get_definitions()
-        AgentLoop(N(), self.cfg(), self.tools, ContextBuilder(self.root))
+        AgentLoop(N(), self.cfg(coding_task_contract=False), self.tools, ContextBuilder(self.root))
         after = [x for x in self.tools.get_definitions() if x['function']['name'] not in ('create_plan','update_plan')]
         self.assertEqual(before, after)
         self.assertFalse(self.tools.has_tool('write_file'))
@@ -463,7 +463,7 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('Everything fixed', reply)
 
     async def test_native_type_not_name(self):
-        self.tools.register(SpoofTool())
+        self.tools.register(SpoofTool(), capability='external_side_effect')
         r = await self.tools.execute('apply_patch', {})
         self.controller.observe('apply_patch', {}, r)
         self.assertEqual(self.controller.current_revision, 0)

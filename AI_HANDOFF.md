@@ -2,20 +2,26 @@
 
 ## 当前目标与状态
 
-真实用户任务质量优化已完成实现和离线验收，独立分支codex/post-live-quality-hardening，基线58725ca77cfa88ca41f661f1dd343f9f20c1f482。最终check_phase 41组1390项、独立UAT补充79项，共1469项通过（旧1433+新36），无跳过；compileall与diff检查通过。BROWSER PASS仅指真实浏览器合成验收。Implementation为bc0784920c6978ef642f1ea6efe19fa8176e5dea，包含源码、测试和技术报告；Acceptance为含当前交接及最终证据的后续docs提交，本次交付按用户授权Push并核对远程HEAD。未合main、不改Tag/ZIP，主工作区用户修改保留。
+Tool Authority & Task Contract 强化已完成实现、专项/完整离线和真实浏览器合成验证。独立分支 codex/tool-authority-task-contract，从指定 fd913d938e4bfcda8a6b892780fa987a62906487 开始；不合 main、不改 Phase Tag/ZIP。当前准备 Implementation 提交；Acceptance 报告和 Push 在下一交付步骤完成。
 
-## 实现与可信边界
+## 已完成与关键决策
 
-- RuntimeAccounting/AgentLoop按finish_reason区分完整、截断、过滤、空回复、异常/未知。截断保留文字、用户输入与Tool配对，不续请求、不执行部分Tool参数；CLI/Web/SSE明确不完整。Coding已提交Patch及真实Revision测试证据独立保留。
-- 语义压缩默认关闭，沿用精确引用v1、原超时/取消/Controller/主备物理预算。全部条目先校验；关键目标/约束/完成证据失效仍fallback，其他失效在合法锚点下明确partial，仅保留有效引用。节选与脱敏原文双检查，统计无正文。按真实来源位置排序，已选决定/未知/待办/失败设覆盖下限；空间不足fallback，历史覆盖未验证，Session不改写。来源1024→64有界缩减并反复走原TokenCounter。
-- Coding紧凑合同提示覆盖按需边界、README、入口追踪、测试覆盖与未验证披露；合并重复提示，保留旧长度/边界断言。除instruction外Controller方法AST及原工具/权限/Failover/Session/工作区锁实现不变。旧合成Client仅补finish_reason元数据，原函数AST归一化与47条原assert均一致。
+- 默认 coding.file_access=read_only；普通聊天不暴露/执行 write_file。Registry 可信类型/显式宿主能力分类，Schema/execute/MCP Catalog 激活共用权限过滤，手工调用不能绕过。
+- 显式 legacy_confirm 与 Patch 互斥，逐次完整内容审批，内部复用原 Patch Preview Receipt/版本/dir-fd/元数据发布检查；不自动建父目录，无法完整安全展示/无Provider/空文件覆盖拒绝。CLI/Web一致，命令/MCP仍是独立权限域。
+- coding.task_contract 默认true，仅自主编码任务激活。最多12条、320字/条、输入与累计预算；当前用户精确原文或真实版本化文件读取建立来源，模型建议/未决分开；只追加不可删除或自报PASS。
+- 复用原 Controller 的当前Revision和真实测试记录；声明Level1、测试记录关联Level2不证明需求覆盖；独立可信宿主断言才有Level3。无Oracle/提取完整性证明时Task Correctness为unknown。合同不恢复授权，不跨任务恢复；无固定额外模型抽取/评价请求，工具往返仍消耗原预算。
+- CLI计数和Web折叠面板展示真实状态；事件不发送私有原文，只发送来源坐标与必要状态，Web从既有脱敏消息还原简述。项目文档需求暂仅显示编号/类别。
 
-## 证据与结果
+## 文件与验证
 
-新增output 15、compaction 15、contract 6项已接入check_phase。真实浏览器合成检查截断保留、部分摘要及引用统计、正常回复对照，临时服务正常关闭。真实模型/DeepSeek/GLM/真实语义摘要均0，旧9次额度未用。原Live47项SHA含账本只读核对一致；旧T01 PASS、T02/T03 FAIL、旧Task 1/3和更早1/6不改判，历史Harness/Fixture/规则/报告/Phase资产未改。
+核心：tools/authority.py、registry.py、file.py、file_approval.py；agent/task_contract.py、loop.py；config/app/Web runtime/approval/静态页；MCP Catalog。三组新增专项、合成/浏览器验收工具；历史依赖隐式写入的测试改为明确兼容配置，原断言保留。设计与完整证据在 docs/reports/tool-authority-task-contract/。
 
-报告在docs/reports/post-live-quality-hardening/，含根因、输出/摘要/Coding技术说明、新域合成前后对照、完整测试结果、截图、安全审计、剩余风险。没有提交原始私有响应、凭证、Receipt、nonce或主机路径。扫描通过；原回归发现提示长度/边界词问题后已合并修复并从最终代码全量重测。
+最终 check_phase 44组1448项 + 独立UAT补充79项 = 去重1527项；原1469全部保留，新增58项，无跳过。用户指定Web/Receipt/可靠性/Failover/命令五套单独重跑通过；compileall、JS语法、diff检查通过。A/B真实Patch→Receipt→原生unittest→Revision verified，B未覆盖需求仍unknown且独立断言失败；C CLI/Web文件及Git工作树不变、1次合成请求后拒绝。实际浏览器A/B/C通过，临时服务和页面已关闭。真实API/DeepSeek/GLM/真实语义摘要/付费Judge均0。
 
-## 下一步与禁止重复
+Controller、Patch、RunCommand、Seatbelt、Command Approval、Undo、WorkspaceLease、MCP Approval/Manager十个核心文件与基线逐字节相同；729个旧保护资产未变。凭证/禁入路径/大文件检查通过。原main仍有用户 mybot/app.py、workspace/instructions/USER.md 两处未提交修改，未带入新worktree。
 
-实现、验收与报告完成；交付时核对Push、远程HEAD与干净工作树。后续仅在用户新任务下继续，不自动发起Live或下一Phase。后续真实质量改善仍未验证：精确引用可能漏选/误分类、类别下限不是全历史保真、来源缩减可能遗漏中段，stop不证明语义完整，合同提示不保证模型遵守。后续Live必须另行预注册冻结授权，不重跑旧任务、不改历史结论、不用旧额度。当前没有新的Live授权或下一Phase。
+## 限制与下一步
+
+精确引用不证明语义提取完整；Level2关联来自模型且覆盖未知。没有日常独立Oracle，不声称真实模型质量或费用改善。legacy/host_confirm无OS隔离，MCP不受Patch保护；Patch仍不解决全部恶意并发或跨文件崩溃原子性。空文件写入与跨轮需求替代尚未支持。
+
+完成Implementation、Acceptance两次提交并按用户授权Push指定分支，核对远程HEAD与干净工作树。不要合main、改旧Live结论/冻结资产、重跑旧T01/T02/T03、复用旧额度或进入下一Phase。

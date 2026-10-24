@@ -41,10 +41,11 @@ class PersistenceChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception): raise item
             return item
         from mybot.tools import build_default_tool_registry
+        from scripts.legacy_write_fixture import legacy_registry
         config = GatewayConfig(skills_enabled=False, context_enabled=False, debug=False, workspace=self.workspace, session_persist=persist,
                                session_path=self.path, session_max_turns=max_turns)
         return AgentLoop(N(chat=N(completions=N(create=create))), config,
-                         build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+                         legacy_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_save_and_restart(self):
         agent = self.agent()

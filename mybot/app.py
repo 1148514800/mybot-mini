@@ -10,6 +10,7 @@ from .mcp_client.manager import MCPClientManager
 from .mcp_client.approval import cli_approval
 from .tools.command_approval import cli_command_approval
 from .tools.undo_approval import cli_undo_approval
+from .tools.file_approval import cli_file_approval
 
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
@@ -26,6 +27,7 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
             init_workspace(config.workspace)
         tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled,
             patch_mode=config.coding_patch_mode, preview_receipt=config.coding_preview_receipt,
+            file_access=config.coding_file_access, file_approval_provider=cli_file_approval,
             command=config.coding_command, command_approval_provider=cli_command_approval)
         async with MCPClientManager(config, tools, approval_provider=cli_approval):
             llm_client = build_client(config)

@@ -15,6 +15,7 @@ from mybot.agent import AgentLoop, ContextBuilder
 from mybot.agent.context_manager import ContextBudgetError,ContextManager
 from mybot.config import GatewayConfig
 from mybot.tools import build_default_tool_registry
+from scripts.legacy_write_fixture import legacy_registry
 from mybot.mcp_client.adapter import MCPToolAdapter
 from mybot.mcp_client.discovery import MCPToolCatalog,validate_discovery
 from mybot.mcp_client.router import AdaptiveToolRouter,MAX_ROUTING_INPUT_CHARS
@@ -82,14 +83,14 @@ class AdaptiveChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
 
     async def test_05_threshold_zero_and_count(self):
         for threshold in (0,1):
-            self.tools=build_default_tool_registry(self.workspace)
+            self.tools=legacy_registry(self.workspace)
             a=self.fake(['list_project_tasks','search_documents'],eager_tool_threshold=threshold)
             self.assertEqual(self.route(a).routing_strategy,'ranked_preselect')
 
     async def test_06_small_eager_respects_count_and_schema(self):
         a=self.fake(['list_project_tasks','search_documents'],max_active_tools=1)
         d=self.route(a);self.assertNotEqual(d.routing_strategy,'small_eager');self.assertLessEqual(len(d.selected_tool_names),1)
-        self.tools=build_default_tool_registry(self.workspace)
+        self.tools=legacy_registry(self.workspace)
         a=self.fake(['list_project_tasks','search_documents'],max_active_schema_chars=256)
         d=self.route(a);self.assertEqual(d.routing_strategy,'manual_fallback');self.assertEqual(d.selected_schema_chars,0)
         self.assertEqual(d.fallback_reason,'schema_budget_limited')
@@ -144,7 +145,7 @@ class AdaptiveChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
         self.assertIn('search_mcp_tools',a.discovery.visible_names())
 
     async def test_13_deterministic_budget_skip_large_candidate(self):
-        self.tools=build_default_tool_registry(self.workspace)
+        self.tools=legacy_registry(self.workspace)
         manager=N(servers={'catalog':{'allowed_tools':['a','b'],'tool_policies':{}}})
         for name,description in [('a','X'*5000),('b','small')]:
             schema={'type':'object','properties':{'value':{'type':'string','description':description}},'required':['value']}

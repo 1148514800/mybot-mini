@@ -27,7 +27,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name);self.repo=make_demo(self.root/'repo')
-        self.tools=build_default_tool_registry(self.repo,coding_enabled=True)
+        self.tools=build_default_tool_registry(self.repo,coding_enabled=True, file_access='legacy_confirm')
         self.git_exe,_=executable('git',self.repo)
 
     def git(self,*args):
@@ -43,7 +43,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
         return p
 
     async def test_default_registry_and_config(self):
-        self.assertEqual([t.name for t in build_default_tool_registry(self.repo).iter_tools()],['read_file','write_file','list_files'])
+        self.assertEqual([t.name for t in build_default_tool_registry(self.repo, file_access='legacy_confirm').iter_tools()],['read_file','write_file','list_files'])
         self.assertEqual(len(self.tools.iter_tools()),7)
         self.assertFalse(GatewayConfig().coding_enabled)
         for bad in (1,0,None,[],{},'true'):

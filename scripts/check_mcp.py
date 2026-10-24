@@ -1,5 +1,6 @@
 """Real SDK stdio processes + mocked LLM, no real model/API or private workspace."""
 import asyncio
+from scripts.legacy_write_fixture import legacy_registry
 import contextlib
 import io
 import json
@@ -65,7 +66,7 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         self.pid=self.root/'pid'
         self.config=GatewayConfig(mcp_enabled=False,mcp_servers={},skills_enabled=False,context_enabled=False,
                                   session_persist=False,debug=False,workspace=self.workspace)
-        self.tools=build_default_tool_registry(self.workspace)
+        self.tools=legacy_registry(self.workspace)
 
     def demo(self,allowed=('add','echo'),**overrides):
         return dict(command=sys.executable,args=['-m','scripts.mcp_demo_server'],allowed_tools=list(allowed),tool_policies={n:'allow' for n in allowed},timeout_seconds=5,**overrides)
@@ -110,7 +111,7 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
             self.assertFalse((await self.tools.execute('mcp__demo__add',{'a':True,'b':2})).success)
             self.assertFalse((await self.tools.execute('mcp__demo__add',{'a':'bad','b':2})).success)
         self.assertFalse((await self.tools.execute('mcp__demo__add',{'a':1,'b':2})).success)
-        filtered=build_default_tool_registry(self.workspace)
+        filtered=legacy_registry(self.workspace)
         async with MCPClientManager(replace(cfg,mcp_servers={'demo':self.demo(('add',))}),filtered) as manager:
             self.assertFalse(filtered.has_tool('mcp__demo__echo'))
             self.assertFalse((await manager.call('demo','echo',{'message':'not allowed'})).success)
@@ -152,7 +153,7 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_tool_timeout_disconnect_release_process(self):
         for name in ('delay','crash'):
-            tools=build_default_tool_registry(self.workspace)
+            tools=legacy_registry(self.workspace)
             async with MCPClientManager(self.fixture_config([name],timeout=0.5),tools) as manager:
                 result=await tools.execute('mcp__test__'+name,{})
                 self.assertFalse(result.success);self.assertTrue(manager.closed)
@@ -161,7 +162,7 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_cancel_handshake_and_body_release_process(self):
         async def run(mode):
-            async with MCPClientManager(self.fixture_config(['typed'],mode=mode,timeout=5),build_default_tool_registry(self.workspace)):
+            async with MCPClientManager(self.fixture_config(['typed'],mode=mode,timeout=5),legacy_registry(self.workspace)):
                 await asyncio.sleep(30)
         for mode in ('normal','hang'):
             self.pid.unlink(missing_ok=True)

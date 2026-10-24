@@ -38,6 +38,7 @@ class Conversation:
     usage_known: bool = True
     resources: dict = field(default_factory=dict)
     report: dict | None = None
+    contract: dict | None = None
     failed_request: bool = False
     secret_values: tuple = ()
 
@@ -53,6 +54,7 @@ class Conversation:
             clean['display_truncated'] = True
         self.sequence += 1
         self.events.append({'sequence': self.sequence, 'time': time.time(), **clean})
+        if event['type'] == 'task_contract': self.contract = clean.get('contract')
         if event['type'] == 'resource_update': self.resources = clean.get('resources', {})
         if event['type'] == 'model_request_started': self.requests += 1
         if event['type'] == 'model_request_failed': self.failed_request = True; self.usage_known = False
@@ -67,7 +69,7 @@ class Conversation:
     def state(self):
         return {'id': self.id, 'title': self.title, 'status': self.status, 'messages': self.messages,
                 'events': list(self.events), 'sequence': self.sequence, 'requests': self.requests,
-                'tokens': self.resources.get('provider_reported_total_tokens') if self.resources else (self.tokens if self.usage_known else None), 'report': self.report, 'resources': self.resources,
+                'tokens': self.resources.get('provider_reported_total_tokens') if self.resources else (self.tokens if self.usage_known else None), 'report': self.report, 'resources': self.resources, 'contract': self.contract,
                 'approval': self.approval.public_pending() if self.approval else None}
 
 
@@ -91,7 +93,7 @@ class ChatRuntime:
         if text.strip() in ('/undo', '/changes', '/clear'): raise ValueError('use_web_controls')
         self.owner = c.id  # No await between checking and reserving the process-wide lease.
         c.status = 'running'; c.started.clear(); c.failed_request = False; c.report = None
-        c.events.clear(); c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
+        c.events.clear(); c.contract = None; c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
         c.messages.append({'role': 'user', 'content': redact(text, c.secret_values), 'time': time.time()})
         c.messages[:] = c.messages[-64:]
         if c.title == '新对话': c.title = redact(text.strip()[:32], c.secret_values)
@@ -114,6 +116,7 @@ class ChatRuntime:
                 else: init_workspace(config.workspace)
                 tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled,
                     patch_mode=config.coding_patch_mode, preview_receipt=config.coding_preview_receipt,
+                    file_access=config.coding_file_access, file_approval_provider=c.approval,
                     command=config.coding_command, command_approval_provider=c.approval)
                 # MCP enter/call/exit MUST stay in this SAME task, per existing manager fences.
                 manager = MCPClientManager(config, tools, approval_provider=c.approval)
@@ -151,6 +154,7 @@ class ChatRuntime:
                     if report:
                         reply = '[OUTPUT] ' + OUTPUT_NOTICES[delivery['status']] + '\n' + reply
                         if agent.partial_reply: reply += '\n[模型部分回复]\n' + agent.partial_reply
+                if agent.task_contract is not None: reply += '\n' + agent.task_contract.summary()
                 reply = redact(reply, c.secret_values)
                 c.messages.append({'role': 'assistant', 'content': reply, 'time': time.time()})
                 c.messages[:] = c.messages[-64:]
@@ -200,7 +204,7 @@ class ChatRuntime:
 
     async def clear(self, c):
         if self.owner is not None: return False
-        c.session.clear(); c.messages.clear(); c.events.clear(); c.report = None; c.title = '新对话'; c.status = 'idle'
+        c.session.clear(); c.messages.clear(); c.events.clear(); c.report = None; c.contract = None; c.title = '新对话'; c.status = 'idle'
         c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
         c.emit({'type': 'conversation_cleared'})
         return True

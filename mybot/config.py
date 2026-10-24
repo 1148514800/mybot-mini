@@ -66,8 +66,8 @@ def _skills_value(key: str, default):
 
 def _coding_value(key='enabled', default=False):
     value = _CONFIG.get('coding', {})
-    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command','autonomy','git_workflow','preview_receipt'}:
-        raise ValueError('coding must contain only enabled, patch_mode, preview_receipt, command, autonomy and git_workflow')
+    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command','autonomy','git_workflow','preview_receipt','file_access','task_contract'}:
+        raise ValueError('coding contains unknown fields (allowed: enabled, patch_mode, preview_receipt, command, autonomy, git_workflow, file_access, task_contract)')
     return value.get(key,default)
 
 
@@ -87,6 +87,8 @@ def _resolve_path(raw_value) -> Path:
 
 @dataclass
 class GatewayConfig:
+    coding_file_access: str = field(default_factory=lambda: _coding_value('file_access', 'read_only'), kw_only=True)
+    coding_task_contract: bool = field(default_factory=lambda: _coding_value('task_contract', True), kw_only=True)
     coding_enabled: bool = field(default_factory=_coding_value)
     coding_patch_mode: str = field(default_factory=lambda: _coding_value('patch_mode', 'off'))
     coding_preview_receipt: bool = field(default_factory=lambda: _coding_value('preview_receipt', False), kw_only=True)
@@ -121,6 +123,9 @@ class GatewayConfig:
     )
 
     def __post_init__(self) -> None:
+        from .tools.authority import validate_file_access
+        validate_file_access(self.coding_file_access, self.coding_patch_mode)
+        if type(self.coding_task_contract) is not bool: raise ValueError('coding.task_contract must be boolean')
         if type(self.coding_enabled) is not bool:raise ValueError('coding.enabled must be a boolean')
         if type(self.coding_patch_mode) is not str or self.coding_patch_mode not in ('off', 'preview', 'write'):
             raise ValueError('coding.patch_mode must be off, preview or write')

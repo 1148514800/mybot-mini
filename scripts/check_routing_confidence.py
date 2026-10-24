@@ -295,7 +295,10 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         from scripts.check_tool_agent_eval import SequenceClient
         # Run the standalone challenge via the same owner lifecycle, including builtin success.
         with patch('mybot.evaluation.tool_agent.load_cases',return_value=[agent_cases('routing')[-1]]):
-            r=await evaluate(modes=('eager','adaptive_selective_hybrid'),limits=Limits(max_cases=1))
+            from mybot.config import GatewayConfig
+            from scripts.legacy_write_fixture import approve_legacy
+            r=await evaluate(modes=('eager','adaptive_selective_hybrid'),limits=Limits(max_cases=1),
+                base_config=GatewayConfig(coding_file_access='legacy_confirm'),file_approval_provider=approve_legacy)
         for row in r['results']:
             self.assertTrue(row['task_success']);self.assertEqual(row['actual_mcp_calls'],0)
             self.assertEqual(row['tool_calls'],1)

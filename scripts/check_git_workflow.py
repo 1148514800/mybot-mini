@@ -186,7 +186,7 @@ class GitWorkflowChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_no_schema_change(self):
         tools=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',command={'mode':'macos_readonly'})
-        before=tools.get_definitions();a=await self.agent()
+        before=tools.get_definitions();a=await self.agent(coding_task_contract=False)
         after=[x for x in a.tools.get_definitions() if x['function']['name'] not in ('create_plan','update_plan')]
         self.assertEqual(before,after);self.assertFalse(a.tools.has_tool('undo_agent_changes'))
         self.assertFalse(a.tools.has_tool('write_file'))
@@ -573,7 +573,7 @@ class GitWorkflowChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_spoof_metadata_not_owned_review_only(self):
         a=await self.agent(SpoofClient(),coding_git_workflow={'enabled':True})
-        a.tools.register(SpoofPatchTool());await a.handle_message('task')
+        a.tools.register(SpoofPatchTool(), capability='external_side_effect');await a.handle_message('task')
         self.assertEqual(a._git_capsule.entries,{});self.assertEqual(a.last_coding_report['state'],'completed_without_changes')
 
     async def test_host_review_only_marks_external(self):

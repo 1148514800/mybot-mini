@@ -6,6 +6,7 @@ import time
 from .security import redact
 from ..tools.command_approval import CommandApprovalRequest, MAX_DISPLAY
 from ..tools.undo_approval import UndoApprovalRequest
+from ..tools.file_approval import FileApprovalRequest
 from ..mcp_client.approval import ApprovalRequest, ApprovalDecision
 
 
@@ -19,6 +20,8 @@ class WebApproval:
         if self.pending is not None: return ApprovalDecision.DENY
         if isinstance(request, CommandApprovalRequest):
             display = request.display_json; kind = 'command'
+        elif isinstance(request, FileApprovalRequest):
+            display = request.display_json; kind = 'file'
         elif isinstance(request, ApprovalRequest):
             display = json.dumps({'server': request.server, 'tool': request.tool,
                                   'arguments': json.loads(request.arguments_json)}, ensure_ascii=True); kind = 'mcp'

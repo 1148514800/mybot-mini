@@ -10,11 +10,40 @@ from .list_files import ListFilesTool
 class ToolRegistry:
     """Name-indexed tools with schema lookup and one execution boundary."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, mutation_enabled=False) -> None:
+        if type(mutation_enabled) is not bool: raise ValueError('mutation_enabled must be boolean')
         self._tools: dict[str, Tool] = {}
+        self._capabilities: dict[str, str] = {}
+        self.mutation_enabled = mutation_enabled
 
-    def register(self, tool: Tool) -> None:
+    def register(self, tool: Tool, *, capability=None) -> None:
+        # Only host code supplies capability. Tool parameters/results cannot grant it.
+        from .authority import native_capability, CAPABILITIES
+        capability = native_capability(tool) if capability is None else capability
+        if capability is not None and capability not in CAPABILITIES:
+            raise ValueError('invalid tool capability')
         self._tools[tool.name] = tool
+        self._capabilities[tool.name] = capability
+
+    def permitted(self, name: str) -> bool:
+        capability = self._capabilities.get(name)
+        if capability is None: return False
+        if capability == 'workspace_mutation' and not self.mutation_enabled: return False
+        # Native tool modes and remote MCP policies remain additional independent gates.
+        from ..mcp_client.adapter import MCPToolAdapter
+        tool = self._tools.get(name)
+        if type(tool) is WriteFileTool and (not tool.enabled or not callable(tool.approval_provider)): return False
+        if type(tool) is MCPToolAdapter:
+            server = tool.manager.servers.get(tool.server, {})
+            return (tool.remote_name in server.get('allowed_tools', []) and
+                    server.get('tool_policies', {}).get(tool.remote_name, 'confirm') != 'deny')
+        return True
+
+    @staticmethod
+    def denied() -> ToolResult:
+        return ToolResult(False, error='tool_authority_denied', metadata={
+            'permission_denied': True, 'executed': False, 'execution_evidence': False,
+            'authority_denied': True})
 
     def has_tool(self, name: str) -> bool:
         return name in self._tools
@@ -36,12 +65,14 @@ class ToolRegistry:
     def get_definitions(self, visible_names=None) -> list[dict]:
         visible = None if visible_names is None else frozenset(visible_names)
         return [tool.to_schema() for tool in self._tools.values()
-                if visible is None or tool.name in visible]
+                if self.permitted(tool.name) and (visible is None or tool.name in visible)]
 
     async def execute(self, name: str, params: dict) -> ToolResult:
         tool = self._tools.get(name)
         if tool is None:
+            if name == 'write_file': return self.denied()
             return ToolResult(success=False, error=f"unknown tool '{name}'")
+        if not self.permitted(name): return self.denied()
         try:
             result = await tool.execute(**dict(params))
         except Exception as exc:
@@ -51,7 +82,7 @@ class ToolRegistry:
         return ToolResult(success=False, error=f"tool returned {type(result).__name__}")
 
 
-def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_mode='off', preview_receipt=False, command=None, command_approval_provider=None) -> ToolRegistry:
+def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_mode='off', preview_receipt=False, command=None, command_approval_provider=None, file_access='read_only', file_approval_provider=None) -> ToolRegistry:
     if type(coding_enabled) is not bool:raise ValueError('coding_enabled must be a boolean')
     if type(patch_mode) is not str or patch_mode not in ('off','preview','write'):
         raise ValueError('invalid patch_mode')
@@ -61,10 +92,12 @@ def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_
     from .command_config import validate_command
     command = {} if command is None else command
     settings = validate_command(command, coding_enabled=coding_enabled, patch_mode=patch_mode)
-    registry = ToolRegistry()
+    from .authority import validate_file_access
+    validate_file_access(file_access, patch_mode)
+    registry = ToolRegistry(mutation_enabled=patch_mode != 'off' or file_access == 'legacy_confirm')
     for tool in (
         ReadFileTool(workspace),
-        *([WriteFileTool(workspace)] if patch_mode == 'off' else []),
+        *([WriteFileTool(workspace, enabled=True, approval_provider=file_approval_provider)] if file_access == 'legacy_confirm' else []),
         ListFilesTool(workspace),
     ):
         registry.register(tool)

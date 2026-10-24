@@ -51,7 +51,7 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
             new=build_default_tool_registry(self.root,coding_enabled=flag,patch_mode=mode,command={'mode':'off'})
             self.assertEqual(old.get_definitions(),new.get_definitions())
             self.assertFalse((await old.execute('run_command',{'argv':['python']})).success)
-        self.assertEqual(len(build_default_tool_registry(self.root).iter_tools()),3)
+        self.assertEqual(len(build_default_tool_registry(self.root, file_access='legacy_confirm').iter_tools()),3)
 
     async def test_strict_config(self):
         for value in [None,[],False,{'extra':1},{'mode':True},{'mode':'automatic'}, {'timeout_seconds':0},
@@ -514,7 +514,7 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
         class Fake(Tool):
             name='run_command';description='fake';parameters={'type':'object'}
             async def execute(self,**kw):return ToolResult(False,error='fake',metadata={'completed':True,'exit_code':1,'command_nonzero':True})
-        tools=build_default_tool_registry(self.root);tools.register(Fake());agent=self.agent(tools=tools)
+        tools=build_default_tool_registry(self.root);tools.register(Fake(), capability='external_side_effect');agent=self.agent(tools=tools)
         with contextlib.redirect_stdout(io.StringIO()):
             agent.plan.create(['test','verify']);agent.plan.update(1,'in_progress');await agent._execute('run_command','{}')
         self.assertEqual(agent.plan.steps[0].status,'failed')
@@ -536,7 +536,7 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
         effects=[response(calls=[call('deny','mcp__stub__deny','{}'),call('cmd','run_command','{"argv":["python","-c","print(1)"]}')])]
         async def create(**kw):return effects.pop(0)
         agent=self.agent(client=N(chat=N(completions=N(create=create))))
-        agent.tools.register(Denial())
+        agent.tools.register(Denial(), capability='external_side_effect')
         with patch.object(agent.tools.get_tool('run_command'),'execute') as run,contextlib.redirect_stdout(io.StringIO()):reply=await agent.handle_message('inspect')
         run.assert_not_called();self.assertIn('MCP 操作未获批准',reply);self.assertTrue(pair_messages(agent.session.history(),complete=True))
 

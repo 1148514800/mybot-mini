@@ -12,6 +12,7 @@ from mybot.agent import AgentLoop, ContextBuilder
 from mybot.config import GatewayConfig
 from mybot.mcp_client.manager import MCPClientManager
 from mybot.tools import build_default_tool_registry
+from mybot.tools.file_approval import cli_file_approval
 from scripts.mcp_catalog_demo_server import DEFINITIONS
 
 CASES = {
@@ -74,7 +75,7 @@ async def compare_case(case_id, mode):
         config=GatewayConfig(workspace=workspace,session_persist=False,skills_enabled=False,debug=False,
             context_enabled=True,context_max_chars=160000,max_react_steps=16,
             mcp_enabled=True,mcp_servers={'catalog':demo_server()},mcp_discovery={'enabled':progressive})
-        tools=build_default_tool_registry(workspace)
+        tools=build_default_tool_registry(workspace, file_access='legacy_confirm', file_approval_provider=cli_file_approval)
         client=FixedDiscoveryClient(progressive,steps)
         async with MCPClientManager(config,tools) as manager:
             agent=AgentLoop(client,config,tools,ContextBuilder(workspace))

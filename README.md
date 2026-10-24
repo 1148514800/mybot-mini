@@ -41,7 +41,7 @@ Copy-Item config\config.example.json config\config.json
 uv run python -m mybot.main
 ```
 
-输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内默认保留最近 6 个完整用户轮次（含工具请求和结果），默认退出后不保存历史；开启 session.persist 后可跨重启恢复。Agent 可以调用 `read_file` 和 `write_file`，文件操作限制在配置的 `workspace.path` 目录内。
+输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内默认保留最近 6 个完整用户轮次（含工具请求和结果），默认退出后不保存历史；开启 session.persist 后可跨重启恢复。新安装普通聊天默认仅提供 `read_file` / `list_files`；原生文件写入须显式启用 Coding Patch 或逐次审批的兼容模式。原生文件操作限制在 `workspace.path` 内；命令和 MCP 有独立权限域。
 
 ## Web Chat（本地可视化界面）
 
@@ -175,7 +175,7 @@ uv run python -m scripts.check_routing_confidence
 
 ## Repository Exploration（Phase 19）
 
-显式设置 `coding.enabled=true` 并将 `workspace.path` 指向已经存在的目标仓库，额外启用 `search_code`、`read_file_range`、`git_status`、`git_diff`。默认false，旧Registry和MCP实验Schema不变。Coding模式不自动写入Workspace引导文件；四个新增工具只读，原write_file仍保留。
+显式设置 `coding.enabled=true` 并将 `workspace.path` 指向已经存在的目标仓库，额外启用 `search_code`、`read_file_range`、`git_status`、`git_diff`。默认false，旧Registry和MCP实验Schema不变。Coding模式不自动写入Workspace引导文件；四个新增工具只读；当前版本的 write_file 需按文末说明显式启用兼容模式。
 
 ```bash
 brew install ripgrep
@@ -191,7 +191,7 @@ Phase 19最终交付使用安全修订 `phase-19-r1`；初版 `phase-19`/ZIP保�
 
 ## Patch-Based Editing（Phase 20）
 
-`coding.patch_mode` 缺省 `off`，保持原工具集合。显式 `coding.enabled=true` 配合 `preview` 或 `write` 时，Registry真正移除原 `write_file` 并注册结构化 `apply_patch`。`read_file_range`提供完整原始字节SHA-256；update要求版本匹配和唯一非重叠锚点，add要求目标不存在、父目录已存在。
+`coding.patch_mode` 缺省 `off`，当前版本默认关闭普通文件写入。显式 `coding.enabled=true` 配合 `preview` 或 `write` 时，Registry真正移除原 `write_file` 并注册结构化 `apply_patch`。`read_file_range`提供完整原始字节SHA-256；update要求版本匹配和唯一非重叠锚点，add要求目标不存在、父目录已存在。
 
 默认 `dry_run=true` 只验证与生成有界Diff；`preview`明确拒绝写入。用户显式开启 `write` 后，模型可传 `dry_run=false`在Workspace内受约束修改。全量预检查、同目录暂存、单文件原子发布和可捕获失败的条件恢复保护已有修改；不提供跨文件崩溃原子性或OS沙盒，也不自动受MCP Approval保护。不新增Shell/测试运行能力，不改变独立MCP工具权限。
 
@@ -258,3 +258,25 @@ Phase25之后的独立可靠性改进（非Phase26）：新入口 `uv run python
 [配置与计量说明](docs/context.md) 提供估算 Token 预算、可选语义摘要和旧字符模式的配置。旧配置默认行为保留；精确本地 Tokenizer 尚未验证，严格模式会拒绝请求。CLI/Web 统一显示已报告 Usage、估算输入、逻辑/物理调用、摘要和裁剪状态。语义模式默认关闭，生产启用会增加模型调用与潜在费用；本轮真实模型请求为0。
 
 CLI/Web 现在按规范化工作区路径共享进程锁；CLI 等待输入时也持锁，结束一个入口后再用另一个操作同一目录。清理不确定时锁保持到进程退出，禁止通过删锁文件绕过。完整证据见 [项目审计验收](docs/reports/project-debt-modernization/acceptance-report.md)。
+
+## Tool Authority 与 Task Contract
+
+`coding.file_access` 默认 `read_only`，旧 `write_file` 不再隐式启用。日常代码修改建议
+`coding.enabled=true`、`coding.patch_mode=write`、`coding.preview_receipt=true`，使用原生 Preview → Receipt Commit。
+旧接口只有显式 `file_access=legacy_confirm`、`patch_mode=off` 及逐次完整内容确认才可写；无审批或无法安全展示则拒绝，
+不再自动建父目录。见 [迁移说明](docs/reports/tool-authority-task-contract/legacy-write-migration.md)。
+命令/MCP 是独立权限域，host_confirm 没有 OS 隔离；默认文件只读不代表整个进程只读。
+
+自主编码任务默认启用 `coding.task_contract=true`（严格布尔，可关闭保持旧任务工具集合）。
+模型通过 `record_task_contract` 提出最多12条要求；宿主核对当前用户原文或真实文件读取版本，分别记录建议、声明和当前测试记录。
+指定测试通过仍不能证明需求覆盖；没有独立需求断言时覆盖与 Task Correctness 显示 unknown。
+CLI 显示计数，Web 可折叠面板显示来源、当前 Revision 和缺少的验收证据。
+
+```bash
+uv run python -m scripts.check_tool_authority
+uv run python -m scripts.check_task_contract
+uv run python -m scripts.check_requirement_evidence
+```
+
+设计、审计、完整离线与浏览器合成验收见 [专题报告](docs/reports/tool-authority-task-contract/acceptance-report.md)。
+早期 Phase 的默认写入说明仅适用于对应历史版本；当前使用请按上述迁移配置。

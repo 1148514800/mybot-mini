@@ -16,6 +16,7 @@ from mybot.agent.planning import Plan
 from mybot.config import GatewayConfig
 from mybot.storage.session_store import SessionStore
 from mybot.tools import build_default_tool_registry
+from scripts.legacy_write_fixture import legacy_registry
 from scripts.check_session import response, call, assert_pairs
 
 
@@ -49,7 +50,7 @@ class ContextChecks(unittest.IsolatedAsyncioTestCase):
             self.requests.append(deepcopy(kwargs))
             return self.effects.pop(0)
         return AgentLoop(N(chat=N(completions=N(create=create))), self.config,
-                         build_default_tool_registry(self.workspace), ContextBuilder(self.workspace))
+                         legacy_registry(self.workspace), ContextBuilder(self.workspace))
 
     def prepare(self, turns, user="CURRENT", current=None, tools=None, plan=None):
         messages = self.agent.context.build_messages(user, [m for t in turns for m in t])
@@ -193,7 +194,10 @@ class ContextChecks(unittest.IsolatedAsyncioTestCase):
         assert_pairs(self, self.requests[1]["messages"])
 
     async def test_mid_task_budget_failure_closes_plan_and_keeps_effects(self):
-        self.effects = [response(calls=[call("p","create_plan",'{"steps":["write","next"]}'),call("s","update_plan",'{"step":1,"status":"in_progress"}'),call("w","write_file",json.dumps({"path":"out.txt","content":"x"*20000}))])]
+        from mybot.tools.patch import ApplyPatchTool
+        self.agent.tools.mutation_enabled = True
+        self.agent.tools.register(ApplyPatchTool(self.workspace, patch_mode='write'))
+        self.effects = [response(calls=[call("p","create_plan",'{"steps":["write","next"]}'),call("s","update_plan",'{"step":1,"status":"in_progress"}'),call("w","apply_patch",json.dumps({"changes":[{"op":"add","path":"out.txt","content":"x"*20000}],"dry_run":False}))])]
         with self.assertRaises(ContextBudgetError): await self.agent.handle_message("complex")
         self.assertEqual(len(self.requests), 1)
         self.assertEqual(self.workspace.joinpath("out.txt").stat().st_size,20000)

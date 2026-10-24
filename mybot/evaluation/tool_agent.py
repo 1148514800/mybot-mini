@@ -355,7 +355,7 @@ def safe_label(value):
     return value if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_./-]{1,128}',value) else '<unavailable>'
 
 
-async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,prices=None,base_config=None,client_factory=None,case_set='core'):
+async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,prices=None,base_config=None,client_factory=None,case_set='core',file_approval_provider=None):
     if type(live) is not bool or type(confirm_api_cost) is not bool or live!=confirm_api_cost:
         raise ValueError('Live requires both --live and --confirm-api-cost')
     limits=limits or Limits(); prices=validate_prices(prices)
@@ -392,7 +392,8 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                                 mcp_discovery={'enabled':progressive,'retrieval_mode':MODE_RETRIEVAL[mode],
                                                **(ADAPTIVE_ROUTING if mode in ADAPTIVE_MODES else {}),
                                                **({'selection_policy':'selective'} if mode=='adaptive_selective_hybrid' else {})})
-                            tools=build_default_tool_registry(workspace)
+                            tools=build_default_tool_registry(workspace, file_access=config.coding_file_access,
+                                file_approval_provider=file_approval_provider)
                             # timeout surrounds the whole connection lifecycle in THIS owner task.
                             remaining=budget['deadline']-time.monotonic()
                             try:

@@ -14,7 +14,7 @@ class CampaignChecks(unittest.IsolatedAsyncioTestCase):
         self.root=Path(self.tmp.name)/'campaign'
         self.g=patch.object(c,'git',side_effect=lambda *a:'' if a[0]=='status' else 'a'*40);self.g.start();self.addCleanup(self.g.stop)
         from mybot.config import GatewayConfig
-        self.freeze=c.freeze(GatewayConfig(provider='coco2',model='gpt-6-astra',api_key=None,base_url=None))
+        self.freeze=c.freeze(GatewayConfig(provider='coco2',model='gpt-6-astra',api_key=None,base_url=None,coding_task_contract=False))
         self.p=patch.object(c,'freeze',return_value=self.freeze);self.p.start();self.addCleanup(self.p.stop)
 
     def init(self,live=True):return c.create(self.root,rounds=3,live=live)
