@@ -1,0 +1,424 @@
+{
+  "status": "OFFLINE_PASS",
+  "baseline": "fd913d938e4bfcda8a6b892780fa987a62906487",
+  "branch": "codex/tool-authority-task-contract",
+  "implementation_commit": "f7d036cac0286f6bda329f2e52f84f9c70b35dc1",
+  "phase": {
+    "module": "scripts.check_phase",
+    "command": "uv run python -m scripts.check_phase",
+    "exit_code": 0,
+    "seconds": 356.56,
+    "tests": 1448,
+    "suites": 44,
+    "skipped": 0,
+    "log_sha256": "2a6f741f80bf65e442b3ea9b8e1a7a3dd747d6086202113899fd10962a99ede3"
+  },
+  "requested_repeat_suites": [
+    {
+      "module": "scripts.check_web_ui",
+      "command": "uv run python -m scripts.check_web_ui",
+      "exit_code": 0,
+      "seconds": 4.42,
+      "tests": 53,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "217ed64ba2c547962193c2d260ef80387b2c42b0e70f515b202da3734ab64d3d"
+    },
+    {
+      "module": "scripts.check_patch_preview_receipt",
+      "command": "uv run python -m scripts.check_patch_preview_receipt",
+      "exit_code": 0,
+      "seconds": 7.54,
+      "tests": 53,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "8a3edb971a70b7ab7884ff1667b00488bc9292dcb31a771cd945ab7574e4e43c"
+    },
+    {
+      "module": "scripts.check_coding_reliability",
+      "command": "uv run python -m scripts.check_coding_reliability",
+      "exit_code": 0,
+      "seconds": 12.89,
+      "tests": 42,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "9a3ff1f6283ec872067bc525f57ee70db4785b6e484d3c0fdb84a2f1fab802b7"
+    },
+    {
+      "module": "scripts.check_coding_failover",
+      "command": "uv run python -m scripts.check_coding_failover",
+      "exit_code": 0,
+      "seconds": 18.37,
+      "tests": 50,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "4110519a595b9027eaeadc98a171b5945998fcf805e6c0a383c8876e9e492641"
+    },
+    {
+      "module": "scripts.check_command_execution",
+      "command": "uv run python -m scripts.check_command_execution",
+      "exit_code": 0,
+      "seconds": 13.46,
+      "tests": 62,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "48f2ba434228eaf8325dbd3c96d42d5d9acf5a3f0ec2d5d07da31a1860bb0478"
+    }
+  ],
+  "independent_uat_complements": [
+    {
+      "module": "scripts.check_uat_preflight",
+      "command": "uv run python -m scripts.check_uat_preflight",
+      "exit_code": 0,
+      "seconds": 2.7,
+      "tests": 9,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "3ce90da412ea1cee60a20d597a7e7a951473956d0b937107affab7e005766d92"
+    },
+    {
+      "module": "scripts.check_patch_diagnostics",
+      "command": "uv run python -m scripts.check_patch_diagnostics",
+      "exit_code": 0,
+      "seconds": 0.93,
+      "tests": 9,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "985efe69526e7f1197b417d402831a8127efb5cd0ebcd27382209f48e01fd56a"
+    },
+    {
+      "module": "scripts.check_adaptive_compaction",
+      "command": "uv run python -m scripts.check_adaptive_compaction",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "tests": 14,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "ccb26e2804bae9d0dee9c0516b3935c4fcf25f29804d6890a2716643dbafddbf"
+    },
+    {
+      "module": "scripts.check_remediation_e2e",
+      "command": "uv run python -m scripts.check_remediation_e2e",
+      "exit_code": 0,
+      "seconds": 1.5,
+      "tests": 5,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "8d6ec3f0f9f03a00439d4ad4a62af2c6c6b122a1082f90eeebec5d1d823ddbcc"
+    },
+    {
+      "module": "scripts.check_agent_instruction_quality",
+      "command": "uv run python -m scripts.check_agent_instruction_quality",
+      "exit_code": 0,
+      "seconds": 0.5,
+      "tests": 5,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "bac969c979790008a209e0c50b9565bffabda7c5b1bf823db1a4ea77b0ec2fcc"
+    },
+    {
+      "module": "scripts.check_real_user_uat",
+      "command": "uv run python -m scripts.check_real_user_uat",
+      "exit_code": 0,
+      "seconds": 1.51,
+      "tests": 13,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "4ec52908d8e60f843c11f8d02bc3b1fb03598d7a3dee954f99841c32973e77ee"
+    },
+    {
+      "module": "scripts.check_targeted_user_uat_v2",
+      "command": "uv run python -m scripts.check_targeted_user_uat_v2",
+      "exit_code": 0,
+      "seconds": 6.27,
+      "tests": 24,
+      "suites": 1,
+      "skipped": 0,
+      "log_sha256": "15cdef34b5027a275f29e9eec69a718887620fa6d965c25c9d1fc40b2313b08a"
+    }
+  ],
+  "new_specialty_suites": {
+    "scripts.check_tool_authority": 20,
+    "scripts.check_task_contract": 22,
+    "scripts.check_requirement_evidence": 16
+  },
+  "original_tests_retained": 1469,
+  "new_tests": 58,
+  "total_nonduplicated_tests": 1527,
+  "skipped": 0,
+  "requested_repeat_tests_already_in_phase": true,
+  "synthetic_scenarios_already_covered_in_specialties": true,
+  "compileall": {
+    "command": "uv run python -m compileall -q mybot scripts",
+    "exit_code": 0
+  },
+  "javascript": {
+    "command": "node --check mybot/web/static/app.js",
+    "exit_code": 0
+  },
+  "diff_check": {
+    "command": "git diff --check",
+    "exit_code": 0
+  },
+  "real_api_requests": 0,
+  "deepseek_requests": 0,
+  "glm_requests": 0,
+  "real_semantic_requests": 0,
+  "paid_judge_requests": 0,
+  "old_budget_reused": false,
+  "old_live_tasks_rerun": false,
+  "historical_results_unchanged": {
+    "T01": "PASS",
+    "T02": "FAIL",
+    "T03": "FAIL",
+    "task_success": "1/3",
+    "earlier_uat": "1/6"
+  },
+  "browser": {
+    "status": "BROWSER_PASS",
+    "type": "real browser with loopback synthetic AgentLoop",
+    "cases": [
+      "A: native repair and Level2, correctness unknown",
+      "B: verified revision with uncovered requirement unknown",
+      "C: authority denial and one synthetic request"
+    ],
+    "real_model_sdk": false,
+    "real_api_requests": 0,
+    "final_pages_closed": true,
+    "final_services_cleaned_up": true,
+    "signal_exit_code": 130,
+    "initial_B_restart_stale_SSE_cancelled": true,
+    "screenshots": {
+      "browser-B.png": "8a836b458628db02c8385d1422c04de08397d3e16ce28a79743b9a708922a59a",
+      "browser-C.png": "14d1c638d4934d217c093eb23cc995aa404f98e2dfb4ef49eea0a55339ca0a04",
+      "browser-A.png": "9936899b0f5f94019151cf1b24c11ff6ea069daedfa1c192c576f8ef935d05a7"
+    }
+  },
+  "quality_claim": "Offline mechanisms validated; real-model task quality/cost improvement NOT_VERIFIED",
+  "security": {
+    "scanned_files": 965,
+    "private_credential_values_checked": 3,
+    "forbidden_paths": [],
+    "unnecessary_large_files": [],
+    "exact_private_credential_matches": [],
+    "protected_existing_assets_checked": 729,
+    "protected_asset_changes": [],
+    "critical_implementations_byte_equal": {
+      "mybot/agent/coding_controller.py": true,
+      "mybot/tools/patch.py": true,
+      "mybot/tools/run_command.py": true,
+      "mybot/tools/macos_sandbox.py": true,
+      "mybot/tools/command_approval.py": true,
+      "mybot/tools/undo.py": true,
+      "mybot/tools/undo_approval.py": true,
+      "mybot/workspace_lease.py": true,
+      "mybot/mcp_client/approval.py": true,
+      "mybot/mcp_client/manager.py": true
+    },
+    "existing_test_assertions": [
+      {
+        "file": "scripts/check_adaptive_routing.py",
+        "baseline_assertions": 170,
+        "current_assertions": 170,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_autonomous_coding.py",
+        "baseline_assertions": 302,
+        "current_assertions": 302,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_coding_campaign.py",
+        "baseline_assertions": 84,
+        "current_assertions": 84,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_command_execution.py",
+        "baseline_assertions": 230,
+        "current_assertions": 230,
+        "original_assertions_unchanged": false,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_context.py",
+        "baseline_assertions": 78,
+        "current_assertions": 78,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_git_workflow.py",
+        "baseline_assertions": 223,
+        "current_assertions": 223,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_list_files.py",
+        "baseline_assertions": 17,
+        "current_assertions": 17,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_mcp.py",
+        "baseline_assertions": 85,
+        "current_assertions": 85,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_mcp_http.py",
+        "baseline_assertions": 124,
+        "current_assertions": 124,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_patch_editing.py",
+        "baseline_assertions": 212,
+        "current_assertions": 212,
+        "original_assertions_unchanged": false,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_persistence.py",
+        "baseline_assertions": 64,
+        "current_assertions": 64,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_phase.py",
+        "baseline_assertions": 10,
+        "current_assertions": 10,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_planning.py",
+        "baseline_assertions": 61,
+        "current_assertions": 61,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_repository_tools.py",
+        "baseline_assertions": 148,
+        "current_assertions": 148,
+        "original_assertions_unchanged": false,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_routing_confidence.py",
+        "baseline_assertions": 105,
+        "current_assertions": 105,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_runtime_accounting.py",
+        "baseline_assertions": 62,
+        "current_assertions": 62,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_session.py",
+        "baseline_assertions": 41,
+        "current_assertions": 41,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      },
+      {
+        "file": "scripts/check_tool_discovery.py",
+        "baseline_assertions": 153,
+        "current_assertions": 153,
+        "original_assertions_unchanged": true,
+        "unchanged_after_explicit_permission_inputs": true
+      }
+    ],
+    "phase_tags": [
+      "phase-01",
+      "phase-02",
+      "phase-03",
+      "phase-04",
+      "phase-05",
+      "phase-06",
+      "phase-07",
+      "phase-08",
+      "phase-09",
+      "phase-10",
+      "phase-11",
+      "phase-12",
+      "phase-13",
+      "phase-14",
+      "phase-15",
+      "phase-16",
+      "phase-17",
+      "phase-18",
+      "phase-19",
+      "phase-19-r1",
+      "phase-20",
+      "phase-21",
+      "phase-22",
+      "phase-23",
+      "phase-24",
+      "phase-25"
+    ],
+    "base": "fd913d938e4bfcda8a6b892780fa987a62906487",
+    "main_status": [
+      " M mybot/app.py",
+      " M workspace/instructions/USER.md"
+    ]
+  },
+  "implementation_source_sha256": {
+    "mybot/agent/loop.py": "61cccbc5d36cd8a1becce1f711c561fdbcfb54384a2f5f7f7d76343cdfc6adcb",
+    "mybot/agent/task_contract.py": "dacfd70a24186e854c379ccc0e02bedd6d7746f7c4ec8010bffb90413980eb72",
+    "mybot/app.py": "0c6c33e71a5707e0605524e4733e99afe37912c13c1d04742af53ed8d319b2ac",
+    "mybot/config.py": "a15138ee33067d8833f01b9167c905e2ac31d4b465214950b3bb5631e04b5eed",
+    "mybot/evaluation/runner.py": "91b86ef5dfe79b43a7fda4c5c820ab365cfa5f7ec6948f5e0247dc629e45b346",
+    "mybot/evaluation/tool_agent.py": "423f37fecc1b86431ad492e35257f406321014934c51cb194d58edea2443d16f",
+    "mybot/mcp_client/discovery.py": "a0a2943580fefb86725a6322ce0dd9cca526d6f12e2413abbe649e395b86ee9b",
+    "mybot/tools/authority.py": "642c45f096ea5044428077084d5f3e2e47a52e9eb15815d238a2465fb8cc7914",
+    "mybot/tools/file.py": "f5c2aeb9d8fddfa680ccf2fe24ac436e0ac0e67945fe506835156660c4300dc1",
+    "mybot/tools/file_approval.py": "a4426cddb6b74065b8d226f64d908f04638efed2c931f310f56ab69d7fe2b8a7",
+    "mybot/tools/registry.py": "3c9fcf42614d4ed785f54a17dd0e96a7198b78874556ee65562a12438fcce6ee",
+    "mybot/web/approval.py": "702c5f64c34a872e4f931a7b4ca789b7dd6b678d59a5336b696c80c50d202db9",
+    "mybot/web/runtime.py": "de6fe39e5f936909cb91bc42105909ead1895b9586b67c772f1aa23aa4849fc1",
+    "mybot/web/static/app.js": "6d0e19b00db0b923678a4d7b68df1636c8f3839d4d03890ac37ff8210a1d4192",
+    "mybot/web/static/index.html": "56b9c1100bef51ca3296913b8824b6a1faa11be58bb2bd41a7c1dc5ffdb15e54",
+    "scripts/accept_tool_authority_contract.py": "5a006d0622a0c50e711cdf10a99aefce3e93029a60b9ec97393d383bdf72d133",
+    "scripts/authority_contract_browser.py": "96127ea429b3bfb3ae650a2302c4d3044dcfdb7d41041ed48ade5c52806ffab7",
+    "scripts/authority_contract_fixtures.py": "c2113de328a3d28d52cf3be907c6b9770026515dd0986f324e9bb11449430b28",
+    "scripts/check_adaptive_routing.py": "b1bbeb082c201bfe92c874148bef203794b6184b302223e3f75b57846227f0aa",
+    "scripts/check_autonomous_coding.py": "f7c46d2eaaf54164c5dabd7e2044db09d866b4553d50fdd3bcb15922f66b9416",
+    "scripts/check_coding_campaign.py": "902b32b5acfda8b249c1bb706243e56935ccbd4796c2bb7f51cab4456440765c",
+    "scripts/check_command_execution.py": "f24e0e9cd1f18e2e77b7cd1d02e970ecce5369a9badfc353d3e0b3804e7acc71",
+    "scripts/check_context.py": "258d4e9906633800a35a41123b32b2220367283b4600417e1534e3f8f04f8736",
+    "scripts/check_git_workflow.py": "05f8f95da0b99014b48f429d25bed5f34696f92354cdc609e01bc040e95320f6",
+    "scripts/check_list_files.py": "6c7f5f1a3ec517791195e88a6603a893b95e2c28ae587caf89a7aa32ba4b0594",
+    "scripts/check_mcp.py": "3ef980b473d9e7e6e3b7c47a0e3d56ddeb7fa36861f0cfbcbb3ec395b3914875",
+    "scripts/check_mcp_http.py": "6aa0485e753e0e4892c0bd6c8cfeb91aa083b3daed6b2cf72aaa6bbc21539fec",
+    "scripts/check_patch_editing.py": "78134f2b5045ccc76b13b27cd7338d3c278f9580f10cb20c050e55a34dedfcf6",
+    "scripts/check_persistence.py": "79d7f738480bf21bf4e8dea3fcba8da8b6b0a8f67c8e1f35e97aef3934c85a6e",
+    "scripts/check_phase.py": "4682f278130d90628a097193592874381a99deaa06f3d30a4faa32206c005ee3",
+    "scripts/check_planning.py": "a057ecdfd3a8cc6f2b9c8a12f2e5e79b232846e502e0391355792ca82e29c985",
+    "scripts/check_repository_tools.py": "84627a227d7b0ece3af35d9c2c01ceb2f4f3083fea18d61186f2d3abf61eb894",
+    "scripts/check_requirement_evidence.py": "57ee1e7bca02979feb47d7a3ce1f5ec770dc8da78e4bbc9d6c1a5035cae887e1",
+    "scripts/check_routing_confidence.py": "146da571e374cd1b731ef904a98056848a65447119d821e7e25327463fcc722f",
+    "scripts/check_runtime_accounting.py": "72012049405131281fe13ac27891577955a113c2ee744984e52eb7b448957086",
+    "scripts/check_session.py": "15b3aee7741526cca4af93b0297fa822944d04b1ae2a788dbfc9b9e2e7057b36",
+    "scripts/check_task_contract.py": "a982312f4f5c58f90bc0e6b83a0e6d930f3e81f794deab2371a4c7ab2571d041",
+    "scripts/check_tool_authority.py": "cbd0f06d2916ecbc5ee7a021272ad7bcbf932e56caf605d2d749aa5b5942fafc",
+    "scripts/check_tool_discovery.py": "5315994bdd4b4b69d37ebb4cf2f97794e2d56c4ada431b36404e2fc8fa85c3a0",
+    "scripts/compare_tool_discovery.py": "ac6ae5eb7f8157393148ad11eeea20201342917e4cc9e103267470f54bc56524",
+    "scripts/legacy_write_fixture.py": "415b155677763f8ccf459a0affd49a0cf176e1e560bcddad11f9eb24f33d5c5c"
+  },
+  "new_report_host_paths": []
+}

@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Tool Authority & Task Contract 强化已完成实现、专项/完整离线和真实浏览器合成验证。独立分支 codex/tool-authority-task-contract，从指定 fd913d938e4bfcda8a6b892780fa987a62906487 开始；不合 main、不改 Phase Tag/ZIP。当前准备 Implementation 提交；Acceptance 报告和 Push 在下一交付步骤完成。
+Tool Authority & Task Contract 强化已完成实现、专项/完整离线和真实浏览器合成验证。独立分支 codex/tool-authority-task-contract，从指定 fd913d938e4bfcda8a6b892780fa987a62906487 开始；不合 main、不改 Phase Tag/ZIP。Implementation 已提交 f7d036cac0286f6bda329f2e52f84f9c70b35dc1；本快照所属后续docs提交为 Acceptance。按用户授权仅Push本专题分支，远程HEAD与交付结果在最终消息核对。
 
 ## 已完成与关键决策
 
@@ -24,4 +24,4 @@ Controller、Patch、RunCommand、Seatbelt、Command Approval、Undo、Workspace
 
 精确引用不证明语义提取完整；Level2关联来自模型且覆盖未知。没有日常独立Oracle，不声称真实模型质量或费用改善。legacy/host_confirm无OS隔离，MCP不受Patch保护；Patch仍不解决全部恶意并发或跨文件崩溃原子性。空文件写入与跨轮需求替代尚未支持。
 
-完成Implementation、Acceptance两次提交并按用户授权Push指定分支，核对远程HEAD与干净工作树。不要合main、改旧Live结论/冻结资产、重跑旧T01/T02/T03、复用旧额度或进入下一Phase。
+本阶段设计、测试、合成/浏览器证据与验收报告齐全。交付前核对指定分支Push、远程HEAD与独立工作树干净；完成后仅在用户新任务下继续。不要合main、改旧Live结论/冻结资产、重跑旧T01/T02/T03、复用旧额度或进入下一Phase。

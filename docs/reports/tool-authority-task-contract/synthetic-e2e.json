@@ -1,0 +1,235 @@
+{
+  "status": "SYNTHETIC_PASS",
+  "real_api_requests": 0,
+  "cases": [
+    {
+      "scenario": "A",
+      "synthetic_requests": 6,
+      "real_api_requests": 0,
+      "controller": {
+        "state": "verified",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 1,
+        "tests_passed_after_last_patch": 1
+      },
+      "contract": {
+        "task_id": "0895e22c8bd0556efdd0d422418a5383",
+        "established": true,
+        "version": 2,
+        "current_revision": 1,
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "requirement_text": "需求 R1（来源与证据状态见下）",
+            "source_type": "user_explicit",
+            "category": "functional",
+            "added_version": 1,
+            "added_at": 1792851169.9637508,
+            "status": "test_evidence_observed",
+            "evidence_level": 2,
+            "evidence_refs": [
+              "test-1"
+            ],
+            "reason": "test_execution_observed_coverage_unknown",
+            "current_revision": 1,
+            "source_span": [
+              7,
+              18
+            ],
+            "source_message_chars": 25
+          }
+        ],
+        "user_explicit_count": 1,
+        "test_evidence_count": 1,
+        "independently_verified_count": 0,
+        "missing_acceptance_count": 1,
+        "pending_conditions": false,
+        "requirement_coverage": "unknown",
+        "task_correctness": "unknown"
+      },
+      "tool_results": [
+        {
+          "tool": "record_task_contract",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "read_file_range",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "read_file_range",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "apply_patch",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "apply_patch",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": true
+        },
+        {
+          "tool": "run_command",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "record_task_contract",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        }
+      ],
+      "result": "PASS",
+      "preview_did_not_write": true,
+      "receipt_committed": true
+    },
+    {
+      "scenario": "B",
+      "synthetic_requests": 6,
+      "real_api_requests": 0,
+      "controller": {
+        "state": "verified",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 1,
+        "tests_passed_after_last_patch": 1
+      },
+      "contract": {
+        "task_id": "679fcdc31818236605ef37e700534019",
+        "established": true,
+        "version": 2,
+        "current_revision": 1,
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "requirement_text": "需求 R1（来源与证据状态见下）",
+            "source_type": "user_explicit",
+            "category": "functional",
+            "added_version": 1,
+            "added_at": 1792851170.071332,
+            "status": "test_evidence_observed",
+            "evidence_level": 2,
+            "evidence_refs": [
+              "test-1"
+            ],
+            "reason": "test_execution_observed_coverage_unknown",
+            "current_revision": 1,
+            "source_span": [
+              12,
+              23
+            ],
+            "source_message_chars": 41
+          },
+          {
+            "requirement_id": "R2",
+            "requirement_text": "需求 R2（来源与证据状态见下）",
+            "source_type": "user_explicit",
+            "category": "boundary",
+            "added_version": 1,
+            "added_at": 1792851170.071337,
+            "status": "identified",
+            "evidence_level": 0,
+            "evidence_refs": [],
+            "reason": "no_current_requirement_acceptance",
+            "current_revision": 1,
+            "source_span": [
+              23,
+              34
+            ],
+            "source_message_chars": 41
+          }
+        ],
+        "user_explicit_count": 2,
+        "test_evidence_count": 1,
+        "independently_verified_count": 0,
+        "missing_acceptance_count": 2,
+        "pending_conditions": false,
+        "requirement_coverage": "unknown",
+        "task_correctness": "unknown"
+      },
+      "tool_results": [
+        {
+          "tool": "record_task_contract",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "read_file_range",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "read_file_range",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "apply_patch",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "apply_patch",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": true
+        },
+        {
+          "tool": "run_command",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        },
+        {
+          "tool": "record_task_contract",
+          "success": true,
+          "authority_denied": false,
+          "receipt_commit_success": false
+        }
+      ],
+      "result": "PASS",
+      "preview_did_not_write": true,
+      "receipt_committed": true,
+      "independent_uncovered_requirement": "FAIL",
+      "requirement_coverage": "unknown",
+      "independent_check_not_agent_evidence": true
+    },
+    {
+      "scenario": "C",
+      "synthetic_requests": 1,
+      "real_api_requests": 0,
+      "controller": null,
+      "contract": null,
+      "tool_results": [
+        {
+          "tool": "write_file",
+          "success": false,
+          "authority_denied": true,
+          "receipt_commit_success": false
+        }
+      ],
+      "result": "PASS",
+      "files_unchanged": true,
+      "git_worktree_unchanged": true,
+      "denied_without_repair_request": true
+    }
+  ],
+  "quality_claim": "Mechanism validation only; real-model task quality NOT_VERIFIED"
+}
