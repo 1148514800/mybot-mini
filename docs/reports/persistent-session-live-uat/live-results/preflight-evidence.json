@@ -1,0 +1,48 @@
+{
+  "status": "BLOCKED",
+  "live_authorization": "GRANTED_16_REQUESTS",
+  "reason": "preexisting_mybot_web_processes",
+  "basis": "User preflight requires no existing Web/CLI/model process; any failure immediately BLOCKED.",
+  "expected_head": "d2841147bbab900ea7fc4ff0aec927968653d2ac",
+  "preregistration_commit": "86105406ed46c32024a4c8d7d669eaaf6ca0be10",
+  "plan_sha256": "3b46c091e4bc927ddb1b04c8598b08d57c63ca0c15d2704a36c605a560971ab4",
+  "freeze_sha256": "f4f3f006c3b80591b79005b9b71a7c95cd858a848679c88285b91b16ae98c470",
+  "prepared_sha256": "7ece43437395779e08d14d4ec7ec10410d0fc50964f35bcaa120ef3a3b2f5c2e",
+  "source_and_configuration_verified": true,
+  "workspace_and_db_identity_verified": true,
+  "workspace_lease_available": true,
+  "uat_port_8889_listener": false,
+  "existing_listener": {
+    "address": "127.0.0.1:8765",
+    "pid": 60450
+  },
+  "existing_processes": [
+    {
+      "pid": 39852,
+      "ppid": 84752,
+      "command": "uv run python -m mybot.web --port 8765"
+    },
+    {
+      "pid": 60449,
+      "ppid": 84752,
+      "command": "uv run python -m mybot.web --port 8765"
+    },
+    {
+      "pid": 60450,
+      "ppid": 60449,
+      "command": "python -m mybot.web --port 8765"
+    }
+  ],
+  "ledger_cases": 0,
+  "ledger_reservations": 0,
+  "event_count": 0,
+  "turn_count": 0,
+  "pin_count": 0,
+  "browser_inventory_available": true,
+  "browser_live_interaction_performed": false,
+  "sdk_retry_zero_in_frozen_source": true,
+  "sdk_client_created": false,
+  "case_attempt_started": false,
+  "existing_services_stopped": false,
+  "workspace_unchanged": true
+}

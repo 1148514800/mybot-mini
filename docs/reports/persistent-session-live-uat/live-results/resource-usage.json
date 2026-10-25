@@ -1,0 +1,38 @@
+{
+  "status": "BLOCKED",
+  "scope": "this frozen UAT batch only; other existing services were not queried",
+  "global_limit": 16,
+  "per_case_limits": {
+    "L01": 10,
+    "L02": 4,
+    "L03": 2
+  },
+  "physical_requests": 0,
+  "budget_reservations": 0,
+  "http_send_attempts": 0,
+  "case_attempts": 0,
+  "per_case_requests": {
+    "L01": 0,
+    "L02": 0,
+    "L03": 0
+  },
+  "providers": {
+    "DeepSeek": 0,
+    "GLM": 0
+  },
+  "summary_requests": 0,
+  "provider_input_tokens": 0,
+  "provider_output_tokens": 0,
+  "provider_total_tokens": 0,
+  "estimated_input_tokens": null,
+  "fallback": null,
+  "output_truncated": null,
+  "web_task_elapsed_seconds": null,
+  "first_token_time": null,
+  "event_count_before": 0,
+  "event_count_after": 0,
+  "event_growth": 0,
+  "event_db_bytes": 86016,
+  "cost": null,
+  "cost_basis": "No UAT model request; no price or dollar cap asserted."
+}

@@ -2,17 +2,16 @@
 
 ## 当前状态
 
-Persistent Session Live UAT离线准备，LIVE_AUTHORIZATION=NOT_GRANTED；真实请求0/16，L01/L02/L03无Attempt、均BLOCKED。独立分支codex/persistent-session-live-uat，基线75cfcd6e1e04ab4d755aa2edf541a08dfedc9da7；不合main、不创建Phase/Tag/ZIP，不改生产mybot或原Harness。
+Persistent Session Live UAT已获本轮GRANTED_16_REQUESTS，但执行前BLOCKED，L01/L02/L03均0 Attempt、0 reservation、0/16物理请求。未启动Live服务或模型，不把未执行当作模型FAIL。分支codex/persistent-session-live-uat，输入HEAD d2841147bbab900ea7fc4ff0aec927968653d2ac；原冻结提交86105406ed46c32024a4c8d7d669eaaf6ca0be10。
 
-## 已准备
+## 阻塞事实
 
-- scripts/persistent_uat：冻结9+4+1条自然输入、实际Web Pin确认/替换/撤销/重启步骤、Unicode来源跨度、评分与停止规则。case预算10/4/2，全局16；NOT_GRANTED在凭证/SDK/账本变更前拒绝Live。
-- 复用原UAT Ledger/SDK adapter的HTTP门与settlement，新增独立持久16预算；重启不重置、case单Attempt、SDK/重定向二次发送拒绝、备用同账本、意外摘要计保守reservation后停止。新22项MockTransport门测试通过。
-- 原真实create_app/ChatRuntime/AgentLoop接入仅在新测试adapter，生产源码不变；新APFS可丢弃workspace与私有空SQLite，默认模板预先创建，MCP/Skills/Coding/命令关闭、文件只读、deterministic摘要、估算输入14000/输出1800。
-- 准备目录 ~/.mybot-mini/uat/persistent-session-20261025；真实模型配置仅本地只读核对存在与模型名，远程凭证有效性unknown，不复制Key。真实账本0 reservation、0 case。
+首项原prepare verify成功，source/config/freeze/prepared/workspace/DB inode与空ledger均通过，UAT workspace lease可用、8889空闲。但已有PID60450在8765运行mybot.web，另有uv启动进程39852/60449；违反用户本次“无既有Web进程、任何检查失败立即BLOCKED”。已停止后续Live，现有用户服务未动，未查询其私聊/任务。
 
-## 证据与下一步
+原批次 ~/.mybot-mini/uat/persistent-session-20261025 保留；没有重新prepare/freeze、新账本、新测试、Case重跑或新提示。预算仍全局16、L01/L02/L03为10/4/2；API/摘要/Judge0，输入/输出/总Token0；费用null。prepared workspace指纹不变，原event DB仍0事件/turn/pin，无本轮不确定执行。
 
-预注册/报告在docs/reports/persistent-session-live-uat/。原1618基线文件保持，新22门测试及相关专项通过，计数/日志hash见offline-preflight.json；不把MockTransport的14次流程调用计作Live，不声称DeepSeek语义成功。离线L02已知无关产品单元损失0/0/3/5，是下界，真实助手信息损失未评。
+## 报告与后续
 
-已从干净预注册提交86105406ed46c32024a4c8d7d669eaaf6ca0be10完成私有freeze.json冻结与verify；后续报告提交为Acceptance，仅核对专题Push与远程HEAD，之后停止；没有新的人类GRANTED_16_REQUESTS不得启动Live。未来先核对freeze.json、配置、DB inode、工作区指纹、账本、进程退出与lease，再按冻结顺序一次运行。不要重跑旧Live、复用余额、改消息追求PASS、自动新建批次或修改生产源码。
+本次独立证据 docs/reports/persistent-session-live-uat/live-results/，包括授权、脱敏进程预检、三Case全维度BLOCKED、0资源、损失未测、冻结哈希和安全报告。旧Preregistration及OFFLINE BLOCKED报告不改；生产mybot、原Harness/测试与历史资产保持。原main及用户两处改动保留。
+
+当前任务在报告提交/专题Push核对后停止。须用户先处理既有服务并明确要求续行，之后只复核同一冻结批次与同一空账本，不能自动启动/重建/扩额。不要把离线损失3/累计5或旧合成通过写成真实模型结论；真实Pin遵从、六轮保持、替换撤销语义、重启继续尚未验证。产品待评风险仍为整轮裁剪连带丢失无关信息，不在本轮修改源码。

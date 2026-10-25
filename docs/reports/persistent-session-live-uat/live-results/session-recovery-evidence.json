@@ -1,0 +1,16 @@
+{
+  "status": "BLOCKED",
+  "case": "L03",
+  "reason": "batch stopped before L01 by process preflight",
+  "live_session_id": null,
+  "restart_performed": false,
+  "title_preserved": null,
+  "messages_preserved": null,
+  "pins_preserved": null,
+  "automatic_requests_on_start": null,
+  "tool_replayed": null,
+  "receipt_restored": null,
+  "approval_restored": null,
+  "verified_restored": null,
+  "event_count": 0
+}

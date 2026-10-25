@@ -1,0 +1,46 @@
+{
+  "algorithm": "sha256",
+  "scope": "all evidence/report files except this self-referential index",
+  "files": {
+    "acceptance-report.md": {
+      "sha256": "b3a4364ca18907eb992a9e1b2b365d03c99fd2bffc5f2ea84d131807c3ad0522",
+      "bytes": 3013
+    },
+    "case-results.md": {
+      "sha256": "aa9463b08fc0c7924ad281a831de6035fd88f317a8c60f3ad3c2a2b23fecf17a",
+      "bytes": 931
+    },
+    "information-loss-analysis.md": {
+      "sha256": "58047a562fe930901b5f885c2a2a8ab853f55715e98d181e5647f89be79b067c",
+      "bytes": 635
+    },
+    "next-step-recommendations.md": {
+      "sha256": "c4ef6612d7bb3d2456c60a459d9dcd6bc74b89c9e379e533d27c795c288b5076",
+      "bytes": 785
+    },
+    "pin-inclusion-evidence.json": {
+      "sha256": "83a39bf26f6f9a200a8c91e27a2e24b4fdc7bb2024e00f36f523d0c1c7368695",
+      "bytes": 896
+    },
+    "preflight-evidence.json": {
+      "sha256": "07a46bdb2e90949dfe615bccfe42a527dc6752e2f2a428c8d97da897a488b72e",
+      "bytes": 1592
+    },
+    "resource-usage.json": {
+      "sha256": "a791b5ec6123008dc7e4a176d16405bb929a98dff363b3e9b19b0ae768fd3598",
+      "bytes": 882
+    },
+    "security-audit.md": {
+      "sha256": "126406948cc685c0ed335c2b0fcc793ee6eebe1640cf4c8d7e40bebd77f6c302",
+      "bytes": 2101
+    },
+    "semantic-adherence.md": {
+      "sha256": "2af9670586bc705ca82d5364332b1e56114b5f9b4be395d7d3d41b4b501ea958",
+      "bytes": 520
+    },
+    "session-recovery-evidence.json": {
+      "sha256": "51141a69d435054bfd9c1b952cedc7ae1056f8f7ffb9943802ee5b926416de1a",
+      "bytes": 414
+    }
+  }
+}
