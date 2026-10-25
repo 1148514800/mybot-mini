@@ -1,0 +1,7 @@
+# Protocol integrity
+
+原始工具请求、tool_call_id、工具结果与顺序不被投影改写。受影响来源轮若含tool_calls或tool结果，或者协议内容精确复述失效原句，则整体省略该轮：记录omitted_protocol_turns、omitted_user_messages及omitted_assistant_messages。来源无法可靠关联也保守整轮回退。不会为保留用户事实而拼接工具返回、制造缺失配对或执行任何历史工具。
+
+不受影响协议的调用ID/顺序/结果逐字保持；只给最终助手解释增加非权威标签。validate_turns与实际合成SDK请求配对检查覆盖并行call、逐个结果、完整最终回复。恢复视图继续只加载聊天文本，不重放工具、命令、MCP、Patch，Approval/Receipt/verified仍不恢复。
+
+专项9项与既有SessionRecovery/ToolAuthority/TaskContract/Patch Receipt/Coding Reliability回归共同核验边界。真实浏览器E先由SyntheticClient发起本地只读list_files，完整配对完成，再固定/撤销对应user跨度；下一次实际合成请求不含旧call ID，诊断完整省略1个协议轮/1条user，不伪造结果。该保守场景仍丢失同轮事实，是明确记录的协议安全成本。

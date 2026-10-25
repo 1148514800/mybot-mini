@@ -75,21 +75,16 @@ class SessionHistory:
         with self.store.connection() as db:return self.store._session(db,self.sid)['title']
     def messages(self,**kwargs):return ConversationProjection(self.store,self.sid).messages(**kwargs)
     def context_turns(self,turns):
-        # Retain canonical facts. Omit complete historical protocol groups containing
-        # withdrawn pin text rather than inventing tool results or stitched quotes.
-        obsolete=[p['content'] for p in self.pins.list() if p['status']!='active']
-        if not obsolete:return turns
-        import json
-        def contains(value):
-            if isinstance(value,str):
-                if any(text in value for text in obsolete):return True
-                try:decoded=json.loads(value)
-                except (ValueError,RecursionError):return False
-                return contains(decoded) if not isinstance(decoded,str) else False
-            if isinstance(value,dict):return any(contains(v) for v in value.values())
-            if isinstance(value,list):return any(contains(v) for v in value)
-            return False
-        return [turn for turn in turns if not contains(turn)]
+        from .context_projection import project_history
+        result,self.projection_diagnostics,self.lifecycle_reference=project_history(self,turns)
+        return result
+
+    def identify_turn(self,messages):
+        # The active host turn is the only source of in-memory identity. Never
+        # search by text or attach identity to legacy imported history.
+        from ..agent.session import HistoryTurn
+        rows=self.store.query("SELECT id FROM messages WHERE session_id=? AND turn_id=? AND role='user'",(self.sid,self.turn_id))
+        return HistoryTurn(messages,session_id=self.sid,source_message_id=rows[0]['id'] if rows else None)
 
     def model_turns(self,limit=6):return ModelContextProjection(self.store,self.sid).turns(limit)
     def status(self):return TaskStatusProjection(self.store,self.sid).current()

@@ -5,6 +5,18 @@ from copy import deepcopy
 from typing import Any
 
 
+class HistoryTurn(list):
+    """Host-only provenance outside message dicts; never serialized to the API.
+
+    A plain/legacy list deliberately has no identity. Text equality must never
+    supply a missing identity, especially after eviction/restart/redaction.
+    """
+    def __init__(self, messages=(), *, session_id=None, source_message_id=None):
+        super().__init__(messages)
+        self.session_id = session_id
+        self.source_message_id = source_message_id
+
+
 class Session:
     """Keep complete user turns in memory, including paired tool messages."""
 

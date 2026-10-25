@@ -121,6 +121,8 @@ class AgentLoop:
                 print(f"[OUTPUT] status={r['output']['status']} complete={r['output']['complete']} task_correctness=unknown tool_failures={r['tool_failures']}")
             c = r['context']
             if c:
+                if c.get('history_projection_incomplete'):
+                    print(f"[PROJECTION] spans={c['redacted_source_spans']} preserved={c['preserved_independent_user_spans']} protocol_omitted={c['omitted_protocol_turns']} mapping_failures={c['source_mapping_failures']}")
                 if c.get('history_information_incomplete'): print('[CONTEXT] 历史仅为节选，覆盖未验证；原会话保留。')
                 if c.get('compaction_evidence'):
                     evidence = c['compaction_evidence']
@@ -342,7 +344,7 @@ class AgentLoop:
             from ..runtime_accounting import find_gateway
             gateway = find_gateway(self.client)
             secrets = (self.config.api_key, getattr(effective,'api_key',None), getattr(getattr(gateway,'_backup_config',None),'api_key',None))
-            summary_index=1+len(self.context_manager._pin_messages)
+            summary_index=1+len(self.context_manager._pin_messages)+len(self.context_manager.lifecycle_reference)
             base = view[:summary_index] + view[summary_index+int(stats['summary_present']):]
             room = self.context_manager.summary_budget(base, definitions)
             stats['available_summary_budget'] = room
@@ -362,9 +364,12 @@ class AgentLoop:
         from .token_counter import TokenCounter
         stats.update(TokenCounter.inspect(effective,TokenCounter.request(effective,view,definitions)))
         stats['after']=self.context_manager.count(view,definitions)
+        projection=getattr(self.history,'projection_diagnostics',{})
+        stats.update(projection)
         if getattr(self,'_pin_history_omitted',0):
-            stats['pin_history_turns_removed']=self._pin_history_omitted;stats['context_truncated']=True
-        stats['history_information_incomplete']=bool(stats['history_turns_omitted'] or stats.get('pins_omitted') or getattr(self,'_pin_history_omitted',0))
+            stats['pin_history_turns_removed']=self._pin_history_omitted
+        stats['history_information_incomplete']=bool(stats['history_turns_omitted'] or stats.get('pins_omitted') or projection.get('history_projection_incomplete'))
+        stats['context_truncated']=bool(stats['context_truncated'] or stats['history_information_incomplete'])
         stats['history_coverage']='unverified' if stats['history_information_incomplete'] else 'full_request_view'
         if self.history.turn_id and stats['history_turns_omitted']:
             status=stats['context_compaction_status']
@@ -389,6 +394,8 @@ class AgentLoop:
             return "当前会话已清空。"
         original_turns=self.session.export_turns()
         turns=self.history.context_turns(original_turns)
+        self.context_manager.lifecycle_reference=self.history.lifecycle_reference
+        self.context_manager.pinned_context=self.history.projection_active_pins
         self._pin_history_omitted=len(original_turns)-len(turns)
         messages = self.context.build_messages(user_input, [m for turn in turns for m in turn])
         if self.config.coding_git_workflow['enabled']:
@@ -676,7 +683,7 @@ class AgentLoop:
         if self.store is not None:
             turns = self.session.export_turns() + [saved_turn]
             self.store.save(turns[-self.session.max_turns:])
-        self.session.add_turn(saved_turn)
+        self.session.add_turn(self.history.identify_turn(saved_turn))
         return reply
 
     async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:

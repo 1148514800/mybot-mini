@@ -193,3 +193,10 @@ check_pinned_context()
 
 from scripts.check_context_projection import check_context_projection
 check_context_projection()
+
+from scripts.check_source_aware_projection import check_source_aware_projection
+check_source_aware_projection()
+from scripts.check_pin_lifecycle_context import check_pin_lifecycle_context
+check_pin_lifecycle_context()
+from scripts.check_projection_protocol_integrity import check_projection_protocol_integrity
+check_projection_protocol_integrity()

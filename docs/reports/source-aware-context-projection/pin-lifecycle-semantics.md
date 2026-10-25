@@ -1,0 +1,9 @@
+# Pin lifecycle and source authority
+
+active Pin保持用户显式确认来源；revoked/superseded只退出当前有效固定集合，不删除原始审计历史。当前新用户消息是独立来源，后来重新提出相同句子不会因旧Pin撤销而被误删。
+
+每次请求带有界宿主生命周期参考：所有category的当前active IDs（包括空集合）、最近至多12个失效记录的id/category/status/revision/来源/span/superseded_by与总数/省略数。无失效原文、凭证、审批或Receipt。Pin历史本身由既有100条上限控制。其余旧记录仍参与来源遮蔽，不因参考只展示12条而重新有效。
+
+同category多条不等于语义冲突：multiple_same_category只表示并列，semantic_conflict_unassessed=true明确没有做语义判断。兼容字段needs_review=false不再由category相等自动触发。UI及Pin参考均展示中性状态，所有有效Pin仍并列有效，不自动选择获胜规则，也没有额外LLM冲突检测。
+
+既有测试中“同类必定needs_review”的断言按新的产品契约改为检查multiple_same_category/unassessed、needs_review=false且两条均active；没有删除测试、减少数量或放宽权限/来源断言。旧未知来源的整轮保守回退测试仍保留并通过。

@@ -213,7 +213,24 @@ class PersistentUATChecks(unittest.IsolatedAsyncioTestCase):
                             if case=='L01':self.assertLessEqual(len(app.runtime.conversations[cid].session.export_turns()),6);self.assertEqual(len(app.runtime.conversations[cid].history.messages()),18)
                     if case=='L02':
                         files=sorted((batch/'private').glob('L02-request-*.json'));items=[json.loads(p.read_text()) for p in files];loss=[x['information_loss']['unrelated_user_unit_count'] for x in items]
-                        self.assertEqual(loss,[0,0,3,5]);self.assertEqual([p['content'] for p in items[2]['pins']],[NEW]);self.assertEqual(items[3]['pins'],[])
+                        # The frozen observer compares complete turn equality. A
+                        # masked copy is unequal even when its independent facts
+                        # survive; keep its legacy result visible, never use it
+                        # as the new source-preservation score or change Live data.
+                        self.assertEqual(loss,[0,0,5,5])
+                        from scripts.source_projection_fixtures import baseline_projection
+                        from scripts.persistent_uat.plan import UNITS
+                        raw_turns=[[dict(role='user',content=text),dict(role='assistant',content='mock')]
+                                   for text in MESSAGES['L02'][:2]]
+                        old_loss=[0,0]+[sum(text not in str(baseline_projection(raw_turns,obsolete)) for text in UNITS.values())
+                                        for obsolete in ([OLD],[OLD,NEW])]
+                        self.assertEqual(old_loss,[0,0,3,5])  # Original baseline assertion retained.
+                        for actual in sends[before+2:before+4]:
+                            user_sources=[m['content'] for m in actual['messages'] if m['role']=='user']
+                            self.assertTrue(all(any(text in m for m in user_sources) for text in UNITS.values()))
+                            self.assertNotIn(OLD,str(actual['messages']))
+                        self.assertEqual(app.runtime.conversations[cid].resources['context']['redacted_source_spans'],2)
+                        self.assertEqual([p['content'] for p in items[2]['pins']],[NEW]);self.assertEqual(items[3]['pins'],[])
             self.assertEqual(len(sends),14);self.assertEqual(len(Ledger(batch/'private/requests.sqlite',plan_hash()).rows()),14)
             # Frozen source/config/workspace changes are rejected without any new HTTP.
             (repo/'mybot/sentinel.py').write_text('# changed\n')

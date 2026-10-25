@@ -72,7 +72,7 @@ class PinChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.h.pins.list()),8)
     async def test_conflicts_are_not_silently_resolved(self):
         self.pin(self.source('no third party'));self.pin(self.source('use numpy'))
-        pins=self.h.pins.list(active_only=True);self.assertEqual(len(pins),2);self.assertTrue(all(p['needs_review'] for p in pins))
+        pins=self.h.pins.list(active_only=True);self.assertEqual(len(pins),2);self.assertTrue(all(p['multiple_same_category'] and p['semantic_conflict_unassessed'] for p in pins));self.assertTrue(all(not p['needs_review'] for p in pins));self.assertTrue(all(p['status']=='active' for p in pins))
     async def test_pin_survives_eviction_after_eight_turns(self):
         m=self.source('KEEP_THIS_CONFIRMED_REQUIREMENT');self.pin(m);a,c=self.build()
         for i in range(8):await a.handle_message('round '+str(i))

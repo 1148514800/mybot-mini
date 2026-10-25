@@ -63,3 +63,7 @@ uv run python mybot/main.py
 macOS ExFAT 会自行生成 `._*` 元数据文件，脚本通过 `git archive` 避免带入未跟踪文件，并设置 `COPYFILE_DISABLE=1` 减少复制元数据；系统仍可能生成。独立验证使用系统临时目录，以避开 ExFAT。建议学习目录位于 APFS。
 
 Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于原Tag/ZIP；原历史评测与归档保持。
+
+## 未编号工程专题
+
+- [Source-Aware Context Projection](source-aware-context-projection.md)：来源跨度投影、生命周期与协议安全；验收状态见[专题报告](../reports/source-aware-context-projection/acceptance-report.md)，不创建或更改历史Tag/ZIP。

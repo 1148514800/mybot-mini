@@ -14,7 +14,9 @@ class PinnedContext:
             for r in result:
                 r['pin_id']=r['id']
                 r['source_span']=[r.pop('start'),r.pop('end')]
-                r['needs_review']=sum(p['category']==r['category'] and p['status']=='active' for p in result)>1
+                r['multiple_same_category']=sum(p['category']==r['category'] and p['status']=='active' for p in result)>1
+                r['semantic_conflict_unassessed']=True
+                r['needs_review']=False  # Compatibility field; category equality is not conflict evidence.
                 r.pop('session_id',None)
             return result
 
@@ -39,5 +41,5 @@ class PinnedContext:
 def render(pins):
     import json
     if not pins:return []
-    fields=('pin_id','category','content','source_message_id','source_span','revision','needs_review')
+    fields=('pin_id','category','content','source_message_id','source_span','revision','needs_review','multiple_same_category','semantic_conflict_unassessed')
     return [{'role':'user','content':PIN_LABEL+json.dumps([{k:p[k] for k in fields} for p in pins],ensure_ascii=False)}]

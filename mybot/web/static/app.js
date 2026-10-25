@@ -48,7 +48,7 @@ function renderMessages() {
 }
 function renderActivity() {
   const allPins = current.pins || [], activePins = allPins.filter(p=>p.status==='active');
-  $('pins-notice').textContent = `${activePins.length} 条当前固定事项。${boot.persistence ? '保存在本地明文数据库。' : '仅本次进程，重启不保留。'} 同分类并列时可能需要确认，不会自动解决语义冲突。`;
+  $('pins-notice').textContent = `${activePins.length} 条当前固定事项。${boot.persistence ? '保存在本地明文数据库。' : '仅本次进程，重启不保留。'} 同分类并列不等于冲突；未进行语义冲突评估，不自动使任何事项失效。`;
   $('pins-list').replaceChildren();
   const cats={current_goal:'当前目标',user_constraint:'用户约束',confirmed_decision:'已确认决定',open_question:'未决事项',pending_work:'待完成工作'};
   for(const p of allPins){
@@ -56,8 +56,8 @@ function renderActivity() {
     const budget=current.resources?.context || {};
     if(budget.pins_included?.includes(p.id))row.append(node('p','最近一次请求：已进入模型预算。'));
     if(budget.pins_omitted?.includes(p.id) || current.pin_budget?.omitted?.includes(p.id))row.append(node('p','最近一次尝试：未进入，预算不足。'));
-    if(p.needs_review && p.status==='active')row.append(node('p','待确认：存在同分类固定项，未自动判断冲突。'));
-    if(p.status==='active'){const revoke=node('button','撤销固定','secondary-button');revoke.disabled=!!boot.busy;revoke.addEventListener('click',()=>confirmData('撤销后，此事项不再进入新的模型请求；历史版本仍保留。',async()=>{await api(`conversations/${selected}/pins/${p.id}/revoke`,'POST',{confirmed:true,revision:p.revision});await refresh();}));row.append(revoke);}
+    if(p.multiple_same_category && p.status==='active')row.append(node('p','同分类多项并列；不是已确认的语义冲突。'));
+    if(p.status==='active'){const revoke=node('button','撤销固定','secondary-button');revoke.disabled=!!boot.busy;revoke.addEventListener('click',()=>confirmData('撤销后，此事项不再作为有效固定要求；历史参考会筛选或标注，审计原文仍保留。',async()=>{await api(`conversations/${selected}/pins/${p.id}/revoke`,'POST',{confirmed:true,revision:p.revision});await refresh();}));row.append(revoke);}
     $('pins-list').append(row);
   }
   const contract = current.contract;
@@ -87,6 +87,7 @@ function renderActivity() {
     (context.pins_included ? ` 固定事项进入 ${context.pins_included.length} / 遗漏 ${context.pins_omitted.length}；${context.pins_omitted.length?'部分固定要求未进入请求。':'已纳入本次实际请求预算。'}` : '') +
     (r.request_budget_exhausted ? '请求预算不足，本轮未完整完成。' : '') +
     (context.compaction_evidence ? ` 引用有效 ${context.compaction_evidence.valid_entries ?? 0} / 无效 ${context.compaction_evidence.invalid_entries ?? 0} / 已删除 ${context.compaction_evidence.removed_entries ?? 0}。` : '') +
+    (context.history_projection_incomplete ? `历史投影已筛选：遮蔽 ${context.redacted_source_spans ?? 0} 个来源跨度，保留 ${context.preserved_independent_user_spans ?? 0} 个独立原文片段；省略协议轮 ${context.omitted_protocol_turns ?? 0}，来源关联失败 ${context.source_mapping_failures ?? 0}。` : '') +
     (context.history_information_incomplete ? '历史仅为节选，决定或未知事项可能遗漏；原会话保留。' : '') +
     (context.context_truncated ? '部分上下文已裁剪或摘要，不能视为完整阅读。' : '');
   let latest = current.events.at(-1), status = labels[current.status] || '状态未知';

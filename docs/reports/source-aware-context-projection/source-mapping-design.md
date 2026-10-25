@@ -1,0 +1,11 @@
+# Source mapping design
+
+`HistoryTurn`是内部list子类，单独携带session_id和source_message_id；消息字典仍严格遵循OpenAI-compatible字段。Session deepcopy/export/restore保留宿主元数据，JSON旧快照则明确没有身份，禁止按相同文本猜测。
+
+新执行轮通过SessionHistory.identify_turn从当前宿主turn_id取得真实user事件ID；SQLite恢复则ModelContextProjection查询持久ID并创建相同元数据。无需数据库schema或旧事件迁移，不写入旧消息。
+
+`project_history`从当前会话Pin表读取可信status/revision/superseded_by、来源ID及Unicode codepoint跨度。对失效Pin逐项校验来源存在、同Session、user角色、未截断/脱敏、跨度范围与原文完全一致；随后校验进入请求的历史轮身份及首条用户正文与数据库一致。来源ID不跨Session；同文不同ID保持不同效力。
+
+可验证的纯文本来源仅遮蔽失效跨度。重叠/相邻跨度合并，仍active的同来源跨度优先保留，不做语义冲突判定。未遮蔽原文逐字保留，增加明确的“经过来源筛选的历史片段”标签与中性遮蔽标记，不生成替代用户句子。标记不是当前用户指令。
+
+缺少ID、来源错误、跨会话、跨度失效、截断、脱敏或内存正文变化时，受影响/无法关联的轮次保守省略，记录固定reason code、来源失败与用户消息损失；不尝试字符串匹配恢复身份。旧JSON和手工注入plain list在存在失效Pin时也走此回退。这一机制允许明确的保守损失，不宣称普遍零损失。
