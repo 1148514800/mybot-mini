@@ -1,0 +1,99 @@
+{
+  "status": "OFFLINE_PASS",
+  "live_authorization": "NOT_GRANTED",
+  "new_gate_tests": 22,
+  "repeated_related_tests": 236,
+  "results": [
+    {
+      "module": "scripts.check_persistent_session_uat",
+      "exit_code": 0,
+      "tests": 22,
+      "seconds": 4.178,
+      "log_sha256": "153c91fa7eba9fd9d6c42d89730106e200965421f20fba5c726e6f6b52a1c4cb"
+    },
+    {
+      "module": "scripts.check_session_event_store",
+      "exit_code": 0,
+      "tests": 22,
+      "seconds": 1.248,
+      "log_sha256": "45205e338f044471ee5d80e596310ca687a0a18f1793fd49d65ff79417b5f090"
+    },
+    {
+      "module": "scripts.check_session_recovery",
+      "exit_code": 0,
+      "tests": 18,
+      "seconds": 5.316,
+      "log_sha256": "8e27f52539d5c54ad6093007450d4412d616bbb9066bf678459b95338cfee452"
+    },
+    {
+      "module": "scripts.check_web_persistence",
+      "exit_code": 0,
+      "tests": 24,
+      "seconds": 0.828,
+      "log_sha256": "4fdf12641787c876072c4366c4e235ac0ed311fdc8c242e17537aefd8edc75c6"
+    },
+    {
+      "module": "scripts.check_pinned_context",
+      "exit_code": 0,
+      "tests": 17,
+      "seconds": 0.57,
+      "log_sha256": "11e55142e73448c089d52e95d428e3d301da8a76d98972a72c5a7cc93bb7d7e3"
+    },
+    {
+      "module": "scripts.check_context_projection",
+      "exit_code": 0,
+      "tests": 10,
+      "seconds": 0.512,
+      "log_sha256": "8428fa71a69b8abf45ac35cda9ba3312fa9a96319ace009983ed05066b456c0a"
+    },
+    {
+      "module": "scripts.check_token_budget",
+      "exit_code": 0,
+      "tests": 16,
+      "seconds": 0.543,
+      "log_sha256": "533f4a6fbe8ae54b33ae370640631e05fd19d2147ff9d5e3dfa7a3ddf04583c6"
+    },
+    {
+      "module": "scripts.check_provider_failover",
+      "exit_code": 0,
+      "tests": 17,
+      "seconds": 0.463,
+      "log_sha256": "43ab52b562a2b9e17a189bbd8038e78bd14deb19adbd7db0e122ec2f3e94825f"
+    },
+    {
+      "module": "scripts.check_web_ui",
+      "exit_code": 0,
+      "tests": 53,
+      "seconds": 4.691,
+      "log_sha256": "fe2d5357dccaa0a61ce740f837b422746ee3d12f3b13c38c3314d00f648747b3"
+    },
+    {
+      "module": "scripts.check_real_user_uat",
+      "exit_code": 0,
+      "tests": 13,
+      "seconds": 1.413,
+      "log_sha256": "4e38c0f7327afbbe7c8820e4759cbe0e4e7759e111dd97de7147a50bbc37a0e9"
+    },
+    {
+      "module": "scripts.check_targeted_user_uat_v2",
+      "exit_code": 0,
+      "tests": 24,
+      "seconds": 6.431,
+      "log_sha256": "5e579a5aeaf6e29888edb77715a96e479ffbb0d7ad4d793f13f4e2dfa9579ebc"
+    }
+  ],
+  "baseline_unique_tests_preserved": 1618,
+  "baseline_full_regression_rerun": false,
+  "real_model_requests": 0,
+  "synthetic_flow": {
+    "transport": "httpx.MockTransport",
+    "requests": 14,
+    "scored_as_live": false,
+    "known_unrelated_units_removed": [
+      0,
+      0,
+      3,
+      5
+    ]
+  }
+}
