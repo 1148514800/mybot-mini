@@ -15,4 +15,4 @@ Persistent Session Live UAT离线准备，LIVE_AUTHORIZATION=NOT_GRANTED；真�
 
 预注册/报告在docs/reports/persistent-session-live-uat/。原1618基线文件保持，新22门测试及相关专项通过，计数/日志hash见offline-preflight.json；不把MockTransport的14次流程调用计作Live，不声称DeepSeek语义成功。离线L02已知无关产品单元损失0/0/3/5，是下界，真实助手信息损失未评。
 
-下一步仅从干净预注册提交冻结本批次并完成报告提交/授权专题Push核对，之后停止；没有新的人类GRANTED_16_REQUESTS不得启动Live。未来先核对freeze.json、配置、DB inode、工作区指纹、账本、进程退出与lease，再按冻结顺序一次运行。不要重跑旧Live、复用余额、改消息追求PASS、自动新建批次或修改生产源码。
+已从干净预注册提交86105406ed46c32024a4c8d7d669eaaf6ca0be10完成私有freeze.json冻结与verify；后续报告提交为Acceptance，仅核对专题Push与远程HEAD，之后停止；没有新的人类GRANTED_16_REQUESTS不得启动Live。未来先核对freeze.json、配置、DB inode、工作区指纹、账本、进程退出与lease，再按冻结顺序一次运行。不要重跑旧Live、复用余额、改消息追求PASS、自动新建批次或修改生产源码。

@@ -1,0 +1,12 @@
+{
+  "status": "BLOCKED",
+  "reason": "NOT_GRANTED",
+  "live_session_id": null,
+  "restart_performed": false,
+  "live_events_before": null,
+  "live_events_after": null,
+  "approval_restored": null,
+  "receipt_restored": null,
+  "verified_restored": null,
+  "automatic_requests": null
+}

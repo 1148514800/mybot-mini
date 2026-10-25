@@ -95,5 +95,12 @@
       3,
       5
     ]
-  }
+  },
+  "preregistration_commit": "86105406ed46c32024a4c8d7d669eaaf6ca0be10",
+  "freeze_verified": true,
+  "plan_sha256": "3b46c091e4bc927ddb1b04c8598b08d57c63ca0c15d2704a36c605a560971ab4",
+  "frozen_sources_sha256": "9d7ed96fe54954477e797770e474f5ef698d48f600abf29922c4c62502a98ad7",
+  "live_ledger_rows": 0,
+  "live_case_rows": 0,
+  "workspace_unchanged": true
 }

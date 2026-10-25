@@ -1,0 +1,13 @@
+{
+  "status": "BLOCKED",
+  "reason": "NOT_GRANTED",
+  "actual_live_cases": null,
+  "source_integrity": null,
+  "active_pin_correctness": null,
+  "model_request_inclusion": null,
+  "semantic_adherence": null,
+  "supersession": null,
+  "revocation": null,
+  "historical_information_loss_live": null,
+  "offline_probe": "See offline-preflight.json; never Live evidence"
+}
