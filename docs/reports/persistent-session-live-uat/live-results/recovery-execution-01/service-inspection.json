@@ -1,0 +1,90 @@
+{
+  "captured_at_utc": "2026-10-25T12:38:28.549651+00:00",
+  "status": "BLOCKED",
+  "reason": "cannot_prove_memory_conversation_is_disposable",
+  "authorization": "GRANTED_16_REQUESTS",
+  "input_head": "84fcb86ce648fe1aca5d4c7c4ee985dfe270dc29",
+  "preregistration_commit": "86105406ed46c32024a4c8d7d669eaaf6ca0be10",
+  "frozen_verified": true,
+  "freeze_sha256": "f4f3f006c3b80591b79005b9b71a7c95cd858a848679c88285b91b16ae98c470",
+  "prepared_sha256": "7ece43437395779e08d14d4ec7ec10410d0fc50964f35bcaa120ef3a3b2f5c2e",
+  "current_uid": 501,
+  "processes": [
+    {
+      "pid": 60450,
+      "ppid": 60449,
+      "uid": 501,
+      "start_observed": "Sat Oct 24 06:03:50 2026 (ps output)",
+      "command": "python -m mybot.web --port 8765",
+      "cwd": "original main checkout",
+      "listening": "127.0.0.1:8765"
+    },
+    {
+      "pid": 60449,
+      "ppid": 84752,
+      "uid": 501,
+      "start_observed": "Sat Oct 24 06:03:50 2026 (ps output)",
+      "command": "uv run python -m mybot.web --port 8765",
+      "cwd": "original main checkout"
+    },
+    {
+      "pid": 39852,
+      "ppid": 84752,
+      "uid": 501,
+      "start_observed": "Sat Oct 24 05:23:02 2026 (ps output)",
+      "command": "uv run python -m mybot.web --port 8765",
+      "cwd": "post-live-quality-hardening worktree",
+      "child": {
+        "pid": 39853,
+        "state": "defunct",
+        "treated_as_active_model": false
+      }
+    },
+    {
+      "pid": 84752,
+      "ppid": 84694,
+      "uid": 501,
+      "command": "/bin/zsh -il",
+      "role": "shared interactive shell; not terminated"
+    }
+  ],
+  "browser_metadata": {
+    "title": "mybot-mini · 你的本地 AI 工作台",
+    "origin": "http://127.0.0.1:8765",
+    "conversation_count": 1,
+    "displayed_message_elements": 2,
+    "task_state": "模型回复已返回",
+    "approval_dialog_open": false,
+    "stop_control_visible": false,
+    "clear_control_disabled": false,
+    "memory_storage_note": "对话仅保存在本次服务内存中",
+    "execution_or_cleanup_uncertainty_shown": false,
+    "composer_has_unsent_draft": false,
+    "settings_dialog_open": true,
+    "chat_text_read": false,
+    "chat_text_exported": false,
+    "keys_cookies_csrf_read": false,
+    "full_page_snapshot_taken": false
+  },
+  "shutdown_safety": {
+    "current_uid": "PASS",
+    "project_process_identity": "PASS",
+    "agent_idle": "UI indicates completed; no stop control",
+    "no_pending_approval": "UI approval dialog closed",
+    "no_execution_uncertainty": "no uncertainty shown in safety status nodes",
+    "no_memory_session_loss": "NOT_PROVEN: one memory conversation with two rendered messages",
+    "no_effect_on_other_work": "NOT_PROVEN: settings dialog open and another launcher belongs to a different worktree"
+  },
+  "shutdown_performed": false,
+  "signal_sent": false,
+  "sessions_cleared": false,
+  "sessions_backed_up": false,
+  "existing_service_retained": true,
+  "loss_prevented": true,
+  "actual_session_loss": false,
+  "uat_started": false,
+  "case_attempts": 0,
+  "reservations": 0,
+  "http_sends": 0,
+  "workspace_unchanged": true
+}

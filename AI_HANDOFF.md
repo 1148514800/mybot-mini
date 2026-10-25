@@ -2,16 +2,18 @@
 
 ## 当前状态
 
-Persistent Session Live UAT已获本轮GRANTED_16_REQUESTS，但执行前BLOCKED，L01/L02/L03均0 Attempt、0 reservation、0/16物理请求。未启动Live服务或模型，不把未执行当作模型FAIL。分支codex/persistent-session-live-uat，输入HEAD d2841147bbab900ea7fc4ff0aec927968653d2ac；原冻结提交86105406ed46c32024a4c8d7d669eaaf6ca0be10。
+Persistent Session Live UAT授权GRANTED_16_REQUESTS保持；自动服务安全核查后仍BLOCKED。L01/L02/L03各0 Attempt、0 reservation、0/16物理请求。原冻结86105406ed46c32024a4c8d7d669eaaf6ca0be10，原批次 ~/.mybot-mini/uat/persistent-session-20261025 不变。本轮输入HEAD84fcb86ce648fe1aca5d4c7c4ee985dfe270dc29，分支codex/persistent-session-live-uat。
 
-## 阻塞事实
+## 最新事实与停止依据
 
-首项原prepare verify成功，source/config/freeze/prepared/workspace/DB inode与空ledger均通过，UAT workspace lease可用、8889空闲。但已有PID60450在8765运行mybot.web，另有uv启动进程39852/60449；违反用户本次“无既有Web进程、任何检查失败立即BLOCKED”。已停止后续Live，现有用户服务未动，未查询其私聊/任务。
+重新核实UID501、ps/lsof/cwd：60450为原main checkout的mybot.web，父60449，监听8765；39852为另一个post-live-quality-hardening worktree的uv launcher，子39853为defunct，不把它当活跃模型。共同父84752交互shell未动。
 
-原批次 ~/.mybot-mini/uat/persistent-session-20261025 保留；没有重新prepare/freeze、新账本、新测试、Case重跑或新提示。预算仍全局16、L01/L02/L03为10/4/2；API/摘要/Judge0，输入/输出/总Token0；费用null。prepared workspace指纹不变，原event DB仍0事件/turn/pin，无本轮不确定执行。
+通过已授权Chrome的精确DOM节点，只读取安全状态与计数：1个会话，当前有2个消息元素；页面明确仅内存存储，任务“模型回复已返回”，无待审批dialog或不确定提示，无输入草稿，设置dialog打开。没有读取聊天正文、聊天标题、设置值或密钥，也未导出、截图或备份私聊。
 
-## 报告与后续
+用户自动关闭条件要求证明memory会话无需保留；目前存在消息，重要性无法在不读正文/无用户处置意图下证明，关闭将丢服务内存状态。设置窗口与另一个worktree亦使不影响用户/其他任务无法证明。因此fail-closed保留全部原服务和页面，未发送信号/清除会话/删除锁/改DB；BLOCKED未解除。
 
-本次独立证据 docs/reports/persistent-session-live-uat/live-results/，包括授权、脱敏进程预检、三Case全维度BLOCKED、0资源、损失未测、冻结哈希和安全报告。旧Preregistration及OFFLINE BLOCKED报告不改；生产mybot、原Harness/测试与历史资产保持。原main及用户两处改动保留。
+## 证据与后续
 
-当前任务在报告提交/专题Push核对后停止。须用户先处理既有服务并明确要求续行，之后只复核同一冻结批次与同一空账本，不能自动启动/重建/扩额。不要把离线损失3/累计5或旧合成通过写成真实模型结论；真实Pin遵从、六轮保持、替换撤销语义、重启继续尚未验证。产品待评风险仍为整轮裁剪连带丢失无关信息，不在本轮修改源码。
+最新独立记录 docs/reports/persistent-session-live-uat/live-results/recovery-execution-01/，旧BLOCKED与OFFLINE报告未改。原verify通过，source/config/freeze/prepared/DB inode/workspace保持；ledger无case/reservation/halt，event0，无本批次执行不确定或文件污染。API/摘要/Judge0，输入/输出/总Token0，cost=null。
+
+当前在报告提交/原专题Push核对后停止。用户需要先解决当前内存会话保留/处置及打开设置的工作影响；不能推测内容可丢或偷偷导出后关闭。后续只复核同一批次和原16次上限，不prepare/freeze/new ledger，不改冻结消息/生产源码、不重跑Case。真实Pin遵从、六轮保持、替换撤销语义、实际信息损失、重启继续仍未验证；旧离线3/累计5只是已知下界。

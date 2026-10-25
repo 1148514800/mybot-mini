@@ -1,0 +1,26 @@
+{
+  "algorithm": "sha256",
+  "scope": "this recovery record, excluding this index",
+  "files": {
+    "case-results.md": {
+      "sha256": "d2f741b5cbd39fb5d1dbb7b6d26fe5796b9db0940fa04e32bf927060749d61b9",
+      "bytes": 733
+    },
+    "recovery-report.md": {
+      "sha256": "2b2630fcc21ddff5f188fe986739429f03b6e30c5e2a5d92abc093814f328dbd",
+      "bytes": 4113
+    },
+    "resource-usage.json": {
+      "sha256": "4b02a999425b67ee0a347127a30288f3be74231f876d5175aa4bef887be08801",
+      "bytes": 607
+    },
+    "security-audit.md": {
+      "sha256": "2763003b56d7d1781e7d88616d7ddd5d135009e928dcbc390bb1bad905eaf089",
+      "bytes": 1610
+    },
+    "service-inspection.json": {
+      "sha256": "eb84ded012c0027b6e2c91a9155fbadc542c42eca5395bf8aea8462535da1706",
+      "bytes": 3094
+    }
+  }
+}
