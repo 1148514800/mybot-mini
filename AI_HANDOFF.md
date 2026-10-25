@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-SessionEventStore v1 & Pinned Context v1 已完成实现、离线专项/全量、真实浏览器A–E和安全审计。独立分支codex/session-eventstore-pinned-context，基线2b8b2aa29a7adab5909730e85dc678ad60eb2a69；本提交为Implementation，下一次仅整理Acceptance证据并按用户授权Push专题分支。不合main、不创建Phase26、不改旧Tag/ZIP。
+SessionEventStore v1 & Pinned Context v1 已完成实现、离线专项/全量、真实浏览器A–E和安全审计。独立分支codex/session-eventstore-pinned-context，基线2b8b2aa29a7adab5909730e85dc678ad60eb2a69；Implementation已提交713c3d28ac5ee0d9e27b9a9a6a740c74d7747963；本快照所属后续docs提交为Acceptance，按用户授权仅Push专题分支，远程HEAD与干净状态在最终交付核对。不合main、不创建Phase26、不改旧Tag/ZIP。
 
 ## 当前实现与决策
 
@@ -24,4 +24,4 @@ SessionEventStore v1 & Pinned Context v1 已完成实现、离线专项/全量�
 
 SQLite不与外部副作用原子提交；同UID攻击者、明文/备份/SSD残留、PID重用仍有风险。恢复不是完整请求回放；Pin有预算省略与保守整轮省略，不能识别所有语义改写/冲突。真实长期任务质量仍需新授权Live；没有使用旧额度，不重跑旧Live、不改冻结资产。
 
-下一步仅完成Acceptance提交、专题Push和远程HEAD/工作树核对；完成后等用户新任务。不要重复实现存储/Pin、自动迁移、自动LLM记忆或进入下一Phase。
+实现与验收资料已齐全；交付时核对专题Push、远程HEAD与工作树，随后仅在用户新任务下继续。不要重复实现存储/Pin、自动迁移、自动LLM记忆或进入下一Phase。
