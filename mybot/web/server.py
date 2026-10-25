@@ -11,6 +11,7 @@ from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 from .runtime import ChatRuntime
 from .security import redact
+from ..storage.event_schema import StoreError
 
 STATIC = Path(__file__).parent / 'static'
 MAX_BODY = 32768
@@ -77,14 +78,19 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         return Response((STATIC / name).read_bytes(), media_type=types[name])
 
     async def bootstrap(request):
+        try:runtime.sync()
+        except StoreError:return JSONResponse({'error':'storage_failed'},status_code=503)
         config = runtime.config
         return JSONResponse({'csrf': csrf, 'workspace': config.workspace.name, 'provider': redact(config.provider, (config.api_key,)),
-            'model': redact(config.model, (config.api_key,)), 'persistence': False, 'command_mode': config.coding_command['mode'],
+            'model': redact(config.model, (config.api_key,)), 'persistence': config.storage_backend=='event_sqlite', 'command_mode': config.coding_command['mode'],
             'receipt': config.coding_preview_receipt, 'coding': config.coding_enabled,
+            'storage_notice': ('本地SQLite明文历史；不保存完整模型请求或授权。' if config.storage_backend=='event_sqlite' else '仅本次进程内存；固定事项也不跨重启。'),
             'busy': runtime.owner, 'cleanup_uncertain': runtime.cleanup_uncertain,
             'conversations': [{'id': c.id, 'title': c.title, 'status': c.status} for c in runtime.conversations.values()]})
 
-    def find(request): return runtime.conversations.get(request.path_params['id'])
+    def find(request):
+        runtime.sync()
+        return runtime.conversations.get(request.path_params['id'])
 
     async def body(request):
         if request.headers.get('content-type', '').split(';')[0] != 'application/json': raise ValueError('invalid_json')
@@ -103,6 +109,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
     async def conversations(request):
         try: c = runtime.new()
         except ValueError: return JSONResponse({'error': 'conversation_limit'}, status_code=409)
+        except StoreError:return JSONResponse({'error':'storage_failed'},status_code=503)
         return JSONResponse(c.state(), status_code=201)
 
     async def state(request):
@@ -117,9 +124,10 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
             text = value.get('message')
             if set(value) != {'message'} or not isinstance(text, str) or not text.strip() or len(text) > 16000:
                 raise ValueError('invalid_message')
-            if text.strip() in ('/undo', '/changes', '/clear'):
+            if text.strip().split()[0] in ('/undo','/changes','/clear','/pins','/pin','/unpin','/repin','/sessions','/session','/history','/delete-session','/review-session'):
                 return JSONResponse({'error': 'web_control_unsupported'}, status_code=400)
             accepted = await runtime.start(c, text)
+        except StoreError:return JSONResponse({'error':'storage_failed'},status_code=503)
         except (ValueError, json.JSONDecodeError, RecursionError, UnicodeError):
             return JSONResponse({'error': 'invalid_message_or_unsupported_control'}, status_code=400)
         return JSONResponse({'accepted': accepted}, status_code=202 if accepted else 409)
@@ -146,6 +154,53 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         except (ValueError, RecursionError, UnicodeError): ok = False
         return JSONResponse({'accepted': ok}, status_code=200 if ok else 409)
 
+    async def history_page(request):
+        c=find(request)
+        if c is None:return JSONResponse({'error':'not_found'},status_code=404)
+        try:
+            before=request.query_params.get('before')
+            return JSONResponse({'messages':c.history.messages(before=int(before) if before else None)})
+        except (StoreError,ValueError):return JSONResponse({'error':'history_unavailable'},status_code=409)
+
+    async def pins(request):
+        c=find(request)
+        if c is None:return JSONResponse({'error':'not_found'},status_code=404)
+        try:
+            value=await body(request)
+            if set(value)-{'message_id','start','end','category','confirmed','replace_id','expected_revision'}:raise ValueError('pin_fields')
+            ident=runtime.pin(c,value)
+            return JSONResponse({'pin_id':ident})
+        except (StoreError,ValueError,KeyError,TypeError):return JSONResponse({'error':'pin_rejected'},status_code=409)
+
+    async def revoke(request):
+        c=find(request)
+        if c is None:return JSONResponse({'error':'not_found'},status_code=404)
+        try:
+            value=await body(request)
+            if set(value)!={'confirmed','revision'} or runtime.owner is not None:raise ValueError('pin_fields')
+            c.history.pins.revoke(request.path_params['pin'],value['revision'],confirmed=value['confirmed'])
+            return JSONResponse({'revoked':True})
+        except (StoreError,ValueError):return JSONResponse({'error':'pin_rejected'},status_code=409)
+
+    async def delete_conversation(request):
+        c=find(request)
+        if c is None:return JSONResponse({'error':'not_found'},status_code=404)
+        try:
+            value=await body(request)
+            if set(value)!={'confirmed'} or value['confirmed'] is not True:raise ValueError('confirmation_required')
+            ok=await runtime.delete(c,confirmed=True)
+            return JSONResponse({'deleted':ok,'physical_erasure_guaranteed':False},status_code=200 if ok else 409)
+        except (StoreError,ValueError):return JSONResponse({'error':'delete_rejected'},status_code=409)
+
+    async def review(request):
+        c=find(request)
+        if c is None:return JSONResponse({'error':'not_found'},status_code=404)
+        try:
+            value=await body(request)
+            if set(value)!={'confirmed','workspace_and_processes_checked'} or value['confirmed'] is not True or value['workspace_and_processes_checked'] is not True:raise ValueError('confirmation_required')
+            runtime.review(c,confirmed=True);return JSONResponse({'reviewed':True})
+        except (StoreError,ValueError):return JSONResponse({'error':'review_rejected'},status_code=409)
+
     async def events(request):
         c = find(request)
         if c is None: return JSONResponse({'error': 'not_found'}, status_code=404)
@@ -153,7 +208,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         except ValueError: return Response(status_code=400)
         async def stream():
             nonlocal cursor
-            while not runtime.closed:
+            while not runtime.closed and c.id in runtime.conversations:
                 c.changed.clear()
                 # A missed window triggers full authenticated state refresh, not fabricated events.
                 if c.events and cursor < c.events[0]['sequence'] - 1:
@@ -170,8 +225,16 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         Route('/api/conversations', conversations, methods=['POST']), Route('/api/conversations/{id}', state),
         Route('/api/conversations/{id}/messages', message, methods=['POST']),
         Route('/api/conversations/{id}/stop', stop, methods=['POST']), Route('/api/conversations/{id}/clear', clear, methods=['POST']),
+        Route('/api/conversations/{id}/history',history_page),
+        Route('/api/conversations/{id}/pins',pins,methods=['POST']),
+        Route('/api/conversations/{id}/pins/{pin}/revoke',revoke,methods=['POST']),
+        Route('/api/conversations/{id}/delete',delete_conversation,methods=['POST']),
+        Route('/api/conversations/{id}/review',review,methods=['POST']),
         Route('/api/conversations/{id}/approval', approval, methods=['POST']), Route('/api/conversations/{id}/events', events)]
-    core = Starlette(routes=routes, lifespan=lifespan)
+    async def storage_error(request,exc):
+        return JSONResponse({'error':'storage_failed'},status_code=503)
+
+    core = Starlette(routes=routes, lifespan=lifespan,exception_handlers={StoreError:storage_error})
     app = Boundary(core, authority=f'127.0.0.1:{port}', cookie=cookie, csrf=csrf)
     app.runtime = runtime
     return app

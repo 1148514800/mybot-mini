@@ -18,6 +18,8 @@ from ..workspace import init_workspace
 from .approval import WebApproval
 from .security import redact
 from ..workspace_lease import WorkspaceLease, WorkspaceBusy
+from ..storage.history import open_store, SessionHistory, recover
+from ..storage.event_schema import StoreError
 
 
 @dataclass
@@ -41,6 +43,12 @@ class Conversation:
     contract: dict | None = None
     failed_request: bool = False
     secret_values: tuple = ()
+    history: object = None
+    recovery_notice: str = ""
+    pin_budget: dict = field(default_factory=dict)
+    store_sequence: int = 0
+    observed_turn_id: str | None = None
+    context_boundary: int = 0
 
     def emit(self, event):
         # No raw receipts, arguments, SDK errors, approval capabilities or private config.
@@ -54,6 +62,7 @@ class Conversation:
             clean['display_truncated'] = True
         self.sequence += 1
         self.events.append({'sequence': self.sequence, 'time': time.time(), **clean})
+        if event['type'] == 'pin_budget':self.pin_budget=clean
         if event['type'] == 'task_contract': self.contract = clean.get('contract')
         if event['type'] == 'resource_update': self.resources = clean.get('resources', {})
         if event['type'] == 'model_request_started': self.requests += 1
@@ -70,7 +79,8 @@ class Conversation:
         return {'id': self.id, 'title': self.title, 'status': self.status, 'messages': self.messages,
                 'events': list(self.events), 'sequence': self.sequence, 'requests': self.requests,
                 'tokens': self.resources.get('provider_reported_total_tokens') if self.resources else (self.tokens if self.usage_known else None), 'report': self.report, 'resources': self.resources, 'contract': self.contract,
-                'approval': self.approval.public_pending() if self.approval else None}
+                'approval': self.approval.public_pending() if self.approval else None,
+                'pin_budget':self.pin_budget, 'pins': self.history.pins.list() if self.history else [], 'recovery_notice': self.recovery_notice}
 
 
 class ChatRuntime:
@@ -80,37 +90,82 @@ class ChatRuntime:
         self.approval_timeout = approval_timeout
         self.task_timeout = task_timeout
         self.conversations = {}; self.owner = None; self.closed = False; self.cleanup_uncertain = False
+        # The channel namespace never imports CLI JSON/private conversations.
+        self.event_store=open_store(self.config,'web')
+        recover(self.event_store)
+        if self.config.storage_backend=='event_sqlite':
+            for row in reversed(self.event_store.sessions(20)):
+                c=Conversation(row['id'],Session(self.config.session_max_turns),title=row['title'])
+                c.history=SessionHistory(self.event_store,c.id);status=c.history.status()
+                c.status=status['status'];c.recovery_notice=status.get('notice','')
+                c.messages=c.history.messages();c.session.restore(c.history.model_turns(c.session.max_turns))
+                c.secret_values=(self.config.api_key,);self.conversations[c.id]=c
+        self.cleanup_uncertain=self.event_store.workspace_uncertain()
+
+    def sync(self):
+        if self.config.storage_backend!='event_sqlite' or self.owner is not None or self.closed:return
+        recover(self.event_store)
+        rows=self.event_store.sessions(20);ids={r['id'] for r in rows}
+        for sid in list(self.conversations):
+            if sid not in ids:
+                c=self.conversations.pop(sid);c.messages.clear();c.events.clear();c.session.clear();c.changed.set()
+        for row in reversed(rows):
+            c=self.conversations.get(row['id'])
+            if c is None:
+                c=Conversation(row['id'],Session(self.config.session_max_turns));c.history=SessionHistory(self.event_store,c.id)
+                c.secret_values=(self.config.api_key,);self.conversations[c.id]=c
+            if row['seq']==c.store_sequence:continue
+            status=c.history.status()
+            if c.observed_turn_id!=status['turn_id']:
+                c.report=None;c.contract=None;c.resources={};c.approval=None;c.events.clear()
+                c.session.restore(c.history.model_turns(c.session.max_turns))
+            elif row['context_after']!=c.context_boundary:
+                c.session.restore(c.history.model_turns(c.session.max_turns))
+            c.context_boundary=row['context_after']
+            c.observed_turn_id=status['turn_id'];c.store_sequence=row['seq']
+            c.title=row['title'];c.messages=c.history.messages();c.status=status['status'];c.recovery_notice=status.get('notice','')
+        if self.event_store.workspace_uncertain():self.cleanup_uncertain=True
 
     def new(self):
         if len(self.conversations) >= 20: raise ValueError('conversation_limit')
-        c = Conversation(secrets.token_hex(16), Session(self.config.session_max_turns))
+        history=SessionHistory(self.event_store)
+        c = Conversation(history.sid, Session(self.config.session_max_turns));c.history=history
         c.secret_values = (self.config.api_key,)
         self.conversations[c.id] = c
         return c
 
     async def start(self, c, text):
-        if self.closed or self.cleanup_uncertain or self.owner is not None: return False
+        if self.closed or self.cleanup_uncertain or self.event_store.workspace_uncertain() or self.owner is not None: return False
+        if c.history.status()['status'] in ('running','pending','execution_uncertain'):return False
         if text.strip() in ('/undo', '/changes', '/clear'): raise ValueError('use_web_controls')
+        try:
+            c.history.start(text)  # Commit acceptance before UI/model publication.
+            accepted_messages=c.history.messages()
+        except StoreError:
+            c.status='failed';self.cleanup_uncertain=True
+            try:c.history.interrupt('storage_failed',failed=True)
+            except StoreError:pass
+            raise
         self.owner = c.id  # No await between checking and reserving the process-wide lease.
         c.status = 'running'; c.started.clear(); c.failed_request = False; c.report = None
-        c.events.clear(); c.contract = None; c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
-        c.messages.append({'role': 'user', 'content': redact(text, c.secret_values), 'time': time.time()})
+        c.events.clear(); c.contract = None; c.pin_budget={}; c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
+        c.messages=accepted_messages;c.recovery_notice='';c.observed_turn_id=c.history.turn_id
         c.messages[:] = c.messages[-64:]
-        if c.title == '新对话': c.title = redact(text.strip()[:32], c.secret_values)
+        c.title=c.history.title()
         c.approval = WebApproval(c.emit, timeout=self.approval_timeout, secret_values=lambda: c.secret_values)
         c.task = asyncio.create_task(self._run(c, text))
         await c.started.wait()
         return True
 
     async def _run(self, c, text):
-        client = None; agent = None; manager = None; lease = WorkspaceLease(self.config.workspace)
+        client = None; agent = None; manager = None; reply = None; lease = WorkspaceLease(self.config.workspace)
         c.started.set()
         c.emit({'type': 'message_started'})
         try:
             async with asyncio.timeout(self.task_timeout):
                 lease.acquire()
                 # Web histories are memory-only and never load/share the CLI disk Session.
-                config = replace(self.config, session_persist=False, debug=False)
+                config = replace(self.config, session_persist=False, session_backend='event_sqlite' if self.config.storage_backend=='event_sqlite' else 'memory', debug=False)
                 if config.coding_enabled:
                     if not config.workspace.is_dir(): raise ValueError('workspace_missing')
                 else: init_workspace(config.workspace)
@@ -127,7 +182,7 @@ class ChatRuntime:
                     c.messages = redact(c.messages, c.secret_values)
                     c.title = redact(c.title, c.secret_values)
                 agent = AgentLoop(client, config, tools, ContextBuilder(config.workspace), session=c.session,
-                    undo_approval_provider=c.approval, event_callback=c.emit)
+                    undo_approval_provider=c.approval, event_callback=c.emit,history=c.history)
                 if isinstance(client, ProviderFailoverClient):
                     client.before_fallback = lambda definitions: agent.coding_controller is None or agent.coding_controller.before_request(definitions)
                 reply = await agent.handle_message(text)
@@ -139,7 +194,7 @@ class ChatRuntime:
                     state = report['state']
                     if state == 'execution_uncertain': self.cleanup_uncertain = True
                     state_label = {'verified':'当前修改已验证','edited_unverified':'已修改，尚未验证','completed_without_changes':'本轮完成，未提交修改','blocked':'已阻止执行','execution_uncertain':'执行结果不确定','cancelled':'已停止','budget_exhausted':'预算耗尽，已停止'}.get(state, '任务结束')
-                    c.status = 'failed' if state in ('blocked', 'execution_uncertain') else ('stopped' if state in ('cancelled', 'budget_exhausted') else 'completed')
+                    c.status = 'execution_uncertain' if state=='execution_uncertain' else 'failed' if state=='blocked' else ('stopped' if state in ('cancelled', 'budget_exhausted') else 'completed')
                     reply = (f"任务状态：{state_label}。已提交 {report['committed_patches']} 次修改，当前版本 {report['current_revision']}。\n\n"
                         f"当前修改之后的有效通过测试数：{report['tests_passed_after_last_patch']}。"
                         + ('指定测试范围已验证；这不代表整个项目或 Strict Success。' if state == 'verified' else '尚不能宣称当前修改已验证。'))
@@ -148,7 +203,7 @@ class ChatRuntime:
                     c.status = 'failed' if c.failed_request or outcome == 'failed' else 'stopped' if outcome in ('timeout','stopped') else 'completed'
                 delivery = agent.last_runtime_report.get('output', {})
                 if delivery.get('status') in OUTPUT_NOTICES:
-                    if c.status not in ('failed','stopped'): c.status = delivery['status']
+                    if c.status not in ('failed','stopped','execution_uncertain'): c.status = delivery['status']
                     # Coding report is independent; retain the model's partial text
                     # as well as the actual host revision report.
                     if report:
@@ -156,8 +211,10 @@ class ChatRuntime:
                         if agent.partial_reply: reply += '\n[模型部分回复]\n' + agent.partial_reply
                 if agent.task_contract is not None: reply += '\n' + agent.task_contract.summary()
                 reply = redact(reply, c.secret_values)
-                c.messages.append({'role': 'assistant', 'content': reply, 'time': time.time()})
-                c.messages[:] = c.messages[-64:]
+
+        except StoreError:
+            c.status='execution_uncertain';self.cleanup_uncertain=True
+            c.recovery_notice='持久化写入失败；不宣称已保存，不自动重放。请检查数据库和工作区后重启。'
         except WorkspaceBusy:
             c.status = 'failed'
             c.emit({'type':'workspace_busy', 'reason':'another_process_or_unsafe_lock'})
@@ -185,11 +242,25 @@ class ChatRuntime:
             if client is not None:
                 try: await client.close()
                 except BaseException: cleanup_ok = False
+            # Persist the terminal boundary only after owned resources settle.
+            # A cleanup failure must remain unsafe after a service restart.
+            try:
+                if reply is not None and cleanup_ok and outcome!='execution_uncertain':
+                    c.history.finish(reply,outcome if outcome in ('completed','failed','cancelled','stopped',*OUTPUT_NOTICES) else 'failed')
+                    c.messages=c.history.messages()[-64:]
+                elif c.history.turn_id is not None:
+                    c.history.interrupt('cancelled' if outcome=='cancelled' else 'runtime_failed',
+                        cancelled=outcome=='cancelled',failed=outcome=='failed',force_uncertain=not cleanup_ok or outcome=='execution_uncertain')
+                    if c.history.status()['status']=='execution_uncertain':
+                        outcome='execution_uncertain';self.cleanup_uncertain=True
+            except StoreError:
+                cleanup_ok=False;self.cleanup_uncertain=True
+                c.recovery_notice='持久化写入失败；不宣称已保存，不自动重放。请检查数据库和工作区后重启。'
             c.status = outcome
             if not cleanup_ok:
                 c.status = 'cleanup_uncertain'; self.cleanup_uncertain = True
             c.emit({'type': {'cancelled': 'message_cancelled', 'failed': 'message_failed',
-                            'stopped': 'message_cancelled', 'cleanup_uncertain': 'message_failed',
+                            'stopped': 'message_cancelled', 'cleanup_uncertain': 'message_failed', 'execution_uncertain': 'message_failed',
                             **{k:'message_incomplete' for k in OUTPUT_NOTICES}}.get(c.status, 'message_completed'),
                     'status': c.status, 'report': c.report})
             # Lease remains held until MCP __aexit__, Agent finally and client close settle.
@@ -204,11 +275,32 @@ class ChatRuntime:
 
     async def clear(self, c):
         if self.owner is not None: return False
-        c.session.clear(); c.messages.clear(); c.events.clear(); c.report = None; c.contract = None; c.title = '新对话'; c.status = 'idle'
+        c.history.clear_context()
+        c.session.clear();
+        if self.config.storage_backend!='event_sqlite':c.messages.clear()
+        c.events.clear(); c.report = None; c.contract = None; c.title = c.history.title() if self.config.storage_backend=='event_sqlite' else '新对话'; c.status = 'idle'
         c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
         c.emit({'type': 'conversation_cleared'})
         return True
 
+    async def delete(self,c,*,confirmed=False):
+        if confirmed is not True:raise StoreError('delete_confirmation_required')
+        if self.owner is not None:return False
+        self.event_store.delete(c.id);self.conversations.pop(c.id,None);c.messages.clear();c.events.clear();c.session.clear();c.changed.set()
+        return True
+
+    def pin(self,c,value):
+        if self.owner is not None:raise StoreError('pin_while_busy')
+        return c.history.pins.add(value['message_id'],value['start'],value['end'],value['category'],
+            confirmed=value.get('confirmed') is True,replace_id=value.get('replace_id'),expected_revision=value.get('expected_revision'))
+
+    def review(self,c,*,confirmed=False):
+        if self.owner is not None:raise StoreError('workspace_busy')
+        c.history.review(confirmed=confirmed)
+        c.status=c.history.status()['status'];c.recovery_notice=c.history.status()['notice']
+        self.cleanup_uncertain=self.event_store.workspace_uncertain()
+
     async def close(self):
         self.closed = True
         for c in self.conversations.values(): await self.stop(c)
+        self.event_store.close()

@@ -15,6 +15,7 @@ class ToolRegistry:
         self._tools: dict[str, Tool] = {}
         self._capabilities: dict[str, str] = {}
         self.mutation_enabled = mutation_enabled
+        self.execution_observer = None
 
     def register(self, tool: Tool, *, capability=None) -> None:
         # Only host code supplies capability. Tool parameters/results cannot grant it.
@@ -73,10 +74,15 @@ class ToolRegistry:
             if name == 'write_file': return self.denied()
             return ToolResult(success=False, error=f"unknown tool '{name}'")
         if not self.permitted(name): return self.denied()
+        observer = self.execution_observer
+        token = observer.begin(name, params, tool, self._capabilities[name]) if observer is not None else None
         try:
             result = await tool.execute(**dict(params))
         except Exception as exc:
-            return ToolResult(success=False, error=f"{type(exc).__name__}: {exc}")
+            result = ToolResult(success=False, error=f"{type(exc).__name__}: {exc}")
+        if not isinstance(result, ToolResult):
+            result = ToolResult(success=False, error=f"tool returned {type(result).__name__}")
+        if observer is not None: observer.complete(token, result)
         if isinstance(result, ToolResult):
             return result
         return ToolResult(success=False, error=f"tool returned {type(result).__name__}")

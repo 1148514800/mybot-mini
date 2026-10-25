@@ -54,7 +54,10 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
             if llm_client is not None:
                 await llm_client.close()
             report = getattr(agent, 'last_coding_report', None)
-            cleanup_ok = manager_ok and (not report or report['state'] != 'execution_uncertain')
+            history=getattr(agent,'history',None)
+            cleanup_ok = manager_ok and (not report or report['state'] != 'execution_uncertain') and (history is None or history.turn_id is None and not history.store.workspace_uncertain())
+            close_history=getattr(agent,'close_history',None)
+            if close_history is not None:close_history()
         finally:
             lease.release(confirmed=cleanup_ok)
         print("Gateway stopped.")

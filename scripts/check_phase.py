@@ -178,3 +178,18 @@ from scripts.check_task_contract import check_task_contract
 check_task_contract()
 from scripts.check_requirement_evidence import check_requirement_evidence
 check_requirement_evidence()
+
+from scripts.check_session_event_store import check_session_event_store
+check_session_event_store()
+
+from scripts.check_session_recovery import check_session_recovery
+check_session_recovery()
+
+from scripts.check_web_persistence import check_web_persistence
+check_web_persistence()
+
+from scripts.check_pinned_context import check_pinned_context
+check_pinned_context()
+
+from scripts.check_context_projection import check_context_projection
+check_context_projection()

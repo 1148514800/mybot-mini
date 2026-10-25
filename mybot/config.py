@@ -108,6 +108,9 @@ class GatewayConfig:
     context_token_budget: dict = field(default_factory=lambda: _context_value('token_budget', {}), kw_only=True)
     context_compaction: dict = field(default_factory=lambda: _context_value('compaction', {}), kw_only=True)
     debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
+    session_backend: str | None = field(default_factory=lambda: _session_value('backend', None), kw_only=True)
+    session_event_path: Path | str = field(default_factory=lambda: _session_value('event_path', '~/.mybot-mini/events.sqlite3'), kw_only=True)
+    session_event_limits: dict = field(default_factory=lambda: _session_value('event_limits', {}), kw_only=True)
     session_max_turns: int = field(default_factory=lambda: _session_value("max_turns", 6))
     session_persist: bool = field(default_factory=lambda: _session_value("persist", False))
     session_path: Path | str = field(default_factory=lambda: _session_value("path", "./.mybot_state/session.json"))
@@ -121,6 +124,10 @@ class GatewayConfig:
     workspace: Path = field(
         default_factory=lambda: _resolve_path(_section("workspace").get("path", PROJECT_DIR / "workspace"))
     )
+
+    @property
+    def storage_backend(self):
+        return self.session_backend if self.session_backend is not None else 'legacy_json' if self.session_persist else 'memory'
 
     def __post_init__(self) -> None:
         from .tools.authority import validate_file_access
@@ -176,6 +183,17 @@ class GatewayConfig:
             raise ValueError("session.persist must be a boolean")
         if not isinstance(self.session_path, (str, Path)) or not str(self.session_path).strip():
             raise ValueError("session.path must be a non-empty path string")
+        resolved_backend=self.storage_backend
+        if resolved_backend not in ('memory','legacy_json','event_sqlite') or type(resolved_backend) is not str:
+            raise ValueError('session.backend must be memory, legacy_json or event_sqlite')
+        if self.session_persist and resolved_backend != 'legacy_json':
+            raise ValueError('session.persist conflicts with session.backend')
+        self.session_persist = resolved_backend == 'legacy_json'
+        if not isinstance(self.session_event_path,(str,Path)) or not str(self.session_event_path).strip():raise ValueError('session.event_path')
+        self.session_event_path = Path(self.session_event_path).expanduser()
+        if not self.session_event_path.is_absolute():self.session_event_path = PROJECT_DIR / self.session_event_path
+        from .storage.event_store import limits
+        self.session_event_limits = limits(self.session_event_limits)
         self.session_path = _resolve_path(self.session_path)
         self.request_timeout_seconds = float(self.request_timeout_seconds)
         self.workspace = _resolve_path(self.workspace)

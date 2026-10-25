@@ -27,7 +27,7 @@ class AgentLoop:
     """Run a simple tool-calling loop for one CLI conversation."""
 
     def __init__(self, client: AsyncOpenAI, config: GatewayConfig, tools: ToolRegistry,
-                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None):
+                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None, history=None):
         from ..runtime_accounting import RuntimeAccounting
         self.resources = RuntimeAccounting()
         self.partial_reply = ""
@@ -47,6 +47,14 @@ class AgentLoop:
         self.store = SessionStore(config.session_path, config.workspace) if config.session_persist else None
         if self.store is not None:
             self.session.restore(self.store.load())
+        from ..storage.history import open_store, SessionHistory, recover
+        self._owns_history = history is None
+        if history is None:
+            engine=open_store(config,'cli');recover(engine)
+            sessions=engine.sessions(1) if config.storage_backend=='event_sqlite' else []
+            history=SessionHistory(engine,sessions[0]['id'] if sessions else None)
+            if sessions:self.session.restore(history.model_turns(self.session.max_turns))
+        self.history=history
         self.coding_controller = None
         self.task_contract = None
         self.last_task_contract = None
@@ -124,6 +132,81 @@ class AgentLoop:
                       f"summarized={c['history_turns_summarized']} truncated={c['context_truncated']}")
 
     async def handle_message(self, user_input: str) -> str:
+        from ..storage.event_schema import StoreError
+        control=self._history_control(user_input)
+        if control is not None:return control
+        if user_input.strip() in ('/clear','/undo','/changes'):
+            reply=await self._run_message(user_input)
+            if user_input.strip()=='/clear':self.history.clear_context()
+            return reply
+        own=self.history.turn_id is None
+        if own:self.history.start(user_input)
+        self.context_manager.pinned_context=self.history.pins.list(active_only=True)
+        old_observer=self.tools.execution_observer;self.tools.execution_observer=self.history
+        try:
+            reply=await self._run_message(user_input)
+            if own:
+                outcome=self.last_runtime_report.get('outcome','completed')
+                status=outcome if outcome in ('failed','cancelled','output_truncated','output_filtered','empty_response','unknown_finish','content_filtered','provider_error','response_unconfirmed','empty_reply','stopped','execution_uncertain') else 'completed'
+                if self.last_coding_report and self.last_coding_report['state']=='execution_uncertain':status='execution_uncertain'
+                elif outcome=='blocked':status='failed'
+                elif outcome in ('budget_exhausted','timeout'):status='stopped'
+                self.history.finish(reply,status)
+            if self.resources.context.get('pins_omitted'):
+                reply='[PIN] 部分固定事项未进入本次请求，历史信息可能遗漏。\n'+reply
+            return reply
+        except BaseException as exc:
+            if isinstance(exc,ContextBudgetError) and self.context_manager.pinned_context:
+                self._notify('pin_budget',included=[],omitted=[p['pin_id'] for p in self.context_manager.pinned_context],reason='protected_request_budget')
+                if self._event_callback is None:print('[PIN] 当前尝试未发送；固定事项未能进入请求预算。')
+            if own:
+                try:self.history.interrupt('storage_failed' if isinstance(exc,StoreError) else 'cancelled' if isinstance(exc,asyncio.CancelledError) else 'runtime_failed',cancelled=isinstance(exc,asyncio.CancelledError),failed=not isinstance(exc,asyncio.CancelledError))
+                except StoreError:pass  # Durable started evidence stays incomplete; never replay.
+            raise
+        finally:
+            self.tools.execution_observer=old_observer
+
+    def _history_control(self,text):
+        from ..storage.event_schema import StoreError
+        from ..storage.history import SessionHistory
+        parts=text.strip().split()
+        if not parts:return None
+        command=parts[0]
+        if command not in ('/pins','/pin','/unpin','/repin','/sessions','/session','/history','/delete-session','/review-session'):return None
+        try:
+            if command=='/pins':return json.dumps(self.history.pins.list(),ensure_ascii=False)
+            if command=='/history':return json.dumps(self.history.messages(before=int(parts[1]) if len(parts)>1 else None),ensure_ascii=False)
+            if command=='/sessions':return json.dumps([{k:s[k] for k in ('id','title')} for s in self.history.store.sessions()],ensure_ascii=False)
+            if command=='/session':
+                if self.store is not None:raise StoreError('legacy_json_session_switch_unsupported')
+                sid=None if parts[1]=='new' else parts[1]
+                h=SessionHistory(self.history.store,sid)
+                if sid:h.status()
+                self.history=h;self.session.restore(h.model_turns(self.session.max_turns))
+                return 'Session '+h.sid+' '+h.status()['status']
+            if len(parts)<2 or parts[1]!='confirm':raise StoreError('explicit_confirm_command_required')
+            if command=='/pin' and len(parts)==6:
+                ident=self.history.pins.add(parts[2],int(parts[3]),int(parts[4]),parts[5],confirmed=True)
+                return 'Pinned '+ident
+            if command=='/repin' and len(parts)==8:
+                ident=self.history.pins.add(parts[4],int(parts[5]),int(parts[6]),parts[7],confirmed=True,replace_id=parts[2],expected_revision=int(parts[3]))
+                return 'Replaced '+ident
+            if command=='/unpin' and len(parts)==4:
+                self.history.pins.revoke(parts[2],int(parts[3]),confirmed=True);return 'Pin revoked'
+            if command=='/delete-session' and len(parts)==3:
+                self.history.store.delete(parts[2])
+                if parts[2]==self.history.sid:self.history=SessionHistory(self.history.store);self.session.clear()
+                return '会话记录已从应用数据库删除；不保证底层介质、备份无残留。'
+            if command=='/review-session' and len(parts)==3 and parts[2]=='WORKSPACE_AND_PROCESSES_CHECKED':
+                self.history.review(confirmed=True);return '人工检查已记录；旧任务仍中断，未恢复授权或verified。'
+            raise StoreError('history_command_arguments')
+        except (ValueError,IndexError,StoreError):
+            return '会话操作拒绝：请检查来源、版本和显式confirm参数；未请求模型。'
+
+    def close_history(self):
+        if self._owns_history:self.history.store.close()
+
+    async def _run_message(self, user_input: str) -> str:
         from ..runtime_accounting import RuntimeAccounting
         from .context_compactor import ContextCompactor
         self.resources = RuntimeAccounting()
@@ -223,7 +306,14 @@ class AgentLoop:
             self._notify('resource_update', resources=self.last_runtime_report)
 
     async def _request_model(self, request, *, purpose='agent'):
-        response = await self.resources.request(self.client, self.config, request, purpose=purpose)
+        from ..storage.event_schema import StoreError
+        active=self.history.turn_id
+        if active:self.history.event('model.started',dict(turn_id=active,purpose=purpose))
+        try:response = await self.resources.request(self.client, self.config, request, purpose=purpose)
+        except Exception:
+            if active:self.history.event('model.failed',dict(turn_id=active,reason='request_failed'))
+            raise
+        if active:self.history.event('model.finished',dict(turn_id=active,status=response_status(response)['status']))
         self._notify('resource_update', resources=self.resources.snapshot())
         return response
 
@@ -252,14 +342,15 @@ class AgentLoop:
             from ..runtime_accounting import find_gateway
             gateway = find_gateway(self.client)
             secrets = (self.config.api_key, getattr(effective,'api_key',None), getattr(getattr(gateway,'_backup_config',None),'api_key',None))
-            base = view[:1] + view[2 if stats['summary_present'] else 1:]
+            summary_index=1+len(self.context_manager._pin_messages)
+            base = view[:summary_index] + view[summary_index+int(stats['summary_present']):]
             room = self.context_manager.summary_budget(base, definitions)
             stats['available_summary_budget'] = room
             summary,status = await self.compactor.compact(turns[:count], effective, summarize, secrets,
                 available_summary_budget=room,
-                fits=lambda item: self.context_manager.accepts(base[:1]+[item]+base[1:], definitions))
+                fits=lambda item: self.context_manager.accepts(base[:summary_index]+[item]+base[summary_index:], definitions))
             if summary:
-                projected = view[:1]+[summary]+view[2 if stats['summary_present'] else 1:]
+                projected = view[:summary_index]+[summary]+view[summary_index+int(stats['summary_present']):]
                 if self.context_manager.accepts(projected,definitions):
                     view=projected;stats['summary_present']=True;stats['history_turns_summarized']=count;stats['history_turns_summarized_indices']=list(range(1,count+1));stats['history_omitted']=False
                 else:
@@ -271,8 +362,14 @@ class AgentLoop:
         from .token_counter import TokenCounter
         stats.update(TokenCounter.inspect(effective,TokenCounter.request(effective,view,definitions)))
         stats['after']=self.context_manager.count(view,definitions)
-        stats['history_information_incomplete']=bool(stats['history_turns_omitted'])
-        stats['history_coverage']='unverified' if stats['history_turns_omitted'] else 'full_request_view'
+        if getattr(self,'_pin_history_omitted',0):
+            stats['pin_history_turns_removed']=self._pin_history_omitted;stats['context_truncated']=True
+        stats['history_information_incomplete']=bool(stats['history_turns_omitted'] or stats.get('pins_omitted') or getattr(self,'_pin_history_omitted',0))
+        stats['history_coverage']='unverified' if stats['history_information_incomplete'] else 'full_request_view'
+        if self.history.turn_id and stats['history_turns_omitted']:
+            status=stats['context_compaction_status']
+            allowed=('deterministic','semantic_applied','semantic_reused','semantic_applied_partial','semantic_applied_pruned')
+            self.history.event('context.compacted',dict(turn_id=self.history.turn_id,status=status if status in allowed else 'fallback',omitted_turns=stats['history_turns_omitted']))
         self.resources.context = dict(stats)
         self._notify('resource_update', resources=self.resources.snapshot())
         return view,stats
@@ -290,7 +387,10 @@ class AgentLoop:
             self.session.clear()
             self.plan.reset()
             return "当前会话已清空。"
-        messages = self.context.build_messages(user_input, self.session.history())
+        original_turns=self.session.export_turns()
+        turns=self.history.context_turns(original_turns)
+        self._pin_history_omitted=len(original_turns)-len(turns)
+        messages = self.context.build_messages(user_input, [m for turn in turns for m in turn])
         if self.config.coding_git_workflow['enabled']:
             from .git_workflow import GitBaseline, GitWorkflowSettings
             from .change_journal import ChangeJournal
@@ -314,7 +414,6 @@ class AgentLoop:
             except (OSError, ValueError):
                 self.coding_controller.stop('blocked', 'git_baseline_or_registry_unavailable')
                 return self._finish_turn(messages, len(messages) - 1, '')
-        turns = self.session.export_turns()
         turn_start = len(messages) - 1
         if self.router is not None:self._route_initial_tools(user_input,messages,turns)
         limit = max(1, min(self.config.max_react_steps, 30))

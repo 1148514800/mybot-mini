@@ -7,7 +7,7 @@ uv sync --frozen
 uv run python -m mybot.web --port 8765
 ```
 
-浏览器访问 **http://127.0.0.1:8765**。入口只监听 IPv4 loopback，没有公网/LAN host 选项，不支持反向代理。原 CLI `uv run python -m mybot.main` 保持可用。不要让不同 Web 进程或 CLI 同时修改同一个工作区；第一版的任务互斥范围是单个 Web 服务进程。
+浏览器访问 **http://127.0.0.1:8765**。入口只监听 IPv4 loopback，没有公网/LAN host 选项，不支持反向代理。原 CLI `uv run python -m mybot.main` 保持可用。不要让不同 Web 进程或 CLI 同时修改同一个工作区；跨进程执行仍使用原 WorkspaceLease。
 
 ## 连接真实模型
 
@@ -39,9 +39,11 @@ uv run python -m mybot.web --port 8765
 
 右侧活动面板可折叠，显示当前任务的逻辑请求次数、已报告 Token（不可获取时标为未知）和单独的输入估算、真实工具卡片、Plan、Diff、修改文件及后端测试状态。工具耗时包括等待审批的时间；取消而未返回的工具显示中断，不伪造成功。底部自动滚动；上滚后可点击新消息提示返回。代码与回复可复制，长代码独立横向滚动。支持基本 Markdown 标题、粗体、列表、引用、表格、代码与基础语法高亮；原始 HTML/图片不执行，不支持数学排版或全部 Markdown 扩展。
 
-深色为默认，按钮可切换浅色；唯一 localStorage 内容是主题偏好。对话、事件和 Session **仅在服务内存**，不加载或写入 CLI 持久化 Session，即使 CLI 配置了 session.persist=true 也不会串用。每个对话有独立 Session，保留配置限定的完整用户轮次；展示消息最多64条、当前任务事件最多128条，每进程最多20个对话。刷新可通过已授权状态与 SSE 恢复当前运行任务；重启服务会丢失 Web 历史，请自行保存需要的回复。
+深色为默认，唯一localStorage内容是主题。默认memory，重启不保存；显式session.backend=event_sqlite后恢复标题/消息/状态，普通聊天和Pin存本地明文SQLite。每次展示最近64条，可“查看更早消息”，会话列表最多20，活动事件128。CLI/Web共享引擎但命名空间隔离，不读取旧CLI JSON；persist=true的旧配置不会自动打开Web持久化。刷新/SSE只恢复当前状态，不重放工具。
 
-“设置与连接”可清空当前对话，仅空闲时允许。第一版不保留跨轮 Undo capsule，`/undo`、`/changes` 明确拒绝；查看当前修改请用活动面板。原 CLI Undo 不受影响。MCP 按原配置启动，confirm 策略调用通过同一 Web 审批；连接、调用、关闭留在原 manager 的同一个 owning task 中。
+用户消息“固定此消息片段”打开确认弹窗，可选择类别及显式替换旧项；活动面板显示来源、状态修订和进入预算的结果。撤销/替换只影响新请求，历史可审计；预算不足会警示遗漏。Pin不提升工具能力或恢复旧验证。配置与限制见[会话后端](reports/session-eventstore-pinned-context/legacy-session-compatibility.md)。
+
+“设置与连接”可清除当前模型上下文；SQLite模式保留聊天和Pin，只有明确确认“删除会话”才删除数据库记录。底层存储、备份可能残留，不保证物理擦除。执行不确定时先人工检查工作区/残留进程，再显式复核；不会恢复旧verified或授权。仅空闲时允许这些操作。第一版不保留跨轮 Undo capsule，`/undo`、`/changes` 明确拒绝；查看当前修改请用活动面板。原 CLI Undo 不受影响。MCP 按原配置启动，confirm 策略调用通过同一 Web 审批；连接、调用、关闭留在原 manager 的同一个 owning task 中。
 
 ## 每次审批
 
@@ -57,7 +59,7 @@ uv run python -m mybot.web --port 8765
 
 `runtime.py` 为每轮创建原 Agent、独立工具 registry、MCP owner 和模型客户端，保留该对话的真实 Session；进程内任务占用与跨进程工作区锁均在清理屏障后释放。模型客户端按轮关闭，fallback 的 sticky 范围是该轮，下一轮重新按配置主模型开始；不是跨轮共用 CLI 客户端。Skills、Planning、MCP、Controller、Receipt 和 Journal 都走既有实现；原生写入器、验证与审批政策未替换。活动回调是可选且不参与授权，CLI 缺省关闭；Web 静默 Plan 的 print 输出，不解析 CLI 日志。
 
-本地单用户模式不提供公网账号、多租户、文件上传、附件或磁盘历史管理。不要转发端口到公网，也不要把本地浏览器授权视为不同 OS 用户之间的安全隔离。
+本地单用户模式不提供公网账号、多租户、文件上传或附件。不要转发端口到公网，也不要把本地浏览器授权视为不同 OS 用户之间的安全隔离。
 
 ## 验证
 
@@ -76,7 +78,7 @@ git diff --check
 
 按 [Context 配置](context.md) 启用估算预算或选择性语义摘要后重启服务。规则摘要仍是默认；语义模式显式允许额外调用才可启用，真实费用未知。
 
-同一工作区已有 CLI/Web 持锁时，新任务安全失败且不发送模型请求。CLI 等待输入期间也持锁；退出后才可由 Web 使用。清理不确定时不要删除锁绕过，确认进程退出后再启动。Web 历史仍只存在内存，不复用 CLI SessionStore。
+同一工作区已有 CLI/Web 持锁时，新任务安全失败且不发送模型请求。CLI 等待输入期间也持锁；退出后才可由 Web 使用。清理不确定时不要删除锁绕过，确认进程退出后再启动。Web默认内存，可显式SQLite；不复用CLI SessionStore。
 
 ## 任务要求与验证
 

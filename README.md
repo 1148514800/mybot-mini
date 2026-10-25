@@ -49,7 +49,7 @@ uv run python -m mybot.main
 uv run python -m mybot.web --port 8765
 ```
 
-访问 **http://127.0.0.1:8765**。支持独立对话、深浅主题、安全 Markdown/代码复制、真实工具活动、Patch Diff、浏览器单次审批、停止及刷新恢复；直接复用现有 AgentLoop。模型凭证和工具权限仍读取本地配置，发送消息后才实际请求模型。Web 历史仅在进程内存中，不共享 CLI 持久化历史；仅监听 loopback，不用于公网部署。完整配置、安全边界与限制见 [Web 使用说明](docs/web-ui.md)。
+访问 **http://127.0.0.1:8765**。支持独立对话、深浅主题、安全 Markdown/代码复制、真实工具活动、Patch Diff、浏览器单次审批、停止及刷新恢复；直接复用现有 AgentLoop。模型凭证和工具权限仍读取本地配置，发送消息后才实际请求模型。Web 默认历史仅在进程内存中；可显式启用 SQLite 跨重启恢复，与 CLI 保持会话命名空间隔离；仅监听 loopback，不用于公网部署。完整配置、安全边界与限制见 [Web 使用说明](docs/web-ui.md)。
 
 ## 配置
 
@@ -76,6 +76,22 @@ uv run python -m mybot.web --port 8765
 
 将 `config/config.json` 顶层的 `debug` 设置为 `true` 开启调试日志，设置为 `false` 关闭，默认关闭。修改后重启程序生效。日志包含模型耗时、供应商已报告 Token（缺失为未知）、工具参数及执行结果摘要；写入参数 `content` 仅显示字符数。调试开关统一由配置文件控制，不再读取 `MYBOT_DEBUG` 环境变量。
 
+
+## 会话事件与用户固定事项
+
+默认 `memory`；旧 `session.persist=true` 继续使用原 CLI JSON，不自动迁移。显式选择 SQLite：
+
+```json
+{"session":{"backend":"event_sqlite","persist":false,"max_turns":6,"event_path":"~/.mybot-mini/events.sqlite3"}}
+```
+
+SQLite保存本地明文聊天/Pin，目录0700、文件0600，必须在workspace外，建议macOS用户目录/APFS。默认全库50,000事件、64MiB、单事件payload64KiB；到限停止，不自动丢历史。最近6轮只限制模型近期上下文，持久早期消息可翻页查看。
+
+Web用户消息可手动固定精确片段、确认替换/撤销；CLI用 `/history`、`/pins`、`/pin confirm ...`。Pin有来源且进入真实预算，最多12条active/4096 UTF8字节，预算不足会明确省略。不是系统规则、授权或旧verified。
+
+重启仅恢复安全聊天和真实任务状态，不重放模型/命令/Patch，不恢复Receipt或审批。副作用不明会阻止新任务，需人工检查后显式复核。SQLite的 `/clear` / Web清上下文保留聊天和Pin；确认删除会话才真实级联删除DB记录，不能保证备份/SSD物理擦除。旧JSON的 `/clear` 行为保持原样。
+
+配置、CLI命令、安全与限制见[后端兼容](docs/reports/session-eventstore-pinned-context/legacy-session-compatibility.md)、[Pin说明](docs/reports/session-eventstore-pinned-context/pinned-context.md)、[完整验收](docs/reports/session-eventstore-pinned-context/acceptance-report.md)。
 
 ## Phase 学习归档
 

@@ -2,8 +2,9 @@ import {markdown, copyText} from './markdown.js';
 const $ = id => document.getElementById(id);
 const node = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
 let boot, selected, stream, current, approvalId = null, approving = false, nearBottom = true;
-const labels = {output_truncated:'输出截断，回答不完整',content_filtered:'回复被过滤',empty_response:'空回复，未完成',provider_error:'供应商状态异常',response_unconfirmed:'结束状态未确认',idle:'准备就绪',running:'正在分析问题',waiting_approval:'正在等待审批',completed:'模型回复已返回',failed:'执行失败',cancelled:'已停止',stopped:'已停止',cleanup_uncertain:'清理状态不确定',stopping:'正在停止并清理',settling:'正在完成资源清理'};
+const labels = {output_truncated:'输出截断，回答不完整',content_filtered:'回复被过滤',empty_response:'空回复，未完成',provider_error:'供应商状态异常',response_unconfirmed:'结束状态未确认',idle:'准备就绪',running:'正在分析问题',waiting_approval:'正在等待审批',completed:'模型回复已返回',failed:'执行失败',cancelled:'已停止',stopped:'已停止',interrupted:'任务中断，未自动续跑',execution_uncertain:'执行结果不确定',pending:'任务尚未完成',cleanup_uncertain:'清理状态不确定',stopping:'正在停止并清理',settling:'正在完成资源清理'};
 const toolLabels = {list_files:'正在查看项目结构',search_code:'正在查找代码',read_file_range:'正在读取文件',read_file:'正在读取文件',apply_patch:'正在处理代码修改',run_command:'正在执行命令',create_plan:'正在制定计划',update_plan:'正在更新计划'};
+let olderMessages = [], pinSource = null, pendingDataAction = null;
 const busy = () => current && ['running','waiting_approval','stopping','settling'].includes(current.status);
 function notice(text) { $('notice').textContent = text; $('notice').hidden = !text; }
 async function api(path, method='GET', data) {
@@ -18,6 +19,7 @@ async function api(path, method='GET', data) {
   finally { clearTimeout(timer); }
 }
 function renderHistory() {
+  $('storage-label').textContent=boot.persistence?'聊天已启用本地SQLite明文存储':'对话仅保存在本次服务内存中';
   $('history').replaceChildren(); $('history-count').textContent = boot.conversations.length;
   for (const c of [...boot.conversations].reverse()) {
     const button = node('button', undefined, 'history-item' + (c.id === selected ? ' active' : ''));
@@ -27,13 +29,17 @@ function renderHistory() {
 }
 function renderMessages() {
   const container = $('messages'); container.replaceChildren(); $('welcome').hidden = current.messages.length > 0;
-  for (const m of current.messages) {
+  $('recovery-notice').textContent = current.recovery_notice || '';
+  const visibleMessages = [...new Map([...olderMessages,...current.messages].map(m=>[m.id || m.time+':'+m.role,m])).values()];
+  for (const m of visibleMessages) {
     const article = node('article', undefined, 'message ' + m.role), head = node('div', undefined, 'message-head');
     head.append(node('span', m.role === 'user' ? '你' : '✦', 'message-avatar'), node('span', m.role === 'user' ? '你' : 'mybot-mini'));
     const time = node('time', new Date(m.time*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})); head.append(time); article.append(head);
     const body = node('div', undefined, 'message-body'); if (m.role === 'assistant') body.append(markdown(m.content)); else body.textContent = m.content;
     article.append(body);
     if (m.role === 'assistant') { const actions = node('div', undefined, 'message-actions'), copy = node('button','⧉ 复制回复','copy-reply'); copy.addEventListener('click', () => copyText(m.content, copy)); actions.append(copy); article.append(actions); }
+    if (m.role === 'user' && m.id) {const pin = node('button','固定此消息片段','copy-reply');pin.disabled=!!boot.busy;pin.addEventListener('click',()=>openPin(m));article.append(pin);}
+    if(m.truncated)article.append(node('p','此历史文本因存储预算截断，不代表完整原文。'));
     container.append(article);
   }
   $('running-indicator').hidden = !busy();
@@ -41,6 +47,19 @@ function renderMessages() {
   else if (current.messages.length) $('new-message').hidden = false;
 }
 function renderActivity() {
+  const allPins = current.pins || [], activePins = allPins.filter(p=>p.status==='active');
+  $('pins-notice').textContent = `${activePins.length} 条当前固定事项。${boot.persistence ? '保存在本地明文数据库。' : '仅本次进程，重启不保留。'} 同分类并列时可能需要确认，不会自动解决语义冲突。`;
+  $('pins-list').replaceChildren();
+  const cats={current_goal:'当前目标',user_constraint:'用户约束',confirmed_decision:'已确认决定',open_question:'未决事项',pending_work:'待完成工作'};
+  for(const p of allPins){
+    const row=node('div',undefined,'pin-row');row.append(node('p',`${cats[p.category]} · ${p.status==='active'?'当前有效':p.status==='superseded'?'已被替换':'已撤销'} · 状态修订 ${p.revision}`),node('p',p.content),node('small',`来源消息 ${p.source_message_id.slice(0,8)} · 字符 ${p.source_span[0]}–${p.source_span[1]}`));
+    const budget=current.resources?.context || {};
+    if(budget.pins_included?.includes(p.id))row.append(node('p','最近一次请求：已进入模型预算。'));
+    if(budget.pins_omitted?.includes(p.id) || current.pin_budget?.omitted?.includes(p.id))row.append(node('p','最近一次尝试：未进入，预算不足。'));
+    if(p.needs_review && p.status==='active')row.append(node('p','待确认：存在同分类固定项，未自动判断冲突。'));
+    if(p.status==='active'){const revoke=node('button','撤销固定','secondary-button');revoke.disabled=!!boot.busy;revoke.addEventListener('click',()=>confirmData('撤销后，此事项不再进入新的模型请求；历史版本仍保留。',async()=>{await api(`conversations/${selected}/pins/${p.id}/revoke`,'POST',{confirmed:true,revision:p.revision});await refresh();}));row.append(revoke);}
+    $('pins-list').append(row);
+  }
   const contract = current.contract;
   $('contract-panel').hidden = !contract;
   if (contract) {
@@ -65,6 +84,7 @@ function renderActivity() {
     (context.estimated_input_tokens !== undefined ? `当前输入估算 ${context.estimated_input_tokens} Token（保守估算，非账单）；${context.request_chars} 字符 / ${context.request_utf8_bytes} 字节。窗口 ${context.model_window_tokens ?? '未知'}；输出预留 ${context.output_reserved_tokens}。` : '') +
     ` 压缩请求 ${r.compaction_requests ?? 0}；${compactLabel}；保留 ${context.history_turns_kept ?? 0} 轮 / 摘要 ${context.history_turns_summarized ?? 0} 轮。` +
     ` 工具失败 ${r.tool_failures ?? 0} 次；用户任务正确性未知。` +
+    (context.pins_included ? ` 固定事项进入 ${context.pins_included.length} / 遗漏 ${context.pins_omitted.length}；${context.pins_omitted.length?'部分固定要求未进入请求。':'已纳入本次实际请求预算。'}` : '') +
     (r.request_budget_exhausted ? '请求预算不足，本轮未完整完成。' : '') +
     (context.compaction_evidence ? ` 引用有效 ${context.compaction_evidence.valid_entries ?? 0} / 无效 ${context.compaction_evidence.invalid_entries ?? 0} / 已删除 ${context.compaction_evidence.removed_entries ?? 0}。` : '') +
     (context.history_information_incomplete ? '历史仅为节选，决定或未知事项可能遗漏；原会话保留。' : '') +
@@ -129,7 +149,7 @@ function renderApproval() {
 }
 function controls() {
   const running = busy(); $('send').hidden = running; $('stop').hidden = !running;
-  $('send').disabled = !$('message-input').value.trim() || !!boot.busy || boot.cleanup_uncertain;
+  $('send').disabled = !$('message-input').value.trim() || !!boot.busy || boot.cleanup_uncertain || ['execution_uncertain','pending','running'].includes(current?.status);
   if (boot.cleanup_uncertain) notice('工作区执行或清理状态无法确认，新任务已禁用。请人工检查并重启服务。');
   $('clear-chat').disabled = !!boot.busy; $('chat-title').textContent = current?.title || '新对话';
 }
@@ -145,7 +165,7 @@ async function refresh() {
   renderHistory(); renderMessages(); renderActivity(); renderApproval(); controls();
 }
 async function select(id) {
-  selected = id; stream?.close(); $('sidebar').parentElement.classList.remove('nav-open'); nearBottom = true;
+  selected = id; olderMessages=[]; stream?.close(); $('sidebar').parentElement.classList.remove('nav-open'); nearBottom = true;
   await refresh();
   if (selected !== id) return;
   stream = new EventSource(`/api/conversations/${id}/events`);
@@ -176,7 +196,9 @@ $('approve').addEventListener('click',()=>decide(true)); $('deny').addEventListe
 $('approval-dialog').addEventListener('cancel',event=>{event.preventDefault();decide(false);});
 $('settings').addEventListener('click',()=>{
   const details=$('settings-details');details.replaceChildren();
-  for(const [label,value] of [['模型',`${boot.provider || '未配置'} / ${boot.model}`],['工作区',boot.workspace],['执行模式',boot.command_mode],['Patch 协议',boot.receipt?'Preview Receipt':'Legacy'],['历史存储','仅本次进程内存']]) details.append(node('dt',label),node('dd',value));
+  for(const [label,value] of [['会话ID',current.id],['模型',`${boot.provider || '未配置'} / ${boot.model}`],['工作区',boot.workspace],['执行模式',boot.command_mode],['Patch 协议',boot.receipt?'Preview Receipt':'Legacy'],['历史存储',boot.persistence?'本地SQLite明文':'仅本次进程内存']]) details.append(node('dt',label),node('dd',value));
+  $('storage-notice').textContent=boot.storage_notice+' CLI/Web默认隔离。清除上下文不会删除SQLite历史或固定事项；删除记录也不能保证备份或底层介质无残留。';
+  $('review-chat').hidden=current.status!=='execution_uncertain';
   $('settings-dialog').showModal();
 });
 $('close-settings').addEventListener('click',()=>$('settings-dialog').close());
@@ -193,3 +215,28 @@ if(innerWidth<1180)document.querySelector('.shell').classList.add('activity-hidd
 try {boot=await api('bootstrap');$('workspace').textContent=boot.workspace;renderHistory();if(boot.conversations.length)await select(boot.busy || boot.conversations.at(-1).id);else await newChat();
   setInterval(async()=>{try{const b=await api('bootstrap');boot={...boot,...b};renderHistory();controls();}catch{}},3000);
 }catch(error){notice(error.message);$('model-label').textContent='连接不可用';}
+
+function openPin(message){
+  pinSource=message;$('pin-quote').value=[...message.content].slice(0,512).join('');$('pin-error').textContent='';
+  const replace=$('pin-replace');replace.replaceChildren();const none=node('option','不替换，新增一项');none.value='';replace.append(none);
+  for(const p of current.pins || [])if(p.status==='active'){const option=node('option',`${p.content.slice(0,70)}（状态修订${p.revision}）`);option.value=p.id;replace.append(option);}
+  $('pin-dialog').showModal();
+}
+$('pin-cancel').addEventListener('click',()=>$('pin-dialog').close());
+$('pin-confirm').addEventListener('click',async()=>{
+  const quote=$('pin-quote').value,raw=pinSource?.content || '',offset=raw.indexOf(quote);
+  if(!quote || offset<0){$('pin-error').textContent='片段必须精确存在于原用户消息。';return;}
+  const start=[...raw.slice(0,offset)].length,end=start+[...quote].length;
+  const old=(current.pins || []).find(p=>p.id===$('pin-replace').value);
+  const value={message_id:pinSource.id,start,end,category:$('pin-category').value,confirmed:true};
+  if(old){value.replace_id=old.id;value.expected_revision=old.revision;}
+  $('pin-confirm').disabled=true;
+  try{await api(`conversations/${selected}/pins`,'POST',value);$('pin-dialog').close();await refresh();}catch(e){$('pin-error').textContent=e.message;}finally{$('pin-confirm').disabled=false;}
+});
+function confirmData(text,action){pendingDataAction=action;$('data-confirm-text').textContent=text;$('data-confirm').showModal();}
+$('data-cancel').addEventListener('click',()=>{$('data-confirm').close();pendingDataAction=null;});
+$('data-approve').addEventListener('click',async()=>{const action=pendingDataAction;pendingDataAction=null;$('data-confirm').close();try{if(action)await action();}catch(e){notice(e.message);}});
+$('delete-chat').addEventListener('click',()=>{const id=selected;$('settings-dialog').close();confirmData('确认删除此会话、固定事项和对应数据库记录？删除后应用不可恢复；备份、SQLite日志和底层存储可能有残留。',async()=>{await api(`conversations/${id}/delete`,'POST',{confirmed:true});stream?.close();boot=await api('bootstrap');if(boot.conversations.length)await select(boot.conversations.at(-1).id);else await newChat();renderHistory();});});
+$('review-chat').addEventListener('click',()=>{$('settings-dialog').close();confirmData('仅当你已人工检查工作区和所有残留子进程后确认。此操作只解除中断状态的执行阻止，不恢复审批、Receipt或verified，也不会重放工具。',async()=>{await api(`conversations/${selected}/review`,'POST',{confirmed:true,workspace_and_processes_checked:true});boot=await api('bootstrap');await refresh();});});
+$('load-older').addEventListener('click',async()=>{try{const first=(olderMessages.length?olderMessages:current.messages)[0];if(!first?.sequence)return;const page=await api(`conversations/${selected}/history?before=${first.sequence}`);if(!page.messages.length){notice('没有更早的已存消息。');return;}olderMessages=page.messages;$('show-recent').hidden=false;nearBottom=false;renderMessages();}catch(e){notice(e.message);}});
+$('show-recent').addEventListener('click',()=>{olderMessages=[];$('show-recent').hidden=true;nearBottom=true;renderMessages();});

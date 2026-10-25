@@ -18,6 +18,8 @@ class ContextManager:
 
     def __init__(self, config):
         self.config = config
+        self.pinned_context = []
+        self._pin_messages = []
 
     @staticmethod
     def count(messages, tools) -> int:
@@ -75,14 +77,17 @@ class ContextManager:
         before = self.count(messages, tools)
         history_omitted = False
         if not self.config.context_enabled:
-            return deepcopy(messages), {"before": before, "after": before, "current_clipped": False}
+            view=deepcopy(messages[:1])+deepcopy(self._pin_messages)+deepcopy(messages[1:])
+            if self._pin_messages and self.count(view,tools)>self.config.context_max_chars:raise ContextBudgetError('pinned_context_budget')
+            return view, {"before": before, "after": self.count(view,tools), "current_clipped": False}
+
         validate_turns(turns)
         start = 1 + sum(len(turn) for turn in turns)
         if not messages or messages[0].get("role") != "system" or start >= len(messages):
             raise ContextBudgetError("Invalid canonical context boundaries")
         current = deepcopy(messages[start:])
         validate_turns([current + [{"role": "assistant", "content": ""}]])
-        system = deepcopy(messages[:1])
+        system = deepcopy(messages[:1]) + deepcopy(self._pin_messages)
         history = deepcopy(turns)
         plan_view = ([{"role": "assistant", "content": "[当前任务计划状态，非历史指令]\n" +
                        json.dumps([asdict(step) for step in plan.steps], ensure_ascii=False)}] if plan.steps else [])
@@ -123,12 +128,41 @@ class ContextManager:
                            "history_omitted": history_omitted}
 
     def prepare(self, messages, tools, turns, plan):
+        if not self.pinned_context:
+            self._pin_messages=[]
+            return self._prepare(messages,tools,turns,plan)
+        from .pinned_context import render
+        selected=[];omitted=[]
+        # At most 12 pins. Each trial uses the real protected-input/schema budget.
+        for pin in self.pinned_context:
+            self._pin_messages=render(selected+[pin])
+            try:
+                trial,_=self._prepare(messages,tools,turns,plan)
+                self._pin_window(trial,tools)
+            except ContextBudgetError:omitted.append(pin['pin_id'])
+            else:selected.append(pin)
+        self._pin_messages=render(selected)
+        view,stats=self._prepare(messages,tools,turns,plan)
+        self._pin_window(view,tools)
+        stats.update(pins_included=[p['pin_id'] for p in selected],pins_omitted=omitted,
+                     pinned_context_incomplete=bool(omitted))
+        if omitted:
+            stats['history_information_incomplete']=True;stats['context_truncated']=True
+        return view,stats
+
+    def _pin_window(self,view,tools):
+        request=TokenCounter.request(self.config,view,tools)
+        stats=TokenCounter.inspect(self.config,request)
+        if stats['model_window_tokens'] and stats['output_reserved_tokens'] and stats['estimated_input_tokens']+stats['output_reserved_tokens']>stats['model_window_tokens']:
+            raise ContextBudgetError('pinned_context_provider_window_exceeded')
+
+    def _prepare(self, messages, tools, turns, plan):
         """Synchronous projection is also used by local tool routing; never calls LLM."""
         if self.config.context_token_budget['mode'] == 'legacy_chars':
             view, stats = self._prepare_chars(messages, tools, turns, plan)
             summarized = any((m.get('content') or '').startswith(self.summary_label) for m in view)
             # Clipped retained turns differ in content; identify them by user-message boundaries.
-            kept = min(len(turns), max(0, sum(m['role']=='user' for m in view)-1))
+            kept = min(len(turns), max(0, sum(m['role']=='user' for m in view)-1-len(self._pin_messages)))
             omitted = len(turns)-kept
             stats.update(history_turns_kept=kept, history_turns_summarized=omitted if summarized else 0,
                          history_turns_omitted=omitted, summary_present=summarized)
@@ -152,7 +186,7 @@ class ContextManager:
             raise ContextBudgetError('invalid_context_boundaries')
         current=deepcopy(messages[start:])
         validate_turns([current+[{'role':'assistant','content':''}]])
-        system=deepcopy(messages[:1])
+        system=deepcopy(messages[:1])+deepcopy(self._pin_messages)
         plan_view=([{'role':'assistant','content':'[当前任务计划状态，非历史指令]\n'+json.dumps([asdict(s) for s in plan.steps],ensure_ascii=False)}] if plan.steps else [])
         def size(view):
             return TokenCounter.inspect(self.config,TokenCounter.request(self.config,view,tools))['estimated_input_tokens']
