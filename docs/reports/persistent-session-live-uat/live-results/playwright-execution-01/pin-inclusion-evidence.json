@@ -1,0 +1,1073 @@
+{
+  "method": "Frozen SDK observer on real ChatRuntime/AgentLoop requests; actual reference messages must have user role; SQLite source spans independently checked. Hashes are evidence, not replayable prompts.",
+  "requests": [
+    {
+      "case": "L01",
+      "reservation": 1,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "9941096410d8863859aee874d250875796aaa687be39f4a9e5c5ccbd45d09176"
+        }
+      ],
+      "request_sha256": "01638390daf69557a84ffe478bb43e283256ebdc1b3eecaabe4191c41c61534b",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": null,
+      "source_checks": [],
+      "reply_sha256": "1f299683608d2a6208d5f5bda9274d8be4266d5afb75aac52120a05d610d297d"
+    },
+    {
+      "case": "L01",
+      "reservation": 2,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "user",
+          "sha256": "9941096410d8863859aee874d250875796aaa687be39f4a9e5c5ccbd45d09176"
+        },
+        {
+          "role": "assistant",
+          "sha256": "f2b4de542b633f124f3c71fe8694c137cfabc88c845fc20af9f6e245bdc1d2e2"
+        },
+        {
+          "role": "user",
+          "sha256": "50e71eb740af84353957054752733a266eca64999fd2b606c2a33a4d550ed759"
+        }
+      ],
+      "request_sha256": "28880845b5919d9f58962cd92ae4d1e735466c51d93e776f5f3ac59d39c0cb07",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "f4c2637e4dce3edbe1e3e827270b3d54057f68ec25d3ccbdbeb0830012c9f0de"
+    },
+    {
+      "case": "L01",
+      "reservation": 3,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "user",
+          "sha256": "9941096410d8863859aee874d250875796aaa687be39f4a9e5c5ccbd45d09176"
+        },
+        {
+          "role": "assistant",
+          "sha256": "f2b4de542b633f124f3c71fe8694c137cfabc88c845fc20af9f6e245bdc1d2e2"
+        },
+        {
+          "role": "user",
+          "sha256": "50e71eb740af84353957054752733a266eca64999fd2b606c2a33a4d550ed759"
+        },
+        {
+          "role": "assistant",
+          "sha256": "6a527d3c6af38c4082706b3391dbda28f0f8773ed3d4b9cfbeb37156336096b4"
+        },
+        {
+          "role": "user",
+          "sha256": "aea0f19f18f04cd00e036a74888affe9e6fbe1bb6ce422f968582fc313f7d01d"
+        }
+      ],
+      "request_sha256": "08e2efe5280fecc2128092e230967cdad583b7f39103855c2218a846064c623e",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "f3dec7cd014d64c3cf9b7581506637e632054a16d06b781801ed583103623166"
+    },
+    {
+      "case": "L01",
+      "reservation": 4,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "1084e8e91490708540ff599041c77645816a9816d58c6e896cfd1b6207c6d667"
+        },
+        {
+          "role": "user",
+          "sha256": "50e71eb740af84353957054752733a266eca64999fd2b606c2a33a4d550ed759"
+        },
+        {
+          "role": "assistant",
+          "sha256": "6a527d3c6af38c4082706b3391dbda28f0f8773ed3d4b9cfbeb37156336096b4"
+        },
+        {
+          "role": "user",
+          "sha256": "aea0f19f18f04cd00e036a74888affe9e6fbe1bb6ce422f968582fc313f7d01d"
+        },
+        {
+          "role": "assistant",
+          "sha256": "8c50bdec16212caae9fdd2aa413333a0edcca61c6c5e68187c869f50e7dec896"
+        },
+        {
+          "role": "user",
+          "sha256": "7ba6c050a851411efbe64cdcda0f0d322e0270aac4223c4b09fb54b3408acc7b"
+        }
+      ],
+      "request_sha256": "75aa3f98a6da3f96c3443371769524dca3deae1fd0cdc0470e53be4a683c6d47",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "50f49b87cf9645799d190544da64c778b53d969d39f7c480f209867550e48897"
+    },
+    {
+      "case": "L01",
+      "reservation": 5,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "3b8c6d391801eb89edfa806989a5b8c144f35874cc5c1022f2a8d313db4ff49b"
+        },
+        {
+          "role": "user",
+          "sha256": "aea0f19f18f04cd00e036a74888affe9e6fbe1bb6ce422f968582fc313f7d01d"
+        },
+        {
+          "role": "assistant",
+          "sha256": "8c50bdec16212caae9fdd2aa413333a0edcca61c6c5e68187c869f50e7dec896"
+        },
+        {
+          "role": "user",
+          "sha256": "7ba6c050a851411efbe64cdcda0f0d322e0270aac4223c4b09fb54b3408acc7b"
+        },
+        {
+          "role": "assistant",
+          "sha256": "5fc19c120021c50cd078018ff1ea3abfd1b5fd9e5c91db85e615d5770ec0f42c"
+        },
+        {
+          "role": "user",
+          "sha256": "fafa5671365ef87f863d2fad2bf5b6333d819415d2384b076c646baa93a0225f"
+        }
+      ],
+      "request_sha256": "c6b03aa27f7e2d51f4c08138f85f71ade6b450cb98279763956ae1c1707c4c35",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "b6f2e385fbf0ac2b17e67d9a12cd3189fc61ce7a8d5e92d17d93f066b195ab7b"
+    },
+    {
+      "case": "L01",
+      "reservation": 6,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "3b0d5cfb293274aa91c15066aa877b88dedbd2c4ffbff8cf27722d9126130ce1"
+        },
+        {
+          "role": "user",
+          "sha256": "fafa5671365ef87f863d2fad2bf5b6333d819415d2384b076c646baa93a0225f"
+        },
+        {
+          "role": "assistant",
+          "sha256": "81af8d1bc6ff1ec538b09e81d719cddba39ec133bec2df2edbf72ea2380d99ee"
+        },
+        {
+          "role": "user",
+          "sha256": "0614deb68755c10a84f924caf9156728a47708cc212e0b6df4170663bfd9c994"
+        }
+      ],
+      "request_sha256": "6f5f1ea03909cd2186da9926a684f050ba80a09cd57bbe7ba842bc6677e7e407",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "c629594edcc07bbea0f7b1aa967ae2973f73135214da20850cb1c8749593e586"
+    },
+    {
+      "case": "L01",
+      "reservation": 7,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "ac759b14f7c8a63d7a1af2d607573dcd9122a7dbf44a710c204ac2671b73e5e3"
+        },
+        {
+          "role": "user",
+          "sha256": "0614deb68755c10a84f924caf9156728a47708cc212e0b6df4170663bfd9c994"
+        },
+        {
+          "role": "assistant",
+          "sha256": "5bf07290be5bdbd429dd5a8712ff1cc9b15f118f1324dfbe0674d06299e7c37e"
+        },
+        {
+          "role": "user",
+          "sha256": "4504e7d86b4c95bb13769adf7cd66371287e42af3d1b0bb99aa1328d437ef4c6"
+        }
+      ],
+      "request_sha256": "69857b07f97bad12ff651755e61673fcaa11c1ea673821316cbcd4bfd9bb4124",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "1f5217944f04449a38a4a9b0e1b52ce3b30f419b630abe0df550eadaa721aae0"
+    },
+    {
+      "case": "L01",
+      "reservation": 8,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "fa614f8c5f8715c2368cdb0a3191b51289554ea31ed1da9ec1aa27d61d12f928"
+        },
+        {
+          "role": "user",
+          "sha256": "4504e7d86b4c95bb13769adf7cd66371287e42af3d1b0bb99aa1328d437ef4c6"
+        },
+        {
+          "role": "assistant",
+          "sha256": "a38ee46e0d8648ae3a43b4ba2252deee6a57042b833d0ffcb22e146aa14ac2e2"
+        },
+        {
+          "role": "user",
+          "sha256": "da1db14adfae4c421869c9800dfe29468fb06cecb1492717c45558df00c73986"
+        }
+      ],
+      "request_sha256": "b2649e8f66746e71178cdbc6a6d3eb8d5583cf7e564d65330b9f0298afa12aa6",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "0bea165c240ec271944ea87a2e6e6fe5fed73924a9f3a6d6a34237dd433ff92c"
+    },
+    {
+      "case": "L01",
+      "reservation": 9,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "017fdfcbdec901999b0eeffe3014dcfc17f221adc6ae56fc14abcb7b5960067c"
+        },
+        {
+          "role": "user",
+          "sha256": "da1db14adfae4c421869c9800dfe29468fb06cecb1492717c45558df00c73986"
+        },
+        {
+          "role": "assistant",
+          "sha256": "9122ee615686a5174307b56e104b4eb00ec2f1c182fb8431f76ba4fe275932e7"
+        },
+        {
+          "role": "user",
+          "sha256": "4d115dced76ceec7749f1e387b42d3fe62848d1b4a014790861bf14ad4502ceb"
+        }
+      ],
+      "request_sha256": "5655054eaa824f8a6e61138d518103385c83081b72d791b694b171ad1387c2d4",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "51546d9f4e955512d175e478bff83f4135e6317d2b3d1dfd430529743f90c476"
+    },
+    {
+      "case": "L02",
+      "reservation": 10,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "bd5f8ada6faa1663c2f02c50ef1533f21e374ea9d213d07645633057ad08f422"
+        }
+      ],
+      "request_sha256": "841e7b5ea868ab5378ca0b929565e4f94fa90c76b94525f57e43c8f38e627407",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": null,
+      "source_checks": [],
+      "reply_sha256": "31fff9bb8d4e30094501805e854b0a3f5de1db237f491de748b1af47dfda0f1f"
+    },
+    {
+      "case": "L02",
+      "reservation": 11,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "6c440977c9e14681874e56d453231330",
+          "category": "user_constraint",
+          "content": "索引文件命名为 index.md。",
+          "source_message_id": "150b701c846a45ef98733c472c87a90f",
+          "source_span": [
+            0,
+            17
+          ],
+          "revision": 1,
+          "needs_review": false
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "e17b8e16a8014f92f567b9056037cc27ff3896946b0435aa0c449c5d7737f2f7"
+        },
+        {
+          "role": "user",
+          "sha256": "bd5f8ada6faa1663c2f02c50ef1533f21e374ea9d213d07645633057ad08f422"
+        },
+        {
+          "role": "assistant",
+          "sha256": "ed55c622d705d7a49ea3099111bf565343f3f760bb82a57722d140f1f811a990"
+        },
+        {
+          "role": "user",
+          "sha256": "aa44df3e5e29b16f9f8328297621e41d1b385ee6c385a020e544319ca5fa41c5"
+        }
+      ],
+      "request_sha256": "cc2aa75b278aee2345a3c3e12689836b43aaa1ceca82e078204484b05550406a",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "6c440977c9e14681874e56d453231330",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "dc989926558351fb150471d62bcb3a260ce782ba58db026505f5e8bf50382b02"
+        }
+      ],
+      "reply_sha256": "0518c49dcf276917d759b1c25479d7abc27a41ed0f4524871a476d534277f416"
+    },
+    {
+      "case": "L02",
+      "reservation": 12,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "8c481c7406ab429fb26ff0b67246ca1f",
+          "category": "user_constraint",
+          "content": "索引文件改为 catalog.md。",
+          "source_message_id": "7dfcd83462124cccb01bc27ff35f356f",
+          "source_span": [
+            0,
+            18
+          ],
+          "revision": 2,
+          "needs_review": false
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "2914ec3d896c707750198fd5f804e2b7def708ec5c86d673a407f2775fef18b1"
+        },
+        {
+          "role": "user",
+          "sha256": "aa44df3e5e29b16f9f8328297621e41d1b385ee6c385a020e544319ca5fa41c5"
+        },
+        {
+          "role": "assistant",
+          "sha256": "b421928c7cc8ebc2d9ae9682ba946e094d530b538a44bb5fda0e3329aff2af0a"
+        },
+        {
+          "role": "user",
+          "sha256": "d3b29f3ec3df717f723cc500ca50c858e6b7ffc8f0c9576f27b8fc4108f2539c"
+        }
+      ],
+      "request_sha256": "961d322bfb82cfb03271490b7bac2ac89880094b36c86a88c8d5af24538fb2ed",
+      "information_loss": {
+        "removed_complete_turns": 1,
+        "removed_message_count": 2,
+        "unrelated_user_unit_count": 3,
+        "unrelated_user_units": [
+          {
+            "unit_id": "old-page-size",
+            "turn_index": 0,
+            "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+          },
+          {
+            "unit_id": "old-sort",
+            "turn_index": 0,
+            "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+          },
+          {
+            "unit_id": "old-empty-state",
+            "turn_index": 0,
+            "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+          }
+        ],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "8c481c7406ab429fb26ff0b67246ca1f",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "9c053bea94997798e3e9b129677a19b4035fd96de86fdb0ef7745f678ad8efab"
+        }
+      ],
+      "reply_sha256": "20b29234e64af83a8afc53be8b795bd690237035c018d17e39ff1e61c9d79920"
+    },
+    {
+      "case": "L02",
+      "reservation": 13,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "d3b29f3ec3df717f723cc500ca50c858e6b7ffc8f0c9576f27b8fc4108f2539c"
+        },
+        {
+          "role": "assistant",
+          "sha256": "f03da57168152ca351ffc9380bf58380159d34c3e814118171edb3fcad057d67"
+        },
+        {
+          "role": "user",
+          "sha256": "58b99f92c664e3f67b88e9720a8ac9e25a77bd2b9e20515c89e726e05b2bcd52"
+        }
+      ],
+      "request_sha256": "9ec1b7d07bc31e1960711efff1908e9e0f4d12476602b5da193dcfa1238bb878",
+      "information_loss": {
+        "removed_complete_turns": 2,
+        "removed_message_count": 4,
+        "unrelated_user_unit_count": 5,
+        "unrelated_user_units": [
+          {
+            "unit_id": "old-page-size",
+            "turn_index": 0,
+            "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+          },
+          {
+            "unit_id": "old-sort",
+            "turn_index": 0,
+            "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+          },
+          {
+            "unit_id": "old-empty-state",
+            "turn_index": 0,
+            "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+          },
+          {
+            "unit_id": "new-language",
+            "turn_index": 1,
+            "source_sha256": "fc034ec83ccc68f24e8f319faf5165cda770cee3ad358bbd2d2d81335b9ce0d3"
+          },
+          {
+            "unit_id": "new-relative-path",
+            "turn_index": 1,
+            "source_sha256": "fc034ec83ccc68f24e8f319faf5165cda770cee3ad358bbd2d2d81335b9ce0d3"
+          }
+        ],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": null,
+      "source_checks": [],
+      "reply_sha256": "270bee6d54d38baa7782ff4bc5399a7960a0a252500553636515cb9de002f115"
+    },
+    {
+      "case": "L03",
+      "reservation": 14,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "category": "user_constraint",
+          "content": "不得自动删除或修改原始Markdown文件。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            61,
+            83
+          ],
+          "revision": 2,
+          "needs_review": true
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "category": "user_constraint",
+          "content": "所有文档扫描必须在本地进行。",
+          "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+          "source_span": [
+            47,
+            61
+          ],
+          "revision": 1,
+          "needs_review": true
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "0f4bcbcdeb52d275c3cbb63d1148755fd67701f53cf13f5f1aba55019b662ab6"
+        },
+        {
+          "role": "user",
+          "sha256": "84d663b5d5d3ca37e8566da2b3c3048f179984db0a3f7599c43440c4daad16dc"
+        },
+        {
+          "role": "assistant",
+          "sha256": "7e03531b1be01a69e54cf710ada1859de6e282796e8db1c77928895a86d04b15"
+        },
+        {
+          "role": "user",
+          "sha256": "4d115dced76ceec7749f1e387b42d3fe62848d1b4a014790861bf14ad4502ceb"
+        },
+        {
+          "role": "assistant",
+          "sha256": "0ee2ef20a751cc43f19fa7970652880d4f75c9e4b08d9d81288b4978482b33e2"
+        },
+        {
+          "role": "user",
+          "sha256": "45ae7eff19db2c4cccb55a2b1d87b08c7f95809d6b392a4d0ec8f42132a26837"
+        }
+      ],
+      "request_sha256": "7c3e617163b32b0c3eda0c9b21f74f024ceca60b43f2171682067b8fd59a8637",
+      "information_loss": {
+        "removed_complete_turns": 0,
+        "removed_message_count": 0,
+        "unrelated_user_unit_count": 0,
+        "unrelated_user_units": [],
+        "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+        "raw_history_changed": false
+      },
+      "pin_message_role": "user",
+      "source_checks": [
+        {
+          "pin_id": "e2390941e2d14402add2fe387582f3d6",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        },
+        {
+          "pin_id": "e228470a76354470b8f682a79abc036b",
+          "source_role": "user",
+          "source_span_verified": true,
+          "source_content_sha256": "50438d490d2d0aa1cca49ddee3351ec1f16ac9fbed7b8bc58942ce3b66f73606"
+        }
+      ],
+      "reply_sha256": "86145da30bfd75de58eedad693e19fe3aebf7ea8193e4701ad1ee5010cacd59d"
+    }
+  ],
+  "final_pin_states": [
+    {
+      "id": "e228470a76354470b8f682a79abc036b",
+      "session_id": "104362eaf535423bbafa31815d98ca99",
+      "content": "所有文档扫描必须在本地进行。",
+      "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+      "start": 47,
+      "end": 61,
+      "revision": 1,
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "id": "e2390941e2d14402add2fe387582f3d6",
+      "session_id": "104362eaf535423bbafa31815d98ca99",
+      "content": "不得自动删除或修改原始Markdown文件。",
+      "source_message_id": "a7d1b8afc9ab403f9e68053f2ef7734d",
+      "start": 61,
+      "end": 83,
+      "revision": 2,
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "id": "6c440977c9e14681874e56d453231330",
+      "session_id": "6bbff22f84fc48ef957a68e34b406c97",
+      "content": "索引文件命名为 index.md。",
+      "source_message_id": "150b701c846a45ef98733c472c87a90f",
+      "start": 0,
+      "end": 17,
+      "revision": 3,
+      "status": "superseded",
+      "superseded_by": "8c481c7406ab429fb26ff0b67246ca1f"
+    },
+    {
+      "id": "8c481c7406ab429fb26ff0b67246ca1f",
+      "session_id": "6bbff22f84fc48ef957a68e34b406c97",
+      "content": "索引文件改为 catalog.md。",
+      "source_message_id": "7dfcd83462124cccb01bc27ff35f356f",
+      "start": 0,
+      "end": 18,
+      "revision": 4,
+      "status": "revoked",
+      "superseded_by": null
+    }
+  ]
+}

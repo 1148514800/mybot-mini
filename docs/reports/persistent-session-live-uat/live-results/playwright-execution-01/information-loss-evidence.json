@@ -1,0 +1,98 @@
+{
+  "live_projection_measurements": [
+    {
+      "reservation": 10,
+      "removed_complete_turns": 0,
+      "removed_message_count": 0,
+      "unrelated_user_unit_count": 0,
+      "unrelated_user_units": [],
+      "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+      "raw_history_changed": false
+    },
+    {
+      "reservation": 11,
+      "removed_complete_turns": 0,
+      "removed_message_count": 0,
+      "unrelated_user_unit_count": 0,
+      "unrelated_user_units": [],
+      "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+      "raw_history_changed": false
+    },
+    {
+      "reservation": 12,
+      "removed_complete_turns": 1,
+      "removed_message_count": 2,
+      "unrelated_user_unit_count": 3,
+      "unrelated_user_units": [
+        {
+          "unit_id": "old-page-size",
+          "turn_index": 0,
+          "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+        },
+        {
+          "unit_id": "old-sort",
+          "turn_index": 0,
+          "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+        },
+        {
+          "unit_id": "old-empty-state",
+          "turn_index": 0,
+          "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+        }
+      ],
+      "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+      "raw_history_changed": false
+    },
+    {
+      "reservation": 13,
+      "removed_complete_turns": 2,
+      "removed_message_count": 4,
+      "unrelated_user_unit_count": 5,
+      "unrelated_user_units": [
+        {
+          "unit_id": "old-page-size",
+          "turn_index": 0,
+          "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+        },
+        {
+          "unit_id": "old-sort",
+          "turn_index": 0,
+          "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+        },
+        {
+          "unit_id": "old-empty-state",
+          "turn_index": 0,
+          "source_sha256": "4e82364ca9a0a577373ad3724296eac6acb0e5e86a23176dd7cba4e5f4139ee9"
+        },
+        {
+          "unit_id": "new-language",
+          "turn_index": 1,
+          "source_sha256": "fc034ec83ccc68f24e8f319faf5165cda770cee3ad358bbd2d2d81335b9ce0d3"
+        },
+        {
+          "unit_id": "new-relative-path",
+          "turn_index": 1,
+          "source_sha256": "fc034ec83ccc68f24e8f319faf5165cda770cee3ad358bbd2d2d81335b9ce0d3"
+        }
+      ],
+      "assistant_semantic_information_loss": "requires human assessment; not inferred from exact user units",
+      "raw_history_changed": false
+    }
+  ],
+  "retained_assistant_proofs": [
+    {
+      "reply_reservation": 11,
+      "included_in_reservation": 12,
+      "assistant_message_sha256": "b421928c7cc8ebc2d9ae9682ba946e094d530b538a44bb5fda0e3329aff2af0a",
+      "present": true
+    },
+    {
+      "reply_reservation": 12,
+      "included_in_reservation": 13,
+      "assistant_message_sha256": "f03da57168152ca351ffc9380bf58380159d34c3e814118171edb3fcad057d67",
+      "present": true
+    }
+  ],
+  "raw_sqlite_messages_retained": true,
+  "count_semantics": "Frozen independent original-user units removed with whole turns; not a count of all semantic facts forgotten."
+}

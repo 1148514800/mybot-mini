@@ -1,0 +1,39 @@
+{
+  "requests_integrity": "ok",
+  "events_integrity": "ok",
+  "requests_foreign_keys": 0,
+  "events_foreign_keys": 0,
+  "events": 100,
+  "turns": [
+    {
+      "state": "completed",
+      "count": 14
+    }
+  ],
+  "tools": 0,
+  "sessions": 3,
+  "pin_statuses": [
+    {
+      "status": "active",
+      "count": 2
+    },
+    {
+      "status": "revoked",
+      "count": 1
+    },
+    {
+      "status": "superseded",
+      "count": 1
+    }
+  ],
+  "private_directory_mode": "0o700",
+  "database_modes": {
+    "requests.sqlite": "0o600",
+    "session-events.sqlite3": "0o600"
+  },
+  "all_frozen_user_messages_exact": true,
+  "per_session_event_sequences_contiguous": true,
+  "provider_secret_exact_value_scan": "PASS (values not exported)",
+  "screenshots_visually_reviewed": true,
+  "scope_review": "Only new report directory and AI_HANDOFF; original reports/source/config/dependencies untouched"
+}

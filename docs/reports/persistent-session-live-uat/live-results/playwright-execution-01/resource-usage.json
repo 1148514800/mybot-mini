@@ -1,0 +1,989 @@
+{
+  "authorization": "GRANTED_16_REQUESTS",
+  "global_limit": 16,
+  "case_limits": {
+    "L01": 10,
+    "L02": 4,
+    "L03": 2
+  },
+  "unique_attempts": [
+    {
+      "id": "L01",
+      "status": "finished"
+    },
+    {
+      "id": "L02",
+      "status": "finished"
+    },
+    {
+      "id": "L03",
+      "status": "finished"
+    }
+  ],
+  "totals": {
+    "requests": 14,
+    "input_tokens": 31348,
+    "output_tokens": 10497,
+    "total_tokens": 41845
+  },
+  "by_case": {
+    "L01": {
+      "requests": 9,
+      "input_tokens": 23708,
+      "output_tokens": 9085,
+      "total_tokens": 32793
+    },
+    "L02": {
+      "requests": 4,
+      "input_tokens": 4763,
+      "output_tokens": 668,
+      "total_tokens": 5431
+    },
+    "L03": {
+      "requests": 1,
+      "input_tokens": 2877,
+      "output_tokens": 744,
+      "total_tokens": 3621
+    }
+  },
+  "models": {
+    "DeepSeek": 14,
+    "GLM": 0,
+    "model_summary": 0,
+    "paid_judge": 0,
+    "failed_model_requests": 0
+  },
+  "http_dispatch_attempts": 14,
+  "http_count_semantics": "SDK pre-transport model attempts; not billing confirmation or browser HTTP total",
+  "provider_usage_complete": true,
+  "cost": null,
+  "cost_reason": "No verifiable billed price/invoice for this provider deployment; 16 requests is not a dollar limit.",
+  "unsettled_reservations": 0,
+  "halt": false,
+  "unused_case_capacity": {
+    "L01": 1,
+    "L02": 0,
+    "L03": 1
+  },
+  "unused_capacity_transferred_or_reused": false,
+  "sdk_max_retries": 0,
+  "per_request": [
+    {
+      "id": 1,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 993,
+        "completion_tokens": 230,
+        "total_tokens": 1223
+      }
+    },
+    {
+      "id": 2,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 1530,
+        "completion_tokens": 737,
+        "total_tokens": 2267
+      }
+    },
+    {
+      "id": 3,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 2325,
+        "completion_tokens": 976,
+        "total_tokens": 3301
+      }
+    },
+    {
+      "id": 4,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 3251,
+        "completion_tokens": 916,
+        "total_tokens": 4167
+      }
+    },
+    {
+      "id": 5,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 3316,
+        "completion_tokens": 1326,
+        "total_tokens": 4642
+      }
+    },
+    {
+      "id": 6,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 3169,
+        "completion_tokens": 1278,
+        "total_tokens": 4447
+      }
+    },
+    {
+      "id": 7,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 3113,
+        "completion_tokens": 1457,
+        "total_tokens": 4570
+      }
+    },
+    {
+      "id": 8,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 3032,
+        "completion_tokens": 1137,
+        "total_tokens": 4169
+      }
+    },
+    {
+      "id": 9,
+      "case_id": "L01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 2979,
+        "completion_tokens": 1028,
+        "total_tokens": 4007
+      }
+    },
+    {
+      "id": 10,
+      "case_id": "L02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 982,
+        "completion_tokens": 142,
+        "total_tokens": 1124
+      }
+    },
+    {
+      "id": 11,
+      "case_id": "L02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 1294,
+        "completion_tokens": 159,
+        "total_tokens": 1453
+      }
+    },
+    {
+      "id": 12,
+      "case_id": "L02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 1300,
+        "completion_tokens": 173,
+        "total_tokens": 1473
+      }
+    },
+    {
+      "id": 13,
+      "case_id": "L02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 1187,
+        "completion_tokens": 194,
+        "total_tokens": 1381
+      }
+    },
+    {
+      "id": 14,
+      "case_id": "L03",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "error_type": null,
+      "status_code": null,
+      "provider_usage": {
+        "prompt_tokens": 2877,
+        "completion_tokens": 744,
+        "total_tokens": 3621
+      }
+    }
+  ],
+  "task_latency": {
+    "L01": {
+      "turn_seconds": [
+        4.330116583965719,
+        8.064014583826065,
+        8.127747708931565,
+        9.070766292046756,
+        11.597894957987592,
+        11.516435041092336,
+        12.49423237517476,
+        9.006925540976226,
+        8.018385750008747
+      ],
+      "sum_seconds": 82.22651883400977,
+      "semantics": "host observed task elapsed, not time to first token"
+    },
+    "L02": {
+      "turn_seconds": [
+        2.6438624998554587,
+        3.179191584000364,
+        3.1782440841197968,
+        3.7877259580418468
+      ],
+      "sum_seconds": 12.789024126017466,
+      "semantics": "host observed task elapsed, not time to first token"
+    },
+    "L03": {
+      "turn_seconds": [
+        6.4097733329981565
+      ],
+      "sum_seconds": 6.4097733329981565,
+      "semantics": "host observed task elapsed, not time to first token"
+    }
+  },
+  "first_token_latency": null,
+  "context_per_turn": {
+    "L01": [
+      {
+        "turn": 1,
+        "context": {
+          "before": 2421,
+          "after": 2421,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 0,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 4215,
+          "history_turns_summarized_indices": [],
+          "request_chars": 2493,
+          "request_utf8_bytes": 3639,
+          "estimated_input_tokens": 4215,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": false,
+          "history_coverage": "full_request_view",
+          "context_truncated": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 2,
+        "context": {
+          "before": 2991,
+          "after": 3597,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 5661,
+          "history_turns_summarized_indices": [],
+          "request_chars": 3669,
+          "request_utf8_bytes": 5809,
+          "estimated_input_tokens": 6481,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": false,
+          "history_coverage": "full_request_view",
+          "context_truncated": false,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 3,
+        "context": {
+          "before": 4464,
+          "after": 5070,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 2,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 9134,
+          "history_turns_summarized_indices": [],
+          "request_chars": 5142,
+          "request_utf8_bytes": 9218,
+          "estimated_input_tokens": 9954,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": false,
+          "history_coverage": "full_request_view",
+          "context_truncated": false,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 4,
+        "context": {
+          "before": 6548,
+          "after": 6961,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 2,
+          "history_turns_summarized": 1,
+          "history_turns_omitted": 1,
+          "summary_present": true,
+          "before_estimated_input_tokens": 13232,
+          "history_turns_summarized_indices": [
+            1
+          ],
+          "request_chars": 7033,
+          "request_utf8_bytes": 12777,
+          "estimated_input_tokens": 13545,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 5,
+        "context": {
+          "before": 8313,
+          "after": 7039,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 2,
+          "history_turns_summarized": 2,
+          "history_turns_omitted": 2,
+          "summary_present": true,
+          "before_estimated_input_tokens": 17419,
+          "history_turns_summarized_indices": [
+            1,
+            2
+          ],
+          "request_chars": 7111,
+          "request_utf8_bytes": 12989,
+          "estimated_input_tokens": 13757,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 6,
+        "context": {
+          "before": 10934,
+          "after": 6719,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 4,
+          "history_turns_omitted": 4,
+          "summary_present": true,
+          "before_estimated_input_tokens": 23186,
+          "history_turns_summarized_indices": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "request_chars": 6791,
+          "request_utf8_bytes": 12695,
+          "estimated_input_tokens": 13399,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 7,
+        "context": {
+          "before": 13518,
+          "after": 6661,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 5,
+          "history_turns_omitted": 5,
+          "summary_present": true,
+          "before_estimated_input_tokens": 29026,
+          "history_turns_summarized_indices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "request_chars": 6733,
+          "request_utf8_bytes": 12731,
+          "estimated_input_tokens": 13435,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 8,
+        "context": {
+          "before": 15803,
+          "after": 6419,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 5,
+          "history_turns_omitted": 5,
+          "summary_present": true,
+          "before_estimated_input_tokens": 34405,
+          "history_turns_summarized_indices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "request_chars": 6491,
+          "request_utf8_bytes": 12447,
+          "estimated_input_tokens": 13151,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 9,
+        "context": {
+          "before": 16519,
+          "after": 6290,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 5,
+          "history_turns_omitted": 5,
+          "summary_present": true,
+          "before_estimated_input_tokens": 36223,
+          "history_turns_summarized_indices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "request_chars": 6362,
+          "request_utf8_bytes": 12332,
+          "estimated_input_tokens": 13036,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      }
+    ],
+    "L02": [
+      {
+        "turn": 1,
+        "context": {
+          "before": 2397,
+          "after": 2397,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 0,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 4153,
+          "history_turns_summarized_indices": [],
+          "request_chars": 2469,
+          "request_utf8_bytes": 3577,
+          "estimated_input_tokens": 4153,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": false,
+          "history_coverage": "full_request_view",
+          "context_truncated": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 2,
+        "context": {
+          "before": 2793,
+          "after": 3145,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 5085,
+          "history_turns_summarized_indices": [],
+          "request_chars": 3217,
+          "request_utf8_bytes": 4939,
+          "estimated_input_tokens": 5611,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": false,
+          "history_coverage": "full_request_view",
+          "context_truncated": false,
+          "pins_included": [
+            "6c440977c9e14681874e56d453231330"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 3,
+        "context": {
+          "before": 2823,
+          "after": 3176,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 5111,
+          "history_turns_summarized_indices": [],
+          "request_chars": 3248,
+          "request_utf8_bytes": 4964,
+          "estimated_input_tokens": 5636,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "8c481c7406ab429fb26ff0b67246ca1f"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false,
+          "pin_history_turns_removed": 1
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      },
+      {
+        "turn": 4,
+        "context": {
+          "before": 2846,
+          "after": 2846,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 0,
+          "history_turns_omitted": 0,
+          "summary_present": false,
+          "before_estimated_input_tokens": 5224,
+          "history_turns_summarized_indices": [],
+          "request_chars": 2918,
+          "request_utf8_bytes": 4584,
+          "estimated_input_tokens": 5224,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": false,
+          "context_compaction_status": "not_needed",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pin_history_turns_removed": 2
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      }
+    ],
+    "L03": [
+      {
+        "turn": 1,
+        "context": {
+          "before": 16637,
+          "after": 6068,
+          "current_clipped": false,
+          "history_omitted": false,
+          "history_turns_kept": 1,
+          "history_turns_summarized": 5,
+          "history_turns_omitted": 5,
+          "summary_present": true,
+          "before_estimated_input_tokens": 37243,
+          "history_turns_summarized_indices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "request_chars": 6140,
+          "request_utf8_bytes": 11666,
+          "estimated_input_tokens": 12370,
+          "local_tokenizer_tokens": null,
+          "token_accuracy": "conservative_utf8_estimate_v1",
+          "context_budget_unit": "estimated_tokens",
+          "context_budget_mode": "estimate",
+          "model_window_tokens": null,
+          "model_window_status": "unknown",
+          "output_reserved_tokens": 1800,
+          "input_token_limit": 14000,
+          "exact_remaining_tokens": null,
+          "tokenizer_status": "unverified_for_deployment",
+          "context_compaction_mode": "deterministic",
+          "context_compaction_triggered": true,
+          "context_compaction_status": "deterministic",
+          "history_information_incomplete": true,
+          "history_coverage": "unverified",
+          "context_truncated": true,
+          "pins_included": [
+            "e2390941e2d14402add2fe387582f3d6",
+            "e228470a76354470b8f682a79abc036b"
+          ],
+          "pins_omitted": [],
+          "pinned_context_incomplete": false
+        },
+        "output": {
+          "status": "complete",
+          "finish_reason": "stop",
+          "complete": true
+        }
+      }
+    ]
+  },
+  "model_request_interval_utc": {
+    "first_reservation": "2026-10-25T13:25:40.104100+00:00",
+    "last_settlement": "2026-10-25T13:27:44.077886+00:00"
+  }
+}

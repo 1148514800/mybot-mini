@@ -1,0 +1,76 @@
+{
+  "input_head": "4e10abda3a89d2b598d4d343a49240efa621234e",
+  "branch": "codex/persistent-session-live-uat",
+  "preregistration_commit": "86105406ed46c32024a4c8d7d669eaaf6ca0be10",
+  "operator_environment_exception": "User allowed isolated coexistence and external Playwright; prior blanket no-other-MyBot-process condition relaxed, frozen product gates unchanged.",
+  "frozen_verify_before_and_between_cases_and_after": "PASS",
+  "plan_sha256": "3b46c091e4bc927ddb1b04c8598b08d57c63ca0c15d2704a36c605a560971ab4",
+  "freeze_sha256": "f4f3f006c3b80591b79005b9b71a7c95cd858a848679c88285b91b16ae98c470",
+  "prepared_sha256": "7ece43437395779e08d14d4ec7ec10410d0fc50964f35bcaa120ef3a3b2f5c2e",
+  "source_hash_manifest_sha256": "9d7ed96fe54954477e797770e474f5ef698d48f600abf29922c4c62502a98ad7",
+  "provider_original_file_sha256": "23f00185cd76b5684a8ccc7390ce51a4c3c93ef7e697e54aaadc988a9665a65a",
+  "provider_config_reused_without_copy_or_mutation": true,
+  "workspace_fingerprint_matches_frozen": true,
+  "ledger_identity": [
+    16777231,
+    14003981
+  ],
+  "event_identity": [
+    16777231,
+    14003979
+  ],
+  "pre_live_attempts": 0,
+  "pre_live_reservations": 0,
+  "limits": {
+    "L01": 10,
+    "L02": 4,
+    "L03": 2
+  },
+  "global_limit": 16,
+  "pre_live_port_8889_free": true,
+  "workspace_lease_acquired_and_released": true,
+  "other_services": {
+    "port_8765_listening_at_inspection": false,
+    "remaining_launcher_pid": 39852,
+    "launcher_uid": 501,
+    "launcher_state": "stopped; child 39853 defunct",
+    "launcher_cwd_project": "post-live-quality-hardening worktree",
+    "user_chrome_pid_preserved": 56352,
+    "old_service_or_browser_page_accessed": false,
+    "old_process_signalled": false,
+    "old_workspace_realpath_equals_uat": false,
+    "other_process_holding_uat_databases": false,
+    "warning": "No running 8765 service was observed at inspection; cannot attest to the continued existence of its earlier memory sessions. No shutdown or recovery was attempted."
+  },
+  "browser_isolation_pass": true,
+  "case_shutdowns": {
+    "L01": {
+      "startup_reservations": 0,
+      "server_wrapper_pid": 49873,
+      "shutdown_confirmed": true,
+      "server_exit_code": 0,
+      "lease_released": true,
+      "final_reservations": 9
+    },
+    "L02": {
+      "startup_reservations": 9,
+      "server_wrapper_pid": 50268,
+      "shutdown_confirmed": true,
+      "server_exit_code": 0,
+      "lease_released": true,
+      "final_reservations": 13
+    },
+    "L03": {
+      "startup_reservations": 13,
+      "server_wrapper_pid": 50416,
+      "shutdown_confirmed": true,
+      "server_exit_code": 0,
+      "lease_released": true,
+      "final_reservations": 14
+    }
+  },
+  "all_own_browser_and_server_pids_exited": true,
+  "ports_8765_and_8889_not_listening_after": true,
+  "sdk_max_retries": 0,
+  "execution_uncertain": false
+}

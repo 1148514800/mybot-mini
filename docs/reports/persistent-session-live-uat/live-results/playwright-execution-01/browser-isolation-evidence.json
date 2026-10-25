@@ -1,0 +1,77 @@
+{
+  "chrome_executable_sha256": "5f3d43277ede0c2804c099e71f712d033a3351216f49ac34d9482cab00ec9d0c",
+  "probe_origin": "http://127.0.0.1:53296",
+  "attempts": [
+    {
+      "headless": false,
+      "passed": true,
+      "version": "152.0.7977.83",
+      "initial": [
+        {
+          "cookieA": false,
+          "cookieB": false,
+          "storageA": false,
+          "storageB": false
+        },
+        {
+          "cookieA": false,
+          "cookieB": false,
+          "storageA": false,
+          "storageB": false
+        }
+      ],
+      "profile_a": {
+        "cookieA": true,
+        "cookieB": false,
+        "storageA": true,
+        "storageB": false
+      },
+      "profile_b": {
+        "cookieA": false,
+        "cookieB": true,
+        "storageA": false,
+        "storageB": true
+      },
+      "profiles": [
+        {
+          "pid": 49282,
+          "directory_basename": "profile-A-s8ta_lt3",
+          "path_sha256": "21fbc6992219f15a7c439732ac324c3c79e82b1614eaebd239400b2bf34df100",
+          "new_directory": true,
+          "mode": "0700",
+          "non_symlink": true,
+          "launch_argument_verified": true
+        },
+        {
+          "pid": 49299,
+          "directory_basename": "profile-B-ie0cz_jq",
+          "path_sha256": "da191989459037174cf7a230ad29566c1032bb45972f2fb40825284a09cde6eb",
+          "new_directory": true,
+          "mode": "0700",
+          "non_symlink": true,
+          "launch_argument_verified": true
+        }
+      ],
+      "click_input_dom_screenshot_verified": true
+    }
+  ],
+  "passed": true,
+  "headless": false,
+  "browser_version": "152.0.7977.83",
+  "probe_server_closed": true,
+  "probe_profiles_removed": true,
+  "playwright_python_version": "1.64.1",
+  "installation": "uv run --no-project --python 3.12 --with playwright (external temporary environment)",
+  "live_browser": {
+    "version": "152.0.7977.83",
+    "headed": true,
+    "uat_profile_new": true,
+    "initial_cookie_jar_empty": true,
+    "profile_path_sha256": "5da3064c2b0fd361470ec8e9143b13a6cbb3d9a8e2591cbf10efd87552be2737",
+    "actual_pid": 49832,
+    "launch_profile_verified": true,
+    "chromium_sandbox": true
+  },
+  "live_profile_removed": true,
+  "cleanup_errors": []
+}
