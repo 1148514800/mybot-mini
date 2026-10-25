@@ -1,0 +1,535 @@
+{
+  "source_before": "b0d5cd92e79c2660c7eff494eb5941fdeddaabaff483014527b62f31253eb366",
+  "runs": [
+    {
+      "name": "check_phase",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_phase"
+      ],
+      "exit_code": 0,
+      "suites": 52,
+      "tests": 1581,
+      "seconds": 362.623,
+      "log_sha256": "c97fa8ccf0a96dbf1af8b356cb0afb9f1ba957ea4b98b57d98226a1ef9e228b2",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_uat_preflight",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_uat_preflight"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 9,
+      "seconds": 2.576,
+      "log_sha256": "450f23da814a9c29715dd218ecef6dec931ed09fd75d879977cbaada0ea03b17",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_patch_diagnostics",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_patch_diagnostics"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 9,
+      "seconds": 0.963,
+      "log_sha256": "dca73a12b747c1009f6f275cdb4114fc64a75ba993c6e1b6040828bd5f6e8077",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_adaptive_compaction",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_adaptive_compaction"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 14,
+      "seconds": 0.491,
+      "log_sha256": "f06a1a427a24e97042aebf71df83a1d63b83f97ce053f38706071fbfe98e52ba",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_remediation_e2e",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_remediation_e2e"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 5,
+      "seconds": 1.46,
+      "log_sha256": "155dc4ad3d86385abda81ebb7109e7dd59e7be7f0f0b7abd7eebea281cd8bcb8",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_agent_instruction_quality",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_agent_instruction_quality"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 5,
+      "seconds": 0.458,
+      "log_sha256": "17c8c609f3cfc5e746a6a98c07af99065156237b283b4fa7a76bc011c06d08e7",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_real_user_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_real_user_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 13,
+      "seconds": 1.386,
+      "log_sha256": "a0f5a822091038d5e7815495df6c1c86a7acda74c667b3e65e29cb7347e08c6c",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_targeted_user_uat_v2",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_targeted_user_uat_v2"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 24,
+      "seconds": 6.442,
+      "log_sha256": "be7ffce9548ecd222694572a4b76fa0ed5ed3cd173edaffa857471ac53710a2a",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_persistent_session_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_persistent_session_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 22,
+      "seconds": 4.089,
+      "log_sha256": "cd2d7da85582a191d020c27a7a2cbe1563375b9f39cd4a088547211c53f58b94",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "compileall",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "compileall",
+        "-q",
+        "mybot",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.043,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "javascript_syntax",
+      "command": [
+        "node",
+        "--check",
+        "mybot/web/static/app.js"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.112,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "git_diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.014,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    }
+  ],
+  "real_model_requests": 0,
+  "source_after": "b0d5cd92e79c2660c7eff494eb5941fdeddaabaff483014527b62f31253eb366",
+  "source_hashes_unchanged": true,
+  "unique_tests": 1682,
+  "status": "PASS",
+  "baseline_unique_tests": 1618,
+  "new_specialized_tests": 42,
+  "persistent_budget_tests": 22,
+  "deduplication": "check_phase 1581 = previous 1539 + new 42; independent complements 79; separate persistent gates 22; unique 1682. Development reruns/browser requests not counted as unit tests.",
+  "real_api_calls": {
+    "DeepSeek": 0,
+    "GLM": 0,
+    "semantic_summary": 0,
+    "paid_judge": 0
+  },
+  "earlier_runs_superseded": "Full checks passed earlier; a legacy frozen-observer whole-turn equality assertion required explicit offline migration. Final hash-stable run is authoritative; no test removal/skip or Live grading change.",
+  "phase_composition": [
+    {
+      "modules": [
+        "scripts.check_session"
+      ],
+      "tests": 12
+    },
+    {
+      "modules": [
+        "scripts.check_planning"
+      ],
+      "tests": 12
+    },
+    {
+      "modules": [
+        "scripts.check_persistence"
+      ],
+      "tests": 16
+    },
+    {
+      "modules": [
+        "scripts.check_context"
+      ],
+      "tests": 18
+    },
+    {
+      "modules": [
+        "scripts.check_skills"
+      ],
+      "tests": 16
+    },
+    {
+      "modules": [
+        "scripts.check_evaluation"
+      ],
+      "tests": 18
+    },
+    {
+      "modules": [
+        "scripts.check_evaluation_v2"
+      ],
+      "tests": 15
+    },
+    {
+      "modules": [
+        "scripts.check_diagnostics"
+      ],
+      "tests": 7
+    },
+    {
+      "modules": [
+        "scripts.check_mcp"
+      ],
+      "tests": 17
+    },
+    {
+      "modules": [
+        "scripts.check_approval"
+      ],
+      "tests": 25
+    },
+    {
+      "modules": [
+        "scripts.check_mcp_http"
+      ],
+      "tests": 28
+    },
+    {
+      "modules": [
+        "scripts.check_mcp_auth"
+      ],
+      "tests": 38
+    },
+    {
+      "modules": [
+        "scripts.check_mcp_oauth"
+      ],
+      "tests": 52
+    },
+    {
+      "modules": [
+        "scripts.check_tool_discovery"
+      ],
+      "tests": 39
+    },
+    {
+      "modules": [
+        "scripts.check_tool_retrieval"
+      ],
+      "tests": 17
+    },
+    {
+      "modules": [
+        "scripts.check_tool_agent_eval"
+      ],
+      "tests": 24
+    },
+    {
+      "modules": [
+        "scripts.check_adaptive_routing"
+      ],
+      "tests": 30
+    },
+    {
+      "modules": [
+        "scripts.check_routing_confidence"
+      ],
+      "tests": 38
+    },
+    {
+      "modules": [
+        "scripts.check_repository_tools"
+      ],
+      "tests": 34
+    },
+    {
+      "modules": [
+        "scripts.check_patch_editing"
+      ],
+      "tests": 61
+    },
+    {
+      "modules": [
+        "scripts.check_command_execution"
+      ],
+      "tests": 62
+    },
+    {
+      "modules": [
+        "scripts.check_autonomous_coding"
+      ],
+      "tests": 100
+    },
+    {
+      "modules": [
+        "scripts.check_git_workflow"
+      ],
+      "tests": 101
+    },
+    {
+      "modules": [
+        "scripts.check_real_coding_eval"
+      ],
+      "tests": 136
+    },
+    {
+      "modules": [
+        "scripts.check_coding_campaign"
+      ],
+      "tests": 33
+    },
+    {
+      "modules": [
+        "scripts.check_coding_reliability"
+      ],
+      "tests": 42
+    },
+    {
+      "modules": [],
+      "tests": 17
+    },
+    {
+      "modules": [],
+      "tests": 13
+    },
+    {
+      "modules": [
+        "scripts.check_coding_failover"
+      ],
+      "tests": 50
+    },
+    {
+      "modules": [
+        "scripts.check_request_budget_efficiency"
+      ],
+      "tests": 18
+    },
+    {
+      "modules": [
+        "scripts.check_coding_failover_batch"
+      ],
+      "tests": 25
+    },
+    {
+      "modules": [
+        "scripts.check_tool_verification_reliability"
+      ],
+      "tests": 44
+    },
+    {
+      "modules": [
+        "scripts.check_tool_verification_live_ab"
+      ],
+      "tests": 29
+    },
+    {
+      "modules": [
+        "scripts.check_patch_preview_receipt"
+      ],
+      "tests": 53
+    },
+    {
+      "modules": [
+        "scripts.check_web_ui"
+      ],
+      "tests": 53
+    },
+    {
+      "modules": [
+        "scripts.check_token_budget"
+      ],
+      "tests": 16
+    },
+    {
+      "modules": [
+        "scripts.check_context_compaction"
+      ],
+      "tests": 22
+    },
+    {
+      "modules": [
+        "scripts.check_runtime_accounting"
+      ],
+      "tests": 23
+    },
+    {
+      "modules": [
+        "scripts.check_output_completeness"
+      ],
+      "tests": 15
+    },
+    {
+      "modules": [
+        "scripts.check_compaction_evidence"
+      ],
+      "tests": 15
+    },
+    {
+      "modules": [
+        "scripts.check_coding_contract_quality"
+      ],
+      "tests": 6
+    },
+    {
+      "modules": [
+        "scripts.check_tool_authority"
+      ],
+      "tests": 20
+    },
+    {
+      "modules": [
+        "scripts.check_task_contract"
+      ],
+      "tests": 22
+    },
+    {
+      "modules": [
+        "scripts.check_requirement_evidence"
+      ],
+      "tests": 16
+    },
+    {
+      "modules": [
+        "scripts.check_session_event_store"
+      ],
+      "tests": 22
+    },
+    {
+      "modules": [
+        "scripts.check_session_recovery"
+      ],
+      "tests": 18
+    },
+    {
+      "modules": [
+        "scripts.check_web_persistence"
+      ],
+      "tests": 24
+    },
+    {
+      "modules": [
+        "scripts.check_pinned_context"
+      ],
+      "tests": 17
+    },
+    {
+      "modules": [
+        "scripts.check_context_projection"
+      ],
+      "tests": 10
+    },
+    {
+      "modules": [
+        "scripts.check_source_aware_projection"
+      ],
+      "tests": 21
+    },
+    {
+      "modules": [
+        "scripts.check_pin_lifecycle_context"
+      ],
+      "tests": 12
+    },
+    {
+      "modules": [
+        "scripts.check_projection_protocol_integrity"
+      ],
+      "tests": 9
+    }
+  ],
+  "implementation_commit": "892a1c31353cdd1b342a9c195d8d646efa5b0e7e"
+}

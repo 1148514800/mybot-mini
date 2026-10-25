@@ -1,0 +1,181 @@
+{
+  "real_model_requests": 0,
+  "checks": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true,
+    "E": true
+  },
+  "cleanup": {
+    "own_server_stopped": true,
+    "own_profile_removed": true
+  },
+  "browser": {
+    "headed": true,
+    "version": "152.0.7977.83",
+    "new_0700_profile": true,
+    "launch_argument_verified": true,
+    "pid": 81256,
+    "profile_path_sha256": "420a3422a43939d52ba55f6f6b9b6d2ed96fa829bc060474fadf46551b4da3bf"
+  },
+  "synthetic_requests": 9,
+  "last_context": {
+    "before": 2371,
+    "after": 3160,
+    "current_clipped": false,
+    "history_omitted": false,
+    "history_turns_kept": 0,
+    "history_turns_summarized": 0,
+    "history_turns_omitted": 0,
+    "summary_present": false,
+    "before_estimated_input_tokens": 4023,
+    "history_turns_summarized_indices": [],
+    "request_chars": 3222,
+    "request_utf8_bytes": 4520,
+    "estimated_input_tokens": 5128,
+    "local_tokenizer_tokens": null,
+    "token_accuracy": "conservative_utf8_estimate_v1",
+    "context_budget_unit": "estimated_tokens",
+    "context_budget_mode": "estimate",
+    "model_window_tokens": null,
+    "model_window_status": "unknown",
+    "output_reserved_tokens": 2000,
+    "input_token_limit": 30000,
+    "exact_remaining_tokens": null,
+    "tokenizer_status": "unverified_for_deployment",
+    "context_compaction_mode": "deterministic",
+    "context_compaction_triggered": false,
+    "context_compaction_status": "not_needed",
+    "history_information_incomplete": true,
+    "history_coverage": "unverified",
+    "context_truncated": true,
+    "revoked_pin_count": 1,
+    "superseded_pin_count": 0,
+    "redacted_source_spans": 0,
+    "preserved_independent_user_spans": 0,
+    "omitted_protocol_turns": 1,
+    "omitted_assistant_messages": 2,
+    "omitted_user_messages": 1,
+    "source_mapping_failures": 0,
+    "source_mapping_failure_reasons": {},
+    "omitted_unmapped_turns": 0,
+    "history_projection_incomplete": true,
+    "assistant_semantic_rewrites_unverified": true,
+    "pin_history_turns_removed": 1
+  },
+  "session_id": "ca68c0566dae46e5b3a3fa2a4290f098",
+  "status": "PASS",
+  "strict_post_capture_pair_validation": true,
+  "screenshots_visually_reviewed": true,
+  "driver_corrections": [
+    "Initial driver used wait_for_function blocked by unchanged CSP; replaced with native locator polling.",
+    "Second driver incorrectly expected empty composer Send enabled; corrected wait.",
+    "Successful synthetic runs also checked screenshot capture; final capture waits for UI refresh/animation to settle. No original Live case or real provider was run."
+  ],
+  "prior_driver_profiles_and_services_cleaned": true,
+  "real_api_calls": {
+    "DeepSeek": 0,
+    "GLM": 0,
+    "semantic_summary": 0,
+    "paid_judge": 0
+  },
+  "synthetic_request_evidence": [
+    {
+      "index": 1,
+      "sha256": "ba59aba55ab09fe9f3c4bd1c5f03c13073d4c6d1f9b614d66b4c2f3ee48c72e5",
+      "message_count": 2,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 2,
+      "sha256": "8500371fd5f4fc710cd1a21a2e529fbdea0a1ab5d3acebb1924d7ebef559d03e",
+      "message_count": 2,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 3,
+      "sha256": "1f331144b720029594b8ea8a48c070c659edfc3ed0d40abdfb77b57f1dbdd058",
+      "message_count": 6,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 4,
+      "sha256": "2dff5231f69288a94474e5012ae4cdcf817e2131072bf60b21a7561546c5a29f",
+      "message_count": 8,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 5,
+      "sha256": "f940d81c72be36e3a6dd7e339dfc6d568186ff8fba6a015cf5c262a36b7bfe32",
+      "message_count": 9,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 6,
+      "sha256": "4c2931011804592fd1b62c58f3e3ffa0620a8a4e4eac70ebac937e1113fd71dd",
+      "message_count": 11,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 7,
+      "sha256": "25010b30df08420267739718de46c2281437fa95c6e83c352fa9b4c2d3007672",
+      "message_count": 2,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 8,
+      "sha256": "904e6d9734c7d043eef23a5a142a43a7a85aaa30ed99f2a5f2aa1e855f1fcc50",
+      "message_count": 4,
+      "protocol_pairs_valid": true
+    },
+    {
+      "index": 9,
+      "sha256": "e610d1943fdb559820c958a31ba6fbb8e226ac851a1e6857abb29c83af4b9128",
+      "message_count": 3,
+      "protocol_pairs_valid": true
+    }
+  ],
+  "development_runs": [
+    {
+      "status": "FAIL",
+      "synthetic_requests": 1,
+      "cleanup": {},
+      "error_type": "Error"
+    },
+    {
+      "status": "FAIL",
+      "synthetic_requests": 1,
+      "cleanup": {},
+      "error_type": "AssertionError"
+    },
+    {
+      "status": "PASS",
+      "synthetic_requests": 9,
+      "cleanup": {
+        "own_server_stopped": true,
+        "own_profile_removed": true
+      },
+      "error_type": null
+    },
+    {
+      "status": "PASS",
+      "synthetic_requests": 9,
+      "cleanup": {
+        "own_server_stopped": true,
+        "own_profile_removed": true
+      },
+      "error_type": null
+    },
+    {
+      "status": "PASS",
+      "synthetic_requests": 9,
+      "cleanup": {
+        "own_server_stopped": true,
+        "own_profile_removed": true
+      },
+      "error_type": null
+    }
+  ],
+  "development_synthetic_request_total": 29
+}

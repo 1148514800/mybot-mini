@@ -1,0 +1,32 @@
+{
+  "input_head": "e9f2e822e5423742c3bf73194cb56f4fa1711869",
+  "protected_git_paths_unchanged": {
+    "scripts/persistent_uat": [],
+    "docs/reports/persistent-session-live-uat": [],
+    "docs/reports/session-eventstore-pinned-context": [],
+    "pyproject.toml": [],
+    "uv.lock": []
+  },
+  "original_private_live_databases_accessed": false,
+  "original_provider_config_accessed": false,
+  "original_batch_server_started": false,
+  "historical_live_scores_changed": false,
+  "model_requests": 0,
+  "schema_changed": false,
+  "production_dependencies_changed": false,
+  "main_checkout_modified_by_task": false,
+  "own_browser_service_and_profiles_cleaned": true,
+  "source_hash_stable_validation": "b0d5cd92e79c2660c7eff494eb5941fdeddaabaff483014527b62f31253eb366",
+  "modified_old_test_contracts": {
+    "check_pinned_context": "Neutral multiple/unassessed flags plus all pins remain active; no semantic conflict inferred.",
+    "check_persistent_session_uat": "Retains original baseline 3/5 assertion; adds actual source-aware request preservation 5/5. Exposes legacy observer equality result as inapplicable, not a new score."
+  },
+  "omission_categories_separate": [
+    "source span masking",
+    "unmapped source fallback",
+    "atomic protocol group omission",
+    "token budget history omission",
+    "unverified assistant semantic rewrite"
+  ],
+  "sensitive_artifacts_committed": false
+}

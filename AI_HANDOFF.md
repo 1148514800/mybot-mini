@@ -18,4 +18,4 @@ HistoryTurn在消息dict外保留session/source ID，SQLite恢复取持久ID；S
 
 ## 后续边界
 
-未知助手语义改写不能可靠清除；协议组/来源失败/预算仍会导致明确的信息损失。离线机制改善不等于DeepSeek真实回答改善。旧冻结observer information_loss按整轮对象相等比较，在局部投影后会把保留事实误计为丢失，后续新合同须用新诊断/实际user单元核查；本轮不改原observer。不要运行原Live批次或使用剩余2次额度。待记录Implementation/Acceptance提交与Push远程核对，不合main。
+未知助手语义改写不能可靠清除；协议组/来源失败/预算仍会导致明确的信息损失。离线机制改善不等于DeepSeek真实回答改善。旧冻结observer information_loss按整轮对象相等比较，在局部投影后会把保留事实误计为丢失，后续新合同须用新诊断/实际user单元核查；本轮不改原observer。不要运行原Live批次或使用剩余2次额度。Implementation 892a1c31353cdd1b342a9c195d8d646efa5b0e7e；Acceptance为随后报告提交，Push并核对远程HEAD，不合main。

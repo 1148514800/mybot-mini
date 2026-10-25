@@ -1,0 +1,26 @@
+{
+  "algorithm": "sha256",
+  "scope": "Report artifacts except this self-index; source hashes in offline-validation.",
+  "files": {
+    "A-compatible-pins.png": "c51b736e0930790c6bd4ae1762137f74af21f661707b86ebc565a857557352f8",
+    "B-replaced-request.png": "ef627f66228162f5c944374f389c00b0d8cb9d9255175e8bc02e053eeb3f471b",
+    "C-revoked-request.png": "9483d72e2fb3c40faa60f07ef41c6dc23a722e34ac0d5fa1be41fdb6ff78f808",
+    "D-recovered.png": "1054f171e6135e96c65ea89f4a3bbfdc96cd98fe22ef3c69ff373254c4aa2211",
+    "E-tool-protocol.png": "946507a8b3e769e8830da18bea008ef23461dd78ee707f54d58affa21e3f9a6e",
+    "acceptance-report.md": "acddb2a4153b1cfaa2c232486afbb0e65438c4c7553710ec9f3e4dcdc718ecfb",
+    "assistant-echo-handling.md": "a532374272b7ed7f0cc2fc1c35e6ae0e5d272c77e2dad2a2f2e05a1efa26ae92",
+    "baseline-comparison.json": "81c009d58a879e7865e2fef790b0824f39299f392311a5fb7fb4e871fd6b0c8c",
+    "browser-acceptance.md": "fce5f4ee21337b91ca23124b91ee9aaed6f8a14a1901d04851259265697a41bf",
+    "browser-evidence.json": "03750c6e7514cb90e39c7efc0ddfddc9f33fc03a6db9bc988b5d37d7fb917b4e",
+    "next-stage-readiness.md": "9305008a3b671f06584ff99063b5ee63a8f65c41b34780ea2d4c7d1016eba575",
+    "offline-validation.json": "142a99f7e51f7af32df3fb12e813b5a4076ff9cdd328479aae80ea228e69fa38",
+    "pin-lifecycle-semantics.md": "0d54209ba567b4dc4602f602e99722f5c70c2e746768afe6c9b59d05ea4d451d",
+    "projection-contract.md": "0f9053f958f2c5863f09320fcc2a259fd2b4a6a6eb7b65edad48e33c3e55444e",
+    "protocol-integrity.md": "65c63fe227b445d1bf3a7bbb8ca324c112c4a9242a4a7b855eb9bafc7ed6b6d1",
+    "remaining-risks.md": "e0f7be86df4437d3770eda2cf37680725c7157bcf6b26912e685bb8025314f70",
+    "root-cause-analysis.md": "4cc8509415f7f9cf88fa20d39c23dff9e807506c25be72cefda7514fcec302a6",
+    "security-audit.md": "992cb96da2c5e4a06b839f396543e501ae5bf434ec7649ca6eda816266e168d0",
+    "security-evidence.json": "3146d018ad6cf8ebaf57ef31a13a3cf13863ef95dc8855b12430b3686b86dcc1",
+    "source-mapping-design.md": "53cdb713dc53a26820da0a57b81bf59d97a657a63d1a14d3dce377b324293655"
+  }
+}
