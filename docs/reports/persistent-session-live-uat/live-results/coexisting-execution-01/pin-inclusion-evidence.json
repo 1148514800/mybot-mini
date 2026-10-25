@@ -1,0 +1,14 @@
+{
+  "status": "BLOCKED",
+  "reason": "browser_identity_isolation_not_proven",
+  "actual_requests": 0,
+  "source_integrity": null,
+  "active_pin_correctness": null,
+  "request_inclusion": null,
+  "semantic_adherence": null,
+  "supersession": null,
+  "revocation": null,
+  "live_history_loss": null,
+  "model_evidence": [],
+  "local_probe_is_live_case_evidence": false
+}

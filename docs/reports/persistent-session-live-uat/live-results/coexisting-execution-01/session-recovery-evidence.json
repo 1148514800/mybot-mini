@@ -1,0 +1,16 @@
+{
+  "status": "BLOCKED",
+  "case": "L03",
+  "attempts": 0,
+  "restart_performed": false,
+  "session_id": null,
+  "title_restored": null,
+  "messages_restored": null,
+  "pins_restored": null,
+  "automatic_start_requests": null,
+  "tool_replay": null,
+  "receipt_restored": null,
+  "approval_restored": null,
+  "verified_restored": null,
+  "event_count": 0
+}

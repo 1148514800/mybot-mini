@@ -1,0 +1,95 @@
+{
+  "captured_at_utc": "2026-10-25T13:01:05.552271+00:00",
+  "status": "BLOCKED",
+  "reason": "no_supported_fresh_browser_profile_or_context_creation_and_isolation_not_proven",
+  "input_head": "2202863c6b4b9f080f855de0add62ec9f2a04f32",
+  "authorization": "GRANTED_16_REQUESTS",
+  "operator_exception": {
+    "ALLOW_ISOLATED_WEB_COEXISTENCE": "GRANTED",
+    "replaces": "operator rule prohibiting every other MyBot Web process",
+    "changes_frozen_contract": false
+  },
+  "frozen_verified": true,
+  "preregistration_commit": "86105406ed46c32024a4c8d7d669eaaf6ca0be10",
+  "plan_sha256": "3b46c091e4bc927ddb1b04c8598b08d57c63ca0c15d2704a36c605a560971ab4",
+  "freeze_sha256": "f4f3f006c3b80591b79005b9b71a7c95cd858a848679c88285b91b16ae98c470",
+  "prepared_sha256": "7ece43437395779e08d14d4ec7ec10410d0fc50964f35bcaa120ef3a3b2f5c2e",
+  "ledger_cases": 0,
+  "ledger_reservations": 0,
+  "ledger_halts": 0,
+  "workspace_unchanged": true,
+  "uat_lease_available": true,
+  "ports_listening_at_final_check": {
+    "8765": false,
+    "8889": false,
+    "8896": false
+  },
+  "old_service": {
+    "current_listener": false,
+    "previous_pids_60449_60450_present": false,
+    "current_uid": 501,
+    "remaining_launcher": {
+      "pid": 39852,
+      "ppid": 84752,
+      "uid": 501,
+      "command": "uv run python -m mybot.web --port 8765",
+      "cwd": "post-live-quality-hardening worktree",
+      "child": "39853 defunct"
+    },
+    "changed_by_this_run": false,
+    "runtime_task_state": "not queried; no listener",
+    "pending_approval": "not queried; no listener",
+    "runtime_storage_location": "not observable in absent process; previous memory observation remains historical",
+    "chat_or_settings_read": false
+  },
+  "configured_paths": {
+    "old_workspace": "original main checkout/workspace",
+    "uat_workspace": "private frozen batch/workspace",
+    "same_resolved_directory": false,
+    "actual_old_runtime_workspace_confirmed": false
+  },
+  "uat_databases_open_by_pids": [],
+  "browser_capabilities": {
+    "iab": [
+      "visibility",
+      "viewport"
+    ],
+    "chrome": [
+      "viewport",
+      "management"
+    ],
+    "chrome_management": "normal non-incognito windows only",
+    "fresh_profile_creation": false,
+    "new_context_creation": false
+  },
+  "browser_probe": {
+    "type": "non-production local browser identity probe",
+    "origin": "http://127.0.0.1:8896",
+    "provider": "iab",
+    "tab_a_initial": {
+      "cookieMarkerPresent": false,
+      "localStorageMarkerPresent": false
+    },
+    "tab_a_after_write": {
+      "cookieMarkerPresent": true,
+      "localStorageMarkerPresent": true
+    },
+    "new_tab_b": {
+      "cookieMarkerPresent": true,
+      "localStorageMarkerPresent": true
+    },
+    "after_cleanup_and_tab_a_reload": {
+      "cookieMarkerPresent": false,
+      "localStorageMarkerPresent": false
+    },
+    "used_production_cookie_name": false,
+    "old_chrome_profile_opened": false,
+    "old_page_operated": false,
+    "probe_tabs_closed": true,
+    "probe_listener_closed": true,
+    "probe_script_sha256": "bd791ed52232a545a22be95ae4380704f9097c97fc307d9d1d87f77ac0fe80de"
+  },
+  "live_case_started": false,
+  "sdk_client_created": false,
+  "production_cookie_conflict_observed": false
+}

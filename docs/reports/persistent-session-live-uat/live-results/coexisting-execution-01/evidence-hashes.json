@@ -1,0 +1,54 @@
+{
+  "algorithm": "sha256",
+  "scope": "all coexisting-execution-01 artifacts except this index",
+  "files": {
+    "acceptance-report.md": {
+      "sha256": "15fcddcc2250d6a24a41ffc2493c70bc19d10bf32badf9cbb47fa0782d90f800",
+      "bytes": 3315
+    },
+    "browser-isolation.md": {
+      "sha256": "e56bc740b12c5129d10a0880a855189f4d2026053bff730f1816b7f35591a497",
+      "bytes": 2237
+    },
+    "browser-probe-cleaned.png": {
+      "sha256": "bfdf30da810405aa6d274902d60a1733b179755085b76d50c6a0c23b7897bba8",
+      "bytes": 27095
+    },
+    "browser-probe-shared-storage.png": {
+      "sha256": "ec49ca223145a1d93dbfbb440d010468183c9820e7e57fe715fa324168158962",
+      "bytes": 26914
+    },
+    "case-results.md": {
+      "sha256": "dc89e2858774799272c7123a65fbda6830cfea97a19ce8adbbf6917dd96d59a8",
+      "bytes": 769
+    },
+    "information-loss-analysis.md": {
+      "sha256": "9d626331dd1c07f723efe3ced8754d1365a8c6489ef8881792c49630d60c8561",
+      "bytes": 518
+    },
+    "isolation-preflight.json": {
+      "sha256": "81f60933dcc78f77b77445d3a11d483d98fac73adab1a776dd313a3f8d6c9f4f",
+      "bytes": 3239
+    },
+    "next-step-recommendations.md": {
+      "sha256": "c0e552f8d6c1192c608f32de85b910dfc0926516fa4bdc43645b6e3219e56625",
+      "bytes": 810
+    },
+    "pin-inclusion-evidence.json": {
+      "sha256": "b7d70410ddca2d008287542878690781fe8514665751c6f0394915b0f2aa335a",
+      "bytes": 369
+    },
+    "resource-usage.json": {
+      "sha256": "e8e81290f53adfdb3135526be851a0b80a9125be47372b3066775d1b83a695fc",
+      "bytes": 896
+    },
+    "security-audit.md": {
+      "sha256": "cc53d21d9fabf50074255b33a482494cbb5754b90b66ceab72fb46c4d1c97e1c",
+      "bytes": 2159
+    },
+    "session-recovery-evidence.json": {
+      "sha256": "1ab848f786ea1d0e7371c7dd8855e5c3522ed62ae5af628ee2d51a75efc1d44a",
+      "bytes": 357
+    }
+  }
+}
