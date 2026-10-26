@@ -69,3 +69,5 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 - [Source-Aware Context Projection](source-aware-context-projection.md)：来源跨度投影、生命周期与协议安全；验收状态见[专题报告](../reports/source-aware-context-projection/acceptance-report.md)，不创建或更改历史Tag/ZIP。
 
 - [Source-Aware语义UAT](source-aware-live-uat.md)：原预注册保留；已获授权完成9次真实请求，最终Task3/3、来源12/12，存在决策分类缺陷；见[Live报告](../reports/source-aware-live-uat/live-results/execution-01/acceptance-report.md)。
+
+- [Decision Provenance & Temporal Validity v1](decision-provenance-temporal-validity.md)：精确确认来源与提交边界历史，离线及独立Chrome合成验收；见[专题报告](../reports/decision-provenance-temporal-validity/acceptance-report.md)，不创建历史Tag/ZIP。

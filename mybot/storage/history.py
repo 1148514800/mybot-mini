@@ -86,6 +86,10 @@ class SessionHistory:
         rows=self.store.query("SELECT id FROM messages WHERE session_id=? AND turn_id=? AND role='user'",(self.sid,self.turn_id))
         return HistoryTurn(messages,session_id=self.sid,source_message_id=rows[0]['id'] if rows else None)
 
+    def decisions(self,**kwargs):
+        from ..agent.decision_provenance import DecisionProvenance
+        return DecisionProvenance(self.store,self.sid).view(**kwargs)
+
     def model_turns(self,limit=6):return ModelContextProjection(self.store,self.sid).turns(limit)
     def status(self):return TaskStatusProjection(self.store,self.sid).current()
 

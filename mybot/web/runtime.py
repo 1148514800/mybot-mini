@@ -80,6 +80,7 @@ class Conversation:
                 'events': list(self.events), 'sequence': self.sequence, 'requests': self.requests,
                 'tokens': self.resources.get('provider_reported_total_tokens') if self.resources else (self.tokens if self.usage_known else None), 'report': self.report, 'resources': self.resources, 'contract': self.contract,
                 'approval': self.approval.public_pending() if self.approval else None,
+                'decisions':self.history.decisions() if self.history else None,
                 'pin_budget':self.pin_budget, 'pins': self.history.pins.list() if self.history else [], 'recovery_notice': self.recovery_notice}
 
 

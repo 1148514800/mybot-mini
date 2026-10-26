@@ -200,3 +200,10 @@ from scripts.check_pin_lifecycle_context import check_pin_lifecycle_context
 check_pin_lifecycle_context()
 from scripts.check_projection_protocol_integrity import check_projection_protocol_integrity
 check_projection_protocol_integrity()
+
+from scripts.check_decision_provenance import check_decision_provenance
+check_decision_provenance()
+from scripts.check_decision_timeline import check_decision_timeline
+check_decision_timeline()
+from scripts.check_decision_context import check_decision_context
+check_decision_context()

@@ -174,8 +174,11 @@ class AgentLoop:
         parts=text.strip().split()
         if not parts:return None
         command=parts[0]
-        if command not in ('/pins','/pin','/unpin','/repin','/sessions','/session','/history','/delete-session','/review-session'):return None
+        if command not in ('/decisions','/pins','/pin','/unpin','/repin','/sessions','/session','/history','/delete-session','/review-session'):return None
         try:
+            if command=='/decisions':
+                from .decision_provenance import render_view
+                return render_view(self.history.decisions(boundary=int(parts[1]) if len(parts)>1 else None))
             if command=='/pins':return json.dumps(self.history.pins.list(),ensure_ascii=False)
             if command=='/history':return json.dumps(self.history.messages(before=int(parts[1]) if len(parts)>1 else None),ensure_ascii=False)
             if command=='/sessions':return json.dumps([{k:s[k] for k in ('id','title')} for s in self.history.store.sessions()],ensure_ascii=False)

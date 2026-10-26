@@ -13,7 +13,10 @@ import stat
 
 from .event_schema import Event,StoreError,VERSION,identifier,validate,STATUSES
 
+DB_VERSION=2
 APP_ID=0x4D594231
+COMMITS_SCHEMA="""CREATE TABLE event_commits(session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+ start_sequence INTEGER NOT NULL, end_sequence INTEGER NOT NULL, PRIMARY KEY(session_id,end_sequence));"""
 DEFAULT_LIMITS={'max_bytes':64*1024*1024,'max_events':50000,'max_payload_bytes':65536}
 SCHEMA='''
 CREATE TABLE sessions(id TEXT PRIMARY KEY, namespace TEXT NOT NULL, workspace TEXT NOT NULL,
@@ -66,11 +69,22 @@ class SessionEventStore:
             if not self._new:self._recover_and_verify_existing()
             with self.connection() as db:
                 if self._new:
-                    db.executescript('BEGIN IMMEDIATE;'+SCHEMA+f'PRAGMA application_id={APP_ID}; PRAGMA user_version=1; COMMIT;')
-                if db.execute('PRAGMA application_id').fetchone()[0]!=APP_ID or db.execute('PRAGMA user_version').fetchone()[0]!=VERSION:
+                    db.executescript('BEGIN IMMEDIATE;'+SCHEMA+COMMITS_SCHEMA+f'PRAGMA application_id={APP_ID}; PRAGMA user_version={DB_VERSION}; COMMIT;')
+                if db.execute('PRAGMA user_version').fetchone()[0]==1:
+                    # Add only a commit-boundary index. Never invent old transaction boundaries.
+                    db.execute('BEGIN IMMEDIATE')
+                    try:
+                        if db.execute('PRAGMA user_version').fetchone()[0]==1:
+                            db.execute(COMMITS_SCHEMA)
+                            db.execute('INSERT INTO event_commits SELECT id,seq,seq FROM sessions WHERE seq>0')
+                            db.execute('PRAGMA user_version=2')
+                        db.execute('COMMIT')
+                    except BaseException:
+                        db.execute('ROLLBACK');raise
+                if db.execute('PRAGMA application_id').fetchone()[0]!=APP_ID or db.execute('PRAGMA user_version').fetchone()[0]!=DB_VERSION:
                     raise StoreError('unsupported_database_version')
                 if db.execute('PRAGMA integrity_check').fetchone()[0]!='ok':raise StoreError('database_integrity')
-                expected={'sessions','events','messages','turns','tools','pins'}
+                expected={'sessions','events','messages','turns','tools','pins','event_commits'}
                 if {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")} != expected:raise StoreError('database_schema')
             if self._new:
                 os.fsync(self._db_fd);os.fsync(self._anchor)
@@ -113,7 +127,7 @@ class SessionEventStore:
         self._guard()
         header=os.pread(self._db_fd,100,0)
         if (len(header)!=100 or header[:16]!=b'SQLite format 3\x00'
-            or int.from_bytes(header[60:64],'big')!=VERSION
+            or int.from_bytes(header[60:64],'big') not in (1,DB_VERSION)
             or int.from_bytes(header[68:72],'big')!=APP_ID):
             raise StoreError('unsupported_database_version')
         db=sqlite3.connect(str(self.path),timeout=2,isolation_level=None)
@@ -130,9 +144,15 @@ class SessionEventStore:
         if os.fstat(self._db_fd).st_size<100 or os.pread(self._db_fd,16,0)!=b'SQLite format 3\x00':raise StoreError('database_header_invalid_original_preserved')
         db=sqlite3.connect('file:'+quote(str(self.path))+'?mode=ro',uri=True)
         try:
-            if db.execute('PRAGMA application_id').fetchone()[0]!=APP_ID or db.execute('PRAGMA user_version').fetchone()[0]!=VERSION:raise StoreError('unsupported_database_version')
+            if db.execute('PRAGMA application_id').fetchone()[0]!=APP_ID or db.execute('PRAGMA user_version').fetchone()[0] not in (1,DB_VERSION):raise StoreError('unsupported_database_version')
             if db.execute('PRAGMA integrity_check').fetchone()[0]!='ok':raise StoreError('database_integrity')
+            version=db.execute('PRAGMA user_version').fetchone()[0]
+            tables={r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            expected={'sessions','events','messages','turns','tools','pins'} | ({'event_commits'} if version==DB_VERSION else set())
+            if tables!=expected:raise StoreError('database_schema')
             db.execute('BEGIN')
+            if version==DB_VERSION:
+                self._verify_commits(db)
             counts={};message_count=0
             for row in db.execute('SELECT session_id,event_id,sequence,event_type,timestamp,payload,source,privacy_class,schema_version,canonical FROM events ORDER BY session_id,sequence'):
                 sid,eid,seq,kind,stamp,payload,source,privacy,version,canonical=row
@@ -148,6 +168,18 @@ class SessionEventStore:
             for sid,seq in db.execute('SELECT id,seq FROM sessions'):
                 if counts.get(sid,0)!=seq:raise StoreError('session_sequence_invalid')
         finally:db.close()
+
+    @staticmethod
+    def _verify_commits(db):
+        for sid,seq in db.execute('SELECT id,seq FROM sessions'):
+            last=0
+            rows=db.execute('SELECT start_sequence,end_sequence FROM event_commits WHERE session_id=? ORDER BY end_sequence',(sid,)).fetchall()
+            for start,end in rows:
+                if not 1<=start<=end<=seq or (last and start!=last+1) or (not last and start!=1 and start!=end):
+                    raise StoreError('commit_boundary_invalid')
+                last=end
+            if last!=seq:raise StoreError('commit_boundary_invalid')
+        if db.execute('PRAGMA foreign_key_check').fetchone():raise StoreError('database_foreign_key')
 
     def _guard(self):
         try:self._check_path()
@@ -221,7 +253,7 @@ class SessionEventStore:
         with self.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             try:
-                seqs=[]
+                seqs=[];new_sequences={}
                 for event,canonical,payload in prepared:
                     old=db.execute('SELECT canonical,sequence FROM events WHERE event_id=?',(event.event_id,)).fetchone()
                     if old:
@@ -235,9 +267,12 @@ class SessionEventStore:
                     db.execute('INSERT INTO events VALUES(?,?,?,?,?,?,?,?,?,?)',(event.session_id,event.event_id,seq,event.event_type,event.timestamp,payload,event.source,event.privacy_class,event.schema_version,canonical))
                     db.execute('UPDATE sessions SET seq=? WHERE id=?',(seq,event.session_id))
                     self._project(db,event,seq);seqs.append(seq)
+                    new_sequences.setdefault(event.session_id,[]).append(seq)
                 for sid in {e.session_id for e,_,_ in prepared}:
                     active=db.execute("SELECT content FROM pins WHERE session_id=? AND status='active'",(sid,)).fetchall()
                     if len(active)>12 or sum(len(r[0].encode('utf-8')) for r in active)>4096:raise StoreError('pin_active_budget')
+                for sid,values in new_sequences.items():
+                    db.execute('INSERT INTO event_commits VALUES(?,?,?)',(sid,min(values),max(values)))
                 db.execute('COMMIT');return seqs
             except BaseException:
                 db.execute('ROLLBACK');raise
@@ -351,7 +386,7 @@ class MemoryEventStore(SessionEventStore):
         self.workspace=Path(workspace).resolve();self.namespace=namespace;self.secrets=tuple(secrets)
         self.workspace_ref=hashlib.sha256(os.fsencode(self.workspace)).hexdigest();self.limits=limits(settings)
         self.db=sqlite3.connect(':memory:',isolation_level=None);self.db.row_factory=sqlite3.Row
-        self.db.execute('PRAGMA foreign_keys=ON');self.db.executescript(SCHEMA)
+        self.db.execute('PRAGMA foreign_keys=ON');self.db.executescript(SCHEMA+COMMITS_SCHEMA)
         self.db.execute('PRAGMA max_page_count='+str(self.limits['max_bytes']//4096))
     @contextmanager
     def connection(self):

@@ -124,7 +124,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
             text = value.get('message')
             if set(value) != {'message'} or not isinstance(text, str) or not text.strip() or len(text) > 16000:
                 raise ValueError('invalid_message')
-            if text.strip().split()[0] in ('/undo','/changes','/clear','/pins','/pin','/unpin','/repin','/sessions','/session','/history','/delete-session','/review-session'):
+            if text.strip().split()[0] in ('/undo','/changes','/clear','/decisions','/pins','/pin','/unpin','/repin','/sessions','/session','/history','/delete-session','/review-session'):
                 return JSONResponse({'error': 'web_control_unsupported'}, status_code=400)
             accepted = await runtime.start(c, text)
         except StoreError:return JSONResponse({'error':'storage_failed'},status_code=503)

@@ -48,11 +48,21 @@ function renderMessages() {
 }
 function renderActivity() {
   const allPins = current.pins || [], activePins = allPins.filter(p=>p.status==='active');
-  $('pins-notice').textContent = `${activePins.length} 条当前固定事项。${boot.persistence ? '保存在本地明文数据库。' : '仅本次进程，重启不保留。'} 同分类并列不等于冲突；未进行语义冲突评估，不自动使任何事项失效。`;
+  $('pins-notice').textContent = `${activePins.length} 条当前固定事项。${boot.persistence ? '保存在本地明文数据库。' : '仅本次进程，重启不保留。'} 模型回答、建议和推断不是宿主已确认事项。只确认来源原文，不确认更强改写。同分类并列不等于冲突。`;
   $('pins-list').replaceChildren();
   const cats={current_goal:'当前目标',user_constraint:'用户约束',confirmed_decision:'已确认决定',open_question:'未决事项',pending_work:'待完成工作'};
   for(const p of allPins){
-    const row=node('div',undefined,'pin-row');row.append(node('p',`${cats[p.category]} · ${p.status==='active'?'当前有效':p.status==='superseded'?'已被替换':'已撤销'} · 状态修订 ${p.revision}`),node('p',p.content),node('small',`来源消息 ${p.source_message_id.slice(0,8)} · 字符 ${p.source_span[0]}–${p.source_span[1]}`));
+    const evidence=current.decisions?.items.find(d=>d.pin_id===p.id);
+    const past=evidence?.ever_effective === false?'无稳定生效区间':evidence?.ever_effective === null?'历史生效边界未知':'历史曾有效';
+    const status=p.status==='active'?'当前有效':`${past}，${p.status==='superseded'?'已被替换':'已撤销'}`;
+    const row=node('div',undefined,'pin-row');row.append(node('p',`${cats[p.category]} · ${status}`),node('p',p.content),node('small',`来源消息 ${p.source_message_id.slice(0,8)} · 字符 ${p.source_span[0]}–${p.source_span[1]}`));
+    if(evidence?.ever_effective === false)row.append(node('p','同一提交内已失效，无可观察的稳定生效区间。'));
+    if(evidence?.ever_effective === null)row.append(node('p','旧记录缺少完整提交边界；无法精确还原更早生效区间。'));
+    if(evidence && !evidence.source_verified)row.append(node('p','来源不完整：这条记录未列入宿主可信原文，不得视为已核验决定。'));
+    if(evidence){
+      const details=node('details'), summary=node('summary','来源与历史生效区间');
+      details.append(summary,node('p',`用户明确固定的原文；生效顺序 ${evidence.valid_from ?? '旧边界未知'}；失效顺序 ${evidence.valid_until ?? (evidence.ended_sequence === null?'未失效':'旧边界未知')}。`),node('p','后来失效不代表当时错误；本视图不恢复任何执行授权。'),node('small',`确认事件 ${evidence.confirmation_event_id.slice(0,8)} · 顺序 ${evidence.confirmation_event_sequence}`));row.append(details);
+    }
     const budget=current.resources?.context || {};
     if(budget.pins_included?.includes(p.id))row.append(node('p','最近一次请求：已进入模型预算。'));
     if(budget.pins_omitted?.includes(p.id) || current.pin_budget?.omitted?.includes(p.id))row.append(node('p','最近一次尝试：未进入，预算不足。'));
