@@ -1,0 +1,21 @@
+{
+  "acceptance-report.md": "8a1a4f5ff0c276cda6eb1ffa46567b773bc77015abfa093a02354792a1eb7e89",
+  "browser-acceptance.md": "7cc3eb9383eccfd52a540950c6176869f85a55f37b043c84b21527a5f9474536",
+  "browser-isolation-evidence.json": "4e107765c472b3eca797569216784351442d2e2665fdd1abc81e06ab2ff30d23",
+  "budget-evidence.json": "9f27416bd0bf00b58a98d59487f8c0e31cc45d905ba653043da60817bd7028ca",
+  "case-results.md": "e09e08ba075c330a5e3dde8c9221c13824e8b31ee2a71319d4c082ebdc2a8cb5",
+  "cleanup-evidence.json": "70658cd3742201ab390872d1805bf45646507f6a235dc7008a95a96ff3d76233",
+  "integrity-evidence.json": "592b6080b2a6cfb32a20b090b9c749c82eeba1d6763fd4a43f522b4003c510a2",
+  "next-stage-recommendations.md": "009f5bd9c642c45c050e8e02a2716eb55326045bfb4fbfc68efee27e7909a958",
+  "offline-validation.json": "e782509dddfab9568eaf5873b52d0047ef7fe0b0798a0837ac14e1b21b6461c8",
+  "private-evidence-hashes.json": "12aa7223ff09ecee5e57d0942d2d9aac3b81cf5ff29734a72bde9534740945d0",
+  "protocol-compatibility.md": "7573b6a4b36fd91a5e8482eefcc167385a44e78ea5865760feb28dee69296c6b",
+  "remaining-risks.md": "9514a8b750c11cf9285d7a341e91cfe141b4228f4622c9efa10c266dfcf4b847",
+  "resource-usage.json": "e5ff18eca1f5c4700f20159a72bd7c9a3122bdec011686a8d9c14f556c374287",
+  "screenshots/R01-resources.png": "3d92571745ee0aed6afefca060006edec1566c08e95dcc812cc77d14e45ba52c",
+  "screenshots/isolation-A.png": "4bb9a92308cbd58a99b451e802716c4d9dbb9486489bab6fe4f91bf9224b4185",
+  "screenshots/isolation-B.png": "40db9a555e6b8faf5785db8eff3111c1aea08d79e4a0d6ba26a8b37a559cbc8b",
+  "security-audit.md": "355b0b6533ea1c7add7b313ba72d4841a5d1a3d78bbcd2b3cf593d2ae4f9a30d",
+  "steer-evidence.json": "622d6799240550b37667075994ba97ae5f7a2cd2ca0b6ebe312ebc2ff83863be",
+  "stream-timing.json": "702a4be859b647e6294e51a61886ca39603234884987982df10745eb1b3e5cf2"
+}

@@ -1,6 +1,6 @@
-# Streaming & Steer Provider UAT准备专题
+# Streaming & Steer Provider UAT专题
 
-未编号专题，不修改历史Phase Tag/ZIP。目标是在零真实请求授权下，准备未来八次物理请求的可审计Web验收；不是新的产品功能或真实模型成功结论。
+未编号专题，不修改历史Phase Tag/ZIP。最初在零真实请求授权下准备八次物理请求的可审计Web验收；本轮授权执行结果另列于文末，不改原离线报告。
 
 ## 概念与架构
 
@@ -20,6 +20,16 @@ uv run python -m scripts.streaming_steer_uat.prepare verify --provider-config '<
 
 ## 案例、验证和限制
 
-四个真实Case依次文本协议/UX、工具Steer、无下一步不应用、取消清理；当前全部LIVE BLOCKED。新增30项Mock专项，加相关217项去重通过及真实Chrome双身份探针。没有调用真实Provider；部署是否支持Streaming/include_usage、DOM体验和语义遵从尚未验证。
+四个真实Case依次文本协议/UX、工具Steer、无下一步不应用、取消清理；离线准备时全部LIVE BLOCKED，原结论保留在准备报告。新增30项Mock专项，加相关217项去重通过及真实Chrome双身份探针。当时没有调用真实Provider，部署协议、DOM体验和语义遵从未验证。
 
 本专题不改生产Streaming/Steer，不重做Memory/Pin/决定来源。与上一阶段区别是独立持久额度和真实场景预注册，不是合成结果当作Live评分。最重要的常见错误是提前结算迭代器、把queued当applied、把空role当首Token、把屏障延迟当网络延迟，以及未经新授权启动服务。
+
+## 本轮真实执行与学习结论
+
+收到新的GRANTED_8_REQUESTS后，原冻结预检通过并完成动态Chrome双身份隔离。真实R01消费328块并在终态前显示预览；首空Chunk约2.344s、首内容2.356s、浏览器提交到DOM预览3.461s。没有时钟关联，SDK到DOM差UNKNOWN。
+
+R01最终provider_error、eof=false，虽observer见stop，也不能当完整成功。Ledger自动HALT，物理1/8、DeepSeek1/GLM0/摘要0，Usage未知、cost=null；R02–R04安全BLOCKED，无补跑。具体consumer拒绝分支没有被记录，GeneratorExit只说明上游停止消费，不能反推唯一根因。
+
+正常关闭自己的uv launcher等待25秒超时；最终独立核实进程消失、端口/Lease释放及Chrome/profile清理，但退出码未知、Case仍running，Cleanup不能判PASS。新Live结果见[独立报告](../reports/streaming-steer-live-uat/live-results/execution-01/acceptance-report.md)。原源码/Fixture/hash/inode保持，不为诊断再调用Provider。
+
+本轮学习重点是：终态字段与可信完成分离，正文hash一致与完整性分离，最终资源释放与正常退出码分离。下一阶段先补脱敏错误可观测性与Mock验证，再考虑新的独立授权Live；不能修复旧账本制造成功。

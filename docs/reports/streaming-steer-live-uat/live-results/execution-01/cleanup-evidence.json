@@ -1,0 +1,36 @@
+{
+  "port_free": true,
+  "lease_available": true,
+  "owned_server_process_absent": true,
+  "graceful_wait_timed_out": true,
+  "exit_status_unknown": true,
+  "profile_removed": true,
+  "initial_shutdown": "SIGINT sent only to own uv launcher; 25s wait expired",
+  "subsequent_status": "Owned launcher and Python PID absent; no listener; WorkspaceLease acquired/released",
+  "explicit_sigterm_sent": false,
+  "force_kill_sent": false,
+  "normal_exit_code": null,
+  "case_ledger_finalized": false,
+  "persisted_case_status": [
+    {
+      "id": "R01",
+      "status": "running"
+    }
+  ],
+  "turns": [
+    {
+      "id": "506f095f592c4f67ae75b5c8da4b3a71",
+      "state": "provider_error"
+    }
+  ],
+  "event_types": {
+    "assistant.message": 1,
+    "conversation.created": 2,
+    "model.finished": 1,
+    "model.started": 1,
+    "turn.finished": 1,
+    "turn.started": 1,
+    "user.message": 1
+  },
+  "tools": 0
+}

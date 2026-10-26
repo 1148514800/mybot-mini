@@ -1,0 +1,9 @@
+# Actual stream protocol evidence
+
+冻结BudgetClient在每次发送前强制stream=True、stream_options={include_usage:true}、SDK max_retries=0。本次唯一HTTP记录有请求体哈希，随后SDK迭代器交付328块；首块为非文本且非终态，后续有真实文本。没有非流式回退、备用或第二请求。未获得HTTP状态数字证据，status_code保持null。
+
+可确认部署接受了请求并发送流；不能确认整个stream_options/Usage协议兼容。observer记录stop，随后GeneratorExit、eof=false、close=true；consumer最终provider_error、terminal不可信。没有可靠Usage，不能称其不支持Usage，也不能声称返回了可靠Usage。
+
+mybot/agent/streaming.py对非单choice、错误role、重复finish、结束后内容/工具等有严格拒绝路径，异常被统一归类provider_error。私有证据没有逐块shape与具体consumer异常；GeneratorExit只是上游停止消费后的观测，不足以唯一定位根因。重复终态、后置内容、其他协议形状或本地拒绝均只属待调查可能性，未被本次证明。没有为诊断额外调用Provider或修改observer。
+
+真实Tool Call分块、Steer后续请求、取消远端计费均未进入本轮场景。后续修复应先Mock复现与脱敏错误可观测性；新Live必须另行授权，不能复用本批次。

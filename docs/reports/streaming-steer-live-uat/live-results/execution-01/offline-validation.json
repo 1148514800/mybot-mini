@@ -1,0 +1,21 @@
+{
+  "status": "REPORT_AND_INTEGRITY_CHECKS_PASS; LIVE_R01_FAIL; R02_R04_BLOCKED",
+  "initial_frozen_verify": "PASS",
+  "final_frozen_verify": "EXPECTED_BLOCKED_batch_halted",
+  "read_only_integrity_checks": 12,
+  "real_requests": 1,
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "git_diff_check": "PASS",
+  "report_json_parse": "PASS",
+  "new_files_credential_value_scan": "PASS",
+  "historical_reports_unchanged": true,
+  "production_and_harness_sources_unchanged": true,
+  "new_offline_tests": 0,
+  "full_check_phase_this_execution": "NOT_RUN; documentation-only delivery",
+  "prior_preparation_tests": 217,
+  "prior_tests_rerun_this_execution": false,
+  "production_legacy_full_1863": "historical, not rerun",
+  "tracked_credential_value_scan_files": 1262,
+  "tracked_credential_value_scan": "PASS"
+}

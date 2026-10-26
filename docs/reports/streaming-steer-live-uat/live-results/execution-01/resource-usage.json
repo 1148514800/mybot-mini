@@ -1,0 +1,23 @@
+{
+  "logical_model_requests": 1,
+  "physical_model_requests": 1,
+  "http_dispatch_attempts": 1,
+  "deepseek": 1,
+  "glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "fallback": 0,
+  "hidden_retry": 0,
+  "failed_requests": 1,
+  "provider_input_tokens": null,
+  "provider_output_tokens": null,
+  "provider_total_tokens": null,
+  "usage_complete": false,
+  "estimated_input_tokens": 2730,
+  "estimate_is_not_provider_usage": true,
+  "output_reserved_tokens": 1200,
+  "input_limit": 14000,
+  "cost": null,
+  "cost_reason": "No trustworthy usage or deployment price; remote token use/billing UNKNOWN",
+  "unsettled_reservations": 0
+}

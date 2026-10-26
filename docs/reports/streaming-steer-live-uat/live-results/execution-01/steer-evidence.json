@@ -1,0 +1,24 @@
+{
+  "R01": {
+    "steers": [],
+    "tools": 0,
+    "steer_included": false
+  },
+  "R02": {
+    "status": "BLOCKED",
+    "queued": null,
+    "applied": null,
+    "semantic_adherence": null,
+    "reason": "Global halt after R01"
+  },
+  "R03": {
+    "status": "BLOCKED",
+    "queued": null,
+    "not_applied": null
+  },
+  "R04": {
+    "status": "BLOCKED",
+    "stop_clicked": false,
+    "cancelled_stream_verified": false
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "R01": {
+    "sdk": {
+      "reservation": 1,
+      "case": "R01",
+      "clock": "server_monotonic",
+      "request_started": 1648445.960693291,
+      "request_sha256": "5e954c72ee1766994eccaba33ed3f398a410026ff98e266a63ed9ff4de4853b4",
+      "steer_included": false,
+      "first_chunk": 1648448.304726333,
+      "first_chunk_is_text": false,
+      "first_chunk_terminal": false,
+      "chunks": 328,
+      "first_text": 1648448.316343666,
+      "first_chunk_seconds": 2.3440330419689417,
+      "finish_reason": "stop",
+      "controlled_barrier_seconds": 0,
+      "eof": false,
+      "closed": true,
+      "error_type": "GeneratorExit",
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      },
+      "assembled_text_sha256": "3ff93dab7e7487532dfe7239178a50f08dc060947ae1a81cdc2da6a1f4fcf92b",
+      "assembled_stripped_sha256": "3ff93dab7e7487532dfe7239178a50f08dc060947ae1a81cdc2da6a1f4fcf92b",
+      "tool_name_fragments": []
+    },
+    "first_content_seconds": 2.3556503751315176,
+    "first_sse_preview_seconds": 3.257147875148803,
+    "chunks_before_first_sse_preview": 65,
+    "browser": {
+      "submit_to_visible_seconds": 3.4612999999523164,
+      "clock": "same browser performance.now domain; observer scheduled DOM visibility, not compositor paint",
+      "visible_characters": 114,
+      "visible_label": "生成中 · 临时预览，尚未正式保存",
+      "visible_before_terminal": true
+    },
+    "sdk_request_to_browser_visible_seconds": null,
+    "sdk_chunk_to_browser_visible_seconds": null,
+    "cross_clock_reason": "No validated correlation between server monotonic and browser performance.now",
+    "normalized_saved_body_matches_sdk_assembly": true,
+    "trusted_complete": false
+  },
+  "R02": null,
+  "R03": null,
+  "R04": null
+}

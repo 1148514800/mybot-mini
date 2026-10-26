@@ -1,0 +1,39 @@
+{
+  "authorization": "GRANTED_8_REQUESTS",
+  "global_cap": 8,
+  "case_caps": {
+    "R01": 1,
+    "R02": 4,
+    "R03": 1,
+    "R04": 2
+  },
+  "cases": [
+    {
+      "id": "R01",
+      "status": "running"
+    }
+  ],
+  "physical_requests": 1,
+  "http_dispatch_attempts": 1,
+  "unsettled": 0,
+  "halt": "protocol_or_runtime_failure",
+  "reservations": [
+    {
+      "id": 1,
+      "case_id": "R01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "failed",
+      "http_attempts": 1,
+      "error_type": "GeneratorExit",
+      "status_code": null,
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      }
+    }
+  ],
+  "remaining_budget_may_not_be_used_in_halted_batch": true
+}

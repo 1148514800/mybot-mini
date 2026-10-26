@@ -74,4 +74,4 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 
 - [Streaming & Steer v1](streaming-steer-v1.md)：真实流消费、安全下一步骤补充与重连，离线/独立Chrome合成状态见[报告](../reports/streaming-steer-v1/acceptance-report.md)；无新历史Tag/ZIP。
 
-- [Streaming & Steer Provider UAT准备](streaming-steer-live-uat.md)：独立8次预算与真实场景预注册；NOT_GRANTED，离线准备完成后Live继续BLOCKED，见[报告](../reports/streaming-steer-live-uat/acceptance-report.md)。
+- [Streaming & Steer Provider UAT](streaming-steer-live-uat.md)：已获新授权，真实R01终态FAIL、其余安全BLOCKED，实际1/8；原离线报告保留，见[Live报告](../reports/streaming-steer-live-uat/live-results/execution-01/acceptance-report.md)。

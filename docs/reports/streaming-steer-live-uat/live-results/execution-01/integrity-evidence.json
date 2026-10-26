@@ -1,0 +1,36 @@
+{
+  "checks": {
+    "source_hashes_unchanged": true,
+    "prepared_bytes_unchanged": true,
+    "plan_unchanged": true,
+    "provider_bytes_and_models_unchanged": true,
+    "workspace_bytes_unchanged": true,
+    "browser_freeze_unchanged": true,
+    "requests.sqlite_identity_unchanged": true,
+    "requests.sqlite_integrity": true,
+    "requests.sqlite_foreign_keys": true,
+    "session-events.sqlite3_identity_unchanged": true,
+    "session-events.sqlite3_integrity": true,
+    "session-events.sqlite3_foreign_keys": true
+  },
+  "preflight": {
+    "passed": true,
+    "usage": {
+      "real_requests": 0,
+      "attempts": 0,
+      "unsettled": 0,
+      "http_attempts": 0
+    },
+    "port_8899_free": true,
+    "lease_acquired_released": true,
+    "database_integrity": true,
+    "workspace_isolated": true,
+    "old_service_not_contacted": true,
+    "browser_isolation": true
+  },
+  "initial_head": "5a58801420f2ea1047f8c9f5e3c8ed2fd6fb0095",
+  "preregistration": "75e79d2ed7fd6c14beef326f025667c3f61085ba",
+  "plan_sha256": "0adcfdce78b7be5dbf5fca7da1f1583f90f2439b2c9081c76cc3fccfc11c08cd",
+  "final_verify": "BLOCKED: batch_halted, expected safety stop; never cleared",
+  "production_source_changed": false
+}
