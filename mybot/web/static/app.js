@@ -13,10 +13,42 @@ async function api(path, method='GET', data) {
     const response = await fetch('/api/' + path, {method, credentials:'same-origin', signal:controller.signal,
       headers: method === 'GET' ? {} : {'Content-Type':'application/json','X-Mybot-CSRF':boot.csrf},
       body: data === undefined ? undefined : JSON.stringify(data)});
-    if (!response.ok) { const detail = await response.json().catch(()=>({})); const message = detail.error === 'conversation_limit' ? '本进程最多保留 20 个对话。请保留需要的内容后重启服务。' : detail.error === 'web_control_unsupported' ? 'Web 第一版不支持跨轮 Undo 与 /changes。请使用活动面板查看修改；清空对话请使用设置按钮。' : response.status === 409 ? '工作区正忙，或本次审批已失效。请查看正在运行的对话。' : response.status === 403 ? '连接授权已过期，请刷新页面。' : '请求未完成，请检查输入或本地配置。'; throw Error(message); }
+    if (!response.ok) { const detail = await response.json().catch(()=>({})); const message = detail.status === 'stale_turn' ? '补充指令目标已过期，请刷新当前任务。' : detail.status === 'rejected' ? '补充指令被拒绝：请核对当前任务、容量及审批状态。' : detail.error === 'conversation_limit' ? '本进程最多保留 20 个对话。请保留需要的内容后重启服务。' : detail.error === 'web_control_unsupported' ? 'Web 第一版不支持跨轮 Undo 与 /changes。请使用活动面板查看修改；清空对话请使用设置按钮。' : response.status === 409 ? '工作区正忙，或本次审批已失效。请查看正在运行的对话。' : response.status === 403 ? '连接授权已过期，请刷新页面。' : '请求未完成，请检查输入或本地配置。'; throw Error(message); }
     return await response.json();
   } catch(error) { throw Error(error.name === 'AbortError' ? '请求超时；后台状态未确认，请刷新后查看。' : error.message); }
   finally { clearTimeout(timer); }
+}
+let previewFrame=0, refreshTimer=0;
+function scheduleRefresh(){if(!refreshTimer)refreshTimer=setTimeout(()=>{refreshTimer=0;refresh().catch(e=>notice(e.message));},100);}
+function renderPreview(){
+  const v=current?.stream_preview || {}, container=$('stream-preview');
+  container.hidden=!v.stream_id || (current.status==='completed' && v.status==='complete') || v.status==='tool_calls';
+  if(container.hidden)return;
+  $('stream-label').textContent=v.status==='generating'?'生成中 · 临时预览，尚未正式保存':v.status==='complete'?'生成结束 · 正在可靠保存':'回复不完整 · '+v.status;
+  $('stream-body').replaceChildren(markdown(v.text || '等待可安全展示的文本…'));
+  if(nearBottom)$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight;
+}
+function renderSteer(){
+  const enabled=boot.steer_enabled, row=(current.steers || []).at(-1), pending=row?.status==='queued';
+  $('steer-form').hidden=!enabled || !busy();
+  $('steer-send').disabled=!enabled || pending || current.status!=='running';
+  $('steer-hint').textContent=current.status==='waiting_approval'?'请先审批、拒绝或停止当前操作；补充指令不能代替审批。':'';
+  const box=$('steer-summary');box.replaceChildren();if(!enabled || !row)return;
+  const text={queued:'已排队，等待下一安全步骤',applied:'已在下一模型步骤应用（不代表模型遵从）',not_applied:'任务在下一模型步骤前已结束，本次补充未生效',discarded_on_stop:'停止后补充指令已失效'}[row.status] || '补充指令未生效';
+  box.append(node('p',text));
+  if(['not_applied','discarded_on_stop'].includes(row.status)){
+    const b=node('button','填入下一轮消息');b.type='button';b.addEventListener('click',()=>{$('message-input').value=row.text;$('message-input').dispatchEvent(new Event('input'));});box.append(b);
+  }
+}
+function streamActivity(event){
+  const e=JSON.parse(event.data);if(!current || e.sequence<=current.sequence)return;
+  if(e.type.startsWith('model_stream') || e.type==='model_text_delta'){
+    if(e.turn_id!==current.active_turn_id){scheduleRefresh();return;}
+    const previous=current.stream_preview || {};
+    if(previous.stream_id===e.stream_id && (e.preview_revision??0)<(previous.preview_revision??0))return;
+    current.stream_preview={...e,status:e.status || 'generating'};current.sequence=e.sequence;
+    if(!previewFrame)previewFrame=requestAnimationFrame(()=>{previewFrame=0;renderPreview();});
+  }else scheduleRefresh();
 }
 function renderHistory() {
   $('storage-label').textContent=boot.persistence?'聊天已启用本地SQLite明文存储':'对话仅保存在本次服务内存中';
@@ -173,16 +205,16 @@ async function refresh() {
   if (state.status === 'cleanup_uncertain') notice('资源清理无法确认，已阻止新任务。请检查运行环境并重启服务。');
   const c = boot.conversations.find(c=>c.id===id); if(c) {c.status=state.status;c.title=state.title;}
   if (busy()) boot.busy = id; else if (boot.busy === id) boot.busy = null;
-  renderHistory(); renderMessages(); renderActivity(); renderApproval(); controls();
+  renderHistory(); renderMessages(); renderActivity(); renderApproval(); controls();renderPreview();renderSteer();
 }
 async function select(id) {
   selected = id; olderMessages=[]; stream?.close(); $('sidebar').parentElement.classList.remove('nav-open'); nearBottom = true;
   await refresh();
   if (selected !== id) return;
   stream = new EventSource(`/api/conversations/${id}/events`);
-  stream.addEventListener('activity', () => refresh().catch(e=>notice(e.message)));
+  stream.addEventListener('activity',streamActivity);
   stream.addEventListener('reset', () => refresh().catch(e=>notice(e.message)));
-  stream.onopen = () => { $('connection').replaceChildren(node('i'), document.createTextNode('本地连接')); };
+  stream.onopen = () => {scheduleRefresh(); $('connection').replaceChildren(node('i'), document.createTextNode('本地连接')); };
   stream.onerror = () => { $('connection').textContent = '连接断开 · 正在重连'; };
 }
 async function newChat() {
@@ -251,3 +283,11 @@ $('delete-chat').addEventListener('click',()=>{const id=selected;$('settings-dia
 $('review-chat').addEventListener('click',()=>{$('settings-dialog').close();confirmData('仅当你已人工检查工作区和所有残留子进程后确认。此操作只解除中断状态的执行阻止，不恢复审批、Receipt或verified，也不会重放工具。',async()=>{await api(`conversations/${selected}/review`,'POST',{confirmed:true,workspace_and_processes_checked:true});boot=await api('bootstrap');await refresh();});});
 $('load-older').addEventListener('click',async()=>{try{const first=(olderMessages.length?olderMessages:current.messages)[0];if(!first?.sequence)return;const page=await api(`conversations/${selected}/history?before=${first.sequence}`);if(!page.messages.length){notice('没有更早的已存消息。');return;}olderMessages=page.messages;$('show-recent').hidden=false;nearBottom=false;renderMessages();}catch(e){notice(e.message);}});
 $('show-recent').addEventListener('click',()=>{olderMessages=[];$('show-recent').hidden=true;nearBottom=true;renderMessages();});
+
+$('steer-form').addEventListener('submit',async event=>{
+  event.preventDefault();const text=$('steer-input').value.trim();if(!text)return;
+  $('steer-send').disabled=true;
+  try{await api(`conversations/${selected}/steer`,'POST',{expected_turn_id:current.active_turn_id,client_request_id:crypto.randomUUID(),text});$('steer-input').value='';await refresh();}
+  catch(e){notice(e.message);}
+  finally{renderSteer();}
+});

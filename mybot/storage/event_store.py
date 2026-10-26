@@ -244,7 +244,7 @@ class SessionEventStore:
         for event in events:
             from .event_privacy import safe_text
             for key,value in event.payload.items():
-                if type(value) is str and key in ('content','title') and safe_text(value,self.secrets,max_bytes=65536)[0]!=value:
+                if type(value) is str and key in ('content','title','text') and safe_text(value,self.secrets,max_bytes=65536)[0]!=value:
                     raise StoreError('sensitive_or_oversized_event_text')
             canonical=hashlib.sha256(event.canonical().encode()).hexdigest()
             payload=json.dumps(event.payload,ensure_ascii=True,sort_keys=True,separators=(',',':'))
@@ -316,6 +316,18 @@ class SessionEventStore:
         elif kind.startswith('pin.'):
             if db.execute("SELECT 1 FROM turns WHERE session_id=? AND state IN ('running','pending')",(sid,)).fetchone():raise StoreError('pin_while_running')
             self._pin(db,event)
+        elif kind.startswith('steer.'):
+            turn=self._turn(db,sid,p['turn_id'],'running')
+            rows=db.execute("SELECT event_type,payload FROM events WHERE session_id=? AND sequence>=? AND event_type IN ('steer.queued','steer.resolved') ORDER BY sequence LIMIT 65",(sid,turn['sequence'])).fetchall()
+            queued={};resolved=set()
+            # Current event is already inserted; validate against earlier records.
+            for row in rows[:-1]:
+                v=json.loads(row['payload'])
+                if row['event_type']=='steer.queued':queued[v['steer_id']]=v
+                else:resolved.add(v['steer_id'])
+            if kind=='steer.queued':
+                if len(rows)>64 or len(queued)>=32 or set(queued)-resolved or p['steer_id'] in queued or any(v['client_request_id']==p['client_request_id'] for v in queued.values()):raise StoreError('steer_event_queue_conflict')
+            elif p['steer_id'] not in queued or p['steer_id'] in resolved:raise StoreError('steer_event_resolution_conflict')
         elif 'turn_id' in p:self._turn(db,sid,p['turn_id'],'running')
 
     @staticmethod

@@ -86,7 +86,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
             'receipt': config.coding_preview_receipt, 'coding': config.coding_enabled,
             'storage_notice': ('本地SQLite明文历史；不保存完整模型请求或授权。' if config.storage_backend=='event_sqlite' else '仅本次进程内存；固定事项也不跨重启。'),
             'busy': runtime.owner, 'cleanup_uncertain': runtime.cleanup_uncertain,
-            'conversations': [{'id': c.id, 'title': c.title, 'status': c.status} for c in runtime.conversations.values()]})
+            'streaming_enabled':runtime.config.web_streaming,'steer_enabled':runtime.config.web_steer,'conversations': [{'id': c.id, 'title': c.title, 'status': c.status} for c in runtime.conversations.values()]})
 
     def find(request):
         runtime.sync()
@@ -131,6 +131,15 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         except (ValueError, json.JSONDecodeError, RecursionError, UnicodeError):
             return JSONResponse({'error': 'invalid_message_or_unsupported_control'}, status_code=400)
         return JSONResponse({'accepted': accepted}, status_code=202 if accepted else 409)
+
+    async def steer(request):
+        c=find(request)
+        if c is None:return JSONResponse({'error':'not_found'},status_code=404)
+        try:return JSONResponse(runtime.steer(c,await body(request)))
+        except StoreError as exc:
+            state='stale_turn' if str(exc)=='stale_turn' else 'rejected'
+            return JSONResponse({'status':state,'error':'steer_rejected_check_turn_capacity_and_approval'},status_code=409)
+        except (ValueError,TypeError):return JSONResponse({'status':'rejected','error':'invalid_steer'},status_code=409)
 
     async def stop(request):
         c = find(request)
@@ -210,8 +219,12 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
             nonlocal cursor
             while not runtime.closed and c.id in runtime.conversations:
                 c.changed.clear()
+                if cursor>c.sequence:
+                    cursor=c.sequence
+                    yield 'event: reset\ndata: {}\n\n'
                 # A missed window triggers full authenticated state refresh, not fabricated events.
                 if c.events and cursor < c.events[0]['sequence'] - 1:
+                    cursor=c.sequence
                     yield 'event: reset\ndata: {}\n\n'
                 for event in list(c.events):
                     if event['sequence'] > cursor:
@@ -224,6 +237,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
     routes = [Route('/', home), Route('/static/{name}', asset), Route('/api/bootstrap', bootstrap),
         Route('/api/conversations', conversations, methods=['POST']), Route('/api/conversations/{id}', state),
         Route('/api/conversations/{id}/messages', message, methods=['POST']),
+        Route('/api/conversations/{id}/steer',steer,methods=['POST']),
         Route('/api/conversations/{id}/stop', stop, methods=['POST']), Route('/api/conversations/{id}/clear', clear, methods=['POST']),
         Route('/api/conversations/{id}/history',history_page),
         Route('/api/conversations/{id}/pins',pins,methods=['POST']),

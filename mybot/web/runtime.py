@@ -8,6 +8,7 @@ import secrets
 import time
 
 from ..runtime_accounting import OUTPUT_NOTICES
+from ..agent.streaming import StreamCleanupError
 from ..agent import AgentLoop, ContextBuilder
 from ..agent.session import Session
 from ..config import GatewayConfig
@@ -50,6 +51,9 @@ class Conversation:
     observed_turn_id: str | None = None
     context_boundary: int = 0
 
+    stream_preview: dict = field(default_factory=dict)
+    steer_inbox: object = None
+
     def emit(self, event):
         # No raw receipts, arguments, SDK errors, approval capabilities or private config.
         event = dict(event)
@@ -60,6 +64,9 @@ class Conversation:
         if len(json.dumps(clean, ensure_ascii=False).encode()) > 32768:
             clean = {k: clean[k] for k in ('type', 'tool', 'call_id', 'success', 'status') if k in clean}
             clean['display_truncated'] = True
+        if str(clean.get('type','')).startswith('model_stream') or clean.get('type')=='model_text_delta':
+            if clean.get('turn_id')!=self.observed_turn_id:return
+            self.stream_preview={k:v for k,v in clean.items() if k in ('turn_id','stream_id','text','preview_revision','status')} | {'status':clean.get('status','generating')}
         self.sequence += 1
         self.events.append({'sequence': self.sequence, 'time': time.time(), **clean})
         if event['type'] == 'pin_budget':self.pin_budget=clean
@@ -76,7 +83,8 @@ class Conversation:
         self.changed.set()
 
     def state(self):
-        return {'id': self.id, 'title': self.title, 'status': self.status, 'messages': self.messages,
+        from ..agent.steer import SteerInbox
+        return {'stream_preview':dict(self.stream_preview),'steers':list(self.steer_inbox.records.values()) if self.steer_inbox else SteerInbox.audit(self.history) if self.history else [],'active_turn_id':self.history.turn_id if self.history else None, 'id': self.id, 'title': self.title, 'status': self.status, 'messages': self.messages,
                 'events': list(self.events), 'sequence': self.sequence, 'requests': self.requests,
                 'tokens': self.resources.get('provider_reported_total_tokens') if self.resources else (self.tokens if self.usage_known else None), 'report': self.report, 'resources': self.resources, 'contract': self.contract,
                 'approval': self.approval.public_pending() if self.approval else None,
@@ -118,7 +126,7 @@ class ChatRuntime:
             if row['seq']==c.store_sequence:continue
             status=c.history.status()
             if c.observed_turn_id!=status['turn_id']:
-                c.report=None;c.contract=None;c.resources={};c.approval=None;c.events.clear()
+                c.report=None;c.contract=None;c.resources={};c.approval=None;c.events.clear();c.stream_preview={};c.steer_inbox=None
                 c.session.restore(c.history.model_turns(c.session.max_turns))
             elif row['context_after']!=c.context_boundary:
                 c.session.restore(c.history.model_turns(c.session.max_turns))
@@ -150,6 +158,8 @@ class ChatRuntime:
         self.owner = c.id  # No await between checking and reserving the process-wide lease.
         c.status = 'running'; c.started.clear(); c.failed_request = False; c.report = None
         c.events.clear(); c.contract = None; c.pin_budget={}; c.requests = c.tokens = 0; c.usage_known = True; c.resources = {}
+        from ..agent.steer import SteerInbox
+        c.steer_inbox=SteerInbox(c.history,c.emit) if self.config.web_steer else None;c.stream_preview={}
         c.messages=accepted_messages;c.recovery_notice='';c.observed_turn_id=c.history.turn_id
         c.messages[:] = c.messages[-64:]
         c.title=c.history.title()
@@ -183,7 +193,7 @@ class ChatRuntime:
                     c.messages = redact(c.messages, c.secret_values)
                     c.title = redact(c.title, c.secret_values)
                 agent = AgentLoop(client, config, tools, ContextBuilder(config.workspace), session=c.session,
-                    undo_approval_provider=c.approval, event_callback=c.emit,history=c.history)
+                    undo_approval_provider=c.approval, event_callback=c.emit,history=c.history,steer_inbox=c.steer_inbox,stream_secrets=c.secret_values)
                 if isinstance(client, ProviderFailoverClient):
                     client.before_fallback = lambda definitions: agent.coding_controller is None or agent.coding_controller.before_request(definitions)
                 reply = await agent.handle_message(text)
@@ -216,6 +226,8 @@ class ChatRuntime:
         except StoreError:
             c.status='execution_uncertain';self.cleanup_uncertain=True
             c.recovery_notice='持久化写入失败；不宣称已保存，不自动重放。请检查数据库和工作区后重启。'
+        except StreamCleanupError:
+            c.status='execution_uncertain';self.cleanup_uncertain=True
         except WorkspaceBusy:
             c.status = 'failed'
             c.emit({'type':'workspace_busy', 'reason':'another_process_or_unsafe_lock'})
@@ -243,6 +255,11 @@ class ChatRuntime:
             if client is not None:
                 try: await client.close()
                 except BaseException: cleanup_ok = False
+            if c.steer_inbox and c.steer_inbox.pending:
+                budget=bool(agent and agent.resources.request_budget_exhausted)
+                stopped=outcome in ('cancelled','stopped','execution_uncertain') and not budget
+                try:c.steer_inbox.resolve('discarded_on_stop' if stopped else 'not_applied','stop' if stopped else 'budget' if budget else 'no_next_step')
+                except StoreError:cleanup_ok=False;self.cleanup_uncertain=True
             # Persist the terminal boundary only after owned resources settle.
             # A cleanup failure must remain unsafe after a service restart.
             try:
@@ -267,6 +284,12 @@ class ChatRuntime:
             # Lease remains held until MCP __aexit__, Agent finally and client close settle.
             lease.release(confirmed=cleanup_ok and not self.cleanup_uncertain)
             if cleanup_ok: self.owner = None
+
+    def steer(self,c,value):
+        if not self.config.web_steer or self.closed or self.cleanup_uncertain or self.owner!=c.id or c.status!='running' or c.task is None or c.task.done() or c.steer_inbox is None:
+            raise StoreError('steer_rejected_busy_approval_or_inactive')
+        if set(value)!={'expected_turn_id','client_request_id','text'}:raise StoreError('steer_fields')
+        return c.steer_inbox.submit(**value)
 
     async def stop(self, c):
         task = c.task

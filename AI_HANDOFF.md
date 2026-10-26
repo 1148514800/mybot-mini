@@ -1,25 +1,27 @@
 # AI_HANDOFF
 
-## 当前目标与状态
+## 当前状态
 
-Decision Provenance & Temporal Validity v1已实现并通过离线及独立Chrome合成验收，真实DeepSeek/GLM/摘要/Judge/Provider HTTP均0，不使用旧剩余1次。分支codex/decision-provenance-temporal-validity，基线ba04931815c222543a7e05bf86147a9a5adb4642；Implementation f1548ca0d309e2ed8bfe348ac750d50f6f95b648，验收报告另有独立提交，报告目录docs/reports/decision-provenance-temporal-validity/。
+Streaming & Steer v1工程、专项、完整离线和独立headed Chrome合成验收已通过。分支codex/streaming-steer-v1，基线c2f1baca04dc8b7bc320e9cd9295fe3d5b870331；实现与报告分两个提交交付。真实DeepSeek/GLM/摘要/Judge/Provider HTTP均0，旧余额未使用。报告docs/reports/streaming-steer-v1/。
 
-## 实现与架构
+## 实现与边界
 
-新增agent/decision_provenance.py与storage/decision_timeline.py：精确SQLite user来源/Unicode跨度/确认事件，与普通原文和未验证分类提议分开。模型自由文本不成为Pin或宿主可信决定。SessionHistory.decisions复用于Web状态与CLI `/decisions [boundary]`。
+新增agent/streaming.py、agent/steer.py，小范围接入原Loop、ProviderFailover、RuntimeAccounting、EventSchema/Store与Web。web.streaming.enabled和web.steer.enabled默认false，旧CLI/非流式兼容。SDK create和consume共用一物理记录；任意首Chunk之后禁止透明Fallback，Usage缺失null。流式工具按index组装并复用严格parse_object，只有可信终态进入原Registry/审批。
 
-事件Schema仍v1；数据库v2新增event_commits，和append_many同事务写提交区间。历史按真实提交终点查询，拒绝原子替换中间序号；v1迁移只记录当前可证明边界，更早未知端点null，禁止推断。部署需停止同库旧版本写者，旧程序不能直接降级读v2。本轮只迁移临时合成库，未打开用户/Live旧库。
+Steer绑定真实Session/Turn，单pending、2000字符、32记录，同ID内容幂等；queued不等于applied。未开始工具明确配对跳过，已开始工具不回滚；下一请求重建并通过Token/Controller预算，物理准入才applied。无下一步not_applied，停止discarded，旧Turn/rejected明确响应，审批等待拒绝。原Pin、Decision Provenance、TaskContract及工具权限未变；v1不让Steer修改可信合同或成为永久Pin。
 
-Context Projection保留原来源遮蔽、独立事实与工具配对，增加自然语言来源/历史政策与有界提交顺序。Web显示来源与历史生效详情，模型回答明确独立于宿主确认；不改变Pin写入口、Tool Authority、CSRF/CSP或生产依赖。
+新增steer.queued/resolved为事件schema v2，旧事件v1与DB v2表结构保持；不新增DB迁移。只恢复有界审计，不恢复队列、流、旧审批/Receipt/verified。不同版本写者升级要协调，不能共享不兼容活动库。
 
-## 验证与完整性
+SSE使用Turn/Stream ID、序号与有界绝对预览快照，100ms合并和帧渲染；重连状态恢复不重发模型。跨Chunk完整行脱敏，4096字符长行保守隐藏，预览8192字节；文本32768字符、工具65536字符/16调用、deque128。关闭超时3秒或失败维持Lease/不确定阻止。
 
-新增56项：来源20、时间线20、上下文16。最终check_phase 55组1637项，独立补充79、持久会话预算22、Source-Aware预算28，总计1766项，0失败/跳过；定向重复不重复计数。compileall、JS语法、diff检查通过，最终Python/JS源码前后哈希一致。初次全量因运行中编辑触发旧冻结门而作废，已稳定源码完整重跑。
+## 验证
 
-Chrome152.0.7977.83/Playwright1.64.1 headed，新0700 profile及双profile Cookie/LocalStorage动态隔离通过。真实页面完成两约束确认、错误模型回答不污染、替换、撤销、跨七轮和重启；12次本地SyntheticClient调用。自身服务exit0、端口/Lease释放、profile清理，旧8765与用户Chrome未操作。原Live报告、冻结资产、Tag/ZIP及所有旧断言保留。
+新增97项：流式33、Failover12、Inbox22、Web30。最终check_phase59组1734项，独立补充79、Persistent预算22、Source-Aware预算28，去重1863项全通过、0跳过；重复执行不重复计数。最终Python/JS源码哈希前后一致，compileall、app.js/markdown.js语法、diff检查通过。
 
-## 已知限制与下一步
+Chrome152.0.7977.83/Playwright1.64.1，新0700 profile及双向Cookie/LocalStorage探针通过。真实页面A–G加H停止：终态前中文/Markdown、Steer跳过工具/下一步应用、无后续不应用、断流、真实网络重连、审批拒绝、停止与完整服务重启。最终8次本地SDK Mock HTTP/8流关闭，Steer applied/not_applied/discarded各1；SQLite完整、Pin0、唯一命令被拒且effect=none。自身服务exit0、端口/Lease释放、profile清理，旧8765、用户Chrome、私有Live库未操作。
 
-不具备通用语义蕴含检测、实时改写模型错误或清除助手语义影响的能力。内部元数据为兼容仍在参考中，减少标签抄写尚未真实模型验证。旧库早期提交边界无法补造；预算仍可省略历史。当前样本参考独立估算1690–1769 Token，较同元数据旧参考增517–558，非供应商Token。
+## 下一步与禁止事项
 
-后续如需DeepSeek验证推断强化、可选/未决分类、历史时态和标签呈现，应另行预注册及授权新Live；不得重跑S01/S02/S03、改旧评分、动旧批次或消耗旧余额。Source-Aware旧Live最终Task3/3且12/12来源保留，但全程Decision Classification FAIL与助手语义影响UNKNOWN仍保持。
+真实coco/DeepSeek与coco2/GLM流兼容、真实Usage/断线、Steer语义遵从仍UNKNOWN，需另行新预注册和授权，不用旧余额、不重跑历史Live。长行隐私缓冲可能延迟/过度隐藏，非通用秘密语义检测；applied不是模型遵从，输出完成不是任务正确。
+
+旧Source-Aware/Decision阶段语义推断强化和助手影响UNKNOWN仍保留，不因新交互改判历史。不得改旧报告、冻结资产、账本、Phase Tag/ZIP或扩大权限。完成Git交付后不自动进入新Live。

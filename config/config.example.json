@@ -138,5 +138,13 @@
         "timeout_seconds": 10
       }
     }
+  },
+  "web": {
+    "streaming": {
+      "enabled": false
+    },
+    "steer": {
+      "enabled": false
+    }
   }
 }

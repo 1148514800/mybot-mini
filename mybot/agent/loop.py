@@ -27,12 +27,14 @@ class AgentLoop:
     """Run a simple tool-calling loop for one CLI conversation."""
 
     def __init__(self, client: AsyncOpenAI, config: GatewayConfig, tools: ToolRegistry,
-                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None, history=None):
+                 context: ContextBuilder, session: Session | None = None, *, undo_approval_provider=None, event_callback=None, history=None, steer_inbox=None, stream_secrets=()):
         from ..runtime_accounting import RuntimeAccounting
         self.resources = RuntimeAccounting()
         self.partial_reply = ""
         self.last_runtime_report = self.resources.snapshot()
         self._event_callback = event_callback
+        self.steer_inbox=steer_inbox;self._steer_references=[];self._pending_steer=None
+        self._stream_secrets=stream_secrets
         self.client = client
         self.config = config
         self.tools = tools
@@ -314,10 +316,28 @@ class AgentLoop:
         from ..storage.event_schema import StoreError
         active=self.history.turn_id
         if active:self.history.event('model.started',dict(turn_id=active,purpose=purpose))
+        from .streaming import OBSERVER
+        streaming=purpose=='agent' and self.config.web_streaming and self._event_callback is not None
+        token=None
+        if streaming:
+            request={**request,'stream':True,'stream_options':{'include_usage':True}}
+            def observed(event):
+                event=dict(event);kind=event.pop('type');self._notify(kind,turn_id=active,**event)
+            token=OBSERVER.set((observed,self._stream_secrets))
+        pending=self._pending_steer if purpose=='agent' else None
+        def admitted():
+            if pending is not None and self.steer_inbox and self.steer_inbox.pending is pending:
+                self._steer_references.append(self.steer_inbox.reference())
+                self.steer_inbox.resolve('applied','next_step')
+            self._notify('resource_update',resources=self.resources.snapshot())
+        self.resources.on_dispatch=admitted if purpose=='agent' else None
         try:response = await self.resources.request(self.client, self.config, request, purpose=purpose)
         except Exception:
             if active:self.history.event('model.failed',dict(turn_id=active,reason='request_failed'))
             raise
+        finally:
+            self.resources.on_dispatch=None
+            if token is not None:OBSERVER.reset(token)
         if active:self.history.event('model.finished',dict(turn_id=active,status=response_status(response)['status']))
         self._notify('resource_update', resources=self.resources.snapshot())
         return response
@@ -443,11 +463,19 @@ class AgentLoop:
             # Freeze what THIS response may execute; activation cannot change it mid-batch.
             self._request_visible_names = frozenset(item['function']['name'] for item in definitions or [])
             llm_messages, stats = await self._prepare_context(messages, definitions, turns)
+            self._pending_steer=self.steer_inbox.pending if self.steer_inbox else None
+            steering=list(self._steer_references)
+            if self._pending_steer is not None:steering.append(self.steer_inbox.reference())
+            if steering:
+                from .token_counter import TokenCounter
+                llm_messages=llm_messages+steering
+                TokenCounter.enforce(self.context_manager.config,TokenCounter.request(self.context_manager.config,llm_messages,definitions))
             self.context_clipped = self.context_clipped or stats["current_clipped"]
             self.context_history_omitted = self.context_history_omitted or stats.get("history_omitted", False)
             if debug and self.config.context_enabled:
                 print(f"[CONTEXT] chars={stats['before']}->{stats['after']} estimated_tokens={stats['estimated_input_tokens']} mode={stats['context_budget_mode']}")
             if controller is not None and not controller.before_request(definitions):
+                if self._pending_steer is not None:self.resources.request_budget_exhausted=True
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             start = time.perf_counter()
             if self._event_callback is not None:
@@ -512,6 +540,11 @@ class AgentLoop:
                     for call in message.tool_calls
                 ],
             })
+            if self.steer_inbox is not None and self.steer_inbox.pending is not None:
+                for call in message.tool_calls:
+                    messages.append(dict(role='tool',tool_call_id=call.id,content=ToolResult(False,error='not_executed_pending_user_steer',metadata={'executed':False}).to_text()))
+                self._notify('tools_deferred_by_steer',count=len(message.tool_calls))
+                continue
             batch_allowed = controller.before_batch(message.tool_calls) if controller is not None else True
             permission_denied = False
             denial_is_mcp = False
@@ -535,6 +568,9 @@ class AgentLoop:
                         if call.function.name.startswith("mcp__") or (self.discovery is not None and call.function.name in self.discovery.tool_names):
                             args = "<MCP arguments omitted>"
                     print(f"[CALL] {call.function.name}: {args}")
+                if self.steer_inbox is not None and self.steer_inbox.pending is not None:
+                    messages.append(dict(role='tool',tool_call_id=call.id,content=ToolResult(False,error='not_executed_pending_user_steer',metadata={'executed':False}).to_text()))
+                    continue
                 was_stopped = permission_denied or command_stopped
                 if controller is not None and (not batch_allowed or controller.state != 'running'):
                     messages.append({'role': 'tool', 'tool_call_id': call.id, 'content':

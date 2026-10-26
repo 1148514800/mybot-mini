@@ -85,8 +85,18 @@ def _resolve_path(raw_value) -> Path:
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
 
 
+def _web_flag(name):
+    web=_CONFIG.get('web',{})
+    if type(web) is not dict or set(web)-{'streaming','steer'}:raise ValueError('invalid web config')
+    value=web.get(name,{})
+    if type(value) is not dict or set(value)-{'enabled'} or type(value.get('enabled',False)) is not bool:raise ValueError('invalid web.'+name)
+    return value.get('enabled',False)
+
+
 @dataclass
 class GatewayConfig:
+    web_streaming: bool = field(default_factory=lambda: _web_flag('streaming'), kw_only=True)
+    web_steer: bool = field(default_factory=lambda: _web_flag('steer'), kw_only=True)
     coding_file_access: str = field(default_factory=lambda: _coding_value('file_access', 'read_only'), kw_only=True)
     coding_task_contract: bool = field(default_factory=lambda: _coding_value('task_contract', True), kw_only=True)
     coding_enabled: bool = field(default_factory=_coding_value)
@@ -130,6 +140,7 @@ class GatewayConfig:
         return self.session_backend if self.session_backend is not None else 'legacy_json' if self.session_persist else 'memory'
 
     def __post_init__(self) -> None:
+        if type(self.web_streaming) is not bool or type(self.web_steer) is not bool:raise ValueError('web streaming/steer enabled must be boolean')
         from .tools.authority import validate_file_access
         validate_file_access(self.coding_file_access, self.coding_patch_mode)
         if type(self.coding_task_contract) is not bool: raise ValueError('coding.task_contract must be boolean')

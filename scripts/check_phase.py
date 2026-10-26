@@ -207,3 +207,12 @@ from scripts.check_decision_timeline import check_decision_timeline
 check_decision_timeline()
 from scripts.check_decision_context import check_decision_context
 check_decision_context()
+
+from scripts.check_model_streaming import check_model_streaming
+check_model_streaming()
+from scripts.check_streaming_failover import check_streaming_failover
+check_streaming_failover()
+from scripts.check_steer_inbox import check_steer_inbox
+check_steer_inbox()
+from scripts.check_streaming_steer_web import check_streaming_steer_web
+check_streaming_steer_web()

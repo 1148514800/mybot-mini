@@ -32,27 +32,32 @@ class ProviderFailoverClient:
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
     async def create(self, **kwargs):
-        # AgentLoop's outer timeout remains authoritative. Reserve half for fallback
-        # rather than extending its deadline or treating cancellation as an API error.
-        if self.active_provider == 'coco':
-            try:
-                async with asyncio.timeout(self._config.request_timeout_seconds / 2):
-                    from .runtime_accounting import dispatch
-                    return await dispatch(self._primary, self._config, kwargs)
-            except (APIError, TimeoutError) as exc:
-                if self._recoverable is not None and not self._recoverable(exc):
-                    raise
-                from .agent.token_counter import TokenCounter
-                TokenCounter.enforce(self._backup_config, {**kwargs, 'model':self._backup_config.model})
-                if not self.before_fallback(kwargs.get('tools')):
-                    raise FallbackBudgetExceeded() from None
-                self.active_provider = 'coco2'
-                print('[LLM] coco 请求失败，切换到 coco2 备用模型。')
-        if self._backup is None:
-            self._backup = self._factory(self._backup_config)
-        # Never reuse coco's model name on the backup endpoint. No tool is replayed.
-        from .runtime_accounting import dispatch
-        return await dispatch(self._backup, self._backup_config, {**kwargs, 'model': self._backup_config.model}, is_fallback=True)
+        from .agent.streaming import PROGRESS
+        seen={'received':False};token=PROGRESS.set(seen)
+        try:
+            # AgentLoop's outer timeout remains authoritative. Reserve half for fallback
+            # rather than extending its deadline or treating cancellation as an API error.
+            if self.active_provider == 'coco':
+                try:
+                    async with asyncio.timeout(self._config.request_timeout_seconds / 2):
+                        from .runtime_accounting import dispatch
+                        return await dispatch(self._primary, self._config, kwargs)
+                except (APIError, TimeoutError) as exc:
+                    if kwargs.get('stream') and seen['received']:raise
+                    if self._recoverable is not None and not self._recoverable(exc):
+                        raise
+                    from .agent.token_counter import TokenCounter
+                    TokenCounter.enforce(self._backup_config, {**kwargs, 'model':self._backup_config.model})
+                    if not self.before_fallback(kwargs.get('tools')):
+                        raise FallbackBudgetExceeded() from None
+                    self.active_provider = 'coco2'
+                    print('[LLM] coco 请求失败，切换到 coco2 备用模型。')
+            if self._backup is None:
+                self._backup = self._factory(self._backup_config)
+            # Never reuse coco's model name on the backup endpoint. No tool is replayed.
+            from .runtime_accounting import dispatch
+            return await dispatch(self._backup, self._backup_config, {**kwargs, 'model': self._backup_config.model}, is_fallback=True)
+        finally:PROGRESS.reset(token)
 
     async def close(self):
         results = await asyncio.gather(

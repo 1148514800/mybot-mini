@@ -5,3 +5,5 @@
 #resource-detail{display:block;margin:0 18px 14px;line-height:1.7;overflow-wrap:anywhere;flex-shrink:0;max-height:180px;overflow-y:auto}
 
 .pin-row{padding:10px 0;border-bottom:1px solid var(--border,#444);overflow-wrap:anywhere}.pin-row small{opacity:.7}#pin-dialog textarea{width:100%;min-height:100px}#pin-dialog label{display:block;margin:12px 0}#pin-dialog select{max-width:100%}#recovery-notice{padding:0 24px;color:#c99b53}
+
+.stream-preview{margin:12px 32px;padding:16px;border:1px dashed var(--border,#555);border-radius:12px;overflow-wrap:anywhere}#stream-label{color:#b7a4ff}#steer-form{padding:10px;border:1px solid var(--border,#555);border-radius:10px}#steer-input{width:100%;background:transparent;color:inherit}#steer-summary{font-size:12px;color:#b7a4ff}

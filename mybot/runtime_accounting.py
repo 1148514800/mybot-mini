@@ -25,6 +25,7 @@ OUTPUT_NOTICES = {
 
 def response_status(response):
     """Only protocol evidence; never infer completion from prose or its length."""
+    if getattr(response,'stream_delivery',None) is not None:return dict(response.stream_delivery)
     choices = getattr(response, 'choices', None)
     if getattr(response, 'error', None) or not choices or len(choices) != 1:
         return dict(status='provider_error', finish_reason='invalid', complete=False)
@@ -93,24 +94,37 @@ async def observe_http(request):
     if record['http_dispatch_attempts']:
         raise RuntimeError('unexpected_sdk_retry')
     record['http_dispatch_attempts'] = 1
+    ledger=CURRENT.get()
+    if ledger is not None and ledger.on_dispatch is not None:ledger.on_dispatch()
 
 
 async def dispatch(client, config, request, *, is_fallback=False):
     measurement = TokenCounter.enforce(config, request)
     if asyncio.current_task().cancelling(): raise asyncio.CancelledError()
     ledger = CURRENT.get()
-    if ledger is None: return await client.chat.completions.create(**request)
+    if ledger is None:
+        result=await client.chat.completions.create(**request)
+        if request.get('stream'):
+            from .agent.streaming import consume
+            return await consume(result,secrets=(getattr(config,'api_key',None),))
+        return result
     hooks = getattr(getattr(client, '_client', None), 'event_hooks', None)
     observable = isinstance(hooks, dict)
     if observable and observe_http not in hooks.setdefault('request', []): hooks['request'].append(observe_http)
     record = {'provider':getattr(config,'provider','unknown'), 'model':getattr(config,'model','unknown'),
               'purpose':ledger.purpose, 'status':'started', 'is_fallback':is_fallback, 'http_dispatch_attempts':0 if observable else None,
               'usage':usage_values(None), **measurement}
+    if request.get('stream'):record.update(streaming_requested=True,streaming=False,first_chunk_received=False,output_exposed=False,terminal_trusted=False,stream_status='opening')
     ledger.records.append(record)
     token = PHYSICAL.set(record)
     try:
+        if ledger.on_dispatch is not None and ledger.purpose=='agent':ledger.on_dispatch()
         response = await client.chat.completions.create(**request)
-        record.update(status='returned', usage=usage_values(getattr(response, 'usage', None)))
+        if request.get('stream'):
+            from .agent.streaming import consume,OBSERVER
+            notify,secrets=OBSERVER.get() or (None,())
+            response=await consume(response,record=record,notify=notify,secrets=secrets)
+        record.update(status='failed' if getattr(response,'stream_delivery',{}).get('status')=='provider_error' else 'returned', usage=usage_values(getattr(response, 'usage', None)))
         return response
     except asyncio.CancelledError:
         record['status'] = 'cancelled'; raise
@@ -122,6 +136,7 @@ async def dispatch(client, config, request, *, is_fallback=False):
 
 @dataclass
 class RuntimeAccounting:
+    on_dispatch: object = None
     logical_requests: int = 0
     compaction_requests: int = 0
     records: list = field(default_factory=list)
