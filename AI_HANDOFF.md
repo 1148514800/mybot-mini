@@ -1,21 +1,17 @@
 # AI_HANDOFF
 
-## 当前目标与状态
+## 当前状态
 
-Source-Aware Context Projection工程实现已完成，分支codex/source-aware-context-projection，基线e9f2e822。原Live L01/L02/L03及3/累计5来源损失结论不改；原私有DB/账本/冻结资产未访问或变更。本轮真实DeepSeek/GLM/摘要/Judge请求均0。
+Source-Aware真实语义UAT只获NOT_GRANTED，禁止调用真实DeepSeek/GLM/摘要/Judge或旧余额。新分支codex/source-aware-live-uat，基线d310a06d533cc258067a487e12adc8f6f5f6fc45。生产mybot/、依赖、旧Harness/报告/私有数据库不改。原1682项工程验收及旧Live结论保留。
 
-## 实现
+## 本轮离线预注册
 
-HistoryTurn在消息dict外保留session/source ID，SQLite恢复取持久ID；SessionHistory→context_projection精确验证user来源与Unicode span，copy中只遮蔽失效跨度、保留原文独立片段。工具组无法安全细分、来源缺失/正文截断/脱敏等情况保守省略并计数。历史助手精确复述省略，其他改写标历史/非权威/未验证；生命周期参考包含active集合及失效状态，不授予权限。同category不再自动needs_review，显示multiple_same_category/unassessed。
+scripts/source_aware_uat固定S01照片3条、S02音乐4条、S03阅读笔记2条，预算4/4/2，全局10，每Case一次Attempt。新独立ledger复用schema/HTTP/SDK gate，任何未结算阻止后续；新授权精确GRANTED_10_REQUESTS且先于凭证/SDK。仅新隔离薄适配器，不修改生产Harness。
 
-先安全投影再预算/摘要；局部遮蔽进入CLI/Web同一context诊断，不能显示历史完整。EventStore/schema/TaskContract/Tool Authority未重构，原生产依赖不变。
+evidence以真实Source ID/Session/user/span核对实际SDK user视图，助手复述不计来源保留，局部遮蔽/预算/协议与语义未知分开。S01五要求、S02三要求、S03两约束+可选建议+未决状态。历史命名被全部遮蔽时，模型诚实UNKNOWN不记安全失败，也不记完整Task PASS。
 
-## 验证与资料
+28项新Mock门及九条原文正式Runtime流程通过；独立headed Chrome同Origin Cookie/LocalStorage双向隔离通过，两个临时profile/服务清理。新批次计划~/.mybot-mini/uat/source-aware-live-20261025，须在Preregistration提交后仅prepare/freeze一次，Acceptance记录实际哈希/inode和零账本。生产Provider配置原路径只读指纹，远端有效性未验证。实际真实模型请求0。
 
-新增21+12+9=42专项已通过，已接入check_phase。旧提交独立git archive+真实AgentLoop/SyntheticClient对照：原替换损失3、撤销累计5；新两阶段保留5/5，原SQLite消息不变。headed独立Playwright Chrome合成A–E通过（兼容Pin、替换、撤销、重启、工具协议），自己的服务/profile已清理。
+## 下一步与禁止事项
 
-已通过全量52组1581项及79补充；因旧整轮相等损失计数不适用局部遮蔽，预算门离线E2E增加原基线3/5+新请求5/5断言（未改冻结消息/observer/评分），22项已重新通过。最终源树哈希稳定复核通过：52组1581+79补充+22预算门=1682去重项，0失败/skip；compileall、JS语法、diff检查通过。Acceptance提交记录最终证据。学习专题docs/phases/source-aware-context-projection.md，不编号、不创建/更改历史Tag或ZIP。报告docs/reports/source-aware-context-projection/。
-
-## 后续边界
-
-未知助手语义改写不能可靠清除；协议组/来源失败/预算仍会导致明确的信息损失。离线机制改善不等于DeepSeek真实回答改善。旧冻结observer information_loss按整轮对象相等比较，在局部投影后会把保留事实误计为丢失，后续新合同须用新诊断/实际user单元核查；本轮不改原observer。不要运行原Live批次或使用剩余2次额度。Implementation 892a1c31353cdd1b342a9c195d8d646efa5b0e7e；Acceptance为随后报告提交，Push并核对远程HEAD，不合main。
+完成本次唯一离线prepare/freeze、Acceptance报告和Push核对后停止；未来必须新的人类GRANTED_10_REQUESTS授权才能按S01→S02→S03执行原冻结计划。冻结后只verify，不重新prepare/freeze、新建替代账本、改消息/跨度/评分或追加提示。新资源与用户8765/Chrome隔离，不能触碰旧私有DB或用户内存会话。报告docs/reports/source-aware-live-uat/；学习专题docs/phases/source-aware-live-uat.md，不创建历史Tag/ZIP。

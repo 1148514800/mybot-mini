@@ -67,3 +67,5 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 ## 未编号工程专题
 
 - [Source-Aware Context Projection](source-aware-context-projection.md)：来源跨度投影、生命周期与协议安全；验收状态见[专题报告](../reports/source-aware-context-projection/acceptance-report.md)，不创建或更改历史Tag/ZIP。
+
+- [Source-Aware语义UAT预注册](source-aware-live-uat.md)：离线准备与冻结，真实Live须另获10请求授权；状态见[报告](../reports/source-aware-live-uat/acceptance-report.md)。
