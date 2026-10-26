@@ -2,16 +2,14 @@
 
 ## 当前状态
 
-独立分支codex/streaming-protocol-shutdown-fix，基线2b08360ee87aba28a9935f8a2b06fae2467883b4。实现协议脱敏诊断、有界SSE与操作员TTY关闭修复。真实授权0，未连接Provider。原R01 FAIL/HALT、1/8及Case running保留，剩余7次不使用。
+独立分支codex/stream-diagnostic-canary，基线ba759de36418d67008e98c8c7ddf05566dc520e5。D01只做离线准备，LIVE_AUTHORIZATION NOT_GRANTED；唯一新批次~/.mybot-mini/uat/stream-diagnostic-canary-20261026/。真实模型0，旧R01 FAIL/HALT/Case running及其余7次不触碰、不继承。
 
 ## 实现与验证
 
-streaming.py固定错误枚举、8块结构ring，合法终态+自然EOF+close才可信；预算/存储/未知宿主异常不吞为Provider错误。无通用语义或真实DeepSeek兼容修复声明，ORIGINAL_R01_ROOT_CAUSE UNKNOWN。
+新增scripts/stream_diagnostic_canary/：单次SQLite/HTTP预算、透明SDK结构诊断、新Web入口、MockTransport/Chrome演练、唯一prepare/freeze/verify。正式create_app→Runtime→AgentLoop→ProviderFailover→SDK不替换，生产源码/依赖/旧UAT脚本报告不改。失败HALT与自有服务关闭分离，不清HALT换PASS。正文仅原生私有事件库，诊断导出元数据/哈希，报告不提交私有数据库。
 
-Web有限2秒SSE+250ms原生重连、Last-Event-ID/reset，错误面板仅传安全代码；Runtime同Task MCP/SDK清理deadline，HALT不阻止清理自身任务。scripts/local_web_process处理继承TTY时uv不转发SIGINT，只对身份/出生时间/端口复核成功的自己子服务发SIGINT。
+252项去重专项回归通过（新增33），compileall/JS语法/diff通过。双profile Cookie/LocalStorage双向隔离通过；独立headed Chrome正常流与重复终态合成验证，两次打开SSE时exit0，端口/Lease/库一致。合成不证明真实DeepSeek兼容；旧问题原因仍UNKNOWN。完整报告docs/reports/stream-diagnostic-canary/。
 
-新协议39、关闭11、SSE8专项；原Streaming33与Web/Steer30最小回归通过。真实headed独立Chrome A–G合成通过，9次Mock HTTP、真实0。SSE旧机制与TTY转发问题分别复现。固定Implementation d73e31a599fc222d35f782474ddae70e3dbf12c6上的全量59 suite/1734、独立129、UAT30、新58合计1951个去重unittest PASS；compileall/JS/diff通过。中途编辑触发的冻结门拒绝和SSE首帧断言失败均修复，未删断言。旧断言保留，生产依赖/旧UAT脚本/旧报告不改。
+## 下一步与禁止重复
 
-## 下一步
-
-OFFLINE PASS，完整验收与脱敏报告/审计已完成。专题docs/phases/streaming-protocol-shutdown-fix.md；报告docs/reports/streaming-protocol-shutdown-fix/。本轮不运行任何旧Live、prepare/freeze或修复旧账本；未来真实验证必须另立新批次与新授权。不合main、不改历史Tag/ZIP。
+完成唯一prepare后以Preregistration干净提交freeze，Acceptance只更新文档与证据。最终冻结状态见报告。不要重复prepare/freeze、不要重建新账本。未收到新的GRANTED_1_REQUEST不得启动Live入口。授权后先verify，再查端口/Lease/进程/独立Chrome/库；新Session DOM发送唯一冻结消息一次，无重试/补跑/Steer。关闭只处理自有服务并实际wait exit0。原8765 launcher/用户Chrome不操作；不合main、不改历史Tag/ZIP。

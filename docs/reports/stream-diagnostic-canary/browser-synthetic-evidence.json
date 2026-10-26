@@ -1,0 +1,262 @@
+{
+  "real_requests": 0,
+  "cases": {
+    "standard": {
+      "status": "completed",
+      "diagnostics": {
+        "protocol": "PASS",
+        "session_id": "85f09c6f54df495ebf703a1fa02cc9b7",
+        "status": "completed",
+        "streams": [
+          {
+            "reservation": 1,
+            "clock": "server_monotonic",
+            "request_started": 1652539.278716958,
+            "chunks": 4,
+            "first_chunk": 1652539.524193916,
+            "first_text_chunk": 1652539.524193916,
+            "first_sse_preview": 1652539.524509958,
+            "first_chunk_seconds": 0.2454769581090659,
+            "first_text_seconds": 0.2454769581090659,
+            "first_sse_seconds": 0.24579300009645522,
+            "natural_eof": true,
+            "sdk_closed": true,
+            "assembled_sha256": "46f1240110c00d61b9f0766b10ef2d1991fbffad475d730f31f9771d803d3961",
+            "assembled_stripped_sha256": "7dea1535d076e70e92696755aa364fccd807abc1729d5aa7159f384f87772903",
+            "stream_status": "complete",
+            "terminal_trusted": true,
+            "diagnostic": {
+              "stream_id": "d9a385d2811e4d93938ecdadf318b581",
+              "error_code": null,
+              "origin": null,
+              "phase": "terminal_validation",
+              "chunk_index": 4,
+              "chunks_observed": 4,
+              "finish_reason": "stop",
+              "terminal_count": 1,
+              "text_received": true,
+              "natural_eof": true,
+              "close_called": true,
+              "closed": true,
+              "recent_chunks": [
+                {
+                  "chunk_index": 1,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 7,
+                  "tool_calls_count": null,
+                  "finish_reason": null
+                },
+                {
+                  "chunk_index": 2,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 7,
+                  "tool_calls_count": null,
+                  "finish_reason": null
+                },
+                {
+                  "chunk_index": 3,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "null",
+                  "content_length": null,
+                  "tool_calls_count": null,
+                  "finish_reason": "stop"
+                },
+                {
+                  "chunk_index": 4,
+                  "choices_count": 0,
+                  "delta_present": false,
+                  "role_present": false,
+                  "content_type": "null",
+                  "content_length": null,
+                  "tool_calls_count": null,
+                  "finish_reason": null
+                }
+              ]
+            },
+            "usage": {
+              "prompt_tokens": 10,
+              "completion_tokens": 20,
+              "total_tokens": 30
+            },
+            "usage_complete": true
+          }
+        ],
+        "saved_reply_sha256": "7dea1535d076e70e92696755aa364fccd807abc1729d5aa7159f384f87772903",
+        "trusted_final_persisted": true,
+        "physical_requests": 1,
+        "http_attempts": 1,
+        "providers": [
+          "coco"
+        ],
+        "usage": [
+          {
+            "prompt_tokens": 10,
+            "completion_tokens": 20,
+            "total_tokens": 30
+          }
+        ],
+        "cost": null,
+        "fallback_dispatch_blocked": false,
+        "accounting_admission_records": 1,
+        "accounting_note": "includes blocked fallback admission; durable reservations and HTTP hook are authoritative physical counts"
+      },
+      "browser_submit_to_visible_ms": 263.7000000476837,
+      "clock": "browser performance.now",
+      "visible_preview": true
+    },
+    "duplicate": {
+      "status": "provider_error",
+      "diagnostics": {
+        "protocol": "FAIL",
+        "session_id": "df7c11a3ac97402296d169242770f836",
+        "status": "provider_error",
+        "streams": [
+          {
+            "reservation": 1,
+            "clock": "server_monotonic",
+            "request_started": 1652542.099525416,
+            "chunks": 4,
+            "first_chunk": 1652542.3285135,
+            "first_text_chunk": 1652542.3285135,
+            "first_sse_preview": 1652542.328831833,
+            "first_chunk_seconds": 0.22898808401077986,
+            "first_text_seconds": 0.22898808401077986,
+            "first_sse_seconds": 0.22930641705170274,
+            "natural_eof": false,
+            "sdk_closed": true,
+            "assembled_sha256": "46f1240110c00d61b9f0766b10ef2d1991fbffad475d730f31f9771d803d3961",
+            "assembled_stripped_sha256": "7dea1535d076e70e92696755aa364fccd807abc1729d5aa7159f384f87772903",
+            "stream_status": "provider_error",
+            "terminal_trusted": false,
+            "diagnostic": {
+              "stream_id": "b8eadf85ac654ca89bc73e7fba900943",
+              "error_code": "stream_duplicate_finish",
+              "origin": "protocol_validation",
+              "phase": "protocol_validation",
+              "chunk_index": 4,
+              "chunks_observed": 4,
+              "finish_reason": "stop",
+              "terminal_count": 2,
+              "text_received": true,
+              "natural_eof": false,
+              "close_called": true,
+              "closed": true,
+              "recent_chunks": [
+                {
+                  "chunk_index": 1,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 7,
+                  "tool_calls_count": null,
+                  "finish_reason": null
+                },
+                {
+                  "chunk_index": 2,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 7,
+                  "tool_calls_count": null,
+                  "finish_reason": null
+                },
+                {
+                  "chunk_index": 3,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "null",
+                  "content_length": null,
+                  "tool_calls_count": null,
+                  "finish_reason": "stop"
+                },
+                {
+                  "chunk_index": 4,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "null",
+                  "content_length": null,
+                  "tool_calls_count": null,
+                  "finish_reason": "stop"
+                }
+              ]
+            },
+            "usage": {
+              "prompt_tokens": null,
+              "completion_tokens": null,
+              "total_tokens": null
+            },
+            "usage_complete": false
+          }
+        ],
+        "saved_reply_sha256": "58f74aa6d42df0db145b8c097f05807fcdabd298cf18316ceced828a3e23728a",
+        "trusted_final_persisted": false,
+        "physical_requests": 1,
+        "http_attempts": 1,
+        "providers": [
+          "coco"
+        ],
+        "usage": [
+          {
+            "prompt_tokens": null,
+            "completion_tokens": null,
+            "total_tokens": null
+          }
+        ],
+        "cost": null,
+        "fallback_dispatch_blocked": false,
+        "accounting_admission_records": 1,
+        "accounting_note": "includes blocked fallback admission; durable reservations and HTTP hook are authoritative physical counts"
+      },
+      "browser_submit_to_visible_ms": 262.2999999523163,
+      "clock": "browser performance.now",
+      "visible_preview": true
+    }
+  },
+  "shutdowns": [
+    {
+      "mode": "standard",
+      "exit_code": 0,
+      "seconds": 1.010164416860789,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "runtime_closed": true,
+      "cleanup_uncertain": false,
+      "sdk_streams_closed": true,
+      "lease_released": true,
+      "database_consistent": true,
+      "process_exit_code": 0,
+      "note": "operator must independently verify exit code and port; this is lifespan evidence only"
+    },
+    {
+      "mode": "duplicate",
+      "exit_code": 0,
+      "seconds": 1.002223915886134,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "runtime_closed": true,
+      "cleanup_uncertain": false,
+      "sdk_streams_closed": true,
+      "lease_released": true,
+      "database_consistent": true,
+      "process_exit_code": 0,
+      "note": "operator must independently verify exit code and port; this is lifespan evidence only"
+    }
+  ],
+  "headed": true,
+  "browser": "152.0.7977.83",
+  "initial_cookie_jar_empty": true,
+  "actual_profile_verified": true,
+  "profile_removed": true
+}

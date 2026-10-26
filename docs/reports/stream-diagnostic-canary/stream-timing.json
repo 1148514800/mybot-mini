@@ -1,0 +1,25 @@
+{
+  "live": {
+    "status": "NOT_RUN",
+    "first_chunk_seconds": null,
+    "first_text_seconds": null,
+    "first_sse_seconds": null,
+    "browser_submit_to_visible_ms": null,
+    "cross_clock_latency": null
+  },
+  "mock": {
+    "standard": {
+      "first_chunk_seconds": 0.2454769581090659,
+      "first_text_seconds": 0.2454769581090659,
+      "first_sse_emission_seconds": 0.24579300009645522,
+      "browser_submit_to_visible_ms": 263.7000000476837
+    },
+    "duplicate": {
+      "first_chunk_seconds": 0.22898808401077986,
+      "first_text_seconds": 0.22898808401077986,
+      "first_sse_emission_seconds": 0.22930641705170274,
+      "browser_submit_to_visible_ms": 262.2999999523163
+    }
+  },
+  "clock_rule": "Never subtract browser performance.now from server monotonic; Mock timings are not Live evidence"
+}

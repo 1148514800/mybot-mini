@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "profiles_removed": true,
+  "server_closed": true,
+  "browser_version": "152.0.7977.83",
+  "headed": true,
+  "chromium_sandbox": true,
+  "playwright_version": "1.64.1",
+  "initial": [
+    {
+      "cookieA": false,
+      "cookieB": false,
+      "storageA": false,
+      "storageB": false
+    },
+    {
+      "cookieA": false,
+      "cookieB": false,
+      "storageA": false,
+      "storageB": false
+    }
+  ],
+  "profile_A": {
+    "cookieA": true,
+    "cookieB": false,
+    "storageA": true,
+    "storageB": false
+  },
+  "profile_B": {
+    "cookieA": false,
+    "cookieB": true,
+    "storageA": false,
+    "storageB": true
+  },
+  "profiles": [
+    {
+      "label": "A",
+      "pid": 32790,
+      "uid": 501,
+      "new_0700_non_symlink": true,
+      "launch_user_data_dir_verified": true,
+      "profile_path_sha256": "340579d55ab427e7d00c06951dc98f17051a764041829f582064ec0a3dc17d83"
+    },
+    {
+      "label": "B",
+      "pid": 32805,
+      "uid": 501,
+      "new_0700_non_symlink": true,
+      "launch_user_data_dir_verified": true,
+      "profile_path_sha256": "7ce9125968fb9db81aa07a2bf2c8a4bd3891d359b61d347a1699aaba08d8ce75"
+    }
+  ],
+  "same_origin": true,
+  "click_input_dom_screenshot_verified": true,
+  "mybot_or_provider_accessed": false
+}

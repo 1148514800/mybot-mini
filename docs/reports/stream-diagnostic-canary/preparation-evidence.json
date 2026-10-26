@@ -1,0 +1,15 @@
+{
+  "status": "PREPARED_OFFLINE_FREEZE_PENDING",
+  "plan_sha256": "87374ab4522dabeaee94eff66141c579fd785d5f334df04dba6c86db0f742835",
+  "prepared_sha256": "a1ba570533475692eef29a61ec9f6344423c663c889202223af7f7f2b527f04d",
+  "unique_prepare": true,
+  "real_requests": 0,
+  "attempts": 0,
+  "reservations": 0,
+  "port": 8899,
+  "port_free_at_preparation": true,
+  "old_8765_listening": false,
+  "old_launcher_present_untouched": true,
+  "old_private_ledger_opened": false,
+  "production_and_old_reports_diff_empty": true
+}

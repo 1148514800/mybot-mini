@@ -77,3 +77,5 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 - [Streaming & Steer Provider UAT](streaming-steer-live-uat.md)：已获新授权，真实R01终态FAIL、其余安全BLOCKED，实际1/8；原离线报告保留，见[Live报告](../reports/streaming-steer-live-uat/live-results/execution-01/acceptance-report.md)。
 
 - [Streaming协议诊断与关闭修复](streaming-protocol-shutdown-fix.md)：固定脱敏错误分类、有界SSE与自身进程关闭；1951项去重回归及Chrome A–G通过，零真实请求，最终验收见[报告](../reports/streaming-protocol-shutdown-fix/acceptance-report.md)。
+
+- [Streaming Diagnostic Canary](stream-diagnostic-canary.md)：独立单次预算、MockTransport及Chrome预检，唯一prepare/freeze；无Live授权，实际0/1，见[报告](../reports/stream-diagnostic-canary/acceptance-report.md)。

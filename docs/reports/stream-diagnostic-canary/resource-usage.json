@@ -1,0 +1,23 @@
+{
+  "live_authorization": "NOT_GRANTED",
+  "D01": "NOT_RUN",
+  "physical_requests": 0,
+  "global_limit": 1,
+  "attempts": 0,
+  "reservations": 0,
+  "http_attempts": 0,
+  "deepseek": 0,
+  "glm": 0,
+  "semantic_summary": 0,
+  "judge": 0,
+  "fallback": 0,
+  "retry": 0,
+  "provider_input_tokens": null,
+  "provider_output_tokens": null,
+  "provider_total_tokens": null,
+  "usage_completeness": "NOT_APPLICABLE_NOT_SENT",
+  "cost": null,
+  "price_available": false,
+  "mock_browser_http": 2,
+  "mock_usage": "fabricated fixture values, excluded from real provider usage"
+}

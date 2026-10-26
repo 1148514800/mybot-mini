@@ -1,0 +1,11 @@
+# Protocol diagnostic coverage
+
+原正式consumer提供固定StreamErrorCode、origin、phase、chunk_index、chunks_observed、finish_reason、terminal_count、text_received、natural_eof、close_called/closed，以及最多8块结构ring。没有新增宽松协议分支、include_usage删除或非流式fallback。诊断足以定位拒绝阶段，不足以单独判断责任属于部署还是本地严格验证。
+
+Observer原样yield SDK对象，无延迟屏障；只记录首Chunk、首文本、Chunk总数、Usage和有界内存文本哈希。正式consumer的处理结果在Turn完成后采集，避免把wrapper在close之前的临时状态误当最终诊断。原生strip后的文本哈希与真实SQLite助手消息匹配才满足持久完整性；最初离线测试因尾随换行哈希不同而拒绝PASS，修正为生产路径实际strip规则，未降低终态要求。
+
+HTTP请求计数取原持久ledger的transport前门。SDK重试必须0；首Chunk前503导致原Failover提出备用，但第二reservation失败、HTTP仍1。RuntimeAccounting可能多出被阻止的备用准入记录，diagnostics明确独立统计。SDK opening就失败时没有stream/Chunk，错误类型另列，不编造消费错误码。after-first中断由原策略禁止fallback。
+
+已验证合法标准流/Usage trailer/缺Usage、重复finish、内容后置、结构拒绝、transport、close失败、ring上限及消息脱敏等；各自测试ID见offline-validation。精确末尾诊断能够用于未来真实调查，但旧R01缺原始结构，原因仍UNKNOWN。GeneratorExit不是Provider断流证据。
+
+D01 Live尚未运行，真实诊断充分性目前UNKNOWN；未来只接受一次新样本，不能为收集更好的证据重试。

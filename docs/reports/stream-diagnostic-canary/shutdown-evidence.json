@@ -1,0 +1,40 @@
+{
+  "live": {
+    "status": "NOT_RUN",
+    "exit_code": null,
+    "natural_eof": null,
+    "sdk_closed": null
+  },
+  "mock": [
+    {
+      "mode": "standard",
+      "exit_code": 0,
+      "seconds": 1.010164416860789,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "runtime_closed": true,
+      "cleanup_uncertain": false,
+      "sdk_streams_closed": true,
+      "lease_released": true,
+      "database_consistent": true,
+      "process_exit_code": 0,
+      "note": "operator must independently verify exit code and port; this is lifespan evidence only"
+    },
+    {
+      "mode": "duplicate",
+      "exit_code": 0,
+      "seconds": 1.002223915886134,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "runtime_closed": true,
+      "cleanup_uncertain": false,
+      "sdk_streams_closed": true,
+      "lease_released": true,
+      "database_consistent": true,
+      "process_exit_code": 0,
+      "note": "operator must independently verify exit code and port; this is lifespan evidence only"
+    }
+  ],
+  "user_service_signalled": false,
+  "user_chrome_operated": false
+}
