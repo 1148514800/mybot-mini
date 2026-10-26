@@ -1,0 +1,113 @@
+{
+  "dynamic_isolation": {
+    "passed": true,
+    "profiles_removed": true,
+    "server_closed": true,
+    "browser_version": "152.0.7977.83",
+    "headed": true,
+    "chromium_sandbox": true,
+    "playwright_version": "1.64.1",
+    "initial": [
+      {
+        "cookieA": false,
+        "cookieB": false,
+        "storageA": false,
+        "storageB": false
+      },
+      {
+        "cookieA": false,
+        "cookieB": false,
+        "storageA": false,
+        "storageB": false
+      }
+    ],
+    "profile_A": {
+      "cookieA": true,
+      "cookieB": false,
+      "storageA": true,
+      "storageB": false
+    },
+    "profile_B": {
+      "cookieA": false,
+      "cookieB": true,
+      "storageA": false,
+      "storageB": true
+    },
+    "profiles": [
+      {
+        "label": "A",
+        "pid": 5621,
+        "uid": 501,
+        "new_0700_non_symlink": true,
+        "launch_user_data_dir_verified": true,
+        "profile_path_sha256": "586b72a8c709c634c0e0a5e217976fd921e749114324e55116fff0dd90ea1da2"
+      },
+      {
+        "label": "B",
+        "pid": 5641,
+        "uid": 501,
+        "new_0700_non_symlink": true,
+        "launch_user_data_dir_verified": true,
+        "profile_path_sha256": "128431ae2c4523c7492d9215e1a40917ebef6fa279b789e46f9e29b599c20ce3"
+      }
+    ],
+    "same_origin": true,
+    "click_input_dom_screenshot_verified": true,
+    "mybot_or_provider_accessed": false
+  },
+  "live_browser": {
+    "headed": true,
+    "version": "152.0.7977.83",
+    "profile_new_0700": true,
+    "cookie_jar_initially_empty": true,
+    "actual_pid": 5984,
+    "launch_argument_verified": true,
+    "profile_path_sha256": "b6c58ad0cdb9b8ac1d2c4cae4cc7fa653cc2e81f08f8a29cc865eb8bb0c71a8b",
+    "sandbox": true
+  },
+  "cases": {
+    "S01": {
+      "server_pid": 6004,
+      "listener_pids": [
+        6005
+      ],
+      "startup_model_requests": 0,
+      "session_id": "1b3ebcb4297248b0b50242e89db107e1",
+      "final_status": "completed",
+      "title": "我想设计一个本地照片管理工具，目前只讨论产品要求，不实现、不调用",
+      "exit_code": 0,
+      "shutdown_confirmed": true,
+      "lease_released": true
+    },
+    "S02": {
+      "server_pid": 6151,
+      "listener_pids": [
+        6153
+      ],
+      "startup_model_requests": 0,
+      "session_id": "76247cdf95a140b094a2fdf7dcc4603d",
+      "final_status": "completed",
+      "title": "我想设计一个离线音乐整理工具，只讨论设计，不实现、不调用工具、不",
+      "exit_code": 0,
+      "shutdown_confirmed": true,
+      "lease_released": true
+    },
+    "S03": {
+      "server_pid": 6330,
+      "listener_pids": [
+        6331
+      ],
+      "startup_model_requests": 0,
+      "session_id": "f830c76ab75844e3a2e22f4f295eeb3c",
+      "final_status": "completed",
+      "title": "我想设计一个本地阅读笔记工具，只讨论产品与架构，不实现、不调用工",
+      "exit_code": 0,
+      "shutdown_confirmed": true,
+      "lease_released": true
+    }
+  },
+  "own_profile_removed": true,
+  "cleanup_errors": [],
+  "all_own_browser_and_server_processes_exited": true,
+  "old_8765_or_user_browser_operated": false
+}

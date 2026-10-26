@@ -1,0 +1,40 @@
+{
+  "authorization": "GRANTED_10_REQUESTS",
+  "preregistration_commit": "ce3a44dbfdb0fef5662753501ca8a021a0be55f8",
+  "input_head": "339da9b0aeaf02a0b4a4226e55fbf80ecd7a6f57",
+  "plan_sha256": "0244a2c401d64325a16f0161eef25b62210cf0bede281900574a119605b9a4bc",
+  "case_limits": {
+    "S01": 4,
+    "S02": 4,
+    "S03": 2
+  },
+  "global_limit": 10,
+  "cases": [
+    {
+      "id": "S01",
+      "status": "finished"
+    },
+    {
+      "id": "S02",
+      "status": "finished"
+    },
+    {
+      "id": "S03",
+      "status": "finished"
+    }
+  ],
+  "reservation_count": 9,
+  "model_http_attempts": 9,
+  "all_returned": true,
+  "sdk_max_retries": 0,
+  "unsettled": 0,
+  "halt": false,
+  "old_balance_used": false,
+  "extra_prompt": false,
+  "rerun": false,
+  "paid_judge": false,
+  "ledger_identity": [
+    16777231,
+    14390539
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "case": "S02",
+  "final_request": 7,
+  "retained_assistant_messages": [
+    {
+      "assistant_source_message_id": "ac0766e9d48e4509840f8d96a1b8da66",
+      "sdk_index": 3,
+      "sdk_sha256": "b798bfc763d2f49134ab490d75821550e7a27259f5dcfbf96f322692c2feefca",
+      "annotated_historical_non_authoritative": true
+    },
+    {
+      "assistant_source_message_id": "546ecb0a241f4b79af03ace1f778aee6",
+      "sdk_index": 5,
+      "sdk_sha256": "1af9321952265f0e38072ac33defa63d8cb10832fc633c63cd89ce44eda345c4",
+      "annotated_historical_non_authoritative": true
+    },
+    {
+      "assistant_source_message_id": "7a3f0c463a5a4d8aa22c17cfbb803e63",
+      "sdk_index": 7,
+      "sdk_sha256": "b69949ffc2e24a179ddbb38985ec16ec4d8a5dcecc54f5f11acc55efe0605a65",
+      "annotated_historical_non_authoritative": true
+    }
+  ],
+  "historical_naming_presence": [
+    {
+      "name": "tracks.csv",
+      "occurrences": [
+        {
+          "message_index": 3,
+          "role": "assistant"
+        },
+        {
+          "message_index": 5,
+          "role": "assistant"
+        },
+        {
+          "message_index": 7,
+          "role": "assistant"
+        }
+      ]
+    },
+    {
+      "name": "library.csv",
+      "occurrences": [
+        {
+          "message_index": 5,
+          "role": "assistant"
+        },
+        {
+          "message_index": 7,
+          "role": "assistant"
+        }
+      ]
+    }
+  ],
+  "exact_echo_messages_omitted": 0,
+  "original_naming_source_spans_masked": 2,
+  "semantic_paraphrases_cleared": "UNKNOWN",
+  "observed_final_history_names": [
+    "tracks.csv",
+    "library.csv"
+  ],
+  "observed_final_active_naming_pins": [],
+  "implementation_suggestions_promoted_in_final": false,
+  "host_reference_prefix_copied_to_reply": true,
+  "causal_attribution": "Historical reuse consistent with retained assistant data; no counterfactual proof of influence or complete semantic removal."
+}

@@ -1,0 +1,2067 @@
+{
+  "scope": "ACTUAL_LIVE",
+  "definition": "Final request original-user source units; assistant copies/summary/final answers do not earn source credit.",
+  "by_case": {
+    "S01": {
+      "historical_naming_presence": [
+        {
+          "name": "photos.jsonl",
+          "occurrences": [
+            {
+              "message_index": 4,
+              "role": "assistant"
+            },
+            {
+              "message_index": 6,
+              "role": "assistant"
+            }
+          ]
+        },
+        {
+          "name": "assets.jsonl",
+          "occurrences": [
+            {
+              "message_index": 1,
+              "role": "user"
+            },
+            {
+              "message_index": 5,
+              "role": "user"
+            },
+            {
+              "message_index": 6,
+              "role": "assistant"
+            }
+          ]
+        }
+      ],
+      "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+      "units": [
+        {
+          "unit_id": "photo-page-size",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+          "source_span": [
+            63,
+            73
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+          "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        },
+        {
+          "unit_id": "photo-sort",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+          "source_span": [
+            73,
+            85
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+          "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": true
+        },
+        {
+          "unit_id": "photo-empty",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+          "source_span": [
+            85,
+            98
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+          "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": true
+        },
+        {
+          "unit_id": "photo-language",
+          "kind": "independent_user_requirement",
+          "source_turn": 2,
+          "source_message_id": "64affef244bf4b26993cf774de4ff744",
+          "source_span": [
+            22,
+            33
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+          "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+          "sdk_message_index": 5,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": true
+        },
+        {
+          "unit_id": "photo-import-time",
+          "kind": "independent_user_requirement",
+          "source_turn": 2,
+          "source_message_id": "64affef244bf4b26993cf774de4ff744",
+          "source_span": [
+            33,
+            56
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+          "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+          "sdk_message_index": 5,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        }
+      ],
+      "introduced": 5,
+      "preserved": 5,
+      "missing": 0,
+      "unknown": 0,
+      "rate": 1.0,
+      "assistant_echo_counts_as_preserved": false,
+      "projection": {
+        "redacted_source_spans": 1,
+        "preserved_independent_user_spans": 2,
+        "omitted_protocol_turns": 0,
+        "omitted_assistant_messages": 0,
+        "source_mapping_failures": 0,
+        "history_projection_incomplete": true,
+        "history_turns_omitted": 0,
+        "context_truncated": true
+      }
+    },
+    "S02": {
+      "historical_naming_presence": [
+        {
+          "name": "tracks.csv",
+          "occurrences": [
+            {
+              "message_index": 3,
+              "role": "assistant"
+            },
+            {
+              "message_index": 5,
+              "role": "assistant"
+            },
+            {
+              "message_index": 7,
+              "role": "assistant"
+            }
+          ]
+        },
+        {
+          "name": "library.csv",
+          "occurrences": [
+            {
+              "message_index": 5,
+              "role": "assistant"
+            },
+            {
+              "message_index": 7,
+              "role": "assistant"
+            }
+          ]
+        }
+      ],
+      "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+      "units": [
+        {
+          "unit_id": "music-page-size",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "4af5456c99db410385f4b357e9441edf",
+          "source_span": [
+            55,
+            67
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+          "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+          "sdk_message_index": 2,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        },
+        {
+          "unit_id": "music-errors",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "4af5456c99db410385f4b357e9441edf",
+          "source_span": [
+            67,
+            83
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+          "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+          "sdk_message_index": 2,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": true
+        },
+        {
+          "unit_id": "music-duration",
+          "kind": "independent_user_requirement",
+          "source_turn": 2,
+          "source_message_id": "477109178bfa40879811cf023f626516",
+          "source_span": [
+            19,
+            38
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+          "expected_user_view_sha256": "c82f64c36405c5af7d99cf1aeec17e99b2f75b9024e805af53c277aaec2809cf",
+          "sdk_message_index": 4,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        }
+      ],
+      "introduced": 3,
+      "preserved": 3,
+      "missing": 0,
+      "unknown": 0,
+      "rate": 1.0,
+      "assistant_echo_counts_as_preserved": false,
+      "projection": {
+        "redacted_source_spans": 2,
+        "preserved_independent_user_spans": 3,
+        "omitted_protocol_turns": 0,
+        "omitted_assistant_messages": 0,
+        "source_mapping_failures": 0,
+        "history_projection_incomplete": true,
+        "history_turns_omitted": 0,
+        "context_truncated": true
+      }
+    },
+    "S03": {
+      "historical_naming_presence": [],
+      "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+      "units": [
+        {
+          "unit_id": "notes-local",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+          "source_span": [
+            39,
+            51
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        },
+        {
+          "unit_id": "notes-protect",
+          "kind": "independent_user_requirement",
+          "source_turn": 1,
+          "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+          "source_span": [
+            51,
+            63
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        },
+        {
+          "unit_id": "notes-cli-optional",
+          "kind": "optional_user_suggestion",
+          "source_turn": 1,
+          "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+          "source_span": [
+            63,
+            93
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        },
+        {
+          "unit_id": "notes-fulltext-open",
+          "kind": "unresolved_user_choice",
+          "source_turn": 1,
+          "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+          "source_span": [
+            93,
+            102
+          ],
+          "source_role": "user",
+          "source_verified": true,
+          "host_identity_verified": true,
+          "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+          "sdk_message_index": 3,
+          "status": "PRESERVED",
+          "possible_missing_causes": [],
+          "assistant_echo_present": false
+        }
+      ],
+      "introduced": 4,
+      "preserved": 4,
+      "missing": 0,
+      "unknown": 0,
+      "rate": 1.0,
+      "assistant_echo_counts_as_preserved": false,
+      "projection": {
+        "redacted_source_spans": 0,
+        "preserved_independent_user_spans": 0,
+        "omitted_protocol_turns": 0,
+        "omitted_assistant_messages": 0,
+        "source_mapping_failures": 0,
+        "history_projection_incomplete": false,
+        "history_turns_omitted": 0,
+        "context_truncated": false
+      }
+    }
+  },
+  "total": {
+    "preserved": 12,
+    "missing": 0,
+    "unknown": 0,
+    "introduced": 12,
+    "rate": 1.0
+  },
+  "independent_sql_and_sdk_hash_checks": [
+    {
+      "case": "S01",
+      "unit_id": "photo-page-size",
+      "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+      "source_span": [
+        63,
+        73
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "ea32141413e7bdf9bc1fcccd56d8506395bf4270563a2047dc4036cfb06d06a2",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S01",
+      "unit_id": "photo-sort",
+      "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+      "source_span": [
+        73,
+        85
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "ea32141413e7bdf9bc1fcccd56d8506395bf4270563a2047dc4036cfb06d06a2",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S01",
+      "unit_id": "photo-empty",
+      "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+      "source_span": [
+        85,
+        98
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "ea32141413e7bdf9bc1fcccd56d8506395bf4270563a2047dc4036cfb06d06a2",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S01",
+      "unit_id": "photo-language",
+      "source_message_id": "64affef244bf4b26993cf774de4ff744",
+      "source_span": [
+        22,
+        33
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 5,
+      "actual_sdk_user_message_sha256": "ce73a6aa5e69a60d716bbc542765dc9ad2390cf8a482dae08f47525715b10ee8",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S01",
+      "unit_id": "photo-import-time",
+      "source_message_id": "64affef244bf4b26993cf774de4ff744",
+      "source_span": [
+        33,
+        56
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 5,
+      "actual_sdk_user_message_sha256": "ce73a6aa5e69a60d716bbc542765dc9ad2390cf8a482dae08f47525715b10ee8",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S02",
+      "unit_id": "music-page-size",
+      "source_message_id": "4af5456c99db410385f4b357e9441edf",
+      "source_span": [
+        55,
+        67
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 2,
+      "actual_sdk_user_message_sha256": "6fd96ac4129b13b15e61e234dffdb2ed46167f13ca7ac91baedb16387b8c06ed",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S02",
+      "unit_id": "music-errors",
+      "source_message_id": "4af5456c99db410385f4b357e9441edf",
+      "source_span": [
+        67,
+        83
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 2,
+      "actual_sdk_user_message_sha256": "6fd96ac4129b13b15e61e234dffdb2ed46167f13ca7ac91baedb16387b8c06ed",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S02",
+      "unit_id": "music-duration",
+      "source_message_id": "477109178bfa40879811cf023f626516",
+      "source_span": [
+        19,
+        38
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 4,
+      "actual_sdk_user_message_sha256": "a35de7fa91ea610992b7fbfbd06f56eaea4e22cbc3f8ee595408cb20df47e7bb",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S03",
+      "unit_id": "notes-local",
+      "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+      "source_span": [
+        39,
+        51
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "d40e59e967bedd032474ab0451067686d6b30e8d1b14a3d151c8e28c02bbcce3",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S03",
+      "unit_id": "notes-protect",
+      "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+      "source_span": [
+        51,
+        63
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "d40e59e967bedd032474ab0451067686d6b30e8d1b14a3d151c8e28c02bbcce3",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S03",
+      "unit_id": "notes-cli-optional",
+      "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+      "source_span": [
+        63,
+        93
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "d40e59e967bedd032474ab0451067686d6b30e8d1b14a3d151c8e28c02bbcce3",
+      "source_unit_present_after_mask": true
+    },
+    {
+      "case": "S03",
+      "unit_id": "notes-fulltext-open",
+      "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+      "source_span": [
+        93,
+        102
+      ],
+      "original_user_source_verified": true,
+      "actual_sdk_user_index": 3,
+      "actual_sdk_user_message_sha256": "d40e59e967bedd032474ab0451067686d6b30e8d1b14a3d151c8e28c02bbcce3",
+      "source_unit_present_after_mask": true
+    }
+  ],
+  "per_request": [
+    {
+      "case": "S01",
+      "reservation": 1,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "lifecycle": [],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "a2ab9a377c194d2a6157194bce15380e6db0d0ca0b8339568c0be4381c71c3ec"
+        }
+      ],
+      "request_sha256": "b47c779b720c89fc7d5107d23af19319c8c53b6c128fbfb48326714b9823a058",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "photos.jsonl",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              }
+            ]
+          },
+          {
+            "name": "assets.jsonl",
+            "occurrences": []
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "photo-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              63,
+              73
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-sort",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              73,
+              85
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-empty",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              85,
+              98
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-language",
+            "status": "NOT_INTRODUCED"
+          },
+          {
+            "unit_id": "photo-import-time",
+            "status": "NOT_INTRODUCED"
+          }
+        ],
+        "introduced": 3,
+        "preserved": 3,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "reply_sha256": "974f70d567af07c25b899cca237b8d429e59349c56a560687eab8509e2f21c66"
+    },
+    {
+      "case": "S01",
+      "reservation": 2,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "6c912f6d928341e9986d8c43e665d2fe",
+          "category": "user_constraint",
+          "content": "照片索引文件命名为 photos.jsonl。",
+          "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+          "source_span": [
+            40,
+            63
+          ],
+          "revision": 1,
+          "needs_review": false,
+          "multiple_same_category": false,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "6c912f6d928341e9986d8c43e665d2fe"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [],
+          "inactive_total": 0,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "d0f973a083f1714947636366a523aba619ce5cfe145a490f33638a8cf16d2814"
+        },
+        {
+          "role": "user",
+          "sha256": "0350fb5b35b86c46465e49ee3f9b60fbc44137ac0a3e70c558f112be20d37dfd"
+        },
+        {
+          "role": "user",
+          "sha256": "a2ab9a377c194d2a6157194bce15380e6db0d0ca0b8339568c0be4381c71c3ec"
+        },
+        {
+          "role": "assistant",
+          "sha256": "2932685bf4b4fe535b68a24ae178f6bd27263cc60d6855b33ef61351e65afcab"
+        },
+        {
+          "role": "user",
+          "sha256": "ce73a6aa5e69a60d716bbc542765dc9ad2390cf8a482dae08f47525715b10ee8"
+        }
+      ],
+      "request_sha256": "1e3c5635419d917af759b73eacb022d91cfc13cb88f5ddf2869d8344a7ed3c95",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "photos.jsonl",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              },
+              {
+                "message_index": 3,
+                "role": "user"
+              },
+              {
+                "message_index": 4,
+                "role": "assistant"
+              }
+            ]
+          },
+          {
+            "name": "assets.jsonl",
+            "occurrences": [
+              {
+                "message_index": 5,
+                "role": "user"
+              }
+            ]
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "photo-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              63,
+              73
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-sort",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              73,
+              85
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "photo-empty",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              85,
+              98
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "photo-language",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "64affef244bf4b26993cf774de4ff744",
+            "source_span": [
+              22,
+              33
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-import-time",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "64affef244bf4b26993cf774de4ff744",
+            "source_span": [
+              33,
+              56
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 5,
+        "preserved": 5,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "reply_sha256": "449b55a6c5c665d3ca26cd1106c30845577b346fb4d066faa7fb3ad82d0cd7f1"
+    },
+    {
+      "case": "S01",
+      "reservation": 3,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "c804d7bc12144496bdd81fc1f6f9ce18",
+          "category": "user_constraint",
+          "content": "照片索引文件改为 assets.jsonl。",
+          "source_message_id": "64affef244bf4b26993cf774de4ff744",
+          "source_span": [
+            0,
+            22
+          ],
+          "revision": 2,
+          "needs_review": false,
+          "multiple_same_category": false,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "c804d7bc12144496bdd81fc1f6f9ce18"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [
+            {
+              "pin_id": "6c912f6d928341e9986d8c43e665d2fe",
+              "category": "user_constraint",
+              "status": "superseded",
+              "revision": 3,
+              "superseded_by": "c804d7bc12144496bdd81fc1f6f9ce18",
+              "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+              "source_span": [
+                40,
+                63
+              ]
+            }
+          ],
+          "inactive_total": 1,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "e2ae54e10ffbe32ac7fa195730db50266869e052e68bb23515b1dc5395f2a27a"
+        },
+        {
+          "role": "user",
+          "sha256": "61b05e264c0187d75e2cd36e687970e963ee6d49ae0acbdb402b6900cdd0022e"
+        },
+        {
+          "role": "user",
+          "sha256": "ea32141413e7bdf9bc1fcccd56d8506395bf4270563a2047dc4036cfb06d06a2"
+        },
+        {
+          "role": "assistant",
+          "sha256": "01adb2c7778eab5574c6483c961d4676f5217ba655cbff9a852420753e0cc13d"
+        },
+        {
+          "role": "user",
+          "sha256": "ce73a6aa5e69a60d716bbc542765dc9ad2390cf8a482dae08f47525715b10ee8"
+        },
+        {
+          "role": "assistant",
+          "sha256": "d5e900b290e8d8cf6b9c8ec25c0a8b9fd5245f96234b86bfb81efbd47415505c"
+        },
+        {
+          "role": "user",
+          "sha256": "e2d605d6a6a2e723b5da814dd2b1c7524483afa2b949416a8484f577eba01243"
+        }
+      ],
+      "request_sha256": "9e84e6c40ae8b0a56846f59a52d4c83f1d51eb50ec75ea7d66646dcd1b99f9a6",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "photos.jsonl",
+            "occurrences": [
+              {
+                "message_index": 4,
+                "role": "assistant"
+              },
+              {
+                "message_index": 6,
+                "role": "assistant"
+              }
+            ]
+          },
+          {
+            "name": "assets.jsonl",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              },
+              {
+                "message_index": 5,
+                "role": "user"
+              },
+              {
+                "message_index": 6,
+                "role": "assistant"
+              }
+            ]
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "photo-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              63,
+              73
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-sort",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              73,
+              85
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "photo-empty",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "3ccee9511acf4c7fb8a169ef72ec31fd",
+            "source_span": [
+              85,
+              98
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "photo-language",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "64affef244bf4b26993cf774de4ff744",
+            "source_span": [
+              22,
+              33
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "photo-import-time",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "64affef244bf4b26993cf774de4ff744",
+            "source_span": [
+              33,
+              56
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 5,
+        "preserved": 5,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 1,
+          "preserved_independent_user_spans": 2,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": true,
+          "history_turns_omitted": 0,
+          "context_truncated": true
+        }
+      },
+      "reply_sha256": "39a70445a529d7cd6b8c9f68f8903f478653bae10e31cc4aa0c9172d921248ec"
+    },
+    {
+      "case": "S02",
+      "reservation": 4,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "lifecycle": [],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "ee146e988eb3a196acb474c0e04f3bb277dcbccb5fd72b763c5fc833d9c44904"
+        }
+      ],
+      "request_sha256": "cc45e10f1a1c18eeabe65dc7e9a39f069398a845c6aaae3bea21505f8412039e",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "tracks.csv",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              }
+            ]
+          },
+          {
+            "name": "library.csv",
+            "occurrences": []
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "music-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              55,
+              67
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-errors",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              67,
+              83
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-duration",
+            "status": "NOT_INTRODUCED"
+          }
+        ],
+        "introduced": 2,
+        "preserved": 2,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "reply_sha256": "ea5f9a3ed1cb2dff265cfd8fcf85f263298abdb97042f382dd141f334c01cd79"
+    },
+    {
+      "case": "S02",
+      "reservation": 5,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "b538c624e2e441ec8ac338f5320a8f8a",
+          "category": "user_constraint",
+          "content": "导出文件命名为 tracks.csv。",
+          "source_message_id": "4af5456c99db410385f4b357e9441edf",
+          "source_span": [
+            36,
+            55
+          ],
+          "revision": 1,
+          "needs_review": false,
+          "multiple_same_category": false,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "b538c624e2e441ec8ac338f5320a8f8a"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [],
+          "inactive_total": 0,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "2e1ba0fd0cbef78a4497a7daa1d5832206fd7b3156e536684c31ca74b2e0fdb4"
+        },
+        {
+          "role": "user",
+          "sha256": "f0a5cf898e89f8535b9dd4b2f2034b7f195e2be74d5f750e0d6cdf0870d0cc8c"
+        },
+        {
+          "role": "user",
+          "sha256": "ee146e988eb3a196acb474c0e04f3bb277dcbccb5fd72b763c5fc833d9c44904"
+        },
+        {
+          "role": "assistant",
+          "sha256": "f844922b40baf59dd22bf0812511cc567557ea4defbc3ff9e82726a9a1ba21e5"
+        },
+        {
+          "role": "user",
+          "sha256": "d5a30ccf239f17a4e6f58899926887ca09075c58e8cf358738fe2bbda3a74387"
+        }
+      ],
+      "request_sha256": "5ffeba65569249ab381fed3a98c436cf1e2972ee1923874945deb0e8d9f2dd6b",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "tracks.csv",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              },
+              {
+                "message_index": 3,
+                "role": "user"
+              },
+              {
+                "message_index": 4,
+                "role": "assistant"
+              }
+            ]
+          },
+          {
+            "name": "library.csv",
+            "occurrences": [
+              {
+                "message_index": 5,
+                "role": "user"
+              }
+            ]
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "music-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              55,
+              67
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-errors",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              67,
+              83
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "music-duration",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "477109178bfa40879811cf023f626516",
+            "source_span": [
+              19,
+              38
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+            "expected_user_view_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 3,
+        "preserved": 3,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "reply_sha256": "870827a07d554125a1e0661814fb2ed95579e298801723a01e87225ba71bdfe2"
+    },
+    {
+      "case": "S02",
+      "reservation": 6,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "e8f9bb9f3deb40658727f4b574c03bf2",
+          "category": "user_constraint",
+          "content": "导出文件改为 library.csv。",
+          "source_message_id": "477109178bfa40879811cf023f626516",
+          "source_span": [
+            0,
+            19
+          ],
+          "revision": 2,
+          "needs_review": false,
+          "multiple_same_category": false,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "e8f9bb9f3deb40658727f4b574c03bf2"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [
+            {
+              "pin_id": "b538c624e2e441ec8ac338f5320a8f8a",
+              "category": "user_constraint",
+              "status": "superseded",
+              "revision": 3,
+              "superseded_by": "e8f9bb9f3deb40658727f4b574c03bf2",
+              "source_message_id": "4af5456c99db410385f4b357e9441edf",
+              "source_span": [
+                36,
+                55
+              ]
+            }
+          ],
+          "inactive_total": 1,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "53da745f5d26aae3ffecd1b0c262ca5fcb329665bdbb8945f4674202144011dd"
+        },
+        {
+          "role": "user",
+          "sha256": "403a18bbd4bc8dc86d06f6dca900d051129c1632c49a5ce2e2a0decf584a8bc7"
+        },
+        {
+          "role": "user",
+          "sha256": "6fd96ac4129b13b15e61e234dffdb2ed46167f13ca7ac91baedb16387b8c06ed"
+        },
+        {
+          "role": "assistant",
+          "sha256": "b798bfc763d2f49134ab490d75821550e7a27259f5dcfbf96f322692c2feefca"
+        },
+        {
+          "role": "user",
+          "sha256": "d5a30ccf239f17a4e6f58899926887ca09075c58e8cf358738fe2bbda3a74387"
+        },
+        {
+          "role": "assistant",
+          "sha256": "1af9321952265f0e38072ac33defa63d8cb10832fc633c63cd89ce44eda345c4"
+        },
+        {
+          "role": "user",
+          "sha256": "947ce20aff59071d140b274f378d10b1501c8a0cc9157d5e078ddb9909b01619"
+        }
+      ],
+      "request_sha256": "418ed0425c84cd643c324b4144ea090f09e10779a0ca9c51bce09524d2318caa",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "tracks.csv",
+            "occurrences": [
+              {
+                "message_index": 4,
+                "role": "assistant"
+              },
+              {
+                "message_index": 6,
+                "role": "assistant"
+              }
+            ]
+          },
+          {
+            "name": "library.csv",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              },
+              {
+                "message_index": 5,
+                "role": "user"
+              },
+              {
+                "message_index": 6,
+                "role": "assistant"
+              }
+            ]
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "music-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              55,
+              67
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-errors",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              67,
+              83
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "music-duration",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "477109178bfa40879811cf023f626516",
+            "source_span": [
+              19,
+              38
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+            "expected_user_view_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 3,
+        "preserved": 3,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 1,
+          "preserved_independent_user_spans": 2,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": true,
+          "history_turns_omitted": 0,
+          "context_truncated": true
+        }
+      },
+      "reply_sha256": "b3e8bd713294664d1e587bfa870865f2d8c6b8a452aa5cc1cd03ed0894cc4261"
+    },
+    {
+      "case": "S02",
+      "reservation": 7,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [
+            {
+              "pin_id": "e8f9bb9f3deb40658727f4b574c03bf2",
+              "category": "user_constraint",
+              "status": "revoked",
+              "revision": 4,
+              "superseded_by": null,
+              "source_message_id": "477109178bfa40879811cf023f626516",
+              "source_span": [
+                0,
+                19
+              ]
+            },
+            {
+              "pin_id": "b538c624e2e441ec8ac338f5320a8f8a",
+              "category": "user_constraint",
+              "status": "superseded",
+              "revision": 3,
+              "superseded_by": "e8f9bb9f3deb40658727f4b574c03bf2",
+              "source_message_id": "4af5456c99db410385f4b357e9441edf",
+              "source_span": [
+                36,
+                55
+              ]
+            }
+          ],
+          "inactive_total": 2,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "7fc6be6be3c981f0d97d87abdd5479f3ab2d407ad4e682288feb3455b1aae120"
+        },
+        {
+          "role": "user",
+          "sha256": "6fd96ac4129b13b15e61e234dffdb2ed46167f13ca7ac91baedb16387b8c06ed"
+        },
+        {
+          "role": "assistant",
+          "sha256": "b798bfc763d2f49134ab490d75821550e7a27259f5dcfbf96f322692c2feefca"
+        },
+        {
+          "role": "user",
+          "sha256": "a35de7fa91ea610992b7fbfbd06f56eaea4e22cbc3f8ee595408cb20df47e7bb"
+        },
+        {
+          "role": "assistant",
+          "sha256": "1af9321952265f0e38072ac33defa63d8cb10832fc633c63cd89ce44eda345c4"
+        },
+        {
+          "role": "user",
+          "sha256": "947ce20aff59071d140b274f378d10b1501c8a0cc9157d5e078ddb9909b01619"
+        },
+        {
+          "role": "assistant",
+          "sha256": "b69949ffc2e24a179ddbb38985ec16ec4d8a5dcecc54f5f11acc55efe0605a65"
+        },
+        {
+          "role": "user",
+          "sha256": "480df088e791587fc006b8c9e91ea38ea288cd4d499dab390c56afed2e1521b2"
+        }
+      ],
+      "request_sha256": "26015ff46362336ad62d9c71452c11ca20fe4fc760e7a44a9b22f524964ba4c4",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "tracks.csv",
+            "occurrences": [
+              {
+                "message_index": 3,
+                "role": "assistant"
+              },
+              {
+                "message_index": 5,
+                "role": "assistant"
+              },
+              {
+                "message_index": 7,
+                "role": "assistant"
+              }
+            ]
+          },
+          {
+            "name": "library.csv",
+            "occurrences": [
+              {
+                "message_index": 5,
+                "role": "assistant"
+              },
+              {
+                "message_index": 7,
+                "role": "assistant"
+              }
+            ]
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "music-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              55,
+              67
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+            "sdk_message_index": 2,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-errors",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "4af5456c99db410385f4b357e9441edf",
+            "source_span": [
+              67,
+              83
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+            "sdk_message_index": 2,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": true
+          },
+          {
+            "unit_id": "music-duration",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "477109178bfa40879811cf023f626516",
+            "source_span": [
+              19,
+              38
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+            "expected_user_view_sha256": "c82f64c36405c5af7d99cf1aeec17e99b2f75b9024e805af53c277aaec2809cf",
+            "sdk_message_index": 4,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 3,
+        "preserved": 3,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 2,
+          "preserved_independent_user_spans": 3,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": true,
+          "history_turns_omitted": 0,
+          "context_truncated": true
+        }
+      },
+      "reply_sha256": "a9b209e5c5f64197fd8dfe9f129b35c2330ed7ddef9d8b3b3e704945c6cc5fcd"
+    },
+    {
+      "case": "S03",
+      "reservation": 8,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [],
+      "lifecycle": [],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "d40e59e967bedd032474ab0451067686d6b30e8d1b14a3d151c8e28c02bbcce3"
+        }
+      ],
+      "request_sha256": "489f31daca92166e254dc2d3bbfbb2a86af535b3fcf997e2f442731aeddf01b1",
+      "source_preservation": {
+        "historical_naming_presence": [],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "notes-local",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              39,
+              51
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-protect",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              51,
+              63
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-cli-optional",
+            "kind": "optional_user_suggestion",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              63,
+              93
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-fulltext-open",
+            "kind": "unresolved_user_choice",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              93,
+              102
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 1,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 4,
+        "preserved": 4,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "reply_sha256": "f4f6770266596883f6ab4b79b3fe3add093a2fa8dbc48c263e9069307c8f108a"
+    },
+    {
+      "case": "S03",
+      "reservation": 9,
+      "purpose": "agent",
+      "finish_reason": "stop",
+      "pins": [
+        {
+          "pin_id": "b941d675c86141a5a905404c6793793c",
+          "category": "user_constraint",
+          "content": "不允许自动删除原始笔记。",
+          "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+          "source_span": [
+            51,
+            63
+          ],
+          "revision": 2,
+          "needs_review": false,
+          "multiple_same_category": true,
+          "semantic_conflict_unassessed": true
+        },
+        {
+          "pin_id": "bc94db24011548f5ac384be29f3aac6a",
+          "category": "user_constraint",
+          "content": "笔记数据只能在本地处理。",
+          "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+          "source_span": [
+            39,
+            51
+          ],
+          "revision": 1,
+          "needs_review": false,
+          "multiple_same_category": true,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "b941d675c86141a5a905404c6793793c",
+              "bc94db24011548f5ac384be29f3aac6a"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [],
+          "inactive_total": 0,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ],
+      "message_hashes": [
+        {
+          "role": "system",
+          "sha256": "d77dca8542dea90b6414945ab6e8657d7b533e6cc214da6f8eb4707e1c879a4a"
+        },
+        {
+          "role": "user",
+          "sha256": "2d09a0028e94105339f90b9cc3a25efe89f8e80c7ac1945a972c2e6b307635bd"
+        },
+        {
+          "role": "user",
+          "sha256": "700f7595fe7920dadbc8782b17970a3ba3d6bbf2f4a3667cd717f6d8b28b5bbd"
+        },
+        {
+          "role": "user",
+          "sha256": "d40e59e967bedd032474ab0451067686d6b30e8d1b14a3d151c8e28c02bbcce3"
+        },
+        {
+          "role": "assistant",
+          "sha256": "b8f9043de55c2c6d898d7249bd78b946eabdaef7ab06c032bf539df4b67403cc"
+        },
+        {
+          "role": "user",
+          "sha256": "102bea97d1db967379ea782238978e51f8b27eb5f184a24b28b23db3625ae788"
+        }
+      ],
+      "request_sha256": "ce753820b774bbe447e25f9fa38c851a55ce6cde83735e33781740e5b1bd906d",
+      "source_preservation": {
+        "historical_naming_presence": [],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "notes-local",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              39,
+              51
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-protect",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              51,
+              63
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-cli-optional",
+            "kind": "optional_user_suggestion",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              63,
+              93
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-fulltext-open",
+            "kind": "unresolved_user_choice",
+            "source_turn": 1,
+            "source_message_id": "497f1da8cce34f2a91e200832e984e29",
+            "source_span": [
+              93,
+              102
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 4,
+        "preserved": 4,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "reply_sha256": "92b290faa511be98b53837dc8143d21b0812a4e15ced2811bcecca8069effee8"
+    }
+  ]
+}

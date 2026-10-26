@@ -1,0 +1,44 @@
+{
+  "ledger_integrity": "ok",
+  "events_integrity": "ok",
+  "foreign_key_errors": 0,
+  "events": 67,
+  "sessions": 4,
+  "turns": [
+    {
+      "state": "completed",
+      "n": 9
+    }
+  ],
+  "tools": 0,
+  "pin_states": [
+    {
+      "status": "active",
+      "n": 3
+    },
+    {
+      "status": "revoked",
+      "n": 1
+    },
+    {
+      "status": "superseded",
+      "n": 2
+    }
+  ],
+  "all_nine_user_messages_exact": true,
+  "db_inodes_match_frozen": true,
+  "configuration_and_workspace_unchanged": true,
+  "source_hashes_unchanged": true,
+  "execution_uncertain": false,
+  "old_private_databases_touched": false,
+  "private_asset_hashes": {
+    "freeze.json": "91f9e04c7ef7aa5c454c2066706f584c273169035162f14da4a95dd1e5c1948e",
+    "prepared.json": "a3831ddf81a05de34a2d9329effd662d22d543f540a54dfc9f18d70c86c81681",
+    "browser-isolation.json": "5a62c5494726ef027e54792f5649b6067b602e8fab4c58512fb5e43d8c811859"
+  },
+  "per_session_sequence_contiguous": true,
+  "report_exact_credential_scan": "PASS (no credential values exported)",
+  "screenshots_visually_reviewed": true,
+  "all_server_wrapper_and_listener_pids_exited": true,
+  "all_old_reports_preregistration_and_code_unchanged": true
+}

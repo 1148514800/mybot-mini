@@ -1,0 +1,30 @@
+{
+  "algorithm": "sha256",
+  "scope": "All files in this Live execution directory except this self-index.",
+  "files": {
+    "S01-final.png": "4864aa67b0f8f22359fb875fb8d10ee758d5855893049fa4580514b12e49e9a2",
+    "S01-replaced.png": "a40c41b880887d59bb801593fd8c3c6c90c3ba69ce03a0b95ef0056133fbb28f",
+    "S02-before-revoke.png": "6b9029600f3be5a619f3937003d8544db15003b2bb2da10bdd67b71f8b5a0de6",
+    "S02-final.png": "1fea9b01098981b7378bf7a47544da9d574649a7280319f135c77c59a4e22c3c",
+    "S02-replaced.png": "c0d48cc3735b0a3a290f32577304e6d0040c6fc9efbd5b5729c6e65a84ac11d3",
+    "S03-compatible-pins.png": "82914bb6cdafe5719730d28faa7fe090e86eb147be90f11a15dfd88a9cd477d8",
+    "S03-final.png": "09fee431945161c417b4b7f69efd2dd2acfda2413cc5559119ca63c551cff4e2",
+    "acceptance-report.md": "a2f2ef7e791a12abbb35408cfa3451c4e30a8491564afb095efb9e73e4d49393",
+    "assistant-echo-analysis.md": "e0373b141bed3f820124ad9ac7821ef4a7d9e5948db8f9d24a5269c64814b34b",
+    "assistant-echo-evidence.json": "621cace80a64d40ab6d18f55d2364c0575a66fb05a1391f543150eddc050a938",
+    "browser-acceptance-evidence.json": "68e9d41b2a4b8d906299f0661c53a6960f719910df8b3b1056449db140e24bcc",
+    "browser-acceptance.md": "17b7d96d365fb2db4be7c5b68e9522e19695b544016ee2e511bf628194f0adbb",
+    "budget-evidence.json": "9bbd1a8f23a2c8ac31b6541457cde17a87c64a5d79defef020392c6f87ebedd4",
+    "case-results.md": "61925ce1e86856a46ec9df10aa5d686e5e492e44adf8437da6328b310ffa26a2",
+    "information-loss-analysis.md": "e91186b5569dc81923a3575397276089b42942e069f1f9a53d2335c739ea323e",
+    "next-step-recommendations.md": "be8f400c9fc972e91af853d5e11d1bddbf5cb9aa544a7eeb045345fce1a679ee",
+    "pin-inclusion-evidence.json": "2f12f24588fa6aaab3d4fa149c26ecff67907de7894fdaef1e4776d64f1b49bd",
+    "probe-A.png": "4bb9a92308cbd58a99b451e802716c4d9dbb9486489bab6fe4f91bf9224b4185",
+    "probe-B.png": "40db9a555e6b8faf5785db8eff3111c1aea08d79e4a0d6ba26a8b37a559cbc8b",
+    "resource-usage.json": "7a2b39fbce25df24ac411f9a85f6d8cb2dbe571b5d853fed53ae5cd9f8ca48e0",
+    "security-audit.md": "b73a8a4db4238212c0406e2575e9a671abfc071bd943d4d138e92407f79f64fb",
+    "security-evidence.json": "3036bfbef453d06bcfb5bbf3ba6ad0d7e8717620e7ab6a016022078c64922076",
+    "semantic-adherence.md": "7209b28ecf0582b01ec6d79eba56381a839f6b15a0ced5d6b9a04bcf5caeb16a",
+    "source-preservation.json": "eb246778d791c029be421f7ae15ee3f72eec6c98e4dd87cecb3f65589c8e8dd5"
+  }
+}
