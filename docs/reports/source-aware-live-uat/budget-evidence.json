@@ -1,0 +1,33 @@
+{
+  "status": "OFFLINE_GATES_PASS_LIVE_ZERO",
+  "ledger_path": "~/.mybot-mini/uat/source-aware-live-20261025/private/requests.sqlite",
+  "identity": [
+    16777231,
+    14390539
+  ],
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "case_caps": {
+    "S01": 4,
+    "S02": 4,
+    "S03": 2
+  },
+  "global_cap": 10,
+  "unsettled_blocks_next_request_or_case": true,
+  "sdk_max_retries": 0,
+  "max_http_sends_per_reservation": 1,
+  "exceptional_summary": "conservative reservation then halt before HTTP",
+  "failed_http_counted": true,
+  "failover_shares_same_ledger": true,
+  "old_authorization_16_rejected": true,
+  "rerun_allowed": false,
+  "unused_capacity_transfer": false,
+  "mock_gate_tests": 28,
+  "mock_frozen_flow_sdk_sends": 9,
+  "real_provider_calls_in_tests": 0,
+  "frozen_no_real_attempt_started": true
+}

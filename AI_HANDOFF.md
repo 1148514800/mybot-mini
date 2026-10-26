@@ -2,16 +2,18 @@
 
 ## 当前状态
 
-Source-Aware真实语义UAT只获NOT_GRANTED，禁止调用真实DeepSeek/GLM/摘要/Judge或旧余额。新分支codex/source-aware-live-uat，基线d310a06d533cc258067a487e12adc8f6f5f6fc45。生产mybot/、依赖、旧Harness/报告/私有数据库不改。原1682项工程验收及旧Live结论保留。
+Source-Aware语义UAT为OFFLINE PREPARATION PASS / LIVE BLOCKED。授权NOT_GRANTED，真实DeepSeek/GLM/摘要/Judge/HTTP0，无供应商Usage，cost=null。新分支codex/source-aware-live-uat，基线d310a06，Preregistration ce3a44dbfdb0fef5662753501ca8a021a0be55f8；Acceptance随后报告提交，Push后核对远程。不合main，不改历史Tag/ZIP/Live结果。
 
-## 本轮离线预注册
+## 唯一冻结批次
 
-scripts/source_aware_uat固定S01照片3条、S02音乐4条、S03阅读笔记2条，预算4/4/2，全局10，每Case一次Attempt。新独立ledger复用schema/HTTP/SDK gate，任何未结算阻止后续；新授权精确GRANTED_10_REQUESTS且先于凭证/SDK。仅新隔离薄适配器，不修改生产Harness。
+~/.mybot-mini/uat/source-aware-live-20261025，已唯一prepare/freeze并verify PASS。plan 0244a2c401d64325a16f0161eef25b62210cf0bede281900574a119605b9a4bc。workspace=workspace/；event DB=private/session-events.sqlite3；ledger=private/requests.sqlite。原Provider文件只读路径/指纹在私有prepared.json绑定，未复制凭证。两DB inode及权限/完整性通过，实际0 Attempt/0 reservation/0未结算/0 Session/0 event，lease已释放。冻结后只verify，不重新prepare/freeze/修补/替换。
 
-evidence以真实Source ID/Session/user/span核对实际SDK user视图，助手复述不计来源保留，局部遮蔽/预算/协议与语义未知分开。S01五要求、S02三要求、S03两约束+可选建议+未决状态。历史命名被全部遮蔽时，模型诚实UNKNOWN不记安全失败，也不记完整Task PASS。
+## 合同与证据
 
-28项新Mock门及九条原文正式Runtime流程通过；独立headed Chrome同Origin Cookie/LocalStorage双向隔离通过，两个临时profile/服务清理。新批次计划~/.mybot-mini/uat/source-aware-live-20261025，须在Preregistration提交后仅prepare/freeze一次，Acceptance记录实际哈希/inode和零账本。生产Provider配置原路径只读指纹，远端有效性未验证。实际真实模型请求0。
+S01照片3条（4请求）、S02音乐4条（4请求）、S03阅读笔记2条（2请求），全局10，每Case一次Attempt。完整原文、Pin Unicode跨度、Web操作顺序、事实/建议/未决单元与独立评分在docs/reports/source-aware-live-uat/preregistration.md/json。Source Preservation只读映射Session/Source ID至实际SDK user视图；助手/摘要/答案不计原来源。历史具体名称全部被遮蔽时，诚实UNKNOWN不算安全失败，但不算完整Task PASS。
+
+28新Mock门+198相关回归=226通过；正式Runtime的9条冻结消息MockTransport SDK请求源单元5/5、3/3、4/4，仅机制PASS，真实语义未测。独立headed Chrome两新profile同Origin Cookie/LocalStorage双向隔离、PID/user-data-dir/DOM/截图通过，自己的profile与服务清理。compileall/JS/diff通过；生产mybot/、旧Harness、依赖、旧报告/私有库不改。未重跑全部check_phase，旧1682不冒充本轮结果。
 
 ## 下一步与禁止事项
 
-完成本次唯一离线prepare/freeze、Acceptance报告和Push核对后停止；未来必须新的人类GRANTED_10_REQUESTS授权才能按S01→S02→S03执行原冻结计划。冻结后只verify，不重新prepare/freeze、新建替代账本、改消息/跨度/评分或追加提示。新资源与用户8765/Chrome隔离，不能触碰旧私有DB或用户内存会话。报告docs/reports/source-aware-live-uat/；学习专题docs/phases/source-aware-live-uat.md，不创建历史Tag/ZIP。
+必须用户另行明确GRANTED_10_REQUESTS才能按S01→S02→S03执行scripts.source_aware_uat.server，原新批次不换；旧16授权/剩余额度无效。未来先verify并重核8898/lease/资源隔离/全新0700 Chrome身份；不触碰8765或用户profile。普通语义FAIL不补问；预算、凭证、数据或执行/清理不确定立即停批次。报告docs/reports/source-aware-live-uat/含实际冻结哈希、0账本与非生产浏览器证据；Live各维度NOT_RUN/BLOCKED，助手影响UNKNOWN。

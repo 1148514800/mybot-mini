@@ -1,0 +1,110 @@
+{
+  "status": "PASS",
+  "suites": [
+    {
+      "module": "scripts.check_source_aware_uat",
+      "exit_code": 0,
+      "tests": 28,
+      "seconds": 2.447,
+      "log_sha256": "57d6c425a8fd58074681b86b5fa1a6758532d5daaae6201235315fedd48af6fc",
+      "failed": false,
+      "final_source_revision": true
+    },
+    {
+      "module": "scripts.check_source_aware_projection",
+      "exit_code": 0,
+      "tests": 21,
+      "seconds": 0.564,
+      "log_sha256": "e0926cd834b328d937fa65e920416d059d278d53fa939f38e8e514044db4d0af",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_pin_lifecycle_context",
+      "exit_code": 0,
+      "tests": 12,
+      "seconds": 0.56,
+      "log_sha256": "e60def4f126c58d5960cf25cbbda278b5088b35bd54f33fb9f7a55d38f4465b0",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_projection_protocol_integrity",
+      "exit_code": 0,
+      "tests": 9,
+      "seconds": 0.495,
+      "log_sha256": "a563ed6b62f4acebe6ac436a025a46d66976351559c7613eacc316ffb0c78749",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_persistent_session_uat",
+      "exit_code": 0,
+      "tests": 22,
+      "seconds": 4.047,
+      "log_sha256": "f5a13ad40c9b7ba190d95ef0f895852c52ec44503207b7d15c01dbf7cda21dbe",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_web_persistence",
+      "exit_code": 0,
+      "tests": 24,
+      "seconds": 0.824,
+      "log_sha256": "cf2907b1500d24d1e791e9824bde9f8abb489f2e4c69fd6a78e3cec08b631349",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_provider_failover",
+      "exit_code": 0,
+      "tests": 17,
+      "seconds": 0.457,
+      "log_sha256": "7558f55749d8ceaac5af8fad36bed6a2c027d5604d140e0ade7e60f394ec6db4",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_web_ui",
+      "exit_code": 0,
+      "tests": 53,
+      "seconds": 4.664,
+      "log_sha256": "0ab4fff3e58eb98d20e933e0e75bbb68d0ab58d3b7cabe78c08ee47c4e84d410",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_session_recovery",
+      "exit_code": 0,
+      "tests": 18,
+      "seconds": 5.211,
+      "log_sha256": "f03a91faa87138b41f389e80a7456ba745f550f4c22f4a07091c4a10676a5e95",
+      "failed": false
+    },
+    {
+      "module": "scripts.check_session_event_store",
+      "exit_code": 0,
+      "tests": 22,
+      "seconds": 1.197,
+      "log_sha256": "4c54b9212ae99d027043713d92d98623a39feb8b2ac57e05e80b3258d6337d1d",
+      "failed": false
+    },
+    {
+      "module": "compileall",
+      "exit_code": 0,
+      "tests": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "module": "javascript_syntax",
+      "exit_code": 0,
+      "tests": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "module": "diff_check",
+      "exit_code": 0,
+      "tests": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "total_checks": 226,
+  "real_model_requests": 0,
+  "full_check_phase_rerun": false,
+  "reason": "Production/Harness/dependencies unchanged; scoped gate/projection/Web/recovery regression.",
+  "new_specialized_checks": 28,
+  "source_production_unchanged": true
+}

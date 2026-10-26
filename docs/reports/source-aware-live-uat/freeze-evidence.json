@@ -1,0 +1,83 @@
+{
+  "status": "FROZEN_OFFLINE",
+  "authorization": "NOT_GRANTED",
+  "preregistration_commit": "ce3a44dbfdb0fef5662753501ca8a021a0be55f8",
+  "baseline": "d310a06d533cc258067a487e12adc8f6f5f6fc45",
+  "canonical_plan_sha256": "0244a2c401d64325a16f0161eef25b62210cf0bede281900574a119605b9a4bc",
+  "private_asset_hashes": {
+    "freeze.json": "91f9e04c7ef7aa5c454c2066706f584c273169035162f14da4a95dd1e5c1948e",
+    "prepared.json": "a3831ddf81a05de34a2d9329effd662d22d543f540a54dfc9f18d70c86c81681",
+    "browser-isolation.json": "5a62c5494726ef027e54792f5649b6067b602e8fab4c58512fb5e43d8c811859"
+  },
+  "source_manifest_sha256": "1894e00938564581df62bbbfe75bd199abaebc19876b4c75d9fae8b48e2ceb2b",
+  "source_file_count": 241,
+  "provider_fingerprint": {
+    "file_sha256": "23f00185cd76b5684a8ccc7390ce51a4c3c93ef7e697e54aaadc988a9665a65a",
+    "providers": {
+      "coco": {
+        "model": "deepseek-v4.1-flash",
+        "base_url_sha256": "86ca0e198bafa8c0cb6c8f704a5ec063cf5a1d70059505b05df9a78ba090b799",
+        "credential_present": true
+      },
+      "coco2": {
+        "model": "glm-5.3-flash",
+        "base_url_sha256": "86ca0e198bafa8c0cb6c8f704a5ec063cf5a1d70059505b05df9a78ba090b799",
+        "credential_present": true
+      }
+    }
+  },
+  "configuration": {
+    "session_max_turns": 6,
+    "coding_enabled": false,
+    "coding_file_access": "read_only",
+    "coding_patch_mode": "off",
+    "mcp_enabled": false,
+    "skills_enabled": false,
+    "max_react_steps": 2,
+    "max_completion_tokens": 1800,
+    "request_timeout_seconds": 90.0,
+    "context_token_budget": {
+      "mode": "estimate",
+      "input_limit": 14000,
+      "model_windows": {}
+    },
+    "context_compaction": {
+      "mode": "deterministic",
+      "allow_extra_requests": false,
+      "max_calls": 1,
+      "input_tokens": 12000,
+      "output_tokens": 1200,
+      "timeout_seconds": 15,
+      "on_failure": "deterministic"
+    }
+  },
+  "workspace_hashes": {
+    "README.md": "edf7b7d0a53cf8f376fc26922d296b439454f2de82090668a9b4ef0fbbad4b74",
+    "instructions/AGENTS.md": "ebb281bbab9bafac7d31bcced413f0f866949267ab2b7194001ab1376f4933f2",
+    "instructions/SOUL.md": "939bc22640c4de4064631b6670be7150e3da64ef755e8c104c79f05cf2252fa4",
+    "instructions/TOOLS.md": "8da27b6df7ea245fe7856343c852e7f6bc514faff98b6b9146365991d40666b9",
+    "instructions/USER.md": "5c23c89d4b0f135fbb911423da4775fed38ed231b90a4ec3a1520b70d6323363"
+  },
+  "ledger_identity": [
+    16777231,
+    14390539
+  ],
+  "event_identity": [
+    16777231,
+    14390537
+  ],
+  "new_batch": "~/.mybot-mini/uat/source-aware-live-20261025",
+  "paths": {
+    "workspace": "workspace/",
+    "events": "private/session-events.sqlite3",
+    "ledger": "private/requests.sqlite"
+  },
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "freeze_or_prepare_repeated": false,
+  "private_databases_committed": false
+}

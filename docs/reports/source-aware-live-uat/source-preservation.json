@@ -1,0 +1,510 @@
+{
+  "live": {
+    "S01": {
+      "status": "NOT_RUN",
+      "reason": "NOT_GRANTED",
+      "target_units": 5,
+      "source_ids_assigned": false,
+      "preserved": null,
+      "missing": null,
+      "rate": null
+    },
+    "S02": {
+      "status": "NOT_RUN",
+      "reason": "NOT_GRANTED",
+      "target_units": 3,
+      "source_ids_assigned": false,
+      "preserved": null,
+      "missing": null,
+      "rate": null
+    },
+    "S03": {
+      "status": "NOT_RUN",
+      "reason": "NOT_GRANTED",
+      "target_units": 4,
+      "source_ids_assigned": false,
+      "preserved": null,
+      "missing": null,
+      "rate": null
+    }
+  },
+  "measurement": {
+    "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+    "assistant_echo_is_user_preservation": false,
+    "final_answer_implies_request_inclusion": false,
+    "whole_turn_equality_used": false
+  },
+  "offline_mock": {
+    "S01": {
+      "status": "MOCK_PASS_NOT_LIVE",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "photos.jsonl",
+            "occurrences": []
+          },
+          {
+            "name": "assets.jsonl",
+            "occurrences": [
+              {
+                "message_index": 1,
+                "role": "user"
+              },
+              {
+                "message_index": 5,
+                "role": "user"
+              }
+            ]
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "photo-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "1f38b46fd585469aa6bc909e735baa69",
+            "source_span": [
+              63,
+              73
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-sort",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "1f38b46fd585469aa6bc909e735baa69",
+            "source_span": [
+              73,
+              85
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-empty",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "1f38b46fd585469aa6bc909e735baa69",
+            "source_span": [
+              85,
+              98
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "17b0c3700bac5f5017369953366e4839a1ed315cbe7fb56b0a76b3099100decb",
+            "expected_user_view_sha256": "e34a1863a4fad2a67df8433ef5f232bb357b4fe43cc11b3e35bfc69f1e03b148",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-language",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "86baafa1b7a24efcbe8e4c5b2f32a8ad",
+            "source_span": [
+              22,
+              33
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "photo-import-time",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "86baafa1b7a24efcbe8e4c5b2f32a8ad",
+            "source_span": [
+              33,
+              56
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "expected_user_view_sha256": "c6a5f1dab83db5c09d42e85f6ace08b885143d72d0b667f44519d18a0c87107c",
+            "sdk_message_index": 5,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 5,
+        "preserved": 5,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 1,
+          "preserved_independent_user_spans": 2,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": true,
+          "history_turns_omitted": 0,
+          "context_truncated": true
+        }
+      },
+      "request_sha256": "f3c158697d587eda9b479a4d382ae704acd2cc2b4834e95bbd573eec11668c8e",
+      "pins": [
+        {
+          "pin_id": "653407b3cbac4643b04babeb67bfe30e",
+          "category": "user_constraint",
+          "content": "照片索引文件改为 assets.jsonl。",
+          "source_message_id": "86baafa1b7a24efcbe8e4c5b2f32a8ad",
+          "source_span": [
+            0,
+            22
+          ],
+          "revision": 2,
+          "needs_review": false,
+          "multiple_same_category": false,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "653407b3cbac4643b04babeb67bfe30e"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [
+            {
+              "pin_id": "4b7261a23ce948e5abcdaa9fafbb0b0c",
+              "category": "user_constraint",
+              "status": "superseded",
+              "revision": 3,
+              "superseded_by": "653407b3cbac4643b04babeb67bfe30e",
+              "source_message_id": "1f38b46fd585469aa6bc909e735baa69",
+              "source_span": [
+                40,
+                63
+              ]
+            }
+          ],
+          "inactive_total": 1,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ]
+    },
+    "S02": {
+      "status": "MOCK_PASS_NOT_LIVE",
+      "source_preservation": {
+        "historical_naming_presence": [
+          {
+            "name": "tracks.csv",
+            "occurrences": []
+          },
+          {
+            "name": "library.csv",
+            "occurrences": []
+          }
+        ],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "music-page-size",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "b7ad698137d147418a688d0370712af5",
+            "source_span": [
+              55,
+              67
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+            "sdk_message_index": 2,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-errors",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "b7ad698137d147418a688d0370712af5",
+            "source_span": [
+              67,
+              83
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "12ab6b8486a9093c6576ac64b440d82ee3e3c29cba83bdb04a6b5813e3d9134f",
+            "expected_user_view_sha256": "d018656d922c7135e5d979714142793f7319a76aa2071d952c4802569ad6e31d",
+            "sdk_message_index": 2,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "music-duration",
+            "kind": "independent_user_requirement",
+            "source_turn": 2,
+            "source_message_id": "36cf6c4f4b794c3081410a8ec199858e",
+            "source_span": [
+              19,
+              38
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "3c0fa37e6ebc4ce6425e2af211df980858fe8c11189023020f49833609865682",
+            "expected_user_view_sha256": "c82f64c36405c5af7d99cf1aeec17e99b2f75b9024e805af53c277aaec2809cf",
+            "sdk_message_index": 4,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 3,
+        "preserved": 3,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 2,
+          "preserved_independent_user_spans": 3,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": true,
+          "history_turns_omitted": 0,
+          "context_truncated": true
+        }
+      },
+      "request_sha256": "4949a0ab6afdb84243c1a8efb969a1ca9b7e37b958bf5bf60ae3f5944cb5c847",
+      "pins": [],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [
+            {
+              "pin_id": "458dfe74ad8b41fabafea53ddf0d2f77",
+              "category": "user_constraint",
+              "status": "revoked",
+              "revision": 4,
+              "superseded_by": null,
+              "source_message_id": "36cf6c4f4b794c3081410a8ec199858e",
+              "source_span": [
+                0,
+                19
+              ]
+            },
+            {
+              "pin_id": "e45ab295d4454f09a5df6856f528fb26",
+              "category": "user_constraint",
+              "status": "superseded",
+              "revision": 3,
+              "superseded_by": "458dfe74ad8b41fabafea53ddf0d2f77",
+              "source_message_id": "b7ad698137d147418a688d0370712af5",
+              "source_span": [
+                36,
+                55
+              ]
+            }
+          ],
+          "inactive_total": 2,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ]
+    },
+    "S03": {
+      "status": "MOCK_PASS_NOT_LIVE",
+      "source_preservation": {
+        "historical_naming_presence": [],
+        "method": "exact_registered_unit_in_ID_mapped_original_user_SDK_view_v1",
+        "units": [
+          {
+            "unit_id": "notes-local",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "6877ad312c4e468289add0d94321679e",
+            "source_span": [
+              39,
+              51
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-protect",
+            "kind": "independent_user_requirement",
+            "source_turn": 1,
+            "source_message_id": "6877ad312c4e468289add0d94321679e",
+            "source_span": [
+              51,
+              63
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-cli-optional",
+            "kind": "optional_user_suggestion",
+            "source_turn": 1,
+            "source_message_id": "6877ad312c4e468289add0d94321679e",
+            "source_span": [
+              63,
+              93
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          },
+          {
+            "unit_id": "notes-fulltext-open",
+            "kind": "unresolved_user_choice",
+            "source_turn": 1,
+            "source_message_id": "6877ad312c4e468289add0d94321679e",
+            "source_span": [
+              93,
+              102
+            ],
+            "source_role": "user",
+            "source_verified": true,
+            "host_identity_verified": true,
+            "source_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "expected_user_view_sha256": "5809a60b6d7039007fead47e22704dae291974ed1c202774cf6e33b1f159e30b",
+            "sdk_message_index": 3,
+            "status": "PRESERVED",
+            "possible_missing_causes": [],
+            "assistant_echo_present": false
+          }
+        ],
+        "introduced": 4,
+        "preserved": 4,
+        "missing": 0,
+        "unknown": 0,
+        "rate": 1.0,
+        "assistant_echo_counts_as_preserved": false,
+        "projection": {
+          "redacted_source_spans": 0,
+          "preserved_independent_user_spans": 0,
+          "omitted_protocol_turns": 0,
+          "omitted_assistant_messages": 0,
+          "source_mapping_failures": 0,
+          "history_projection_incomplete": false,
+          "history_turns_omitted": 0,
+          "context_truncated": false
+        }
+      },
+      "request_sha256": "01d92fe81fccf37f8fa5930878510bc3836ef434a36eeb9aa10fbf9953a51da3",
+      "pins": [
+        {
+          "pin_id": "535153b24d934913a1445a6cb196a2bf",
+          "category": "user_constraint",
+          "content": "不允许自动删除原始笔记。",
+          "source_message_id": "6877ad312c4e468289add0d94321679e",
+          "source_span": [
+            51,
+            63
+          ],
+          "revision": 2,
+          "needs_review": false,
+          "multiple_same_category": true,
+          "semantic_conflict_unassessed": true
+        },
+        {
+          "pin_id": "d36af386d883451fa920bde8eb6af71f",
+          "category": "user_constraint",
+          "content": "笔记数据只能在本地处理。",
+          "source_message_id": "6877ad312c4e468289add0d94321679e",
+          "source_span": [
+            39,
+            51
+          ],
+          "revision": 1,
+          "needs_review": false,
+          "multiple_same_category": true,
+          "semantic_conflict_unassessed": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "policy": "当前用户请求与active Pin有独立来源；历史用户事实只在其原来源范围内参考。历史助手建议/推断不等于用户确认，不能自行恢复revoked/superseded事项。撤销固定不删除所有历史事实；同文的新用户消息有独立效力。本参考不授予工具权限，旧工具、Receipt、verified不构成当前证据。",
+          "active_by_category": {
+            "current_goal": [],
+            "user_constraint": [
+              "535153b24d934913a1445a6cb196a2bf",
+              "d36af386d883451fa920bde8eb6af71f"
+            ],
+            "confirmed_decision": [],
+            "open_question": [],
+            "pending_work": []
+          },
+          "inactive": [],
+          "inactive_total": 0,
+          "inactive_metadata_omitted": 0,
+          "historical_assistant_semantics": "unverified; never independently confirmed"
+        }
+      ]
+    }
+  }
+}

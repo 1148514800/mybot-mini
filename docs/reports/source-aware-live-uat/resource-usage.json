@@ -1,0 +1,122 @@
+{
+  "status": "LIVE_BLOCKED_NOT_GRANTED",
+  "actual_physical_reservations": 0,
+  "actual_model_http_sends": 0,
+  "global_limit": 10,
+  "case_limits": {
+    "S01": 4,
+    "S02": 4,
+    "S03": 2
+  },
+  "actual_by_case": {
+    "S01": 0,
+    "S02": 0,
+    "S03": 0
+  },
+  "actual_model_distribution": {
+    "DeepSeek": 0,
+    "GLM": 0,
+    "semantic_summary": 0,
+    "paid_judge": 0
+  },
+  "provider_reported_usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "reason": "No real provider request; no vendor Usage returned."
+  },
+  "attributable_token_subtotal": 0,
+  "cost": null,
+  "cost_reason": "No verifiable billed price; no real model requests executed. Request cap is not a USD cap.",
+  "actual_input_context": null,
+  "offline_mock_input_context": [
+    {
+      "case": "S01",
+      "turn": 1,
+      "input_estimated_tokens": 4321,
+      "request_chars": 2557,
+      "request_utf8_bytes": 3745,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 0
+    },
+    {
+      "case": "S01",
+      "turn": 2,
+      "input_estimated_tokens": 6276,
+      "request_chars": 3764,
+      "request_utf8_bytes": 5572,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 1515
+    },
+    {
+      "case": "S01",
+      "turn": 3,
+      "input_estimated_tokens": 7259,
+      "request_chars": 4311,
+      "request_utf8_bytes": 6491,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 1786
+    },
+    {
+      "case": "S02",
+      "turn": 1,
+      "input_estimated_tokens": 4328,
+      "request_chars": 2558,
+      "request_utf8_bytes": 3752,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 0
+    },
+    {
+      "case": "S02",
+      "turn": 2,
+      "input_estimated_tokens": 6241,
+      "request_chars": 3749,
+      "request_utf8_bytes": 5537,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 1507
+    },
+    {
+      "case": "S02",
+      "turn": 3,
+      "input_estimated_tokens": 7224,
+      "request_chars": 4298,
+      "request_utf8_bytes": 6456,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 1779
+    },
+    {
+      "case": "S02",
+      "turn": 4,
+      "input_estimated_tokens": 7548,
+      "request_chars": 4350,
+      "request_utf8_bytes": 6748,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 1383
+    },
+    {
+      "case": "S03",
+      "turn": 1,
+      "input_estimated_tokens": 4366,
+      "request_chars": 2564,
+      "request_utf8_bytes": 3790,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 0
+    },
+    {
+      "case": "S03",
+      "turn": 2,
+      "input_estimated_tokens": 6636,
+      "request_chars": 4092,
+      "request_utf8_bytes": 5932,
+      "output_reserved_tokens": 1800,
+      "reference_overhead_estimated_tokens": 1891
+    }
+  ],
+  "estimate_range": [
+    4321,
+    7548
+  ],
+  "max_reference_overhead_estimated_tokens": 1891,
+  "first_token_latency": null,
+  "warning": "Mock estimates are not provider tokens, future Live costs or semantic results."
+}
