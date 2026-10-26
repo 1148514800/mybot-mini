@@ -31,6 +31,6 @@ Chrome脚本只创建0700临时profile与MockTransport服务。不要运行原Li
 
 标准400多块流通过；stop后重复finish精确标stream_duplicate_finish；stop后内容标stream_after_finish_payload，均不返回工具。原真实328块没有完整结构，ORIGINAL_R01_ROOT_CAUSE仍UNKNOWN。
 
-旧SSE持连接会阻止退出的机制与继承TTY时launcher信号不转发分别合成复现。新真实Chrome A–G已验证协议错误、工具、Steer、HALT与恢复，具体证据在专题报告。全量回归结果在Acceptance提交时记录；Implementation阶段不得提前宣布全量完成。
+旧SSE持连接会阻止退出的机制与继承TTY时launcher信号不转发分别合成复现。新真实Chrome A–G已验证协议错误、工具、Steer、HALT与恢复，具体证据在专题报告。最终固定Implementation全量59 suite/1734项，加独立129、UAT预算30和新58，1951个去重unittest通过；Chrome A–G、compileall/JS/diff通过。重复开发运行不累加。
 
 与上一阶段变化是增加有界可观测性与可信关闭边界，没有放宽模型终态、删除旧断言或重跑旧Live。

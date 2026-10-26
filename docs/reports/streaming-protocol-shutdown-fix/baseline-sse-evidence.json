@@ -1,0 +1,6 @@
+{
+  "baseline_commit": "2b08360",
+  "sse_open_shutdown_blocked_after_3_seconds": true,
+  "after_client_disconnect_exit": 0,
+  "real_requests": 0
+}

@@ -1,0 +1,21 @@
+{
+  "before": {
+    "prepared.json": "5178b1058351b5e3316de26dd4771282b99166a6451e7352dac332141654e321",
+    "freeze.json": "4e1f54941d11fef13087467623873ac51f2e5e7ab4f7bacf300896c0f835b8ad",
+    "private/requests.sqlite": "14dc014bb61ed679943fb70756d779c2635b80a21586baef9040f4dfd1531f8f",
+    "private/session-events.sqlite3": "ec7efd038697fc755e9629c6fc1e88e3b76da1b3eb5b2b46783e64e932b11475",
+    "ledger_state": {
+      "cases": [
+        [
+          "R01",
+          "running"
+        ]
+      ],
+      "requests": 1,
+      "halt": "protocol_or_runtime_failure"
+    }
+  },
+  "after_bytes_equal": true,
+  "old_reports_and_uat_scripts_diff": [],
+  "old_case_not_rescored": true
+}

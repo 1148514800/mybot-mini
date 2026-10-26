@@ -1,0 +1,90 @@
+{
+  "mock_only": true,
+  "requests": [
+    {
+      "index": 1,
+      "scenario": "A",
+      "request_sha256": "771985e7ee3afee1836e5a99f428cc81bc1b4ff5da22129a1ccb11b582cb5408",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 2,
+      "scenario": "B",
+      "request_sha256": "12d84c71b58be5889e8bdad1f018f9f2c92b5efb54f065003e5454a4ab129c99",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 3,
+      "scenario": "D",
+      "request_sha256": "9a93dab5a9155b25f01e8883ede966f78e7ece955af42cf8dc9c5d2213450927",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 4,
+      "scenario": "D",
+      "request_sha256": "6ddcff0e56cffbc1617f5115cc4c86c8322c010bb563d832558067b2f02adc2f",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 5,
+      "scenario": "D2",
+      "request_sha256": "2ca5d944d59f50a6902048b8882046a4cd909309b6b1056a1ff46a5f7d2bfc13",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 6,
+      "scenario": "E",
+      "request_sha256": "2fe3f15cab109b8b88dd44de10616752662a9ab92b1358c7f6b07c1e5f2da4b9",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 7,
+      "scenario": "E",
+      "request_sha256": "a3b291ebc37c5e306bf221b90e9253f5d84f46d4d02e3555edb87a52d4d89f5b",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": true,
+      "skipped_tool_result": true
+    },
+    {
+      "index": 8,
+      "scenario": "C",
+      "request_sha256": "98ad6b323420028f2229ce53352a9360289138e748554a6da22941a2b1da4af8",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    },
+    {
+      "index": 9,
+      "scenario": "F",
+      "request_sha256": "661a832fb14dd66066a0deaac4f87454a606e0072fd427f95e570fc371ad71e5",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_result": false
+    }
+  ],
+  "remote_provider_requests": 0,
+  "operator_variant": "Committed browser operator with read-only per-scene DOM snapshots; no Mock packet or runtime changes",
+  "tracked_operator_sha256": "bda2ed08f60293bb970326cfbf45cd84496d75c0dfd34a1897efe202ee55da95",
+  "private_operator_sha256": "ef48be9de537fec7d36ba5dd38eb9875cb0679d37832226339caa2ea08f9e7cb"
+}

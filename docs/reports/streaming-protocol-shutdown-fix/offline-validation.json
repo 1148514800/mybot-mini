@@ -1,0 +1,126 @@
+{
+  "status": "OFFLINE_PASS",
+  "implementation_sha": "d73e31a599fc222d35f782474ddae70e3dbf12c6",
+  "full_suites": 59,
+  "full_tests": 1734,
+  "legacy_independent_supplement_tests": 129,
+  "uat_budget_tests": 30,
+  "new_protocol_tests": 39,
+  "new_shutdown_tests": 11,
+  "new_sse_tests": 8,
+  "new_total": 58,
+  "unique_unittest_total": 1951,
+  "unique_test_ids_sha256": "3ce691ebca81d45835fa8480ceeb6d1b40b9e5b9f3c6ef8b2434b20516635f54",
+  "deduplication": "Normalized verbose unittest IDs; two verbosity=1 suites resolved by existing unittest loader (17+13); identical reruns not counted twice; non-unittest helpers and Chrome scenarios not added to numeric total",
+  "runs": [
+    {
+      "name": "check_phase",
+      "exit_code": 0,
+      "suites": 59,
+      "tests": 1734,
+      "log_sha256": "63d8cb71874787d6bbb75af03074d4bad62af32cf0bcca8464e2105ad020205d"
+    },
+    {
+      "name": "check_uat_preflight",
+      "exit_code": 0,
+      "seconds": 2.687,
+      "tests": 9,
+      "log_sha256": "11afb4510548a6cf97c394981e652e1a9929d49df0d30d0461ee4aa5471f46d4"
+    },
+    {
+      "name": "check_patch_diagnostics",
+      "exit_code": 0,
+      "seconds": 1.054,
+      "tests": 9,
+      "log_sha256": "dd58676469926258764827b168d87b17ecddc124b088ca77b92d715730d4bcbf"
+    },
+    {
+      "name": "check_adaptive_compaction",
+      "exit_code": 0,
+      "seconds": 0.489,
+      "tests": 14,
+      "log_sha256": "77a2e5ce875cc52c280df7d8291d44c54779ca2444eba2ad217c5cb9d901c75f"
+    },
+    {
+      "name": "check_remediation_e2e",
+      "exit_code": 0,
+      "seconds": 1.533,
+      "tests": 5,
+      "log_sha256": "997d7e99bdcdb77c49bbfc97f67aa1543d5999e7725fc998156f31042bde4e6e"
+    },
+    {
+      "name": "check_agent_instruction_quality",
+      "exit_code": 0,
+      "seconds": 0.476,
+      "tests": 5,
+      "log_sha256": "9680a08ed4ebcca727c9c2c1bd1f62a7e3a1c1fa6b35b31540ddd1bf3394d94f"
+    },
+    {
+      "name": "check_real_user_uat",
+      "exit_code": 0,
+      "seconds": 1.546,
+      "tests": 13,
+      "log_sha256": "fe717f635f017a6de71bf3435860d7f23662d0974a018da30313c191b8751605"
+    },
+    {
+      "name": "check_targeted_user_uat_v2",
+      "exit_code": 0,
+      "seconds": 6.376,
+      "tests": 24,
+      "log_sha256": "8a2e5891d55a54b4fa545d8063de14b6b7d240fb4b1daec9747281d57475243c"
+    },
+    {
+      "name": "check_persistent_session_uat",
+      "exit_code": 0,
+      "seconds": 4.154,
+      "tests": 22,
+      "log_sha256": "3e30a69beb262a994c80c98c22a2b45b03bacf66b711afe1b61b8c94571da81a"
+    },
+    {
+      "name": "check_source_aware_uat",
+      "exit_code": 0,
+      "seconds": 2.477,
+      "tests": 28,
+      "log_sha256": "8101b2890af8753ce678d883371c9676389942752936935fa9a4cd5622e8fd2a"
+    },
+    {
+      "name": "check_streaming_steer_uat",
+      "exit_code": 0,
+      "seconds": 0.823,
+      "tests": 30,
+      "log_sha256": "75ad04d5a6cab355479f602e88fbe7e325c5f6a1c30431f2abad87a1c15d4426"
+    },
+    {
+      "name": "check_stream_protocol_diagnostics",
+      "exit_code": 0,
+      "seconds": 0.573,
+      "tests": 39,
+      "log_sha256": "f0523fdc72343ae558da217285b9056fc696e925f6c2ca4ea1067e20c7797cd6"
+    },
+    {
+      "name": "check_stream_shutdown",
+      "exit_code": 0,
+      "seconds": 21.809,
+      "tests": 11,
+      "log_sha256": "94387a5e802e8a9b8bf801295aa2650aea7e359f7e927ae0e9d043664bae10fb"
+    },
+    {
+      "name": "check_stream_sse_lifecycle",
+      "exit_code": 0,
+      "seconds": 0.974,
+      "tests": 8,
+      "log_sha256": "fbfb3db58c1e5becec820227b14d7b5a468d13e4a3012095093ca9a41a8b8d0e"
+    }
+  ],
+  "compileall": "PASS",
+  "javascript_syntax": "PASS (app.js, markdown.js)",
+  "git_diff_check": "PASS",
+  "chrome_scenarios": 7,
+  "independent_observer_reproduction": "PASS; not counted as unittest",
+  "real_deepseek": 0,
+  "real_glm": 0,
+  "real_summary": 0,
+  "real_judge": 0,
+  "original_r01_root_cause": "UNKNOWN",
+  "development_failures": "Initial retry-first SSE broke two existing reset-first assertions (kept and fixed); editing source during an intermediate frozen-environment suite correctly failed closed. Final acceptance ran fixed implementation with no Python source changes."
+}

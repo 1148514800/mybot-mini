@@ -1,0 +1,186 @@
+{
+  "launcher_stdin_is_tty": true,
+  "real_requests": 0,
+  "cases": {
+    "A": {
+      "status": "PASS",
+      "sdk_requests": 1,
+      "complete": true,
+      "dom": {
+        "title": {
+          "sha256": "3e7cb5e22d3c5e7ab00c3b32616a34b443020278b62ab148b82956c2ee69f813",
+          "characters": 6
+        },
+        "label": "生成结束 · 正在可靠保存",
+        "body": {
+          "sha256": "86da08eacf6558412511b943d6e12cb0abd3a6f09d0cf9c5ab5eca45e9b9159a",
+          "characters": 63
+        },
+        "notice": "",
+        "steer": ""
+      }
+    },
+    "B": {
+      "status": "PASS",
+      "error_code": "stream_duplicate_finish",
+      "complete": false,
+      "dom": {
+        "title": {
+          "sha256": "b4921ac4a3f17eb37f708f32eecf9cc1ee110c968e71c67de1df2a03bf9ce4ad",
+          "characters": 7
+        },
+        "label": "回复不完整 · provider_error · 协议结构不兼容",
+        "body": {
+          "sha256": "4aac9e2401e4e32c7a7fb40e9f12fa5281623368d692e3a52b5e38d57baac394",
+          "characters": 81
+        },
+        "notice": "",
+        "steer": ""
+      }
+    },
+    "D": {
+      "status": "PASS",
+      "executed_tools": [
+        "read_file"
+      ],
+      "incomplete_tool_executed": false,
+      "dom_complete": {
+        "title": {
+          "sha256": "8c30cebd39af72914d1c444f2862f53d0ebb65047389372107ce93130cb3a9a8",
+          "characters": 7
+        },
+        "label": "生成结束 · 正在可靠保存",
+        "body": {
+          "sha256": "9318c32cfb51ee73e2b22bde6684f9231e81c5226735d28d6e24a768c54393b3",
+          "characters": 67
+        },
+        "notice": "",
+        "steer": ""
+      },
+      "dom_incomplete": {
+        "title": {
+          "sha256": "daf18315c91a0c06f57d6223e2ecea61398fb5ac79f8ae91864e537e792a7078",
+          "characters": 9
+        },
+        "label": "回复不完整 · provider_error · 协议结构不兼容",
+        "body": {
+          "sha256": "3f205904c4a5cb9d69c95ca429187e5b2092180832736103c064c7b966b6a863",
+          "characters": 72
+        },
+        "notice": "",
+        "steer": ""
+      }
+    },
+    "E": {
+      "status": "PASS",
+      "queued": true,
+      "applied": true,
+      "original_unchanged": true,
+      "next_request_steer": true,
+      "old_tool_skipped": true,
+      "dom": {
+        "title": {
+          "sha256": "55c37bb9cad46ff1e768270efe19e25ed40f3a0920369fb2cf3863362f6b0b3a",
+          "characters": 9
+        },
+        "label": "生成结束 · 正在可靠保存",
+        "body": {
+          "sha256": "95a734b84f9b8ece8143d3e696e9413c4df3434474d45cfda66295218d2f85a9",
+          "characters": 66
+        },
+        "notice": "",
+        "steer": "已在下一模型步骤应用（不代表模型遵从）"
+      }
+    },
+    "C": {
+      "status": "PASS",
+      "browser_kept_open": true,
+      "dom": {
+        "title": {
+          "sha256": "abe978446750269dfb6996fa0c1184eae53314d0bbdc33890ab86c6b28875102",
+          "characters": 9
+        },
+        "label": "生成中 · 临时预览，尚未正式保存",
+        "body": {
+          "sha256": "e081ea611de9448cde36fe086504ab78e488c066d51461b83e10f3523e828a07",
+          "characters": 23
+        },
+        "notice": "",
+        "steer": ""
+      }
+    },
+    "G": {
+      "status": "PASS",
+      "session_restored": true,
+      "no_replay": true,
+      "no_partial_complete": true,
+      "dom": {
+        "title": {
+          "sha256": "abe978446750269dfb6996fa0c1184eae53314d0bbdc33890ab86c6b28875102",
+          "characters": 9
+        },
+        "label": "",
+        "body": {
+          "sha256": "e081ea611de9448cde36fe086504ab78e488c066d51461b83e10f3523e828a07",
+          "characters": 23
+        },
+        "notice": "",
+        "steer": ""
+      }
+    },
+    "F": {
+      "status": "PASS",
+      "new_request_refused": true,
+      "halt_preserved": true,
+      "dom": {
+        "title": {
+          "sha256": "12fe4e1869158ea5fde95be9982e4083128233b951deff8f68bcffff315661ef",
+          "characters": 11
+        },
+        "label": "回复不完整 · provider_error · 协议结构不兼容",
+        "body": {
+          "sha256": "0d0dd0ef8bc273ea9eb2c2ab35f2146ec7c4c730059f6666a0915865b5b01448",
+          "characters": 85
+        },
+        "notice": "工作区正忙，或本次审批已失效。请查看正在运行的对话。",
+        "steer": ""
+      }
+    }
+  },
+  "shutdowns": [
+    {
+      "label": "C-open-EventSource-active-stream",
+      "exit_code": 0,
+      "seconds": 1.7765441660303622,
+      "verified_child_sigint": true,
+      "lease_released": true,
+      "port_released": true
+    },
+    {
+      "label": "F-halted-open-EventSource",
+      "exit_code": 0,
+      "seconds": 3.2848178748972714,
+      "verified_child_sigint": true,
+      "lease_released": true,
+      "port_released": true
+    }
+  ],
+  "profile_initially_empty": true,
+  "chrome": "152.0.7977.83",
+  "headed": true,
+  "actual_profile_verified": true,
+  "mock_http_requests": 9,
+  "mock_sdk_request_hashes": [
+    "771985e7ee3afee1836e5a99f428cc81bc1b4ff5da22129a1ccb11b582cb5408",
+    "12d84c71b58be5889e8bdad1f018f9f2c92b5efb54f065003e5454a4ab129c99",
+    "9a93dab5a9155b25f01e8883ede966f78e7ece955af42cf8dc9c5d2213450927",
+    "6ddcff0e56cffbc1617f5115cc4c86c8322c010bb563d832558067b2f02adc2f",
+    "2ca5d944d59f50a6902048b8882046a4cd909309b6b1056a1ff46a5f7d2bfc13",
+    "2fe3f15cab109b8b88dd44de10616752662a9ab92b1358c7f6b07c1e5f2da4b9",
+    "a3b291ebc37c5e306bf221b90e9253f5d84f46d4d02e3555edb87a52d4d89f5b",
+    "98ad6b323420028f2229ce53352a9360289138e748554a6da22941a2b1da4af8",
+    "661a832fb14dd66066a0deaac4f87454a606e0072fd427f95e570fc371ad71e5"
+  ],
+  "mock_stream_closes": 9,
+  "profile_removed": true
+}

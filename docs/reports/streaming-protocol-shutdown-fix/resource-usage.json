@@ -1,0 +1,16 @@
+{
+  "real_deepseek": 0,
+  "real_glm": 0,
+  "real_semantic_summary": 0,
+  "paid_judge": 0,
+  "real_provider_http_dispatches": 0,
+  "provider_reported_input_tokens": null,
+  "provider_reported_output_tokens": null,
+  "provider_reported_total_tokens": null,
+  "usage_status": "not_applicable_no_real_requests",
+  "cost": null,
+  "final_browser_mock_http": 9,
+  "other_mock_calls": "offline test fixtures; not provider requests",
+  "old_batch_used_requests": 1,
+  "old_batch_halt_preserved": true
+}
