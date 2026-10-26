@@ -12,4 +12,4 @@
 
 ## 下一步与禁止重复
 
-完成唯一prepare后以Preregistration干净提交freeze，Acceptance只更新文档与证据。最终冻结状态见报告。不要重复prepare/freeze、不要重建新账本。未收到新的GRANTED_1_REQUEST不得启动Live入口。授权后先verify，再查端口/Lease/进程/独立Chrome/库；新Session DOM发送唯一冻结消息一次，无重试/补跑/Steer。关闭只处理自有服务并实际wait exit0。原8765 launcher/用户Chrome不操作；不合main、不改历史Tag/ZIP。
+唯一prepare/freeze已完成，冻结源码SHA c87a26b3532a640b4c604b5870c5bf638c095960；verify通过，真实请求/Attempt/reservation/HTTP均0。Acceptance只更新文档与证据。不要重复prepare/freeze、不要重建新账本。未收到新的GRANTED_1_REQUEST不得启动Live入口。授权后先verify，再查端口/Lease/进程/独立Chrome/库；新Session DOM发送唯一冻结消息一次，无重试/补跑/Steer。关闭只处理自有服务并实际wait exit0。原8765 launcher/用户Chrome不操作；不合main、不改历史Tag/ZIP。

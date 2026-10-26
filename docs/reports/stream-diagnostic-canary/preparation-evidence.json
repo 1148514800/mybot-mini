@@ -1,15 +1,37 @@
 {
-  "status": "PREPARED_OFFLINE_FREEZE_PENDING",
+  "status": "OFFLINE_PREPARATION_PASS_LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "preregistration_commit": "c87a26b3532a640b4c604b5870c5bf638c095960",
   "plan_sha256": "87374ab4522dabeaee94eff66141c579fd785d5f334df04dba6c86db0f742835",
-  "prepared_sha256": "a1ba570533475692eef29a61ec9f6344423c663c889202223af7f7f2b527f04d",
   "unique_prepare": true,
-  "real_requests": 0,
-  "attempts": 0,
-  "reservations": 0,
-  "port": 8899,
-  "port_free_at_preparation": true,
-  "old_8765_listening": false,
-  "old_launcher_present_untouched": true,
-  "old_private_ledger_opened": false,
-  "production_and_old_reports_diff_empty": true
+  "unique_freeze": true,
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "reservation_rows": 0,
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "private_file_hashes": {
+    "prepared.json": "a1ba570533475692eef29a61ec9f6344423c663c889202223af7f7f2b527f04d",
+    "freeze.json": "f5e4c4c64bee2c516978b588d24cbcd6c0bf2dc843f2ae8d3f0901b1bf2ce756",
+    "browser-isolation.json": "87c3c17159b6c4668870fc7ec7be43fd7be38bf0be527d8a8b36c11a4ea5340b"
+  },
+  "source_files_frozen": 280,
+  "source_hash_map_sha256": "078a306e546307e316eff9d9fa5e5e9ba1f8def1a96b52f95dd57b7948f1e148",
+  "provider_bytes_unchanged": true,
+  "workspace_bytes_and_inode_unchanged": true,
+  "event_and_ledger_inodes_unchanged": true,
+  "sqlite_integrity": "ok",
+  "workspace_lease": "acquired_and_released",
+  "port_8899_bind": "PASS",
+  "old_halt_accessed": false,
+  "production_and_old_reports_unchanged": true
 }

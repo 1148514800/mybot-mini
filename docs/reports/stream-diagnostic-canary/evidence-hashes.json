@@ -1,0 +1,20 @@
+{
+  "acceptance-report.md": "a3c7ed9c3fb60e496efa0c5c772e2496d8312df0e09e43cfe57d98f08065f736",
+  "browser-acceptance.md": "f254140d487898649e50739233b0f7a60a24aae9d36a1a7cfb576321668ec639",
+  "browser-isolation-evidence.json": "8dbaf34bc12d887798300868e79c1b304043abe1bb328301b81639136cf683c7",
+  "browser-synthetic-evidence.json": "d3e764c419f487261ce52292c29f43f56cce2fb88e538b788d054333f5bf6310",
+  "next-stage-recommendations.md": "2e5f2232466443e9b735b17062d19c194df2253f530164293d59d8e1d1bfcbb2",
+  "offline-validation.json": "e5bb272c47347b7068e2c95624192e3afe3b96cc60c17e8408ea81fac22eb480",
+  "preparation-evidence.json": "7e3b9c39c19342322a5f7100c78ba66f835a95ebab078371b71d82aeb392d36a",
+  "preregistration.md": "1b5bb48c81cf2ec162900a647f5388dff4761145fbe9e06420c80c2dff6db5bf",
+  "protocol-diagnostics.md": "6086ef5a73519cdacbdc50cc57fb59d45afc262100988e10280533a6c1378564",
+  "resource-usage.json": "426c7da13c1457c48e9979b2b2bc98f71251ec351f6af734ba1dd88c24900d14",
+  "screenshots/duplicate-preview.png": "a6eb20a798b5117c89bafd20d42321befe457268dd5cf0ff75003fb13a672f47",
+  "screenshots/probe-A.png": "4bb9a92308cbd58a99b451e802716c4d9dbb9486489bab6fe4f91bf9224b4185",
+  "screenshots/probe-B.png": "40db9a555e6b8faf5785db8eff3111c1aea08d79e4a0d6ba26a8b37a559cbc8b",
+  "screenshots/standard-preview.png": "a6eb20a798b5117c89bafd20d42321befe457268dd5cf0ff75003fb13a672f47",
+  "security-audit.md": "de09c64c48d7456d695293e92f422beaa892aef3b131c1a05252c5e4281abe29",
+  "shutdown-evidence.json": "eb166641370530054e9ba8a437673f898693e856aec313d5a15b0e0cc736d801",
+  "stream-timing.json": "908da21ef838d385f8940058ef35db55ec17b3e903e290eb4c6b9941e4a6d28b",
+  "tracked-security-check.json": "3a7f85c12e870cc309b3596b349bf2c0e985c6757b9cfc864f2deebdbca9e3e6"
+}

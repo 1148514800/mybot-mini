@@ -2,7 +2,7 @@
 
 LIVE_AUTHORIZATION: NOT_GRANTED。真实请求0/1，Attempt0、reservation0、HTTP0。D01没有运行；不能把本轮Mock或浏览器演练判成真实Streaming PASS。DeepSeek/GLM/摘要/Judge均0，供应商Token未知且未请求，cost=null。
 
-独立分支codex/stream-diagnostic-canary以ba759de36418d67008e98c8c7ddf05566dc520e5为基线。新单次请求harness已实现，唯一prepare完成；此预注册提交时freeze待执行，最终冻结证据由独立Acceptance提交补充。禁止改动原HALT/旧结果。
+独立分支codex/stream-diagnostic-canary以ba759de36418d67008e98c8c7ddf05566dc520e5为基线。新单次请求harness已实现，唯一prepare与唯一freeze完成，冻结后verify通过。Preregistration/source SHA为`c87a26b3532a640b4c604b5870c5bf638c095960`；Acceptance只更新文档与脱敏证据。两个数据库inode、workspace字节/inode、Provider原字节和全部冻结源码一致；新库sessions/events/turns/messages/tools均0，8899可绑定、Lease获取释放正常。禁止改动原HALT/旧结果。
 
 252项去重测试PASS（新增33；39协议、11关闭、8SSE、33Streaming、12Streaming failover、30Web/Steer、30旧UAT离线预算、23Accounting、17Provider failover、16Token预算）。最后新增导出model/opening error字段后33项再次通过，重复执行不重复计数。compileall、JS语法和git diff --check通过。本任务没有重新声称上一轮1951项已经全量重跑。
 
