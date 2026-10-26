@@ -1,0 +1,23 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "acceptance-report.md": "638e8d74bfbd9019a0bbc61d2f7e7ec04d35309f9d9f4479755f8e4b07cf36b5",
+    "browser-acceptance.md": "51c92138a919bb2f06aa1eecc44891b756fd8b765e4484c95fb9848771f54ec4",
+    "browser-isolation-evidence.json": "c5b64062ff3a3a1bbeee6db3ab4751a7bd19bb2dba0036e98ed0f0b4888f2455",
+    "budget-evidence.json": "e48c4362057c1d2dfb13208051e6583c87ea97039b0bd45641da5ef5ce90b7cc",
+    "case-results.md": "4d44816c4f5d75dec7a2d935874af8d592a5040933cfa12e9900f9299cbd25d5",
+    "frozen-plan.json": "379dc755447e2f7fea86d016f6843b8ecbee5e30c127f0e96804bdec8ae835de",
+    "next-stage-recommendations.md": "f9de53a9e89f43a41573fe3450d50e841f781610bb1633ce087f499282020939",
+    "offline-validation.json": "78e8a64f2166eba85ce681d55c71fa48a7f5a2fd1f2dc7d1a4a7733581335573",
+    "preregistration.md": "83b0fe064808448095d9514baa11fb2fbe3f3cd1efa41d493cbd7cad93247f9b",
+    "protocol-compatibility.md": "80710b53aeaef885ccad9372d7fb7f5851d55c98bd1696d6f13c48c25360f6d7",
+    "remaining-risks.md": "f113d39e220cf3b972e5c785cd0572f35fc8b4c34abc02587d895e9a82c6a8a2",
+    "resource-usage.json": "dd02556fbf63292ca503ea08e072ff01bdb4d4a11d9e82d2e9b8e02f8cd07a83",
+    "screenshots/probe-A.png": "4bb9a92308cbd58a99b451e802716c4d9dbb9486489bab6fe4f91bf9224b4185",
+    "screenshots/probe-B.png": "40db9a555e6b8faf5785db8eff3111c1aea08d79e4a0d6ba26a8b37a559cbc8b",
+    "security-audit.md": "ddbe3f9d333e611bf489dfb588f08da7f563ecc998163c7bda9fc9ceb1127b05",
+    "security-evidence.json": "f5b9a22e513b356b3fd414532abfa5c168cb7a69744cf579169f52d5b706b718",
+    "steer-evidence.json": "fc221e0342a0af7c63f7355a37371a45b7482be8cab657161e9fee3bd560a4dd",
+    "stream-timing.json": "66b6e7aa8ed51b860d53c438b7a90e3a222069a48686b14c9fdbee5385774662"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "status": "LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "cases": {
+    "R01": {
+      "queue": "NOT_RUN",
+      "application": "NOT_RUN",
+      "request_inclusion": "UNKNOWN",
+      "semantic_adherence": "UNKNOWN",
+      "tool_skips": "NOT_RUN"
+    },
+    "R02": {
+      "queue": "NOT_RUN",
+      "application": "NOT_RUN",
+      "request_inclusion": "UNKNOWN",
+      "semantic_adherence": "UNKNOWN",
+      "tool_skips": "NOT_RUN"
+    },
+    "R03": {
+      "queue": "NOT_RUN",
+      "application": "NOT_RUN",
+      "request_inclusion": "UNKNOWN",
+      "semantic_adherence": "UNKNOWN",
+      "tool_skips": "NOT_RUN"
+    },
+    "R04": {
+      "queue": "NOT_RUN",
+      "application": "NOT_RUN",
+      "request_inclusion": "UNKNOWN",
+      "semantic_adherence": "UNKNOWN",
+      "tool_skips": "NOT_RUN"
+    }
+  },
+  "mock_not_live": true
+}

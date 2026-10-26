@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "preserved": {
+    "mybot": true,
+    "config": true,
+    "pyproject.toml": true,
+    "uv.lock": true,
+    "scripts/streaming_browser_server.py": true,
+    "scripts/streaming_browser_acceptance.py": true,
+    "scripts/source_aware_uat": true,
+    "scripts/persistent_uat": true,
+    "scripts/uat": true,
+    "docs/reports/streaming-steer-v1": true,
+    "docs/reports/source-aware-live-uat": true,
+    "docs/reports/persistent-session-live-uat": true,
+    "docs/reports/decision-provenance-temporal-validity": true
+  },
+  "tracked_files_checked": 1242,
+  "forbidden_tracked_files": [],
+  "credential_pattern_findings": [],
+  "real_provider_requests": 0,
+  "live_authorization": "NOT_GRANTED",
+  "private_old_ledgers_opened": false,
+  "existing_8765_or_user_browser_operated": false,
+  "preregistration_commit": "75e79d2ed7fd6c14beef326f025667c3f61085ba",
+  "scanning_is_auxiliary": true
+}

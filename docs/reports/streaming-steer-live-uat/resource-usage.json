@@ -1,0 +1,23 @@
+{
+  "real_logical_requests": 0,
+  "physical_requests": 0,
+  "global_limit": 8,
+  "case_limits": {
+    "R01": 1,
+    "R02": 4,
+    "R03": 1,
+    "R04": 2
+  },
+  "http_dispatch_attempts": 0,
+  "deepseek": 0,
+  "glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "fallback": 0,
+  "hidden_retries": 0,
+  "provider_input_tokens": null,
+  "provider_output_tokens": null,
+  "provider_total_tokens": null,
+  "usage_status": "NOT_RUN",
+  "cost": null
+}

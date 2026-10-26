@@ -14,7 +14,7 @@
 uv run python -m scripts.check_streaming_steer_uat
 uv run python -m compileall -q scripts/streaming_steer_uat
 uv run --no-project --with playwright python -m scripts.streaming_steer_uat.browser_probe --chrome '<Chrome路径>' --output '<新私有路径>/browser-isolation.json'
-# 当前批次已prepare：不要重复下面已完成动作。只在预注册clean提交之后唯一freeze，然后verify。
+# 当前批次已唯一prepare/freeze并verify通过；不要重复prepare或freeze。只使用原Provider路径verify。
 uv run python -m scripts.streaming_steer_uat.prepare verify --provider-config '<prepared.json内原配置路径>'
 ```
 

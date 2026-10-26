@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "new_mock_tests": 30,
+  "related_unique_tests": 217,
+  "composition": {
+    "new_uat": 30,
+    "streaming_steer": 97,
+    "old_uat_budget": 50,
+    "accounting_provider": 40
+  },
+  "complete_check_phase_rerun": false,
+  "reason": "No production or old harness changes; scoped full adapter/protocol/budget/Web regression.",
+  "prior_baseline": 1863,
+  "prior_baseline_not_added_to_run_count": true,
+  "command": "uv run python -m unittest scripts.check_streaming_steer_uat scripts.check_model_streaming scripts.check_streaming_failover scripts.check_steer_inbox scripts.check_streaming_steer_web scripts.check_persistent_session_uat scripts.check_source_aware_uat scripts.check_runtime_accounting scripts.check_provider_failover",
+  "log_sha256": "65f56584595bc1881a0b6b6a165827b552fac627360766d673e79623f7373124",
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "diff_check": "PASS",
+  "real_requests": 0
+}

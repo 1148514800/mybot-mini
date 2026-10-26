@@ -1,0 +1,7 @@
+# Protocol compatibility — UNKNOWN
+
+真实DeepSeek/GLM尚未连接。stream=True、stream_options.include_usage、首Chunk格式、tool_calls片段、finish_reason及末尾Usage的真实部署兼容性均UNKNOWN。没有通过取消stream_options、改非流式或新提示追求PASS。
+
+30项新Mock检查覆盖预留/HTTP/关闭结算、首Chunk前合法Fallback逐次计数、首Chunk后禁止Fallback、取消Usage未知、严格零重试、完整Web/原AgentLoop链与受限只读Registry。217相关检查只是离线机制证据。
+
+真实结果出现stream拒绝或不可信终态时，记录类别、真实物理尝试及已知Usage，停止后续依赖Case；不自动补跑。R01协议成功也不自动意味着终态前有可见文本。

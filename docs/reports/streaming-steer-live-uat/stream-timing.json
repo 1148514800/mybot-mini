@@ -1,0 +1,44 @@
+{
+  "status": "NOT_RUN",
+  "clock_domains": {
+    "sdk": "server monotonic",
+    "browser": "operator monotonic; separate",
+    "difference": "UNKNOWN without validated clock correlation"
+  },
+  "cases": {
+    "R01": {
+      "first_provider_chunk_seconds": null,
+      "first_content_delta_seconds": null,
+      "first_browser_visible_seconds": null,
+      "chunk_to_dom_difference": null,
+      "actual_barrier_seconds": null
+    },
+    "R02": {
+      "first_provider_chunk_seconds": null,
+      "first_content_delta_seconds": null,
+      "first_browser_visible_seconds": null,
+      "chunk_to_dom_difference": null,
+      "actual_barrier_seconds": null
+    },
+    "R03": {
+      "first_provider_chunk_seconds": null,
+      "first_content_delta_seconds": null,
+      "first_browser_visible_seconds": null,
+      "chunk_to_dom_difference": null,
+      "actual_barrier_seconds": null
+    },
+    "R04": {
+      "first_provider_chunk_seconds": null,
+      "first_content_delta_seconds": null,
+      "first_browser_visible_seconds": null,
+      "chunk_to_dom_difference": null,
+      "actual_barrier_seconds": null
+    }
+  },
+  "planned_barriers_seconds": {
+    "R01": 0,
+    "R02": 8,
+    "R03": 8,
+    "R04": 8
+  }
+}
