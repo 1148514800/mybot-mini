@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Streaming & Steer v1工程、专项、完整离线和独立headed Chrome合成验收已通过。分支codex/streaming-steer-v1，基线c2f1baca04dc8b7bc320e9cd9295fe3d5b870331；实现与报告分两个提交交付。真实DeepSeek/GLM/摘要/Judge/Provider HTTP均0，旧余额未使用。报告docs/reports/streaming-steer-v1/。
+Streaming & Steer v1工程、专项、完整离线和独立headed Chrome合成验收已通过。分支codex/streaming-steer-v1，基线c2f1baca04dc8b7bc320e9cd9295fe3d5b870331；Implementation f6eb05a75bd710438d026b1b761de3df6ba43a86；验收报告另有独立提交。真实DeepSeek/GLM/摘要/Judge/Provider HTTP均0，旧余额未使用。报告docs/reports/streaming-steer-v1/。
 
 ## 实现与边界
 

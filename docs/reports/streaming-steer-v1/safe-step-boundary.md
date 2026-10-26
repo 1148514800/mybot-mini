@@ -1,0 +1,9 @@
+# Safe step boundary
+
+在途请求是提交时固定的字节集合。Steer到达只写宿主Inbox，不修改该请求或启动额外请求。当前模型可以先安全结束；如果返回工具调用，则在真正开始执行前检查pending，为本批未执行调用补齐失败结果并进入原有下一ReAct步骤。
+
+若Steer在某工具已经开始后到达，不强行终止未知副作用、不声称回滚；等待其真实结束，后续未开始工具继续逐项检查pending并跳过。人工审批等待拒绝Steer，用户仍须审批、拒绝或停止；补充文本不构成权限。
+
+下一步仍先走原ContextManager/Compactor流程，另附已应用及新pending的真实用户来源参考，并用TokenCounter检查完整请求；Controller.before_request仍决定是否有请求余量。RuntimeAccounting物理准入才持久记录applied。预算适配器若在此之前拒绝，Inbox不会被虚报已应用；新的流参数也经过实际dispatch预算校验。
+
+保守限制：Steer参考没有送入旧语义摘要分类器；其空间不足时可以拒绝后续请求，而非临时增加摘要调用或扩大窗口。若模型只返回最终文本，或已达ReAct/Controller上限，没有下一步骤就not_applied，不自动开启新Turn。UI“填入下一轮消息”仅填入，必须用户再次点击发送。

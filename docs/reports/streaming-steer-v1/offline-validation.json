@@ -1,0 +1,271 @@
+{
+  "source_before": "c4a107305c9ee73a407280b617b999ab5a2e313b207090fe2122107a42fe9e0b",
+  "runs": [
+    {
+      "name": "check_phase",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_phase"
+      ],
+      "exit_code": 0,
+      "suites": 59,
+      "tests": 1734,
+      "seconds": 380.671,
+      "log_sha256": "f4e399a66c83900282dd7dcbadaad8e7fbd0a3247c991154358893f8a98a0fb9",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_uat_preflight",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_uat_preflight"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 9,
+      "seconds": 2.648,
+      "log_sha256": "0221fc8a13de5f9082c939bf3024342d3738c83e6728e2c57ebbe62eb2f39a93",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_patch_diagnostics",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_patch_diagnostics"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 9,
+      "seconds": 1.021,
+      "log_sha256": "64063c9b18f51dc9110cbad25abdcd7d75b6acd455b393f60846d117cf0dc519",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_adaptive_compaction",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_adaptive_compaction"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 14,
+      "seconds": 0.499,
+      "log_sha256": "77a2e5ce875cc52c280df7d8291d44c54779ca2444eba2ad217c5cb9d901c75f",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_remediation_e2e",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_remediation_e2e"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 5,
+      "seconds": 1.503,
+      "log_sha256": "407876e371e14eac0e7ae479d222a2daf3e9800a8fb673879a436b0d8c9c39c0",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_agent_instruction_quality",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_agent_instruction_quality"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 5,
+      "seconds": 0.474,
+      "log_sha256": "17c8c609f3cfc5e746a6a98c07af99065156237b283b4fa7a76bc011c06d08e7",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_real_user_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_real_user_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 13,
+      "seconds": 1.449,
+      "log_sha256": "8d15327304052efe8f28fe56d73c0d403b39ab4997bd9724035e439f05998f76",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_targeted_user_uat_v2",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_targeted_user_uat_v2"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 24,
+      "seconds": 6.564,
+      "log_sha256": "8da434654ddc340363dc067b6ed8b87c25532cddf3659aa5714de3dbeb0a6c95",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_persistent_session_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_persistent_session_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 22,
+      "seconds": 4.237,
+      "log_sha256": "2b4a5e723065e58264e8e3e3eddfce4c5d366c5930da278b8a5f490c9b45cb66",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_source_aware_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_source_aware_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 28,
+      "seconds": 2.428,
+      "log_sha256": "351cc4add4511940408c40bb5b8a9509883aac2de7fd0f1075ef3d9accd42ddd",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "compileall",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "compileall",
+        "-q",
+        "mybot",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.038,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "javascript_syntax",
+      "command": [
+        "node",
+        "--check",
+        "mybot/web/static/app.js"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.111,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "git_diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.016,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    }
+  ],
+  "real_model_requests": 0,
+  "source_after": "c4a107305c9ee73a407280b617b999ab5a2e313b207090fe2122107a42fe9e0b",
+  "source_hashes_unchanged": true,
+  "unique_tests": 1863,
+  "status": "PASS",
+  "baseline_commit": "c2f1baca04dc8b7bc320e9cd9295fe3d5b870331",
+  "implementation_commit": "f6eb05a75bd710438d026b1b761de3df6ba43a86",
+  "branch": "codex/streaming-steer-v1",
+  "counts": {
+    "check_phase": 1734,
+    "check_phase_suites": 59,
+    "independent_complements": 79,
+    "persistent_uat_budget": 22,
+    "source_aware_uat_budget": 28,
+    "new_streaming": 33,
+    "new_failover": 12,
+    "new_steer": 22,
+    "new_web": 30,
+    "new_total": 97,
+    "previous_baseline": 1766,
+    "unique_total": 1863,
+    "targeted_and_browser_reruns_excluded": true
+  },
+  "real_usage": {
+    "deepseek": 0,
+    "glm": 0,
+    "summary": 0,
+    "judge": 0,
+    "provider_http": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0,
+    "cost": null
+  },
+  "prior_validation_runs": [
+    {
+      "status": "PASS_SUPERSEDED_BY_FINAL_SOURCE",
+      "unique_tests": 1863,
+      "log_sha256": "c1bd0677fe94a37abd85261510a82a49e9e78bf2052c67853160dde4fb828633"
+    },
+    {
+      "status": "PASS_SUPERSEDED_BY_FINAL_SOURCE",
+      "unique_tests": 1863,
+      "log_sha256": "6ce25170db84806c20e93ed03882d830af8e411f4061bfa6cbaa2d5a89d278a4"
+    }
+  ]
+}

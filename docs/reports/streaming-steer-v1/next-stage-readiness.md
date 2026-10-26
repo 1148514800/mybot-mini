@@ -1,0 +1,7 @@
+# Next-stage readiness
+
+本阶段只准备好离线工程及独立浏览器合成能力。真实Provider验证必须另行授权、新建预注册合同并独立限额，不使用任何旧剩余额度，不重跑历史Live Case或改变旧评分。
+
+新Live应分别评估：首Chunk与Usage兼容、流中错误不Fallback、SDK retries0、Provider物理请求与HTTP尝试对应、跨Chunk凭证保护、取消清理、Steer排队/准入/模型实际遵从区别、审批等待及执行中副作用边界。语义正确性需要独立评分，不能拿流完成或Steer applied替代。
+
+后续产品重点是减少保守隐私缓冲的可见延迟、以可靠方式扩展Steer的TaskContract来源支持，以及真实Provider的非标准流兼容；不应通过第二次模型请求、隐式摘要、自动审批或预算扩张掩盖这些限制。

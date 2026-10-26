@@ -1,0 +1,215 @@
+{
+  "real_model_requests": 0,
+  "checks": {
+    "dual_profile_cookie_localstorage_bidirectional": true,
+    "A_incremental_before_final": true,
+    "B_steer_skips_tools_original_request_unchanged": true,
+    "C_no_next_step_no_extra_request": true,
+    "D_broken_stream_incomplete_no_tool": true,
+    "E_real_disconnect_reconnect_no_duplicate_or_replay": true,
+    "F_approval_not_bypassed": true,
+    "H_stop_closes_stream_discards_steer": true,
+    "G_restart_no_stream_or_steer_tool_replay": true
+  },
+  "cleanup": {
+    "own_server_stopped": true,
+    "own_profile_removed": true,
+    "lease_reacquired_after_each_stop": true
+  },
+  "browser": {
+    "playwright_version": "1.64.1",
+    "headed": true,
+    "version": "152.0.7977.83",
+    "new_0700_profile": true,
+    "launch_argument_verified": true,
+    "profile_path_sha256": "79dcf8e8812fecc192c381f35c7eaa125b624f6593385e76e9ccc70b3f3a5c3e"
+  },
+  "synthetic_requests": 8,
+  "sdk_http_attempts": 8,
+  "stream_close_observations": 8,
+  "status": "PASS",
+  "sdk_requests": [
+    {
+      "index": 1,
+      "request_sha256": "85300aeb6f45874b60e47f11aff84b16f3daf42d9dfaf2a2639ec03ecac35b1b",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    },
+    {
+      "index": 2,
+      "request_sha256": "7ff8cfaaaed41f6f322823e1078e25395704c9a4ccae3c0334b0e38497943d57",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    },
+    {
+      "index": 3,
+      "request_sha256": "b57ecbc6fcc0d8c0c1e82853f4492860b262b3adb11e72a060323321adfe7977",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": true,
+      "skipped_tool_results": 1,
+      "tool_calls_paired": true,
+      "message_count": 5,
+      "output_reserve": 2000
+    },
+    {
+      "index": 4,
+      "request_sha256": "4be1cebef9c1e34c9ad6be21b6785f976751130366267db2bd42113420950c65",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    },
+    {
+      "index": 5,
+      "request_sha256": "5c07d43233ff520bc038f52273cc004858070076983f6305e989f77ee7bfb390",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    },
+    {
+      "index": 6,
+      "request_sha256": "931efd4a0398a3ab658ace9d1b87560435c882e5e78d220ddb9e797e5d5cbbdd",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    },
+    {
+      "index": 7,
+      "request_sha256": "54694c1f7a87640cf2b8439a08773098e359a42755c76e6409ddd142932dc9d1",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    },
+    {
+      "index": 8,
+      "request_sha256": "c1c16aa87cbab03fdabdc05827974e108230e810aa3df635ac12ac7e82e9a588",
+      "stream": true,
+      "include_usage": true,
+      "steer_included": false,
+      "skipped_tool_results": 0,
+      "tool_calls_paired": true,
+      "message_count": 2,
+      "output_reserve": 2000
+    }
+  ],
+  "raw_requests_committed": false,
+  "screenshots": [
+    {
+      "file": "screenshots/A-before-final.png",
+      "sha256": "2928b8faa9d44a9e4bf8bac6ccfc9b2be7dc56ec4fbb13d66a51cb0be301fe6f",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/B-applied.png",
+      "sha256": "054902dba10bcb91bd3e001c0efcd14d2a51421e38532540367dff1d5d3f77c4",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/C-not-applied.png",
+      "sha256": "77629207785b2cb97372458d58959ceae5764ebb58b2f702dbcde6f9b2af39fe",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/D-incomplete.png",
+      "sha256": "e5e08d7bb16d4f922f88e61e3cf37ec1660c5837ffa519010f75f59b86d30ef7",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/E-reconnected.png",
+      "sha256": "4df11034699f8fc1cc4058a22451d872f87000d1f3660a54dd15e5b45ca77dbe",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/F-denied.png",
+      "sha256": "554a0abc6b05626076957ecc662e84083bd8b8bf98dc74ebd71cb23dc9479984",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/G-restored.png",
+      "sha256": "578ee2cbb57350dc182d6de8d9def2ab6d08ad9df5c51d42d596cd52d6dbd37d",
+      "public_synthetic_only": true
+    },
+    {
+      "file": "screenshots/H-cancelled.png",
+      "sha256": "2c57ac4038ed5ebd313fd140d321ca24c4e308b55d60f20a3040bea9e66c54cc",
+      "public_synthetic_only": true
+    }
+  ],
+  "storage": {
+    "integrity": "ok",
+    "foreign_key_violations": 0,
+    "messages_by_role": {
+      "assistant": 6,
+      "user": 7
+    },
+    "terminal_turns": {
+      "cancelled": 1,
+      "completed": 4,
+      "provider_error": 1,
+      "stopped": 1
+    },
+    "event_types": {
+      "assistant.message": 6,
+      "conversation.created": 8,
+      "model.finished": 7,
+      "model.started": 8,
+      "steer.queued": 3,
+      "steer.resolved": 3,
+      "tool.finished": 1,
+      "tool.started": 1,
+      "turn.finished": 6,
+      "turn.interrupted": 1,
+      "turn.started": 7,
+      "user.message": 7
+    },
+    "pin_count": 0,
+    "tool_outcomes": [
+      {
+        "name": "run_command",
+        "state": "failed",
+        "effect": "none"
+      }
+    ]
+  },
+  "steer_outcomes": [
+    {
+      "status": "applied",
+      "cause": "next_step"
+    },
+    {
+      "status": "not_applied",
+      "cause": "no_next_step"
+    },
+    {
+      "status": "discarded_on_stop",
+      "cause": "stop"
+    }
+  ],
+  "protected_fixture_unchanged": true
+}

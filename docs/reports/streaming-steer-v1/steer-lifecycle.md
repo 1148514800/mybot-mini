@@ -1,0 +1,11 @@
+# Steer lifecycle and durable audit
+
+用户专属POST /api/conversations/{id}/steer要求expected_turn_id、client_request_id、text。保持原Cookie/Origin/CSRF及请求体限制；仅本服务拥有的running任务接受，不接受idle、旧Turn、跨Session、审批等待、不确定或已关闭状态。模型无对应Tool。
+
+每Turn最多一个pending，文本1–2000字符，最多32条已受理记录；client_request_id同内容幂等、不同内容拒绝。宿主生成Steer ID和独立事件来源ID。queued表示排队，不表示模型收到。applied仅表示在下一物理请求准入时加入；不承诺Provider成功或模型遵从。无下一步骤或预算不足→not_applied，停止→discarded_on_stop；stale_turn/rejected作为明确HTTP响应状态，UI区分目标过期与其它拒绝，不写伪造的已接受事件。
+
+新增steer.queued与steer.resolved使用事件schema_version=2；旧事件保持v1，旧事件哈希和数据库v2表结构不变，无新的数据库迁移。Store校验活动Turn、单槽、最多32条、重复ID与成对解析；隐私和大小限制复用原safe_text与事件配额。
+
+进程本地Inbox不恢复。重启只读最近64条Steer事件、最多32项有界审计，未应用队列显示not_applied/process_queue_not_restored，不自动执行。恢复不创建模型请求、旧工具、审批、Receipt或verified。不同版本写者不应共享同一活动数据库：旧程序不理解新增事件类型，部署需协调停止旧写者；本轮只使用全新临时合成库。
+
+v1 Steer是本Turn输入，不自动持久化为Pin、confirmed_decision或以后Turn的当前指令。不改初始user.message，不删TaskContract要求；TaskContract暂不接纳Steer作为原始已确认要求。可在独立审计查看原文来源，但不能冒充initial user_input的引用。

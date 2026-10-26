@@ -1,0 +1,30 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "acceptance-report.md": "ef9aba41c5b2eb33f9fb0896d5d0b5a34579a717644317e2b5ce21e8b2ef21c6",
+    "architecture.md": "2c66464fd24908bfab1ea8e54d53c0188d8ade3c732679b079a98e756f1b2077",
+    "browser-acceptance.md": "6983aff26b097ff1acfaed8a384dbb824acb6e827ae4f6b14712c3b92106310f",
+    "browser-evidence.json": "adb3b986d094dda456597691b48c9b9a3dbf70b5242992127cde7d3591ccbc1e",
+    "chunk-assembly.md": "4be4565ec323a19d93aec9416afbc9c505c82def056b4b413455a88c764a98cb",
+    "next-stage-readiness.md": "081a0ec799b6e525bd6feb4cc14f38cca28a4ae5de913c6cfb18b91191cef6b7",
+    "offline-validation.json": "c78b11b471c85c6d9dd204dd03cde726e25758209829033e0fbba17c39eb180e",
+    "privacy-and-redaction.md": "f8ae9f1b86a7b1c708730631e509b0004d0fa558cc4a05e50de13dc5232c1b77",
+    "provider-failover.md": "242eb2b49ef73c4f6016b55563a39992c5963deebbe6b6ca2b7c6df086b0470d",
+    "remaining-risks.md": "d4c030043ca0d870678e6818037d1b8f0fed3019346331af9ed5414e9cb9243c",
+    "resource-usage.json": "0aed9ed3c0fedb36bd2e6b59bfa40ff4fbccc9b46c199b1cb2aa45cb0ef8cdf9",
+    "safe-step-boundary.md": "60ee0aa7e31a7d3f2baeff1431fdf05df5fd94471fed1c022b4e35be78e2c0ad",
+    "screenshots/A-before-final.png": "2928b8faa9d44a9e4bf8bac6ccfc9b2be7dc56ec4fbb13d66a51cb0be301fe6f",
+    "screenshots/B-applied.png": "054902dba10bcb91bd3e001c0efcd14d2a51421e38532540367dff1d5d3f77c4",
+    "screenshots/C-not-applied.png": "77629207785b2cb97372458d58959ceae5764ebb58b2f702dbcde6f9b2af39fe",
+    "screenshots/D-incomplete.png": "e5e08d7bb16d4f922f88e61e3cf37ec1660c5837ffa519010f75f59b86d30ef7",
+    "screenshots/E-reconnected.png": "4df11034699f8fc1cc4058a22451d872f87000d1f3660a54dd15e5b45ca77dbe",
+    "screenshots/F-denied.png": "554a0abc6b05626076957ecc662e84083bd8b8bf98dc74ebd71cb23dc9479984",
+    "screenshots/G-restored.png": "578ee2cbb57350dc182d6de8d9def2ab6d08ad9df5c51d42d596cd52d6dbd37d",
+    "screenshots/H-cancelled.png": "2c57ac4038ed5ebd313fd140d321ca24c4e308b55d60f20a3040bea9e66c54cc",
+    "security-audit.md": "81a18e47b91969b89acc1f4a57a3f83a483a81146619e573af0dabecd1f13a08",
+    "security-evidence.json": "068d2adb8351beb7d21495277443cfbca0a4f02ce208570888976d73c62b5ae0",
+    "sse-client-state.md": "934d678dbfbf3a2af039b24511294de450eb5604e8a8b7742749fa13dc1134a3",
+    "steer-lifecycle.md": "ec54c37f3e1949d7c9940b1f41cef8266052b7b339e55938244eb45260aec60b",
+    "streaming-protocol.md": "4f97c759cef33e4f7d90666778d3c5b986bdf4253492df13f690cf43f85aa285"
+  }
+}

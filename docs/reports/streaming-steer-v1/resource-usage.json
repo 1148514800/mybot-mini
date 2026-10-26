@@ -1,0 +1,23 @@
+{
+  "real_model_requests": 0,
+  "deepseek": 0,
+  "glm": 0,
+  "semantic_summary": 0,
+  "paid_judge": 0,
+  "real_provider_http": 0,
+  "real_provider_input_tokens": 0,
+  "real_provider_output_tokens": 0,
+  "real_provider_total_tokens": 0,
+  "cost": null,
+  "cost_reason": "No real requests; deployment price not established.",
+  "final_browser_sdk_mock_http": 8,
+  "final_browser_stream_close_observations": 8,
+  "simulated_usage_not_billing": {
+    "known_input_subtotal": 60,
+    "known_output_subtotal": 120,
+    "known_total_subtotal": 180,
+    "requests_missing_usage": 2,
+    "complete_total": null
+  },
+  "previous_allowances_used": false
+}

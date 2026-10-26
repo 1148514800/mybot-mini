@@ -1,0 +1,11 @@
+# SSE client state and reconnect
+
+model_stream_started、model_text_delta、model_stream_finished/incomplete均带Turn ID和宿主Stream ID。名为delta的文本事件携带有界安全预览的绝对快照及递增preview_revision，客户端替换而非盲目append。sequence、Turn ID、Stream ID和revision阻止重复和旧Turn晚到数据混入。
+
+行安全释放后最多约每100ms发布一次快照，最终强制flush；客户端requestAnimationFrame合并渲染。流事件不调用完整会话GET；非高频活动事件100ms合并刷新。保持原安全Markdown DOM，滚动离开底部时不强制跳转，停止和审批保留。
+
+服务器持有当前预览快照，浏览器刷新或EventSource重新open后GET可信状态；过期和大于当前sequence的Last-Event-ID均发reset，由快照恢复而非伪造缺失Token。缓冲覆盖不会要求模型重发。没有因SSE断线取消Agent，没有进程重启后的旧消费恢复。
+
+临时预览明确“生成中/尚未正式保存”；只有原ChatRuntime可靠清理与finish事务路径写入正式assistant.message一次。截断、过滤、未知终态、取消和断流显示不完整状态。普通终端聊天与Pin/决定来源面板保持分离。
+
+浏览器E真实切换网络离线/在线，模型继续运行；重连后同一行只出现一次，SDK请求数量不变。单元另外覆盖过期/未来cursor、generator断开后Agent继续运行和状态GET不发模型请求。
