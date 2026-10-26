@@ -1,0 +1,260 @@
+{
+  "source_before": "37f37e464daf1e5ec7e8e08cac7ad444a7383837cc5fd3ae36f7b551e2fa7e9e",
+  "runs": [
+    {
+      "name": "check_phase",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_phase"
+      ],
+      "exit_code": 0,
+      "suites": 55,
+      "tests": 1637,
+      "seconds": 365.546,
+      "log_sha256": "0e9d630aba856781c111a8b29fb1385fcbc4b55b51b551bf8878052254fbf9a3",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_uat_preflight",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_uat_preflight"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 9,
+      "seconds": 2.576,
+      "log_sha256": "599d1e1dc5a846252c62609c34cb872ef848f8602529eb9cf2dfd0c2fd11d5a4",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_patch_diagnostics",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_patch_diagnostics"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 9,
+      "seconds": 0.977,
+      "log_sha256": "a7a799f0818dded1d9768267400ab04438ad2a0bab772d2f821bf288c2a99371",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_adaptive_compaction",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_adaptive_compaction"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 14,
+      "seconds": 0.493,
+      "log_sha256": "77a2e5ce875cc52c280df7d8291d44c54779ca2444eba2ad217c5cb9d901c75f",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_remediation_e2e",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_remediation_e2e"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 5,
+      "seconds": 1.475,
+      "log_sha256": "932f68957364fba683a12d44cbc6655aa12c8af79d739939cd77e9edc51576d6",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_agent_instruction_quality",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_agent_instruction_quality"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 5,
+      "seconds": 0.463,
+      "log_sha256": "17c8c609f3cfc5e746a6a98c07af99065156237b283b4fa7a76bc011c06d08e7",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_real_user_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_real_user_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 13,
+      "seconds": 1.437,
+      "log_sha256": "964e1665f608c1b30ebce9577ff6f8354bf6d229d85b0019196483b946c93831",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_targeted_user_uat_v2",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_targeted_user_uat_v2"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 24,
+      "seconds": 6.375,
+      "log_sha256": "961dec54cd17c6bbfd31864585db8d989a51cbd5ba87c3ec22510a28a316e6ba",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_persistent_session_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_persistent_session_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 22,
+      "seconds": 4.107,
+      "log_sha256": "46abbf8bebdad02c61ee60612cc7df1bf5738aa0b99fd057b3d5ff9f9f1d2097",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "check_source_aware_uat",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "scripts.check_source_aware_uat"
+      ],
+      "exit_code": 0,
+      "suites": 1,
+      "tests": 28,
+      "seconds": 2.493,
+      "log_sha256": "ef00781ad5b34b97cc0ab11abefb3aed238daf53f97e0d06eed9f9e46ed941cc",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "compileall",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "compileall",
+        "-q",
+        "mybot",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.051,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "javascript_syntax",
+      "command": [
+        "node",
+        "--check",
+        "mybot/web/static/app.js"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.113,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    },
+    {
+      "name": "git_diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "suites": 0,
+      "tests": 0,
+      "seconds": 0.017,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": false,
+      "skipped": 0
+    }
+  ],
+  "real_model_requests": 0,
+  "source_after": "37f37e464daf1e5ec7e8e08cac7ad444a7383837cc5fd3ae36f7b551e2fa7e9e",
+  "source_hashes_unchanged": true,
+  "unique_tests": 1766,
+  "status": "PASS",
+  "implementation_commit": "f1548ca0d309e2ed8bfe348ac750d50f6f95b648",
+  "baseline_commit": "ba04931815c222543a7e05bf86147a9a5adb4642",
+  "branch": "codex/decision-provenance-temporal-validity",
+  "test_counting": {
+    "check_phase": 1637,
+    "check_phase_suites": 55,
+    "independent_complements": 79,
+    "persistent_uat_budget": 22,
+    "source_aware_uat_budget": 28,
+    "new_provenance": 20,
+    "new_timeline": 20,
+    "new_context": 16,
+    "new_total": 56,
+    "baseline_known": 1682,
+    "previous_separate_source_aware_uat": 28,
+    "unique_total": 1766,
+    "excluded": "targeted reruns, preliminary failed run, browser checks and manual observations"
+  },
+  "preliminary_run": {
+    "status": "INVALID_FOR_ACCEPTANCE",
+    "check_phase_tests_before_stop": 1114,
+    "cause": "operator edited source during run; existing frozen_environment_changed gate rejected",
+    "log_sha256": "08c218dca2820845f28530077faa4db77ca0ab01d3c7957c7afac971ce1e7b19"
+  },
+  "real_provider_usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0,
+    "cost": 0
+  }
+}

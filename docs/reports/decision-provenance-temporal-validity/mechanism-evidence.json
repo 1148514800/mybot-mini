@@ -1,0 +1,99 @@
+{
+  "A": {
+    "model_false_strengthening_persisted_as": "assistant.message only",
+    "trusted_quotes": [
+      "不允许自动删除原始笔记。",
+      "笔记数据只能在本地处理。"
+    ],
+    "pin_count": 2,
+    "source_records": [
+      {
+        "session_id": "af9239e6ebd74b9b88ba779ebdf9efd8",
+        "source_message_id": "f688a23063f8429d9ec22a26676c04d0",
+        "source_span": [
+          12,
+          24
+        ],
+        "source_role": "user",
+        "original_quote": "不允许自动删除原始笔记。",
+        "provenance_kind": "host_confirmed_pin",
+        "semantic_classification": "host_selected_category_only",
+        "confirmation_event_id": "d6c1c01eff54425da6943051fb97b279",
+        "confirmation_event_sequence": 7,
+        "current_lifecycle_status": "active",
+        "source_verified": true,
+        "pin_id": "c552c841bc5747fc902fd26424918011",
+        "category": "user_constraint",
+        "valid_from": 7,
+        "valid_until": null,
+        "added_sequence": 7,
+        "ended_sequence": null,
+        "superseded_by": null,
+        "ever_effective": true,
+        "trusted_at_boundary": true,
+        "status_at_boundary": "active"
+      },
+      {
+        "session_id": "af9239e6ebd74b9b88ba779ebdf9efd8",
+        "source_message_id": "f688a23063f8429d9ec22a26676c04d0",
+        "source_span": [
+          0,
+          12
+        ],
+        "source_role": "user",
+        "original_quote": "笔记数据只能在本地处理。",
+        "provenance_kind": "host_confirmed_pin",
+        "semantic_classification": "host_selected_category_only",
+        "confirmation_event_id": "c8de0a5780f14643b90503aaf03c545d",
+        "confirmation_event_sequence": 6,
+        "current_lifecycle_status": "active",
+        "source_verified": true,
+        "pin_id": "49196bb7c1934a0ca6086573dc3c3148",
+        "category": "user_constraint",
+        "valid_from": 6,
+        "valid_until": null,
+        "added_sequence": 6,
+        "ended_sequence": null,
+        "superseded_by": null,
+        "ever_effective": true,
+        "trusted_at_boundary": true,
+        "status_at_boundary": "active"
+      }
+    ]
+  },
+  "B": {
+    "snapshots": [
+      {
+        "boundary": 6,
+        "active_quotes": [
+          "索引文件命名为index.md。"
+        ]
+      },
+      {
+        "boundary": 12,
+        "active_quotes": [
+          "索引文件命名为catalog.md。"
+        ]
+      },
+      {
+        "boundary": 13,
+        "active_quotes": []
+      }
+    ],
+    "intervals": [
+      {
+        "quote": "索引文件命名为catalog.md。",
+        "valid_from": 12,
+        "valid_until": 13,
+        "current_status": "revoked"
+      },
+      {
+        "quote": "索引文件命名为index.md。",
+        "valid_from": 6,
+        "valid_until": 12,
+        "current_status": "superseded"
+      }
+    ],
+    "atomic_internal_boundary_rejected": true
+  }
+}

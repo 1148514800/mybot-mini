@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-Decision Provenance & Temporal Validity v1已实现并通过离线及独立Chrome合成验收，真实DeepSeek/GLM/摘要/Judge/Provider HTTP均0，不使用旧剩余1次。分支codex/decision-provenance-temporal-validity，基线ba04931815c222543a7e05bf86147a9a5adb4642；实现与验收报告分两个提交交付，报告目录docs/reports/decision-provenance-temporal-validity/。
+Decision Provenance & Temporal Validity v1已实现并通过离线及独立Chrome合成验收，真实DeepSeek/GLM/摘要/Judge/Provider HTTP均0，不使用旧剩余1次。分支codex/decision-provenance-temporal-validity，基线ba04931815c222543a7e05bf86147a9a5adb4642；Implementation f1548ca0d309e2ed8bfe348ac750d50f6f95b648，验收报告另有独立提交，报告目录docs/reports/decision-provenance-temporal-validity/。
 
 ## 实现与架构
 

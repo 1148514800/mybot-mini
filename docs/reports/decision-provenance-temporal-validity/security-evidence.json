@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "preserved_paths": {
+    "docs/reports/source-aware-live-uat": true,
+    "docs/reports/persistent-session-live-uat": true,
+    "scripts/source_aware_uat": true,
+    "scripts/persistent_uat": true,
+    "mybot/agent/pinned_context.py": true,
+    "mybot/agent/task_contract.py": true,
+    "mybot/agent/context_compactor.py": true,
+    "mybot/agent/token_counter.py": true,
+    "mybot/tools": true,
+    "mybot/web/security.py": true,
+    "mybot/web/approval.py": true,
+    "pyproject.toml": true,
+    "uv.lock": true
+  },
+  "tracked_paths_checked": 1178,
+  "forbidden_tracked_paths": [],
+  "tracked_and_changed_text_credential_pattern_findings": [],
+  "real_requests": {
+    "deepseek": 0,
+    "glm": 0,
+    "semantic_summary": 0,
+    "paid_judge": 0,
+    "provider_http": 0
+  },
+  "old_live_assets_accessed": false,
+  "old_user_browser_or_8765_operated": false,
+  "notes": [
+    "Credential patterns are auxiliary; changed contents and screenshots were reviewed.",
+    "No process termination targeted old services or user Chrome.",
+    "Only newly-created synthetic SQLite was opened or migrated.",
+    "Same-UID hostile tampering is outside the existing storage boundary."
+  ]
+}

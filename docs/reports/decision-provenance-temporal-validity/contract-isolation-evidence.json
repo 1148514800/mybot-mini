@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "actual_nonempty_task_contract": true,
+  "synthetic_observed_test_link": true,
+  "persistent_pin_count": 0,
+  "model_calls": 0,
+  "execution_fixture_only": true
+}

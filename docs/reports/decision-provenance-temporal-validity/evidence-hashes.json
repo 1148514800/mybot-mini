@@ -1,0 +1,26 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "acceptance-report.md": "33e32975ba1ed72b3270ccd8c7a759190241548f80b2d08fd79fd7209c792d77",
+    "browser-acceptance.md": "bdcaae6b96ed6de132837bd20d12c3164c0686e000adec1f3119d3629b32e09e",
+    "browser-evidence.json": "5e98d838c55fca5c6b9062f2648c9d81afdd1f4dd250a002dd2d75ea8b43a919",
+    "contract-isolation-evidence.json": "304345e4df2be857d55cafec5f7727e90fb66ba10b8f13630a0cb00206c9fe8b",
+    "decision-context.md": "0ab32658d5dcf8297c3b9b6996e5712d2053a00fd64327232fbc6174bf896070",
+    "mechanism-evidence.json": "8a81a4ed225fab4c3ac481bef0b72832ab7b7cc523feac1ab43dd443067ac520",
+    "next-stage-readiness.md": "65dd964a133ecf1799bb1cf3f47a1d6ed7eda8ccfb590d7f1c0feb376350e5c3",
+    "offline-validation.json": "5e7c1bb32bf7356b74c029cc46dfba07253f7436d4aaf211da44445ed60e5e5d",
+    "provenance-model.md": "0987071ab1d996e5c7610021fc5789171cad4c2ad5d286b5def3902389912654",
+    "remaining-risks.md": "9b5c16cf475af69735041a231034771bf08622d81200ad1ecab564559ce880b3",
+    "resource-usage.json": "da6fa2f849f2667f0a27fea8d09fa213b53ed5960b69359779d49ed586b7c377",
+    "root-cause-analysis.md": "1fbd2257264afc0b8aa07cecf99a5e47a0325d4df3717986f949ac8a0e274671",
+    "screenshots/A-trusted-vs-model.png": "7ddf29df09ffd51e3dc9302287dbc8c1c61487caf5aef89940f7f27fcd099f46",
+    "screenshots/B-replacement-history.png": "1477065bf5b8ddf66c3e21def5fd2e5d9c6a0908ef986366fbc88683bb0c4e83",
+    "screenshots/C-revoked-history.png": "5d6811c1232298cd2653499e98718e6d37b73c4acf84e92e26ee7cdbfa2a7ed0",
+    "screenshots/D-restarted.png": "9e6918b55df5ed68ca02ad053e252a94dc10cfe80ca0bac167a20cae00a7b4bf",
+    "security-audit.md": "871c9e59dc4f2821f14ee10574792585f265a5d8968f55a2cb848a33a0275c2a",
+    "security-evidence.json": "ecd8ea63bccc3205219726e6356e2421ab331ed56080eefa9c64ed4964b200ed",
+    "synthetic-case-results.md": "bc0b748ab2021c0b0f7d3e40251cf057e61822ae15def7d5b8ea6ea95608bd73",
+    "temporal-validity.md": "95a323bcce6efeec65d433fb4843f2d3acf1790961b040509af48d545d5e630d",
+    "trust-boundary.md": "826417b9ff5947e5ff9969c91551c3bd3c3e010be85ce96ce75dbfd68ced270c"
+  }
+}

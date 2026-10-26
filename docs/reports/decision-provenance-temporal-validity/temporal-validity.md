@@ -1,0 +1,11 @@
+# Temporal Validity v1
+
+原pin.added / pin.superseded / pin.revoked事件和事件Schema v1不变。数据库格式升级为v2，仅新增event_commits(session_id,start_sequence,end_sequence)。append_many把新事件和每Session的提交区间写入同一BEGIN IMMEDIATE事务，失败一起回滚；幂等重放不制造新边界。无新生命周期事件、时钟比较或语义版本号。
+
+必须新增数据库索引而不能只推断相邻事件：通用append_many可一次添加多个Pin或连续替换。同一事务内所有事件只有提交后的最终集合可见。valid_from是添加事件所属提交的end_sequence，valid_until是终止事件所属提交的end_sequence，采用左闭右开区间。普通替换时旧Pin终点=新Pin起点，添加新Pin和旧Pin失效之间的内部序号不可查询。一次事务内又创建又失效的Pin没有稳定有效区间，ever_effective=false。
+
+view(boundary=...)只接受零边界及已记录的真实提交终点，非法、未来或中间序号拒绝。当前与历史状态分开；current_lifecycle_status可以是superseded，但status_at_boundary在替换前仍为active。撤销不会修改过去的状态。时间戳、revision都不参与排序。跨Session、namespace、workspace查询拒绝；只读视图不恢复执行能力。
+
+旧v1数据库先按原完整性/事件哈希检查，再事务性建立提交索引，仅记录迁移时各Session的当前边界。更早未保存的事务边界无法从旧事件可靠重建：historical_boundaries_complete=false、未知端点null，旧边界查询拒绝；不倒填或伪造。旧事件哈希及消息字节保持。测试只在临时合成库验证迁移，未打开旧Live或用户数据库。老版本程序不能新打开v2；已运行的旧写进程也不应与升级后的写者共享同一数据库，因为旧写者不会维护提交索引。部署升级需先停止该数据库的旧写者，保留升级前备份用于降级，不能手工把版本号改回。本轮独立合成库不与8765共享，不执行用户库升级。
+
+读取采用同一SQLite快照，最多200条Pin事件、100个Pin、100条变化和最近200个提交终点（另含零边界），limit缩小时返回omitted。生命周期转移核对规范事件哈希，数据库重新打开时核对提交区间连续性、终点和外键。提交索引遵守原同UID合作边界；不是防御恶意同UID改库的密码学日志。
