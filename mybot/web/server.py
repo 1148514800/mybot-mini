@@ -56,6 +56,9 @@ class Boundary:
         await self.app(scope, bounded_receive, secure_send)
 
 
+SSE_CONNECTION_SECONDS = 2.0  # Finite requests let Uvicorn drain before lifespan shutdown.
+
+
 def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=90, task_timeout=600):
     options = {} if client_factory is None else {'client_factory': client_factory}
     runtime = ChatRuntime(config, approval_timeout=approval_timeout, task_timeout=task_timeout, **options)
@@ -217,21 +220,30 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         except ValueError: return Response(status_code=400)
         async def stream():
             nonlocal cursor
+            retry_sent = False
+            deadline = asyncio.get_running_loop().time() + SSE_CONNECTION_SECONDS
             while not runtime.closed and c.id in runtime.conversations:
+                if asyncio.get_running_loop().time() >= deadline: return
                 c.changed.clear()
                 if cursor>c.sequence:
                     cursor=c.sequence
-                    yield 'event: reset\ndata: {}\n\n'
+                    yield f'id: {cursor}\nevent: reset\ndata: {{}}\n\n'
                 # A missed window triggers full authenticated state refresh, not fabricated events.
                 if c.events and cursor < c.events[0]['sequence'] - 1:
                     cursor=c.sequence
-                    yield 'event: reset\ndata: {}\n\n'
+                    yield f'id: {cursor}\nevent: reset\ndata: {{}}\n\n'
                 for event in list(c.events):
                     if event['sequence'] > cursor:
                         cursor = event['sequence']
                         yield f'id: {cursor}\nevent: activity\ndata: {json.dumps(event, ensure_ascii=True)}\n\n'
-                try: await asyncio.wait_for(c.changed.wait(), 15)
-                except TimeoutError: yield ': heartbeat\n\n'
+                if not retry_sent:
+                    # Preserve immediate reset/activity as the first frame.
+                    yield 'retry: 250\n\n'
+                    retry_sent = True
+                remaining = deadline - asyncio.get_running_loop().time()
+                if remaining <= 0: return
+                try: await asyncio.wait_for(c.changed.wait(), remaining)
+                except TimeoutError: return  # Native EventSource reconnects with Last-Event-ID.
         return StreamingResponse(stream(), media_type='text/event-stream', headers={'X-Accel-Buffering': 'no'})
 
     routes = [Route('/', home), Route('/static/{name}', asset), Route('/api/bootstrap', bootstrap),

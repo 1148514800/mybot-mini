@@ -3,6 +3,11 @@ import asyncio,json,re,time
 from types import SimpleNamespace as N
 from uuid import uuid4
 from contextvars import ContextVar
+from collections import deque
+from enum import StrEnum
+
+import httpx
+from openai import APIError
 
 PROGRESS=ContextVar('stream_progress',default=None)
 OBSERVER=ContextVar('stream_observer',default=None)
@@ -42,91 +47,217 @@ class SafePreview:
 
 def get(obj,key,default=None):return obj.get(key,default) if isinstance(obj,dict) else getattr(obj,key,default)
 
-async def consume(stream,*,record=None,notify=None,secrets=()):
-    record=record if record is not None else {};sid=uuid4().hex;text='';calls={};finish=None;usage=None;status=None
-    first=False;safe=SafePreview(secrets);preview='';revision=0;last=0.;pending=False;closed=False
-    def emit(kind,**kw):
-        if notify:notify(dict(type=kind,stream_id=sid,**kw))
-    def flush(fragment='',final=False):
-        nonlocal preview,revision,last,pending
-        released=safe.feed(fragment,final=final)
-        preview=(preview+released).encode('utf-8')[:8192].decode('utf-8',errors='ignore');pending|=bool(released)
-        if pending and (final or time.monotonic()-last>=.1):
-            revision+=1;emit('model_text_delta',text=preview,preview_revision=revision);record['output_exposed']=True;last=time.monotonic();pending=False
-    record.update(streaming=True,first_chunk_received=False,output_exposed=False,terminal_trusted=False,stream_status='consuming')
-    emit('model_stream_started',status='generating',text='',preview_revision=0)
+class StreamErrorCode(StrEnum):
+    CHOICES = 'stream_choices_invalid'
+    CHOICE_INDEX = 'stream_choice_index_invalid'
+    ROLE = 'stream_role_invalid'
+    CONTENT = 'stream_content_type_invalid'
+    AFTER_FINISH = 'stream_after_finish_payload'
+    DUPLICATE_FINISH = 'stream_duplicate_finish'
+    TOOL_FRAGMENT = 'stream_tool_fragment_invalid'
+    TOOL_ARGUMENTS = 'stream_tool_arguments_invalid'
+    TOOL_GAP = 'stream_tool_index_gap'
+    PROVIDER_FRAME = 'stream_provider_error_frame'
+    TRANSPORT = 'stream_transport_interrupted'
+    BUFFER = 'stream_local_buffer_limit'
+    TERMINAL = 'stream_terminal_missing'
+    CLOSE = 'stream_close_unconfirmed'
+    CANCELLED = 'stream_user_or_caller_cancelled'
+    TIMEOUT = 'stream_local_timeout'
+    HOST = 'stream_host_failure'
+
+
+class StreamProtocolError(ValueError):
+    def __init__(self, code):
+        self.code = StreamErrorCode(code)
+        super().__init__(self.code.value)
+
+
+def _kind(value):
+    # Fixed vocabulary: even malicious class names / finish strings cannot escape.
+    return ('null' if value is None else 'string' if isinstance(value, str) else
+            'list' if isinstance(value, list) else 'object' if isinstance(value, dict) else 'other')
+
+
+def _finish(value):
+    return value if value in ('stop', 'tool_calls', 'length', 'content_filter', None) else 'unknown'
+
+
+async def consume(stream, *, record=None, notify=None, secrets=()):
+    record = record if record is not None else {}
+    sid = uuid4().hex
+    text = ''; calls = {}; finish = None; usage = None; status = None
+    safe = SafePreview(secrets); preview = ''; revision = 0; last = 0.; pending = False
+    count = 0; terminals = 0; eof = False; closed = False; close_called = False
+    phase = 'opening'; code = None; origin = None; recent = deque(maxlen=8); iterator = None
+
+    def reject(reason):
+        raise StreamProtocolError(reason)
+
+    def diagnostic():
+        return dict(stream_id=sid, error_code=code.value if code else None, origin=origin,
+                    phase=phase, chunk_index=count, chunks_observed=count,
+                    finish_reason=_finish(finish), terminal_count=terminals,
+                    text_received=bool(text), natural_eof=eof, close_called=close_called,
+                    closed=closed, recent_chunks=list(recent))
+
+    def emit(kind, **kw):
+        if notify: notify(dict(type=kind, stream_id=sid, **kw))
+
+    def flush(fragment='', final=False):
+        nonlocal preview, revision, last, pending
+        released = safe.feed(fragment, final=final)
+        preview = (preview + released).encode('utf-8')[:8192].decode('utf-8', errors='ignore')
+        pending |= bool(released)
+        if pending and (final or time.monotonic() - last >= .1):
+            revision += 1
+            emit('model_text_delta', text=preview, preview_revision=revision)
+            record['output_exposed'] = True; last = time.monotonic(); pending = False
+
+    record.update(streaming=True, first_chunk_received=False, output_exposed=False,
+                  terminal_trusted=False, stream_status='consuming')
+    emit('model_stream_started', status='generating', text='', preview_revision=0)
     try:
-        async for chunk in stream:
-            first=True;record['first_chunk_received']=True
-            progress=PROGRESS.get()
-            if progress is not None:progress['received']=True
-            if get(chunk,'error'):raise ValueError('stream_provider_error')
-            if get(chunk,'usage') is not None:usage=get(chunk,'usage')
-            choices=get(chunk,'choices')
-            if not isinstance(choices,list):raise ValueError('stream_choices')
-            if not choices:continue
-            if len(choices)!=1 or get(choices[0],'index',0)!=0:raise ValueError('stream_choice_index')
-            choice=choices[0];delta=get(choice,'delta');content=get(delta,'content');parts=get(delta,'tool_calls')
-            if get(delta,'role') not in (None,'assistant'):raise ValueError('stream_role')
-            if get(delta,'function_call') or (finish is not None and (content or parts)):raise ValueError('stream_after_finish')
+        iterator = stream.__aiter__()
+        while True:
+            phase = 'sdk_iteration'
+            try:
+                chunk = await anext(iterator)
+            except StopAsyncIteration:
+                eof = True
+                break
+            except asyncio.CancelledError:
+                raise
+            except TimeoutError:
+                code = StreamErrorCode.TIMEOUT; origin = 'timeout'
+                raise
+            except (APIError, httpx.HTTPError, OSError):
+                code = StreamErrorCode.TRANSPORT; origin = 'sdk_transport'
+                if not count: raise  # Original failover boundary, before any genuine chunk.
+                status = 'provider_error'; usage = None
+                break
+            count += 1; record['first_chunk_received'] = True
+            progress = PROGRESS.get()
+            if progress is not None: progress['received'] = True
+            phase = 'protocol_validation'
+            choices = get(chunk, 'choices')
+            choice = choices[0] if isinstance(choices, list) and choices else None
+            delta = get(choice, 'delta'); content = get(delta, 'content'); parts = get(delta, 'tool_calls')
+            reason = get(choice, 'finish_reason')
+            if reason is not None: terminals += 1
+            recent.append(dict(chunk_index=count,
+                choices_count=len(choices) if isinstance(choices, list) else None,
+                delta_present=delta is not None, role_present=get(delta, 'role') is not None,
+                content_type=_kind(content), content_length=len(content) if isinstance(content, str) else None,
+                tool_calls_count=len(parts) if isinstance(parts, list) else None,
+                finish_reason=_finish(reason)))
+            if get(chunk, 'error'): reject(StreamErrorCode.PROVIDER_FRAME)
+            if get(chunk, 'usage') is not None: usage = get(chunk, 'usage')
+            if not isinstance(choices, list): reject(StreamErrorCode.CHOICES)
+            if not choices: continue  # Standard usage-only trailer, including after finish.
+            if len(choices) != 1 or type(get(choice, 'index', 0)) is not int or get(choice, 'index', 0) != 0:
+                reject(StreamErrorCode.CHOICE_INDEX)
+            if delta is not None and not isinstance(delta, dict) and not hasattr(delta, 'model_fields'):
+                reject(StreamErrorCode.CHOICES)
+            if get(delta, 'role') not in (None, 'assistant'): reject(StreamErrorCode.ROLE)
+            if get(delta, 'function_call') or (finish is not None and (content or parts)):
+                reject(StreamErrorCode.AFTER_FINISH)
             if content is not None:
-                if not isinstance(content,str):raise ValueError('stream_content')
-                if len(text)+len(content)>32768:
-                    text+=content[:32768-len(text)];status='output_truncated';break
-                text+=content
-                flush(content)
+                if not isinstance(content, str): reject(StreamErrorCode.CONTENT)
+                if len(text) + len(content) > 32768:
+                    text += content[:32768-len(text)]
+                    code = StreamErrorCode.BUFFER; origin = 'local_limit'; status = 'output_truncated'
+                    break
+                text += content
+                phase = 'preview'; flush(content); phase = 'protocol_validation'
             if parts is not None:
-                if not isinstance(parts,list):raise ValueError('stream_calls')
+                if not isinstance(parts, list): reject(StreamErrorCode.TOOL_FRAGMENT)
                 for part in parts:
-                    i=get(part,'index')
-                    if type(i) is not int or not 0<=i<16:raise ValueError('stream_tool_index')
-                    c=calls.setdefault(i,dict(id='',name='',arguments=''))
-                    f=get(part,'function');kind=get(part,'type')
-                    if kind not in (None,'function'):raise ValueError('stream_tool_type')
-                    for key,value in [('id',get(part,'id')),('name',get(f,'name')),('arguments',get(f,'arguments'))]:
+                    i = get(part, 'index')
+                    if type(i) is not int or not 0 <= i < 16: reject(StreamErrorCode.TOOL_FRAGMENT)
+                    c = calls.setdefault(i, dict(id='', name='', arguments=''))
+                    f = get(part, 'function')
+                    if get(part, 'type') not in (None, 'function'): reject(StreamErrorCode.TOOL_FRAGMENT)
+                    for key, value in [('id', get(part, 'id')), ('name', get(f, 'name')), ('arguments', get(f, 'arguments'))]:
                         if value is not None:
-                            if not isinstance(value,str):raise ValueError('stream_tool_fragment')
-                            limit=256 if key=='id' else 128 if key=='name' else 65536
-                            if len(c[key])+len(value)>limit or sum(len(v) for call in calls.values() for v in call.values())+len(value)>65536:raise ValueError('stream_tool_limit')
-                            c[key]+=value
-                    if len(c['id'])>256 or len(c['name'])>128 or sum(len(v) for call in calls.values() for v in call.values())>65536:raise ValueError('stream_tool_limit')
-            reason=get(choice,'finish_reason')
+                            if not isinstance(value, str): reject(StreamErrorCode.TOOL_FRAGMENT)
+                            limit = 256 if key == 'id' else 128 if key == 'name' else 65536
+                            if len(c[key])+len(value)>limit or sum(len(v) for call in calls.values() for v in call.values())+len(value)>65536:
+                                reject(StreamErrorCode.BUFFER)
+                            c[key] += value
             if reason is not None:
-                if finish is not None:raise ValueError('stream_duplicate_finish')
-                finish=reason
+                if finish is not None: reject(StreamErrorCode.DUPLICATE_FINISH)
+                finish = reason
         if status is None:
-            status={'stop':'complete' if text.strip() and not calls else 'provider_error' if calls else 'empty_response',
-                'tool_calls':'tool_calls' if calls else 'provider_error','length':'output_truncated','content_filter':'content_filtered'}.get(finish,'response_unconfirmed')
-        if status=='tool_calls':
+            phase = 'terminal_validation'
+            status = {'stop': 'complete' if text.strip() and not calls else 'provider_error' if calls else 'empty_response',
+                      'tool_calls': 'tool_calls' if calls else 'provider_error', 'length': 'output_truncated',
+                      'content_filter': 'content_filtered'}.get(_finish(finish), 'response_unconfirmed')
+            if status == 'response_unconfirmed': code = StreamErrorCode.TERMINAL; origin = 'protocol_validation'
+            if status == 'provider_error': reject(StreamErrorCode.TOOL_ARGUMENTS)
+        if status == 'tool_calls':
             from ..tools.arguments import parse_object
-            if sorted(calls)!=list(range(len(calls))):raise ValueError('stream_tool_gap')
-            ids=set()
+            if sorted(calls) != list(range(len(calls))): reject(StreamErrorCode.TOOL_GAP)
+            ids = set()
             for c in calls.values():
-                if not c['id'] or c['id'] in ids or not re.fullmatch(r'[A-Za-z0-9_]{1,128}',c['name']) or not isinstance(parse_object(c['arguments'],max_bytes=65536),dict):raise ValueError('stream_tool_incomplete')
+                if not c['id'] or c['id'] in ids or not re.fullmatch(r'[A-Za-z0-9_]{1,128}', c['name']):
+                    reject(StreamErrorCode.TOOL_FRAGMENT)
+                try: arguments = parse_object(c['arguments'], max_bytes=65536)
+                except (ValueError, TypeError): reject(StreamErrorCode.TOOL_ARGUMENTS)
+                if not isinstance(arguments, dict): reject(StreamErrorCode.TOOL_ARGUMENTS)
                 ids.add(c['id'])
+    except StreamProtocolError as exc:
+        code = exc.code; origin = 'provider_frame' if code == StreamErrorCode.PROVIDER_FRAME else 'local_limit' if code == StreamErrorCode.BUFFER else 'protocol_validation'
+        status = 'provider_error'; usage = None
     except asyncio.CancelledError:
-        status='cancelled';raise
-    except Exception:
-        if not first:raise  # Only the original failover policy may retry before any chunk.
-        status='provider_error';usage=None
+        code = StreamErrorCode.CANCELLED; origin = 'caller_cancellation'; status = 'cancelled'
+        raise
+    except TimeoutError:
+        code = StreamErrorCode.TIMEOUT; origin = 'timeout'; status = 'interrupted'
+        raise
+    except BaseException:
+        # Includes budget/freeze/store/approval and unexpected host failures. Do NOT
+        # disguise these as provider errors or make them eligible for retry.
+        if code is None: code = StreamErrorCode.HOST; origin = 'host'
+        status = 'interrupted'
+        raise
     finally:
-        record['stream_status']=status or 'provider_error'
+        failure_phase = phase
+        record['stream_status'] = status or 'provider_error'
         try:
-            close=getattr(stream,'close',None) or getattr(stream,'aclose',None)
-            if close is None:raise StreamCleanupError('stream_close_unavailable')
-            await asyncio.wait_for(close(),3);closed=True
+            close_called = True
+            async def close_owned():
+                try:
+                    # Close a distinct generator before its owner settles resource
+                    # accounting, so local rejection is not mistaken for EOF.
+                    if iterator is not None and iterator is not stream:
+                        end = getattr(iterator, 'aclose', None)
+                        if end is not None: await end()
+                finally:
+                    close = getattr(stream, 'close', None) or getattr(stream, 'aclose', None)
+                    if close is None: raise StreamCleanupError('stream_close_unavailable')
+                    await close()
+            await asyncio.wait_for(close_owned(), 3); closed = True
         except BaseException as exc:
-            record.update(stream_status='interrupted',terminal_trusted=False)
-            emit('model_stream_incomplete',status='interrupted',text=preview,preview_revision=revision)
-            raise StreamCleanupError('stream_cleanup_unconfirmed') from exc
+            # Preserve the primary error classification in a separate bounded field.
+            record['stream_primary_error_code'] = code.value if code else None
+            code = StreamErrorCode.CLOSE; origin = 'cleanup'; phase = 'close'
+            record.update(stream_status='interrupted', terminal_trusted=False, stream_diagnostic=diagnostic())
+            emit('model_stream_incomplete', status='interrupted', text=preview,
+                 preview_revision=revision, error_code=code.value)
+            raise StreamCleanupError(code.value) from None
         finally:
             if closed:
+                phase = failure_phase
+                record['stream_diagnostic'] = diagnostic()
                 flush(final=True)
-                emit('model_stream_finished' if status in ('complete','tool_calls') else 'model_stream_incomplete',
-                    status=status or 'provider_error',text=preview,preview_revision=revision)
-    trusted=finish in ('stop','tool_calls','length','content_filter') and status in ('complete','tool_calls','output_truncated','content_filtered','empty_response')
-    record.update(terminal_trusted=trusted,stream_status=status)
-    if not trusted:usage=None
-    assembled=[N(id=c['id'],type='function',function=N(name=c['name'],arguments=c['arguments'])) for _,c in sorted(calls.items())] if status=='tool_calls' else None
-    return N(choices=[N(message=N(content=text[:32768],tool_calls=assembled),finish_reason=finish)],usage=usage,
-        stream_delivery=dict(status=status,finish_reason=finish if isinstance(finish,str) else 'unknown',complete=status=='complete'))
+                emit('model_stream_finished' if status in ('complete', 'tool_calls') else 'model_stream_incomplete',
+                     status=status or 'provider_error', text=preview, preview_revision=revision,
+                     error_code=code.value if code else None)
+    trusted = eof and closed and finish in ('stop', 'tool_calls', 'length', 'content_filter') and status in ('complete', 'tool_calls', 'output_truncated', 'content_filtered', 'empty_response')
+    record.update(terminal_trusted=trusted, stream_status=status)
+    if not trusted: usage = None
+    assembled = [N(id=c['id'], type='function', function=N(name=c['name'], arguments=c['arguments'])) for _, c in sorted(calls.items())] if status == 'tool_calls' and trusted else None
+    return N(choices=[N(message=N(content=text[:32768], tool_calls=assembled), finish_reason=finish)], usage=usage,
+             stream_delivery=dict(status=status, finish_reason=_finish(finish) or 'unknown', complete=status=='complete' and trusted,
+                                  error_code=code.value if code else None))

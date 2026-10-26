@@ -1,0 +1,11 @@
+# Shutdown causes and fix
+
+本机已安装Uvicorn Server.shutdown源码先停止接入、等待活动HTTP任务，然后才发送lifespan.shutdown。旧SSE无限循环等runtime.closed；runtime.closed在ChatRuntime.close（lifespan）中设置。合成旧基线服务保持SSE时，SIGINT后3秒仍不退出；仅断开探针连接便exit0。此循环等待可证明，不等于已证明原25秒超时唯一根因。
+
+生产SSE改为每连接最多2秒，原生EventSource retry=250ms、Last-Event-ID续传；不依赖尚未发生的lifespan关闭信号。reset带当前cursor并保持立即reset为首帧，漏掉窗口时触发认证状态刷新。正常断线只结束HTTP流，不取消Agent、不发模型请求；终态仍持久化。代价是周期连接轮转与短暂重连间隙，浏览器须保持状态刷新；不是永不重连长连接。
+
+另在真实继承TTY的操作员拓扑复现：SIGINT只发uv launcher，子Python持续监听，等待超时。管道输入时同一启动形式可正常转发。新scripts/local_web_process只供操作员合成工具使用，记录自身服务子进程PID、UID、PPID、启动时间、完整argv、cwd和指定本地端口；先SIGINT launcher，1秒后仅当原身份再次完全匹配且仍监听时SIGINT子服务。不强杀、不批量匹配、不终止未知进程。若监听已经结束，继续等待自身launcher排空而不发额外信号。身份改变则拒绝。
+
+ChatRuntime.close唤醒changed并通过原生内部stop清理已拥有任务，不经过可被HALT策略覆盖的用户准入stop钩子。清理不授予新模型/工具能力，不删除HALT。MCP与SDK client退出各有同Task的3秒cooperative deadline；MCP不能用wait_for换Task退出其cancel scopes。总体stop等待10秒，无法确认时保持cleanup_uncertain并抛安全错误，不擅自释放不确定Lease。对无视取消的第三方协程无法提供OS级强制终止保证。
+
+旧冻结UAT脚本保持原样，其HALT后的verify/Case finish仍可能报告失败；本轮不通过清HALT或伪造finished修复旧账本。新模拟HALT仅证明禁止新请求与关闭自身资源可以独立。原R01仍FAIL。

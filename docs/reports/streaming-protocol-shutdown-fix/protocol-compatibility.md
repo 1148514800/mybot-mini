@@ -1,0 +1,9 @@
+# Compatibility scope
+
+可信终态现在显式要求合法finish、SDK自然EOF和关闭确认三者同时成立。标准stop后choices=[]的Usage收尾仍可接受；原来即支持，本轮没有为了R01放宽重复finish或终态后content。
+
+保持32K文本、16工具、工具ID/name/参数及总缓冲上限；完整、严格JSON且索引连续的Tool Call才可返回AgentLoop。对本地长度截断不声称可信完成；未完成/中断Usage保持null。闭合独立iterator再关闭其owner，使本地主动拒绝与自然EOF区分，reservation仍由原observer负责，不重复物理记账。
+
+SafePreview的跨Chunk敏感片段缓冲与8192字节预览边界不变；非流式ChatCompletion、下一安全步骤Steer、审批与Tool Authority不变。未增加模型、摘要或Judge请求。
+
+本轮没有被证据支持的DeepSeek特定协议宽容分支。原R01原因UNKNOWN；合成通过不能宣称真实DeepSeek部署已修复。后续必须用全新批次和明确新授权真实验证，不能使用原HALT批次。

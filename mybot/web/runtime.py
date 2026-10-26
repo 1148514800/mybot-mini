@@ -66,7 +66,7 @@ class Conversation:
             clean['display_truncated'] = True
         if str(clean.get('type','')).startswith('model_stream') or clean.get('type')=='model_text_delta':
             if clean.get('turn_id')!=self.observed_turn_id:return
-            self.stream_preview={k:v for k,v in clean.items() if k in ('turn_id','stream_id','text','preview_revision','status')} | {'status':clean.get('status','generating')}
+            self.stream_preview={k:v for k,v in clean.items() if k in ('turn_id','stream_id','text','preview_revision','status','error_code')} | {'status':clean.get('status','generating')}
         self.sequence += 1
         self.events.append({'sequence': self.sequence, 'time': time.time(), **clean})
         if event['type'] == 'pin_budget':self.pin_budget=clean
@@ -250,10 +250,12 @@ class ChatRuntime:
                 try: agent._git_capsule.close()
                 except BaseException: cleanup_ok = False
             if manager is not None:
-                try: await manager.__aexit__(None, None, None)
+                try:
+                    async with asyncio.timeout(3): await manager.__aexit__(None, None, None)
                 except BaseException: cleanup_ok = False
             if client is not None:
-                try: await client.close()
+                try:
+                    async with asyncio.timeout(3): await client.close()
                 except BaseException: cleanup_ok = False
             if c.steer_inbox and c.steer_inbox.pending:
                 budget=bool(agent and agent.resources.request_budget_exhausted)
@@ -326,5 +328,13 @@ class ChatRuntime:
 
     async def close(self):
         self.closed = True
-        for c in self.conversations.values(): await self.stop(c)
+        for c in self.conversations.values(): c.changed.set()
+        for c in self.conversations.values():
+            try:
+                # Shutdown owns cleanup; an admission/HALT hook is not permission
+                # to prevent closing an already owned task. Never clear that hook.
+                await asyncio.wait_for(ChatRuntime.stop(self, c), 10)
+            except BaseException:
+                self.cleanup_uncertain = True
+                raise StreamCleanupError('runtime_close_unconfirmed') from None
         self.event_store.close()
