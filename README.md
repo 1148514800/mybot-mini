@@ -16,14 +16,13 @@ cp config/config.example.json config/config.json
 
 编辑 `config/config.json`，填写提供商的 `api_key`、`base_url` 和 `model`。真实配置文件不会提交到 Git。
 
-CLI 自动回退：当 `llm.provider` 为 `coco`，且 `llm.providers.coco2` 已配置有效的
-`api_key`、`base_url`、`model` 时，主模型的 API 错误（包括超时）会最多触发一次备用请求。
-例如 `coco/deepseek-v4.1-flash` 失败后使用 `coco2/glm-5.3-flash`；后续请求在当前进程继续使用
-`coco2`，重启后重新从 `coco` 开始。回退读取配置，不写回 Provider、Model 或凭证。
-只有两个提供商同时配置时启用；主提供商占原请求时限的一半，为备用请求留出时间，整个请求仍受
-原时限和任务截止时间约束。SDK 隐式重试关闭，备用请求计入编码模型请求预算；预算不足、任务取消
-或工具错误不会触发备用请求。备用模型失败后直接上报，不继续轮询、重试或重放工具。
-流式接口不在当前 CLI 的支持范围。专项离线检查：`uv run python -m scripts.check_provider_failover`。
+CLI/Web 自动切换使用通用 Provider 链：以 `llm.provider` 为默认项，按
+`llm.providers` 的 JSON 声明顺序回绕，每个 Provider 每轮最多尝试一次，分别使用自己的
+Key、URL 和模型。成功项在当前任务内保持，新独立任务从默认项重新开始，不写回配置。
+连接/超时、401/403/404/408/429及5xx可切换；流中断必须确认关闭并撤销未完成预览，不能拼接输出或重放工具。
+每项使用完整 `request_timeout_seconds`，所有尝试仍受原生物理请求预算和任务截止限制。
+SDK隐式重试关闭；参数、权限、宿主错误、用户Stop及关闭状态未知不会自动重试。
+配置与边界详见 [Provider链说明](docs/provider-failover.md)。离线检查：`uv run python -m scripts.check_provider_chain`。
 
 既有评测入口继续使用原单模型客户端，不启用回退。混合模型行为必须使用独立版本及新评测组，不能
 追加到已有冻结 DeepSeek Campaign；本次开发没有调用真实模型 API。

@@ -19,11 +19,11 @@ class FailoverStreamChecks(unittest.IsolatedAsyncioTestCase):
         g=self.gateway([chunk('primary',finish='stop')]);a=RuntimeAccounting();await a.request(g,self.cfg,self.req);self.assertEqual(len(a.records),1);self.assertTrue(a.records[0]['first_chunk_received']);self.assertEqual(self.back.requests,[])
     async def test_error_before_first_chunk_fallback(self):
         g=self.gateway([APIConnectionError(request=httpx.Request('POST','http://mock.invalid'))]);a=RuntimeAccounting();r=await a.request(g,self.cfg,self.req);self.assertEqual(r.choices[0].message.content,'backup');self.assertEqual([v['provider'] for v in a.records],['coco','coco2']);self.assertTrue(a.records[0]['streaming_requested']);self.assertFalse(a.records[0]['first_chunk_received']);self.assertTrue(a.records[1]['terminal_trusted']);self.assertEqual(a.snapshot()['logical_requests'],1)
-    async def test_error_after_role_chunk_no_fallback(self):
-        g=self.gateway([chunk(),APIConnectionError(request=httpx.Request('POST','http://mock.invalid'))]);a=RuntimeAccounting();r=await a.request(g,self.cfg,self.req);self.assertEqual(response_status(r)['status'],'provider_error');self.assertEqual(len(a.records),1);self.assertEqual(self.back.requests,[])
-    async def test_error_after_tool_fragment_no_fallback(self):
+    async def test_error_after_role_chunk_safe_fallback(self):
+        g=self.gateway([chunk(),APIConnectionError(request=httpx.Request('POST','http://mock.invalid'))]);a=RuntimeAccounting();r=await a.request(g,self.cfg,self.req);self.assertEqual(response_status(r)['status'],'complete');self.assertEqual(len(a.records),2);self.assertEqual(len(self.back.requests),1)
+    async def test_error_after_tool_fragment_discards_call(self):
         from scripts.streaming_fixtures import tool
-        g=self.gateway([chunk(tools=[tool(0,'a','list_','{')]),OSError('closed')]);a=RuntimeAccounting();r=await a.request(g,self.cfg,self.req);self.assertIsNone(r.choices[0].message.tool_calls);self.assertEqual(self.back.requests,[])
+        g=self.gateway([chunk(tools=[tool(0,'a','list_','{')]),OSError('closed')]);a=RuntimeAccounting();r=await a.request(g,self.cfg,self.req);self.assertIsNone(r.choices[0].message.tool_calls);self.assertEqual(len(self.back.requests),1)
     async def test_budget_blocks_fallback(self):
         g=self.gateway([APIConnectionError(request=httpx.Request('POST','http://mock.invalid'))]);g.before_fallback=lambda _:False;a=RuntimeAccounting()
         with self.assertRaises(FallbackBudgetExceeded):await a.request(g,self.cfg,self.req)
@@ -33,13 +33,14 @@ class FailoverStreamChecks(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TokenBudgetError):await a.request(g,cfg,{**self.req,'messages':[dict(role='user',content='x'*3000)]})
         self.assertEqual(a.records,[])
     async def test_partial_usage_not_zero(self):
-        g=self.gateway([chunk('half'),OSError('closed')]);a=RuntimeAccounting();await a.request(g,self.cfg,self.req);self.assertIsNone(a.snapshot()['provider_reported_total_tokens']);self.assertEqual(a.snapshot()['missing_usage_requests'],1)
-    async def test_primary_timeout_after_chunk_no_fallback(self):
-        g=self.gateway([]);g._config=replace(self.cfg,request_timeout_seconds=.04);g._primary=Client([Stream([chunk('half'),chunk('late')],delay=.015)]);a=RuntimeAccounting()
-        with self.assertRaises(TimeoutError):await a.request(g,self.cfg,self.req)
-        self.assertEqual(self.back.requests,[]);self.assertEqual(len(a.records),1)
+        g=self.gateway([chunk('half'),OSError('closed')]);a=RuntimeAccounting();await a.request(g,self.cfg,self.req);self.assertIsNone(a.snapshot()['provider_reported_total_tokens']);self.assertEqual(a.snapshot()['missing_usage_requests'],2)
+    async def test_primary_timeout_after_chunk_safe_fallback(self):
+        g=self.gateway([]);g._configs=(replace(self.cfg,request_timeout_seconds=.04),self.backup)
+        stream=Stream([chunk('half'),chunk('late')],delay=.03);g._clients[0]=Client([stream]);a=RuntimeAccounting()
+        r=await a.request(g,self.cfg,self.req)
+        self.assertEqual(r.choices[0].message.content,'backup');self.assertTrue(stream.closed);self.assertEqual(len(a.records),2)
     async def test_cancel_no_fallback(self):
-        g=self.gateway([]);s=Stream([chunk('late')],delay=10);g._primary=Client([s]);a=RuntimeAccounting();t=asyncio.create_task(a.request(g,self.cfg,self.req));await asyncio.sleep(.01);t.cancel()
+        g=self.gateway([]);s=Stream([chunk('late')],delay=10);g._clients[0]=Client([s]);a=RuntimeAccounting();t=asyncio.create_task(a.request(g,self.cfg,self.req));await asyncio.sleep(.01);t.cancel()
         with self.assertRaises(asyncio.CancelledError):await t
         self.assertTrue(s.closed);self.assertEqual(self.back.requests,[])
     async def test_real_sdk_sse_usage_http_once(self):

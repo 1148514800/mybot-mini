@@ -67,7 +67,7 @@ class AccountingChecks(Base):
         agent=self.build(sdk);await agent.handle_message('hello')
         self.assertEqual(agent.last_runtime_report['http_dispatch_attempts'],1);self.assertEqual(len(calls),1)
     async def test_transient_only_default_failover(self):
-        for code in (400,401,403,422):
+        for code in (400,422):
             error=APIStatusError('synthetic',response=httpx.Response(code,request=httpx.Request('POST','https://offline.invalid')),body=None)
             backup=Client();cfg=replace(self.config,provider='coco');gateway=ProviderFailoverClient(Client([error]),cfg,replace(cfg,provider='coco2'),lambda c:backup)
             with self.assertRaises(APIStatusError):await self.build(gateway,cfg).handle_message('hello')

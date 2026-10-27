@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from contextvars import ContextVar
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from .agent.token_counter import TokenCounter
 
@@ -84,7 +84,7 @@ def owns_dispatch(client):
 
 def active_config(client, default):
     gateway = find_gateway(client)
-    return gateway._backup_config if gateway is not None and gateway.active_provider == 'coco2' else default
+    return gateway.active_config if gateway is not None else default
 
 
 async def observe_http(request):
@@ -98,32 +98,29 @@ async def observe_http(request):
     if ledger is not None and ledger.on_dispatch is not None:ledger.on_dispatch()
 
 
-async def dispatch(client, config, request, *, is_fallback=False):
+async def dispatch(client, config, request, *, is_fallback=False, record=None):
     measurement = TokenCounter.enforce(config, request)
     if asyncio.current_task().cancelling(): raise asyncio.CancelledError()
     ledger = CURRENT.get()
-    if ledger is None:
-        result=await client.chat.completions.create(**request)
-        if request.get('stream'):
-            from .agent.streaming import consume
-            return await consume(result,secrets=(getattr(config,'api_key',None),))
-        return result
     hooks = getattr(getattr(client, '_client', None), 'event_hooks', None)
     observable = isinstance(hooks, dict)
     if observable and observe_http not in hooks.setdefault('request', []): hooks['request'].append(observe_http)
-    record = {'provider':getattr(config,'provider','unknown'), 'model':getattr(config,'model','unknown'),
-              'purpose':ledger.purpose, 'status':'started', 'is_fallback':is_fallback, 'http_dispatch_attempts':0 if observable else None,
-              'usage':usage_values(None), **measurement}
+    record = {} if record is None else record
+    record.update({'provider':getattr(config,'provider','unknown'), 'model':getattr(config,'model','unknown'),
+              'purpose':ledger.purpose if ledger is not None else 'agent', 'status':'started', 'is_fallback':is_fallback, 'http_dispatch_attempts':0 if observable else None,
+              'usage':usage_values(None), 'dispatch_phase':'host_preflight', **measurement})
     if request.get('stream'):record.update(streaming_requested=True,streaming=False,first_chunk_received=False,output_exposed=False,terminal_trusted=False,stream_status='opening')
-    ledger.records.append(record)
+    if ledger is not None: ledger.records.append(record)
     token = PHYSICAL.set(record)
     try:
-        if ledger.on_dispatch is not None and ledger.purpose=='agent':ledger.on_dispatch()
+        if ledger is not None and ledger.on_dispatch is not None and ledger.purpose=='agent':ledger.on_dispatch()
+        record['dispatch_phase'] = 'sdk_request'
         response = await client.chat.completions.create(**request)
         if request.get('stream'):
+            record['sdk_stream_opened'] = True
             from .agent.streaming import consume,OBSERVER
             notify,secrets=OBSERVER.get() or (None,())
-            response=await consume(response,record=record,notify=notify,secrets=secrets)
+            response=await consume(response,record=record,notify=notify,secrets=tuple(dict.fromkeys((*secrets, getattr(config,'api_key',None)))))
         record.update(status='failed' if getattr(response,'stream_delivery',{}).get('status')=='provider_error' else 'returned', usage=usage_values(getattr(response, 'usage', None)))
         return response
     except asyncio.CancelledError:
@@ -151,6 +148,8 @@ class RuntimeAccounting:
     async def request(self, client, config, request, *, purpose='agent'):
         effective = active_config(client, config)
         if getattr(effective, 'model', None): request = {**request, 'model':effective.model}
+        # Keep caller task limits, but measure the actual active model/window.
+        TokenCounter.enforce(replace(config, provider=effective.provider, model=effective.model), request)
         TokenCounter.enforce(effective, request)
         self.logical_requests += 1
         self.compaction_requests += int(purpose == 'compaction')

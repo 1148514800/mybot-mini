@@ -7,7 +7,7 @@ import unicodedata
 from typing import Any
 
 from openai import APITimeoutError, AsyncOpenAI
-from ..provider_failover import FallbackBudgetExceeded
+from ..provider_failover import FallbackBudgetExceeded, ProviderChainExhausted
 
 from ..runtime_accounting import OUTPUT_NOTICES, response_status
 from ..config import GatewayConfig
@@ -217,6 +217,9 @@ class AgentLoop:
         from ..runtime_accounting import RuntimeAccounting
         from .context_compactor import ContextCompactor
         self.resources = RuntimeAccounting()
+        from ..runtime_accounting import find_gateway
+        gateway = find_gateway(self.client)
+        if gateway is not None: gateway.reset_task()
         self.partial_reply = ""
         self.compactor = ContextCompactor(self.config)
         self.last_runtime_report = self.resources.snapshot()
@@ -312,6 +315,12 @@ class AgentLoop:
             self.last_runtime_report = self.resources.snapshot()
             self._notify('resource_update', resources=self.last_runtime_report)
 
+    def _logical_request_timeout(self, controller):
+        from ..runtime_accounting import find_gateway
+        gateway = find_gateway(self.client)
+        window = gateway.logical_request_timeout if gateway else self.config.request_timeout_seconds
+        return min(window, max(.001, controller.remaining_seconds)) if controller else window
+
     async def _request_model(self, request, *, purpose='agent'):
         from ..storage.event_schema import StoreError
         active=self.history.turn_id
@@ -323,7 +332,9 @@ class AgentLoop:
             request={**request,'stream':True,'stream_options':{'include_usage':True}}
             def observed(event):
                 event=dict(event);kind=event.pop('type');self._notify(kind,turn_id=active,**event)
-            token=OBSERVER.set((observed,self._stream_secrets))
+            from ..runtime_accounting import find_gateway
+            gateway=find_gateway(self.client)
+            token=OBSERVER.set((observed,tuple(dict.fromkeys((*self._stream_secrets, *(gateway.secret_values if gateway else ()))))))
         pending=self._pending_steer if purpose=='agent' else None
         def admitted():
             if pending is not None and self.steer_inbox and self.steer_inbox.pending is pending:
@@ -347,7 +358,7 @@ class AgentLoop:
         from dataclasses import replace
         effective = active_config(self.client, self.config)
         if not isinstance(effective, GatewayConfig):
-            effective = replace(self.config, model=effective.model, provider='coco2')
+            effective = replace(self.config, model=effective.model, provider=effective.provider)
         self.context_manager.config = effective
         view, stats = self.context_manager.prepare(messages, definitions, turns, self.plan)
         count = stats['history_turns_omitted']
@@ -366,7 +377,7 @@ class AgentLoop:
                 return await request_call
             from ..runtime_accounting import find_gateway
             gateway = find_gateway(self.client)
-            secrets = (self.config.api_key, getattr(effective,'api_key',None), getattr(getattr(gateway,'_backup_config',None),'api_key',None))
+            secrets = (self.config.api_key, getattr(effective,'api_key',None), *(gateway.secret_values if gateway else ()))
             summary_index=1+len(self.context_manager._pin_messages)+len(self.context_manager.lifecycle_reference)
             base = view[:summary_index] + view[summary_index+int(stats['summary_present']):]
             room = self.context_manager.summary_budget(base, definitions)
@@ -479,17 +490,26 @@ class AgentLoop:
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
             start = time.perf_counter()
             if self._event_callback is not None:
-                self._notify('model_request_started', model=self.config.model, provider=getattr(self.client, 'active_provider', self.config.provider))
+                from ..runtime_accounting import active_config
+                current = active_config(self.client,self.config)
+                self._notify('model_request_started', model=current.model, provider=current.provider)
             try:
                 response = await asyncio.wait_for(
                     self._request_model(dict(model=self.config.model, messages=llm_messages, tools=definitions,
                         temperature=0.1, max_tokens=self.config.max_completion_tokens)),
-                    timeout=(min(self.config.request_timeout_seconds, max(.001, controller.remaining_seconds))
-                             if controller is not None else max(1.0, self.config.request_timeout_seconds)),
+                    timeout=self._logical_request_timeout(controller),
                 )
             except FallbackBudgetExceeded:
                 self.resources.request_budget_exhausted = True
                 return await self._complete_turn(messages, turn_start, '', controller.stop_reason if controller else 'model_request_budget')
+            except ProviderChainExhausted as exc:
+                self.resources.outcome = 'failed'
+                self.resources.output = dict(status='provider_error', failure_reason=str(exc))
+                self._notify('model_request_failed', reason='providers_exhausted')
+                if controller is not None:
+                    controller.stop('blocked', 'providers_exhausted')
+                    return await self._complete_turn(messages, turn_start, '', controller.stop_reason)
+                return str(exc)
             except (TimeoutError, APITimeoutError):
                 self.resources.outcome = 'timeout'
                 self._notify('model_request_failed', reason='timeout')
@@ -502,7 +522,8 @@ class AgentLoop:
 
             if self._event_callback is not None:
                 usage = getattr(response, 'usage', None)
-                active_config = getattr(self.client, '_backup_config', self.config) if getattr(self.client, 'active_provider', None) == 'coco2' else self.config
+                from ..runtime_accounting import active_config as current_config
+                active_config = current_config(self.client,self.config)
                 self._notify('model_request_finished', duration_seconds=round(time.perf_counter() - start, 3),
                     provider=getattr(self.client, 'active_provider', self.config.provider), model=active_config.model,
                     tokens=getattr(usage, 'total_tokens', None))
@@ -699,7 +720,9 @@ class AgentLoop:
         delivery_status = self.resources.output.get('status')
         if controller is not None:
             reply = controller.finish(reason)
-            if delivery_status in OUTPUT_NOTICES and partial:
+            if self.resources.output.get('failure_reason'):
+                reply += '\n' + self.resources.output['failure_reason']
+            elif delivery_status in OUTPUT_NOTICES and partial:
                 reply += '\n[模型部分回复]\n' + partial
             self.last_coding_report = controller.snapshot()
             if self.task_contract is not None: reply += '\n' + self.task_contract.summary()
@@ -713,6 +736,11 @@ class AgentLoop:
             reply += '\n[TASK CHANGE SUMMARY]\n' + self._active_journal.summary_text(4000)
         if delivery_status in OUTPUT_NOTICES:
             reply = '[OUTPUT] ' + OUTPUT_NOTICES[delivery_status] + '\n' + reply
+        from ..runtime_accounting import find_gateway
+        gateway = find_gateway(self.client)
+        if gateway is not None:
+            for secret in gateway.secret_values:
+                if len(secret) >= 6: reply = reply.replace(secret, "[已隐藏]")
         messages.append({"role": "assistant", "content": reply})
         from ..tools.patch import ApplyPatchTool
         patch_tool = self.tools.get_tool('apply_patch')

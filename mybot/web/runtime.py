@@ -189,7 +189,7 @@ class ChatRuntime:
                 await manager.__aenter__()
                 client = self.client_factory(config)
                 if isinstance(client, ProviderFailoverClient):
-                    c.secret_values = tuple(dict.fromkeys((config.api_key, client._backup_config.api_key)))
+                    c.secret_values = tuple(dict.fromkeys((config.api_key, *client.secret_values)))
                     c.messages = redact(c.messages, c.secret_values)
                     c.title = redact(c.title, c.secret_values)
                 agent = AgentLoop(client, config, tools, ContextBuilder(config.workspace), session=c.session,
@@ -213,6 +213,8 @@ class ChatRuntime:
                     outcome = agent.last_runtime_report['outcome']
                     c.status = 'failed' if c.failed_request or outcome == 'failed' else 'stopped' if outcome in ('timeout','stopped') else 'completed'
                 delivery = agent.last_runtime_report.get('output', {})
+                if delivery.get('failure_reason'):
+                    reply += '\n' + str(delivery['failure_reason'])[:4096]
                 if delivery.get('status') in OUTPUT_NOTICES:
                     if c.status not in ('failed','stopped','execution_uncertain'): c.status = delivery['status']
                     # Coding report is independent; retain the model's partial text

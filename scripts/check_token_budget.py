@@ -73,12 +73,15 @@ class TokenChecks(Base):
         agent=self.build(gateway,cfg)
         with self.assertRaises(TokenBudgetError):await agent.handle_message('test')
         self.assertEqual(len(primary.requests),1);self.assertEqual(backup.requests,[])
-    async def test_sticky_backup_reprojects_following_turn(self):
-        primary=Client([failed()]);backup=Client();cfg=replace(self.config,provider='coco',model='primary')
+    async def test_sticky_backup_reprojects_step_then_new_task_resets(self):
+        (self.root/'small.txt').write_text('example')
+        primary=Client([failed()]);backup=Client([response(calls=[call('once','read_file','{"path":"small.txt"}')]),response('done')]);cfg=replace(self.config,provider='coco',model='primary')
         secondary=replace(cfg,provider='coco2',model='backup',context_token_budget={'mode':'estimate','input_limit':6500})
         gateway=ProviderFailoverClient(primary,cfg,secondary,lambda c:backup);agent=self.build(gateway,cfg)
-        await agent.handle_message('first');await agent.handle_message('second')
+        await agent.handle_message('first')
         self.assertEqual(agent.resources.context['input_token_limit'],6500);self.assertTrue(all(r['model']=='backup' for r in backup.requests))
+        await agent.handle_message('second')
+        self.assertEqual(agent.resources.context['input_token_limit'],8000);self.assertEqual(primary.requests[-1]['model'],'primary');self.assertEqual(len(backup.requests),2)
     async def test_single_provider_sdk_retries_disabled(self):
         with patch('mybot.config.AsyncOpenAI') as sdk:build_client(self.config)
         self.assertEqual(sdk.return_value.max_retries,0)

@@ -12,7 +12,7 @@ import httpx
 from openai import APIConnectionError, APIStatusError, APITimeoutError
 
 from mybot.config import GatewayConfig
-from mybot.provider_failover import ProviderFailoverClient, build_gateway_client, FallbackBudgetExceeded
+from mybot.provider_failover import ProviderFailoverClient, build_gateway_client, FallbackBudgetExceeded, ProviderChainExhausted
 from mybot.agent import AgentLoop, ContextBuilder
 from mybot.tools import build_default_tool_registry
 from scripts.check_session import response, call, assert_pairs
@@ -33,7 +33,7 @@ class FailoverChecks(unittest.IsolatedAsyncioTestCase):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.config = GatewayConfig(provider='coco', model='deepseek-v4.1-flash', api_key='synthetic-primary',
             workspace=Path(self.tmp.name), skills_enabled=False, context_enabled=False, session_persist=False)
-        self.backup = N(model='glm-5.3-flash')
+        self.backup = N(provider='coco2', model='glm-5.3-flash')
 
     def wrapper(self, effect, backup_effect=None):
         self.primary = client(effect)
@@ -67,14 +67,16 @@ class FailoverChecks(unittest.IsolatedAsyncioTestCase):
         await self.invoke(self.wrapper([APIStatusError('synthetic',response=r,body=None)]))
         self.secondary.chat.completions.create.assert_awaited_once()
 
-    async def test_internal_timeout_reserves_backup_time(self):
+    async def test_each_provider_gets_full_window(self):
         w=self.wrapper([])
         class Expired:
+            def expired(self): return True
             async def __aenter__(self): raise TimeoutError()
             async def __aexit__(self,*args): pass
-        with patch('mybot.provider_failover.asyncio.timeout',return_value=Expired()) as timer:
+        native_timeout=asyncio.timeout
+        with patch('mybot.provider_failover.asyncio.timeout',side_effect=[Expired(),native_timeout(60)]) as timer:
             await self.invoke(w)
-        timer.assert_called_once_with(self.config.request_timeout_seconds/2)
+        self.assertEqual([c.args[0] for c in timer.call_args_list],[self.config.request_timeout_seconds]*2)
         self.secondary.chat.completions.create.assert_awaited_once()
 
     async def test_cancellation_never_falls_back(self):
@@ -114,7 +116,7 @@ class FailoverChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_backup_error_not_retried(self):
         w=self.wrapper([failed()],[failed()])
-        with self.assertRaises(APIConnectionError):await self.invoke(w)
+        with self.assertRaises(ProviderChainExhausted):await self.invoke(w)
         self.assertEqual(self.secondary.chat.completions.create.await_count,1)
 
     async def test_budget_refuses_second_request(self):
@@ -143,11 +145,11 @@ class FailoverChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(w._primary.with_options.call_args.kwargs,{'max_retries':0})
         self.assertEqual(w._backup.with_options.call_args.kwargs,{'max_retries':0})
 
-    async def test_no_backup_and_other_provider_keep_original_client(self):
-        for provider,providers in [('coco',{}),('coco2',{'coco2':{'invalid':True}})]:
-            self.config.provider=provider
-            with patch('mybot.config._PROVIDERS',providers),patch('mybot.config.build_client',return_value='original'):
-                self.assertEqual(build_gateway_client(self.config),'original')
+    async def test_single_provider_uses_zero_retry_client(self):
+        sdk=client([response('ok')])
+        with patch('mybot.config._PROVIDERS',{}),patch('mybot.config.build_client',return_value=sdk):
+            gateway=build_gateway_client(self.config);await self.invoke(gateway)
+        self.assertEqual(gateway.active_provider,self.config.provider);sdk.with_options.assert_called_once_with(max_retries=0)
 
     async def test_incomplete_backup_rejected_without_request(self):
         for bad in ({'model':'glm'}, {'model':'glm','api_key':'YOUR_KEY','base_url':'https://example.invalid'}):
