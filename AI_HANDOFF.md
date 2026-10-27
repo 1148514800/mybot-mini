@@ -2,18 +2,16 @@
 
 ## 当前状态
 
-codex/stream-legacy-function-compat。新精确GRANTED_1_REQUEST后D02唯一Live已完成：Protocol PASS、Clean Shutdown PASS，真实1/1、DeepSeek1/GLM0/摘要0/Judge0，0fallback/重试/工具/Steer。输入HEAD18f89ddd63e1b5fe6d429424cdcd5a6f3e520450；冻结源码06d53077c3f35985506c835b42d29fd8cd394aa7。未改源码或重新prepare/freeze。
+codex/streaming-steer-real-uat-v2，基线54eeeb80be0cdef65f25affc6eae6c907474cb19。仅离线准备，LIVE_AUTHORIZATION NOT_GRANTED，真实Provider0。T01/T02/T03预算4/1/1、全局6，原D02授权已耗尽不继承。
 
-## 真实证据与限制
+## 实现与验证
 
-514 Chunk、stop接受1次、自然EOF/SDK close/terminal_trusted均true，SQLite正文hash匹配。末块legacy对象name/arguments空字符串、0extra、语义空，修复在本样本中兼容。观察与可信结算Usage475/512/987，cost=null。首Chunk2.280s、首文本2.281s、SSE emit2.563s、浏览器同钟可见2.700s；跨钟延迟UNKNOWN。
+只增scripts/streaming_steer_real_uat_v2/及专项/文档，生产/依赖/旧脚本报告不变。原native Web→Agent→Failover→SDK；T01原生read_file/list_files，其他空Registry；MCP/Skills/Coding关闭。分开queued、native admitted、reservation、HTTP、response、semantic；applied不等于HTTP。原请求hash不变，Source ID/原文精确匹配，工具跳过executed=false与批次配对保留，不导出参数/请求/正文。
 
-7个单行非标题/代码段落块，未严格满足五个自然段格式；该附加格式FAIL不改冻结Protocol PASS，整体语义未独立评审。D01原字段仍无法恢复，旧R01/D01失败/HALT不改判。
+最终388项去重相关测试PASS，新增47，未重跑历史2051全量；源码hash权威运行前后一致。双profile隔离与新headed Chrome T01→02→03通过，5次Mock模型HTTP、3服务exit0/端口Lease库释放，真实0。初始UAT字段重名已修并保留日志hash，无生产缺陷修复。报告docs/reports/streaming-steer-real-uat-v2/。
 
-服务wait exit0（约1.114s），自有PID/8900/Lease释放、库一致、0uncertain/unsettled、workspace字节不变，独立Chrome profile清理。Case passed、reservation returned、无HALT，但额度/唯一Attempt已用尽。完整报告docs/reports/stream-legacy-function-compat/live-results/execution-01/。
+## 下一步与边界
 
-## 下一步与禁止事项
+先提交全部UAT与合同，干净后唯一prepare/freeze/verify到~/.mybot-mini/uat/streaming-steer-real-v2-20261026/；端口8901。Acceptance只文档，不再改冻结源码，不重复prepare/freeze。未来须新GRANTED_6_REQUESTS及当前环境隔离核验，T01→02→03每Case一次、不可挪预算或补跑；协议/权限/预算/存储/不确定异常HALT，清理不清HALT。语义失败独立记分。
 
-禁止重启D02、重发、复用旧额度或自动继续Steer。任何新Live需新合同/批次/授权。内容格式遵从可另立任务，不通过追加提示更改当前成绩。生产修复只涉及空legacy检查和安全诊断；先前2051去重离线通过，本轮无源码变动未重跑全量。旧私有库/用户Chrome/8765未操作，main/Tag/ZIP不动。
-
-共享Git外置盘AppleDouble旁索引警告沿用既有审计；旁文件不清理，正式pack先前verify exit0，后续Git操作可能继续警告。冻结源码及已验证292文件hash保持。
+旧R01/D01/D02私有资产未打开，旧真实成绩保持；用户Chrome/8765/私人workspace未操作。main/Tag/ZIP不动。共享.git AppleDouble旁索引只读核对，正式pack verify0，旁文件不处理。

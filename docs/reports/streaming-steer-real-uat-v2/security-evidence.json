@@ -1,0 +1,10 @@
+{
+  "tracked_files_scanned": 1439,
+  "actual_key_matches": 0,
+  "forbidden_runtime_files": 0,
+  "production_and_dependencies_unchanged": true,
+  "old_reports_and_harness_unchanged": true,
+  "old_private_assets_opened": false,
+  "authority_source_hashes_match": true,
+  "real_requests": 0
+}

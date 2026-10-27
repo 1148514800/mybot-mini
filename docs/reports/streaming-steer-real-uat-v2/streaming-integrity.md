@@ -1,0 +1,7 @@
+# Streaming integrity
+
+生产代码完全不变，继续使用D02已验证解析器：空legacy语义兼容、非空或坏类型legacy独立拒绝、重复finish/post-finish拒绝、工具分块和JSON严格检查、自然EOF与close才可信。8块ring不记录原函数名/参数/正文。
+
+新observer有意把关闭与结算分开：native consumer在close之后才赋terminal_trusted；下一SDK入口先结算已经关闭并完成native校验的上一流，或在Turn结束结算。避免早于consumer判定时把观察Usage写成可信Usage。非法工具参数即使已EOF，settled Usage仍null。close失败保留reserved/HALT，不能继续。
+
+8秒屏障仅是已冻结的操作窗口，交付首块且consumer恢复后才等待，所有Chunk对象与顺序不变。T02无人工屏障。取消中断屏障记录实际耗时，EOF=false与close=true可以同时成立；不能把GeneratorExit或stop单项当作Provider断流/成功。
