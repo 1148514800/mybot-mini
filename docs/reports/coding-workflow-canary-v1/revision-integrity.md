@@ -1,0 +1,13 @@
+# Revision-aware Integrity Gate
+
+完整性门记录干净Fixture HEAD、所有公开文件hash/mode、整个.git文件hash/mode和初始workspace inode。每次SDK请求及HTTP前重读冻结源码/Provider/两库身份、不可变资产和当前Integrity record；每个原生工具前后也核对。隐藏测试不进入工作区，源码hash和prepared hash将其固定。
+
+只有原生ApplyPatchTool成功、receipt_commit_success/preview_to_commit_consistent真实成立，且原生ChangeJournal.revision恰好+1、journal_valid/git_metadata_unchanged、唯一文件search.py与after hash/current_matches均一致时，才持久追加修订链并更新当前允许字节。使用原生对象，不替代Patch结果，也不重写模型参数。
+
+链条包含之前/之后hash、Revision和原生Journal摘要。后续verify核对每段顺序、首hash对应冻结Bug基线、相邻hash连续、最终hash对应磁盘、Receipt/Journal声明和唯一文件匹配；protected文件和Git metadata仍必须等于prepared初始值。允许search.py合法变化不等于忽略整个workspace。
+
+Patch发布后、完整性记录落盘前崩溃会形成不匹配而HALT，不能猜测、reset或重新freeze。未知新文件/源文件、symlink/hardlink、Git HEAD/Index/config变化、Journal缺失/不匹配都拒绝继续。原Controller的current_revision与last verified tests仍由原生工具观察维护，宿主Gate不替它宣布verified。
+
+Restart不会重置ledger或重放Patch：C01只允许一个Attempt，已有任何Case/reservation阻止再次start；会话历史不恢复Receipt、审批、Controller验证或执行授权。Stop保留实际已提交文件，不假称回滚。未知状态保留HALT/资源不确定，绝不自行checkout/reset。
+
+这是同UID可信宿主内的防漂移审计，不是可抵抗恶意宿主同时重写所有可信记录的密码学证明。

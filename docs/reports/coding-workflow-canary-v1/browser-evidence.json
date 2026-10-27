@@ -1,0 +1,1595 @@
+{
+  "mode": "MOCK",
+  "real_requests": 0,
+  "approval_mode": "SYNTHETIC_APPROVAL",
+  "cleanup": {
+    "primary_error": null,
+    "service_start_error": null,
+    "service_shutdown_error": null,
+    "context_close_error": null,
+    "profile_cleanup_error": null,
+    "context_close_calls": 1,
+    "browser_process_exit_status": "EXITED",
+    "profile_removed": true,
+    "cleanup_uncertain": false,
+    "actual_profile_verified": true,
+    "profile_0700_fresh": true,
+    "browser_version": "152.0.7977.83",
+    "headed": true,
+    "sandbox": true,
+    "initial_cookie_jar_empty": true,
+    "automatic_cleanup_pass": true
+  },
+  "message_submissions": 1,
+  "synthetic_approval_count": 1,
+  "session_id": "614ae99f75f9451092fe51327c33e8a5",
+  "full_effective_argv_inspected": true,
+  "approval_dialog_seen": true,
+  "preview_visible": true,
+  "controller": {
+    "state": "verified",
+    "current_revision": 1,
+    "committed_patches": 1,
+    "test_runs": 1,
+    "test_passes": 1,
+    "test_failures": 0,
+    "tests_passed_after_last_patch": 5,
+    "verification": "valid",
+    "model_requests": 6
+  },
+  "status": "completed",
+  "settled": {
+    "status": "completed",
+    "controller": {
+      "state": "verified",
+      "current_revision": 1,
+      "committed_patches": 1,
+      "test_runs": 1,
+      "test_passes": 1,
+      "test_failures": 0,
+      "tests_passed_after_last_patch": 5,
+      "verification": "valid",
+      "model_requests": 6
+    },
+    "revision": 1,
+    "native_patch_chain": [
+      {
+        "revision": 1,
+        "before_sha256": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+        "after_sha256": "faeea24fc5c6cabb846055d55878cb4a3495d1fca203ef3f330e12e37a189915",
+        "preview_to_commit_consistent": true,
+        "receipt_commit_success": true,
+        "native_journal": {
+          "agent_owned_files": 1,
+          "preexisting_user_dirty_files": 0,
+          "files": [
+            {
+              "path": "notesearch/search.py",
+              "source": "native_patch",
+              "operation": "updated",
+              "preexisting_git_state": "clean_or_not_reported",
+              "original_sha256": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+              "final_sha256": "faeea24fc5c6cabb846055d55878cb4a3495d1fca203ef3f330e12e37a189915",
+              "current_matches": true,
+              "current_state": "matches_agent_result",
+              "first_revision": 1,
+              "last_revision": 1
+            }
+          ],
+          "other_git_changes": [],
+          "baseline": {
+            "head": "2731037fe8e5de9d33cadd5688ba15037d03b038",
+            "complete": true,
+            "truncated": false,
+            "index_fingerprint": "available",
+            "staged": [],
+            "unstaged": [],
+            "untracked": [],
+            "conflicts": [],
+            "reason": ""
+          },
+          "git_metadata_unchanged": true,
+          "current_status_complete": true,
+          "external_side_effects_possible": false,
+          "undo_status": "undo_unavailable",
+          "undo_eligible": false,
+          "journal_valid": true,
+          "review_scope": "native Patch delta; Git status is not a complete filesystem audit"
+        }
+      }
+    ],
+    "tools": [
+      {
+        "tool": "read_file_range",
+        "success": true,
+        "metadata": {},
+        "revision": 0
+      },
+      {
+        "tool": "read_file_range",
+        "success": true,
+        "metadata": {},
+        "revision": 0
+      },
+      {
+        "tool": "apply_patch",
+        "success": true,
+        "metadata": {
+          "error_category": null,
+          "safe_error_code": null,
+          "failure_phase": "unknown",
+          "safe_to_retry": false,
+          "file_metadata_supported": null,
+          "dry_run": true,
+          "applied": false,
+          "receipt_created": true,
+          "receipt_commit_success": false,
+          "preview_to_commit_consistent": null,
+          "file_revision_verified": false,
+          "after_sha256": {
+            "notesearch/search.py": "faeea24fc5c6cabb846055d55878cb4a3495d1fca203ef3f330e12e37a189915"
+          },
+          "before_sha256": {
+            "notesearch/search.py": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3"
+          },
+          "changed_files": [
+            "notesearch/search.py"
+          ],
+          "execution_evidence": false
+        },
+        "revision": 0
+      },
+      {
+        "tool": "apply_patch",
+        "success": true,
+        "metadata": {
+          "error_category": null,
+          "safe_error_code": null,
+          "failure_phase": "unknown",
+          "safe_to_retry": false,
+          "file_metadata_supported": null,
+          "dry_run": false,
+          "applied": true,
+          "receipt_created": false,
+          "receipt_commit_success": true,
+          "preview_to_commit_consistent": true,
+          "file_revision_verified": true,
+          "after_sha256": {
+            "notesearch/search.py": "faeea24fc5c6cabb846055d55878cb4a3495d1fca203ef3f330e12e37a189915"
+          },
+          "before_sha256": {
+            "notesearch/search.py": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3"
+          },
+          "changed_files": [
+            "notesearch/search.py"
+          ],
+          "execution_evidence": true
+        },
+        "revision": 1
+      },
+      {
+        "tool": "run_command",
+        "success": true,
+        "metadata": {
+          "status": "completed",
+          "approved": true,
+          "completed": true,
+          "spawned": true,
+          "sandbox_applied": true,
+          "exit_code": 0,
+          "execution_mode": "macos_readonly",
+          "execution_evidence": true,
+          "process_terminated": false,
+          "output_truncated": false,
+          "timed_out": false
+        },
+        "revision": 1
+      }
+    ],
+    "approvals": [
+      {
+        "kind": "command",
+        "approved": true
+      }
+    ],
+    "streams": [
+      {
+        "case": "C01",
+        "reservation": 1,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.132763166,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "12181096e980c1b32888fb47ec52a462fbf63891e1910c94054c97ef685be04d",
+        "sdk_messages_sha256": "94417eb7408c52879d05b3cae52e75d023d8b3b7a932dc96943350ab59d4db7a",
+        "steer_sources": [],
+        "assembled_calls": [],
+        "tool_results": [],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.244020708,
+        "wire_body_sha256": "12181096e980c1b32888fb47ec52a462fbf63891e1910c94054c97ef685be04d",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.259357458,
+        "sdk_request_unchanged_at_close": true,
+        "chunks": 3,
+        "first_chunk": 1720406.259114875,
+        "first_text": null,
+        "first_nonterminal_delivered": true,
+        "controlled_barrier_seconds": 0,
+        "barrier_planned_seconds": 0,
+        "natural_eof": true,
+        "sdk_closed": true,
+        "terminal_trusted": true,
+        "stream_status": "tool_calls",
+        "diagnostic": {
+          "stream_id": "47be4be520854b7ead04835cfbebb3a9",
+          "error_code": null,
+          "origin": null,
+          "phase": "terminal_validation",
+          "chunk_index": 3,
+          "chunks_observed": 3,
+          "finish_reason": "tool_calls",
+          "terminal_count": 1,
+          "text_received": false,
+          "natural_eof": true,
+          "close_called": true,
+          "closed": true,
+          "recent_chunks": [
+            {
+              "chunk_index": 1,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 2,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": "tool_calls",
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 3,
+              "choices_count": 0,
+              "delta_present": false,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": null,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            }
+          ]
+        },
+        "observed_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "settled_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "case": "C01",
+        "reservation": 2,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.397845875,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "2b9ca330906c0d4510388c2264d7c27828fc9d8cf92758ab2bf4c532379d8fdc",
+        "sdk_messages_sha256": "bd94d3a52d8aa90c37411ac69c1973711c2b0b94b79fc7967f469e7c20c96d7f",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.426997,
+        "wire_body_sha256": "2b9ca330906c0d4510388c2264d7c27828fc9d8cf92758ab2bf4c532379d8fdc",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.43940575,
+        "sdk_request_unchanged_at_close": true,
+        "chunks": 3,
+        "first_chunk": 1720406.4390875,
+        "first_text": null,
+        "first_nonterminal_delivered": true,
+        "controlled_barrier_seconds": 0,
+        "barrier_planned_seconds": 0,
+        "natural_eof": true,
+        "sdk_closed": true,
+        "terminal_trusted": true,
+        "stream_status": "tool_calls",
+        "diagnostic": {
+          "stream_id": "622dfb960dda461fad3cc0f5a13e6294",
+          "error_code": null,
+          "origin": null,
+          "phase": "terminal_validation",
+          "chunk_index": 3,
+          "chunks_observed": 3,
+          "finish_reason": "tool_calls",
+          "terminal_count": 1,
+          "text_received": false,
+          "natural_eof": true,
+          "close_called": true,
+          "closed": true,
+          "recent_chunks": [
+            {
+              "chunk_index": 1,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 2,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": "tool_calls",
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 3,
+              "choices_count": 0,
+              "delta_present": false,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": null,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            }
+          ]
+        },
+        "observed_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "settled_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "case": "C01",
+        "reservation": 3,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.576369041,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "255dbb84c5104a802bed2474c30ac5e54e93aaff6f39f8671e38cbbc5e6c34dc",
+        "sdk_messages_sha256": "4ffdb4dc751e9701d9ee475ffc5b32ece219aec42d8e5cb623c9b375d905e6e6",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.603043333,
+        "wire_body_sha256": "255dbb84c5104a802bed2474c30ac5e54e93aaff6f39f8671e38cbbc5e6c34dc",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.616069875,
+        "sdk_request_unchanged_at_close": true,
+        "chunks": 3,
+        "first_chunk": 1720406.61567225,
+        "first_text": null,
+        "first_nonterminal_delivered": true,
+        "controlled_barrier_seconds": 0,
+        "barrier_planned_seconds": 0,
+        "natural_eof": true,
+        "sdk_closed": true,
+        "terminal_trusted": true,
+        "stream_status": "tool_calls",
+        "diagnostic": {
+          "stream_id": "c7ef481da2ea42e980bfbb01f3a4f408",
+          "error_code": null,
+          "origin": null,
+          "phase": "terminal_validation",
+          "chunk_index": 3,
+          "chunks_observed": 3,
+          "finish_reason": "tool_calls",
+          "terminal_count": 1,
+          "text_received": false,
+          "natural_eof": true,
+          "close_called": true,
+          "closed": true,
+          "recent_chunks": [
+            {
+              "chunk_index": 1,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 2,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": "tool_calls",
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 3,
+              "choices_count": 0,
+              "delta_present": false,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": null,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            }
+          ]
+        },
+        "observed_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "settled_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "case": "C01",
+        "reservation": 4,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.746234291,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "1d4c8bd697ee3c7c8ff83dc2c9b56ee6e806d86d63fe54d183bc8633000d39ac",
+        "sdk_messages_sha256": "7857177e22cca59d7c7974e3f21d6472dcc2c556504304c7a953532e1b39523f",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          },
+          {
+            "assistant_message_index": 6,
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9641e32f26481a919e7a336ae49863286fa24b736f17d781c15d0395f2e7a3df"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          },
+          {
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool_message_index": 7,
+            "assistant_message_index": 6,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "2a2c4f5bc3f69c1c06411852d97477bd5ea7addb8210f9c701dbf6215168319a"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.772848583,
+        "wire_body_sha256": "1d4c8bd697ee3c7c8ff83dc2c9b56ee6e806d86d63fe54d183bc8633000d39ac",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.785357166,
+        "sdk_request_unchanged_at_close": true,
+        "chunks": 3,
+        "first_chunk": 1720406.784988416,
+        "first_text": null,
+        "first_nonterminal_delivered": true,
+        "controlled_barrier_seconds": 0,
+        "barrier_planned_seconds": 0,
+        "natural_eof": true,
+        "sdk_closed": true,
+        "terminal_trusted": true,
+        "stream_status": "tool_calls",
+        "diagnostic": {
+          "stream_id": "42a6ccf92066446896e7fa329e8a2327",
+          "error_code": null,
+          "origin": null,
+          "phase": "terminal_validation",
+          "chunk_index": 3,
+          "chunks_observed": 3,
+          "finish_reason": "tool_calls",
+          "terminal_count": 1,
+          "text_received": false,
+          "natural_eof": true,
+          "close_called": true,
+          "closed": true,
+          "recent_chunks": [
+            {
+              "chunk_index": 1,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 2,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": "tool_calls",
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 3,
+              "choices_count": 0,
+              "delta_present": false,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": null,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            }
+          ]
+        },
+        "observed_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "settled_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "case": "C01",
+        "reservation": 5,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.926214125,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "27235902ef76899a8831fadba81bfa5822850cbea31fe2d3e0e052ced8f35ac0",
+        "sdk_messages_sha256": "f648921fb6ff80695b3122c8ef999507b820396eeddddf9b9ed6ca27be686c2d",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          },
+          {
+            "assistant_message_index": 6,
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9641e32f26481a919e7a336ae49863286fa24b736f17d781c15d0395f2e7a3df"
+          },
+          {
+            "assistant_message_index": 8,
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "a784e1eaa5a71fd0407403fe6cac95ccc66d87d2a7752d7026e49a83135908ca"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          },
+          {
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool_message_index": 7,
+            "assistant_message_index": 6,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "2a2c4f5bc3f69c1c06411852d97477bd5ea7addb8210f9c701dbf6215168319a"
+          },
+          {
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool_message_index": 9,
+            "assistant_message_index": 8,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "b7ed7b0849cfa79f81f5931ed31ab71f14d22a3ba94be780b3420e0d56ffdf4c"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.952966291,
+        "wire_body_sha256": "27235902ef76899a8831fadba81bfa5822850cbea31fe2d3e0e052ced8f35ac0",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.966647875,
+        "sdk_request_unchanged_at_close": true,
+        "chunks": 3,
+        "first_chunk": 1720406.966270458,
+        "first_text": null,
+        "first_nonterminal_delivered": true,
+        "controlled_barrier_seconds": 0,
+        "barrier_planned_seconds": 0,
+        "natural_eof": true,
+        "sdk_closed": true,
+        "terminal_trusted": true,
+        "stream_status": "tool_calls",
+        "diagnostic": {
+          "stream_id": "afaa332f744045648d103af015613eab",
+          "error_code": null,
+          "origin": null,
+          "phase": "terminal_validation",
+          "chunk_index": 3,
+          "chunks_observed": 3,
+          "finish_reason": "tool_calls",
+          "terminal_count": 1,
+          "text_received": false,
+          "natural_eof": true,
+          "close_called": true,
+          "closed": true,
+          "recent_chunks": [
+            {
+              "chunk_index": 1,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 2,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": 1,
+              "finish_reason": "tool_calls",
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 3,
+              "choices_count": 0,
+              "delta_present": false,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": null,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            }
+          ]
+        },
+        "observed_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "settled_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "case": "C01",
+        "reservation": 6,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720407.386155041,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "1217d06178e6c7b0303584135a90f6be5bfcb2c33c1cd6e0feeec1ae34d35e5c",
+        "sdk_messages_sha256": "c3393c1c27e43c24b7cdffc750d9de813f6c6bf8890981ce517897ff57d424d4",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          },
+          {
+            "assistant_message_index": 6,
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9641e32f26481a919e7a336ae49863286fa24b736f17d781c15d0395f2e7a3df"
+          },
+          {
+            "assistant_message_index": 8,
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "a784e1eaa5a71fd0407403fe6cac95ccc66d87d2a7752d7026e49a83135908ca"
+          },
+          {
+            "assistant_message_index": 10,
+            "call_id_sha256": "1993ce4f603732b41502721f4a888f185ff8ef06656a1c64b0037ca3ba1e9040",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "67038c70cfc95e36739fddc2c9542770c19da16edd2294ddb4a20fe0bb1d1931"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          },
+          {
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool_message_index": 7,
+            "assistant_message_index": 6,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "2a2c4f5bc3f69c1c06411852d97477bd5ea7addb8210f9c701dbf6215168319a"
+          },
+          {
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool_message_index": 9,
+            "assistant_message_index": 8,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "b7ed7b0849cfa79f81f5931ed31ab71f14d22a3ba94be780b3420e0d56ffdf4c"
+          },
+          {
+            "call_id_sha256": "1993ce4f603732b41502721f4a888f185ff8ef06656a1c64b0037ca3ba1e9040",
+            "tool_message_index": 11,
+            "assistant_message_index": 10,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "16e568ff80ea9e291c630d88623f6c9683cf2f24c2900b645ecd105193e674fe"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720407.414324666,
+        "wire_body_sha256": "1217d06178e6c7b0303584135a90f6be5bfcb2c33c1cd6e0feeec1ae34d35e5c",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": true,
+        "sdk_request_unchanged_at_close": true,
+        "chunks": 2,
+        "first_chunk": 1720407.427527458,
+        "first_text": 1720407.427527458,
+        "first_nonterminal_delivered": false,
+        "controlled_barrier_seconds": 0,
+        "barrier_planned_seconds": 0,
+        "natural_eof": true,
+        "sdk_closed": true,
+        "terminal_trusted": true,
+        "stream_status": "complete",
+        "diagnostic": {
+          "stream_id": "45198685777545d1a6c67139ea7d8946",
+          "error_code": null,
+          "origin": null,
+          "phase": "terminal_validation",
+          "chunk_index": 2,
+          "chunks_observed": 2,
+          "finish_reason": "stop",
+          "terminal_count": 1,
+          "text_received": true,
+          "natural_eof": true,
+          "close_called": true,
+          "closed": true,
+          "recent_chunks": [
+            {
+              "chunk_index": 1,
+              "choices_count": 1,
+              "delta_present": true,
+              "role_present": false,
+              "content_type": "string",
+              "content_length": 22,
+              "tool_calls_count": null,
+              "finish_reason": "stop",
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            },
+            {
+              "chunk_index": 2,
+              "choices_count": 0,
+              "delta_present": false,
+              "role_present": false,
+              "content_type": "null",
+              "content_length": null,
+              "tool_calls_count": null,
+              "finish_reason": null,
+              "legacy_function_call_present": false,
+              "legacy_function_call_kind": "null",
+              "legacy_name_kind": "null",
+              "legacy_name_length": null,
+              "legacy_arguments_kind": "null",
+              "legacy_arguments_length": null,
+              "legacy_extra_field_count": 0,
+              "legacy_semantically_empty": true
+            }
+          ]
+        },
+        "observed_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "settled_usage": {
+          "prompt_tokens": 10,
+          "completion_tokens": 10,
+          "total_tokens": 20
+        },
+        "reply_sha256": "2427a0eb555209bcdcee57869a082bb3af9587f1ebb81f028a56e610796f320a"
+      }
+    ],
+    "requests": [
+      {
+        "case": "C01",
+        "reservation": 1,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.132763166,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "12181096e980c1b32888fb47ec52a462fbf63891e1910c94054c97ef685be04d",
+        "sdk_messages_sha256": "94417eb7408c52879d05b3cae52e75d023d8b3b7a932dc96943350ab59d4db7a",
+        "steer_sources": [],
+        "assembled_calls": [],
+        "tool_results": [],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.244020708,
+        "wire_body_sha256": "12181096e980c1b32888fb47ec52a462fbf63891e1910c94054c97ef685be04d",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.259357458,
+        "sdk_request_unchanged_at_close": true
+      },
+      {
+        "case": "C01",
+        "reservation": 2,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.397845875,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "2b9ca330906c0d4510388c2264d7c27828fc9d8cf92758ab2bf4c532379d8fdc",
+        "sdk_messages_sha256": "bd94d3a52d8aa90c37411ac69c1973711c2b0b94b79fc7967f469e7c20c96d7f",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.426997,
+        "wire_body_sha256": "2b9ca330906c0d4510388c2264d7c27828fc9d8cf92758ab2bf4c532379d8fdc",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.43940575,
+        "sdk_request_unchanged_at_close": true
+      },
+      {
+        "case": "C01",
+        "reservation": 3,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.576369041,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "255dbb84c5104a802bed2474c30ac5e54e93aaff6f39f8671e38cbbc5e6c34dc",
+        "sdk_messages_sha256": "4ffdb4dc751e9701d9ee475ffc5b32ece219aec42d8e5cb623c9b375d905e6e6",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.603043333,
+        "wire_body_sha256": "255dbb84c5104a802bed2474c30ac5e54e93aaff6f39f8671e38cbbc5e6c34dc",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.616069875,
+        "sdk_request_unchanged_at_close": true
+      },
+      {
+        "case": "C01",
+        "reservation": 4,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.746234291,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "1d4c8bd697ee3c7c8ff83dc2c9b56ee6e806d86d63fe54d183bc8633000d39ac",
+        "sdk_messages_sha256": "7857177e22cca59d7c7974e3f21d6472dcc2c556504304c7a953532e1b39523f",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          },
+          {
+            "assistant_message_index": 6,
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9641e32f26481a919e7a336ae49863286fa24b736f17d781c15d0395f2e7a3df"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          },
+          {
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool_message_index": 7,
+            "assistant_message_index": 6,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "2a2c4f5bc3f69c1c06411852d97477bd5ea7addb8210f9c701dbf6215168319a"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.772848583,
+        "wire_body_sha256": "1d4c8bd697ee3c7c8ff83dc2c9b56ee6e806d86d63fe54d183bc8633000d39ac",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.785357166,
+        "sdk_request_unchanged_at_close": true
+      },
+      {
+        "case": "C01",
+        "reservation": 5,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720406.926214125,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "27235902ef76899a8831fadba81bfa5822850cbea31fe2d3e0e052ced8f35ac0",
+        "sdk_messages_sha256": "f648921fb6ff80695b3122c8ef999507b820396eeddddf9b9ed6ca27be686c2d",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          },
+          {
+            "assistant_message_index": 6,
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9641e32f26481a919e7a336ae49863286fa24b736f17d781c15d0395f2e7a3df"
+          },
+          {
+            "assistant_message_index": 8,
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "a784e1eaa5a71fd0407403fe6cac95ccc66d87d2a7752d7026e49a83135908ca"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          },
+          {
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool_message_index": 7,
+            "assistant_message_index": 6,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "2a2c4f5bc3f69c1c06411852d97477bd5ea7addb8210f9c701dbf6215168319a"
+          },
+          {
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool_message_index": 9,
+            "assistant_message_index": 8,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "b7ed7b0849cfa79f81f5931ed31ab71f14d22a3ba94be780b3420e0d56ffdf4c"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720406.952966291,
+        "wire_body_sha256": "27235902ef76899a8831fadba81bfa5822850cbea31fe2d3e0e052ced8f35ac0",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": false,
+        "first_nonterminal_delivery_monotonic": 1720406.966647875,
+        "sdk_request_unchanged_at_close": true
+      },
+      {
+        "case": "C01",
+        "reservation": 6,
+        "provider": "coco",
+        "model": "deepseek-v4.1-flash",
+        "native_is_fallback": false,
+        "sdk_admission_monotonic": 1720407.386155041,
+        "http_attempts": 1,
+        "provider_http_response_observed": true,
+        "sdk_request_sha256": "1217d06178e6c7b0303584135a90f6be5bfcb2c33c1cd6e0feeec1ae34d35e5c",
+        "sdk_messages_sha256": "c3393c1c27e43c24b7cdffc750d9de813f6c6bf8890981ce517897ff57d424d4",
+        "steer_sources": [],
+        "assembled_calls": [
+          {
+            "assistant_message_index": 2,
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "73633dcdb664e8eabc7e10d0cbe2a3cfb3f734306e037ec6896b73d49c425770"
+          },
+          {
+            "assistant_message_index": 4,
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9d3aea7977a752aff4f7d8a9af58fa53003acb2349baa5d29b429eea34cd7311"
+          },
+          {
+            "assistant_message_index": 6,
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "9641e32f26481a919e7a336ae49863286fa24b736f17d781c15d0395f2e7a3df"
+          },
+          {
+            "assistant_message_index": 8,
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "a784e1eaa5a71fd0407403fe6cac95ccc66d87d2a7752d7026e49a83135908ca"
+          },
+          {
+            "assistant_message_index": 10,
+            "call_id_sha256": "1993ce4f603732b41502721f4a888f185ff8ef06656a1c64b0037ca3ba1e9040",
+            "tool": "unknown",
+            "target": "unknown",
+            "arguments_sha256": "67038c70cfc95e36739fddc2c9542770c19da16edd2294ddb4a20fe0bb1d1931"
+          }
+        ],
+        "tool_results": [
+          {
+            "call_id_sha256": "a5cf8cd404f8cafa8f546b7dcec97cd2b79318f88e8e606baaadb29f9b4ada21",
+            "tool_message_index": 3,
+            "assistant_message_index": 2,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "7779ad9cf0c7292da9d0ff27e174c1e7d70cf74edb6ad617908e456447f6623a"
+          },
+          {
+            "call_id_sha256": "7e3b3bf8e6e0fad2ebc774464e14418a1fc716aa72b49779d0e2788352c9c0d1",
+            "tool_message_index": 5,
+            "assistant_message_index": 4,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "c1c09c745baa6c7afccb4a5580f4bea2d172f193612cbec5ea50f64e525c6616"
+          },
+          {
+            "call_id_sha256": "35fc1b984e63fc0170eeb0d9681ab54cc5787bb3824c8803df2dd394511761cd",
+            "tool_message_index": 7,
+            "assistant_message_index": 6,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "2a2c4f5bc3f69c1c06411852d97477bd5ea7addb8210f9c701dbf6215168319a"
+          },
+          {
+            "call_id_sha256": "c81a8f1fa2d79de35e520a1ae6ba7de3b3f206654930ebfc70316925bcdee7f7",
+            "tool_message_index": 9,
+            "assistant_message_index": 8,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "b7ed7b0849cfa79f81f5931ed31ab71f14d22a3ba94be780b3420e0d56ffdf4c"
+          },
+          {
+            "call_id_sha256": "1993ce4f603732b41502721f4a888f185ff8ef06656a1c64b0037ca3ba1e9040",
+            "tool_message_index": 11,
+            "assistant_message_index": 10,
+            "paired": true,
+            "explicitly_skipped": false,
+            "executed_false": false,
+            "identifier_present": false,
+            "result_sha256": "16e568ff80ea9e291c630d88623f6c9683cf2f24c2900b645ecd105193e674fe"
+          }
+        ],
+        "all_tool_results_paired": true,
+        "identifier_present_in_messages": false,
+        "http_dispatch_monotonic": 1720407.414324666,
+        "wire_body_sha256": "1217d06178e6c7b0303584135a90f6be5bfcb2c33c1cd6e0feeec1ae34d35e5c",
+        "wire_messages_match_sdk": true,
+        "first_chunk_terminal": true,
+        "sdk_request_unchanged_at_close": true
+      }
+    ],
+    "session_id": "614ae99f75f9451092fe51327c33e8a5",
+    "uncertain": false,
+    "logical_requests": 6,
+    "cost": null
+  },
+  "refresh_requests": 6,
+  "refresh_no_resend": true,
+  "revision_visible": true,
+  "shutdown": {
+    "exit_code": 0,
+    "seconds": 2.1212153749074787,
+    "verified_child_sigint": false,
+    "listener_absent": true,
+    "was_ready": true
+  },
+  "native_cleanup": {
+    "runtime_closed": true,
+    "sdk_closed": true,
+    "lease_released": true,
+    "database_consistent": true,
+    "cleanup_uncertain": false
+  },
+  "independent_score": {
+    "public": {
+      "status": "pass",
+      "category": null,
+      "tests": 5,
+      "passed": true
+    },
+    "host_acceptance": {
+      "status": "pass",
+      "category": null,
+      "tests": 10,
+      "passed": true
+    },
+    "isolated": true,
+    "strict_functional_pass": true
+  },
+  "physical_requests": 6,
+  "actual_http_attempts": 6,
+  "assessment": {
+    "dimensions": {
+      "model_workflow": true,
+      "actual_patch_committed": true,
+      "source_scope_compliance": true,
+      "preview_receipt_integrity": true,
+      "current_revision_test_evidence": true,
+      "host_controller_verified": true,
+      "public_tests": true,
+      "independent_acceptance_tests": true,
+      "git_diff_journal_integrity": true,
+      "tool_authority": true,
+      "human_command_approval": false,
+      "streaming_protocol_integrity": true,
+      "request_usage_accounting": true,
+      "workspace_process_cleanup": true,
+      "user_task_correctness": true
+    },
+    "strict_success": false,
+    "synthetic_workflow_pass": true,
+    "command_approval": "SYNTHETIC_APPROVAL",
+    "usage_complete": true,
+    "cost": null
+  }
+}

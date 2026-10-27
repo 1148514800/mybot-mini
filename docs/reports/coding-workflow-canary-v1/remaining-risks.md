@@ -1,0 +1,11 @@
+# 剩余风险
+
+真实DeepSeek Coding能力、12次预算内修复成功率、审批值守时序、实际Token/价格、GLM fallback兼容仍未验证。离线Reactive Mock知道预定义修复，不代表模型自主定位能力；所有Mock通过也不能把C01真人Live严格成功记为PASS。
+
+在等待命令审批时Stop，原生历史/控制器可能保守进入uncertain并保留Lease到进程退出。演练如实记录HALT、不把已提交修改说成回滚，不解除原策略。Live遇此状态立即停止，只清理可确认拥有的资源，不重启Case或补跑。
+
+初期配置沿用14k输入/1000字符工具结果导致Coding Schema不容纳/Receipt被节选，均在冻结前配置为32k输入、16k工具结果、120k上下文字符，保持1800输出预留与所有计数预算；这不保证未知部署模型窗口兼容。另/private/tmp继承wheel所有权差异通过仅规范新Fixture组解决，未改原生Patch安全门。浏览器waiting_approval须视为运行中，不能提前结束。
+
+Gold只通过已验证Seatbelt子进程执行，仍非抗任意恶意解释器篡改的完备语义验证器。Gate保护当前可信宿主记录与字节/Journal归属，不抵抗恶意同UID宿主整体伪造。不同外部并发变化和断电时序可能只能HALT，不自动恢复。
+
+本轮冻结后不得修改源码、Fixture、隐藏套件或标准；有问题另立新批次与新授权，不覆盖本批。旧所有Live结果、Phase25 Benchmark、旧账本/HALT、main/Tag/ZIP、用户Chrome/8765、共享AppleDouble均保持。

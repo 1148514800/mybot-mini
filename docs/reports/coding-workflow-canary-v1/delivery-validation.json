@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "source_files": 332,
+  "python_dependency_files": 325,
+  "source_hashes_match": true,
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "diff_check": "PASS",
+  "credential_value_matches": 0,
+  "forbidden_assets": 0,
+  "reviewed_files": 1569,
+  "production_old_report_changes": 0,
+  "real_provider_requests": 0,
+  "synthetic_approval_count": 1,
+  "strict_live_success": false
+}

@@ -1,19 +1,21 @@
 # AI_HANDOFF
 
-## 当前状态
+## 当前目标与状态
 
-codex/streaming-operator-reliability-v3。原离线Implementation07c25ce181b2af3dc368815ec4956a3ff05c75a2、预注册/冻结源码4a8fdb64a22811b20aebb85d1e1d25e9f385ad67、Live输入8a01520d7c8c7c60735f193e9afc5ae6a1f51a09。新精确GRANTED_2_REQUESTS后N01→N02唯一Live完成，两Case冻结目标PASS，实际2/2物理/HTTP已耗尽，禁止继续请求或补跑。
+codex/coding-workflow-canary-v1，基线16f25f74db78089bf1bc697022e53f46473449bd。C01离线实现/验证完成，待Implementation/Preregistration提交和唯一新prepare/freeze。真实Provider授权NOT_GRANTED，DeepSeek/GLM/摘要/JudgeLLM0，旧GRANTED_2_REQUESTS已耗尽不继承。
 
-## Live验证
+## 已完成
 
-N01：真实非终态交付后DOM Steer queued→not_applied/no_next_step；SQLite user来源/Session/Turn/原文匹配，在途请求hash不变，无下一准入或SDK/HTTP。113chunks、stop一次、自然EOF、close、可信持久hash一致，UI未生效/下一轮按钮可见。中文四条编号自然句；计数器8因编号点+句末且正确FORMAT_REVIEW_REQUIRED，独立审阅四句，不改原观测。
+只增scripts/coding_workflow_canary_v1/与专项，生产AgentLoop/Controller/Authority/Receipt/RunCommand/Session/原UAT不变。新notesearch-mini五公开文件、干净Bug Git基线/无remote；Public5/Host10实际Seatbelt隔离基线fail、Reference pass。只允许notesearch/search.py：原生读取SHA→Preview→Receipt Commit→Journal，额外scope gate拒绝其他路径/argv，不改写参数或伪造工具。Revision Gate核对完整workspace/Git与连续Native Journal/hash链，允许可证明合法Revision，未知漂移HALT，不能reset或再prepare。
 
-N02：首真实块后DOM Stop，1chunk无文本，取消中断8秒屏障（实际约0.099秒）；SDK关闭、cancelled、非EOF/不可信终态、0助手完成消息/工具。Usage null。不能声称已测试可见文本中途Stop或远端计费终止。两次刷新/SSE重连后持久HTTP计数1/2；两服务同8902、wait exit0、SDK/Lease/SQLite/端口释放，Context close一次、自有Chrome退出/Profile自动移除、错误字段全null。
+原生SDK Mock+headed Chrome固定8903正常闭环：6 Mock请求，Preview/审批可见，SYNTHETIC_APPROVAL一次，实际command macos_readonly测试5通过，Controller verified/Revision1，独立Host10通过；刷新仍6无重放，服务exit0/SDK/Lease/SQLite/端口/Profile自动清理。14机制/功能维度通过，human_command_approval=false、strict_success=false正确保留，synthetic_workflow_pass=true，不是模型能力或真人Live成绩。
 
-DeepSeek2、GLM/重试/Fallback/摘要/Judge0。N01供应商447输入/111输出/558总Token；N02未知，整批Token总数null，cost=null。两Attempt各一次已结算，1completed turn+1cancelled turn；case completed只表示验收过程结束。0reserved/HALT/uncertain，320冻结源码/配置/workspace/两库身份/冻结元数据hash验证PASS，无文件污染。新双profile隔离与headed Chrome152.0.7977.83通过。
+完整check_phase及独立补充2142去重unittest PASS，新增45，程序式检查另执行；源码前后hash一致。14组失败情形独立保存，包括未修改/Receipt/范围/审批/测试/过期Revision/协议/预算/Stop。审批等待时Stop原运行时可能保留uncertain/Lease，保留失败和实际Patch，不说回滚。不放宽ownership；新Fixture显式当前GID，避免/private/tmp继承wheel。32k输入/16k工具结果/120k上下文字符在冻结前固定，1800输出预留，不保证部署窗口。
 
-## 离线与边界
+## 下一步与边界
 
-原离线2097去重unittest/78新增及完整check_phase程序式检查通过，不在本Live重复计数。新报告docs/reports/streaming-operator-reliability-v3/live-results/execution-01/；原Offline和历史报告/旧私库/HALT/旧Chrome/8765均未触碰。单socket/清理修复未改源码，唯一prepare/freeze不重做。main/Tag/ZIP/共享AppleDouble旁文件不处理。
+报告docs/reports/coding-workflow-canary-v1/。提交实现和预注册后，干净树唯一prepare/freeze/verify ~/.mybot-mini/uat/coding-workflow-canary-v1-20261027/，固定8903，C01单Attempt/最多12物理请求，工具≤40、写≤2、命令≤2、无进展4、任务600s/命令30s/Web900s，SDK重试0。freeze后不得改源码/Fixture/Host测试/评分。
 
-后续只做独立新任务：本批额度已耗尽，不沿用任何旧余额，不重启N01/N02。真实后期文本取消、远端Usage/计费兼容和长期稳定仍UNKNOWN，原T02根因仍UNKNOWN，原T01语义FAIL保持。新句数模块仍不是语义Judge。最终报告提交/远程HEAD见Git与交付，推送后再verify。
+未来必须新GRANTED_12_REQUESTS及原冻结/当前环境/独立Chrome核验；每次命令另需真实用户在原WebApproval确认，Live operator不代点/不自动批准，拒绝超时无人值守不执行、不重问。不把模型额度当命令批准，不因失败补跑。Host Score在已验证Seatbelt进程运行、绝不宿主import候选，结果不回模型。
+
+原Phase25 Benchmark、R01/D01/D02/T01 FAIL/T02 FAIL/T03 BLOCKED/N01/N02 PASS及旧私库/HALT保留，用户Chrome/8765/真实项目、main/Tag/ZIP/共享AppleDouble不处理。源码332文件完整范围哈希保存（回归Python/依赖325）；最终提交/远程HEAD通过Git确认。

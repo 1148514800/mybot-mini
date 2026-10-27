@@ -85,3 +85,5 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 - [Streaming Tool Call & Steer真实UAT v2](streaming-steer-real-uat-v2.md)：原离线冻结保持；新授权Live实际3/6，T01工具/Steer协议通过但两句格式FAIL，T02启动exit1、T03 BLOCKED，见[Live报告](../reports/streaming-steer-real-uat-v2/live-results/execution-01/acceptance-report.md)。
 
 - [Operator Reliability与Steer/Stop Canary v3](streaming-operator-reliability-v3.md)：单socket交接、Chrome异常清理及句数诊断；2097项去重/78新增离线与headed Mock通过，原离线冻结保留；新授权N01/N02真实目标PASS、实际2/2，取消Usage未知，见[Live报告](../reports/streaming-operator-reliability-v3/live-results/execution-01/acceptance-report.md)。
+
+- [Coding Workflow Canary v1](coding-workflow-canary-v1.md)：原生Preview/Receipt/Patch/审批/测试与Revision-aware完整性；2142去重/45新增及headed Synthetic闭环通过，真实0，唯一冻结状态见[报告](../reports/coding-workflow-canary-v1/acceptance-report.md)。

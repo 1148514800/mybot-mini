@@ -1,0 +1,9 @@
+# 模型额度与命令批准独立
+
+当前真实模型授权NOT_GRANTED；未来只有新GRANTED_12_REQUESTS能开启一次C01，旧GRANTED_2_REQUESTS已耗尽，不继承任何额度。即使模型额度获准，真实run_command仍必须经过原WebApproval，显示完整有效argv、cwd、30秒以内超时与macos_readonly沙盒信息，用户在实际弹窗确认一次。
+
+Live浏览器代码仅检查/等待原生弹窗，绝不点击approve、不调用resolve API、不持有自动批准缓存。无人值守、拒绝或超时不执行命令，不重复请求批准；原Controller据此blocked/未验证结束。若合法修复后再次测试，每次新调用仍需独立真人确认，且受command_attempts≤2和600秒任务预算限制。
+
+Mock正常演练明确使用SYNTHETIC_APPROVAL：真实DOM检查完整有效argv/cwd/sandbox/time后，仅点击批准一次。原RunCommand真实执行与Seatbelt隔离未被模拟，只有人的决定是合成的。offline的synthetic_workflow_pass可以通过，human_command_approval和strict_success不能冒充真人Live成功。
+
+额外scope gate只允许指定argv和cwd，不能shell执行、安装、Git Commit/Push或改外部系统；它不改写参数、生成批准、放宽原生Schema或替换RunCommandTool。命令授权nonce、Receipt和CSRF不进入报告。

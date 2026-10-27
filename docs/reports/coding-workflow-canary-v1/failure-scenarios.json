@@ -1,0 +1,795 @@
+{
+  "mode": "MOCK_ONLY",
+  "real_requests": 0,
+  "unique_unit_count_added": 0,
+  "scenarios": [
+    {
+      "case": "no_patch",
+      "controller": {
+        "state": "completed_without_changes",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 1
+      },
+      "revision": 0,
+      "model_requests": 1,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [],
+      "protocol_errors": [
+        null
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "preview_only",
+      "controller": {
+        "state": "completed_without_changes",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 4
+      },
+      "revision": 0,
+      "model_requests": 4,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "invalid_receipt",
+      "controller": {
+        "state": "blocked",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "invalid",
+        "model_requests": 3
+      },
+      "revision": 0,
+      "model_requests": 3,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "wrong_sha",
+      "controller": {
+        "state": "completed_without_changes",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 4
+      },
+      "revision": 0,
+      "model_requests": 4,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "scope",
+      "controller": {
+        "state": "blocked",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "invalid",
+        "model_requests": 3
+      },
+      "revision": 0,
+      "model_requests": 3,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "approval_denied",
+      "controller": {
+        "state": "blocked",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "invalid",
+        "model_requests": 5
+      },
+      "revision": 1,
+      "model_requests": 5,
+      "independent_functional": {
+        "public": {
+          "status": "pass",
+          "category": null,
+          "tests": 5,
+          "passed": true
+        },
+        "host_acceptance": {
+          "status": "pass",
+          "category": null,
+          "tests": 10,
+          "passed": true
+        },
+        "isolated": true,
+        "strict_functional_pass": true
+      },
+      "approvals": [
+        {
+          "kind": "command",
+          "approved": false
+        }
+      ],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch",
+        "run_command"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 1
+    },
+    {
+      "case": "approval_timeout",
+      "controller": {
+        "state": "blocked",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "invalid",
+        "model_requests": 5
+      },
+      "revision": 1,
+      "model_requests": 5,
+      "independent_functional": {
+        "public": {
+          "status": "pass",
+          "category": null,
+          "tests": 5,
+          "passed": true
+        },
+        "host_acceptance": {
+          "status": "pass",
+          "category": null,
+          "tests": 10,
+          "passed": true
+        },
+        "isolated": true,
+        "strict_functional_pass": true
+      },
+      "approvals": [
+        {
+          "kind": "command",
+          "approved": false
+        }
+      ],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch",
+        "run_command"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 1
+    },
+    {
+      "case": "test_failed",
+      "controller": {
+        "state": "edited_unverified",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 1,
+        "test_passes": 0,
+        "test_failures": 1,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 7
+      },
+      "revision": 1,
+      "model_requests": 7,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [
+        {
+          "kind": "command",
+          "approved": true
+        }
+      ],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch",
+        "run_command"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 1
+    },
+    {
+      "case": "no_test",
+      "controller": {
+        "state": "edited_unverified",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 6
+      },
+      "revision": 1,
+      "model_requests": 6,
+      "independent_functional": {
+        "public": {
+          "status": "pass",
+          "category": null,
+          "tests": 5,
+          "passed": true
+        },
+        "host_acceptance": {
+          "status": "pass",
+          "category": null,
+          "tests": 10,
+          "passed": true
+        },
+        "isolated": true,
+        "strict_functional_pass": true
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 1
+    },
+    {
+      "case": "stale_after_test",
+      "controller": {
+        "state": "edited_unverified",
+        "current_revision": 2,
+        "committed_patches": 2,
+        "test_runs": 1,
+        "test_passes": 1,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 10
+      },
+      "revision": 2,
+      "model_requests": 10,
+      "independent_functional": {
+        "public": {
+          "status": "pass",
+          "category": null,
+          "tests": 5,
+          "passed": true
+        },
+        "host_acceptance": {
+          "status": "pass",
+          "category": null,
+          "tests": 10,
+          "passed": true
+        },
+        "isolated": true,
+        "strict_functional_pass": true
+      },
+      "approvals": [
+        {
+          "kind": "command",
+          "approved": true
+        }
+      ],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch",
+        "run_command",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 2
+    },
+    {
+      "case": "incomplete_tool",
+      "controller": {
+        "state": "completed_without_changes",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 1
+      },
+      "revision": 0,
+      "model_requests": 1,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [],
+      "protocol_errors": [
+        "stream_tool_arguments_invalid"
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "broken_stream",
+      "controller": {
+        "state": "completed_without_changes",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "pending",
+        "model_requests": 1
+      },
+      "revision": 0,
+      "model_requests": 1,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [],
+      "protocol_errors": [
+        "stream_transport_interrupted"
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "budget",
+      "controller": {
+        "state": "budget_exhausted",
+        "current_revision": 0,
+        "committed_patches": 0,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "invalid",
+        "model_requests": 12
+      },
+      "revision": 0,
+      "model_requests": 12,
+      "independent_functional": {
+        "public": {
+          "status": "fail",
+          "category": null,
+          "tests": 5,
+          "passed": false
+        },
+        "host_acceptance": {
+          "status": "fail",
+          "category": null,
+          "tests": 10,
+          "passed": false
+        },
+        "isolated": true,
+        "strict_functional_pass": false
+      },
+      "approvals": [],
+      "uncertain": false,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "cleanup_uncertain": false
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range",
+        "read_file_range"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 0
+    },
+    {
+      "case": "stop_after_patch",
+      "controller": {
+        "state": "cancelled",
+        "current_revision": 1,
+        "committed_patches": 1,
+        "test_runs": 0,
+        "test_passes": 0,
+        "test_failures": 0,
+        "tests_passed_after_last_patch": 0,
+        "verification": "invalid",
+        "model_requests": 5
+      },
+      "revision": 1,
+      "model_requests": 5,
+      "independent_functional": {
+        "public": {
+          "status": "pass",
+          "category": null,
+          "tests": 5,
+          "passed": true
+        },
+        "host_acceptance": {
+          "status": "pass",
+          "category": null,
+          "tests": 10,
+          "passed": true
+        },
+        "isolated": true,
+        "strict_functional_pass": true
+      },
+      "approvals": [
+        {
+          "kind": "command",
+          "approved": false
+        }
+      ],
+      "uncertain": true,
+      "cleanup": {
+        "runtime_closed": true,
+        "sdk_closed": true,
+        "lease_released": false,
+        "database_consistent": true,
+        "cleanup_uncertain": true
+      },
+      "tool_names": [
+        "read_file_range",
+        "read_file_range",
+        "apply_patch",
+        "apply_patch"
+      ],
+      "protocol_errors": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native_patch_count": 1
+    }
+  ]
+}

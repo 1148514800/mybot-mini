@@ -1,0 +1,43 @@
+{
+  "asset_hashes": {
+    "README.md": "c04f0e79171267536bf3ae11a77a71a79100e11bb0fe53034a40e5f7d4420064",
+    "notesearch/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "notesearch/search.py": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+    "tests/test_search.py": "ed93dff57fd7057f0eb41725740db195633f8c5a2c8e0698622a151ab9b06186",
+    ".gitignore": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793",
+    "hidden/test_hidden.py": "7b970e5bcf46d61828798fc88042521549f7d34d57e997f8c0ec2e7c2a22b478"
+  },
+  "actual_sandbox_validation": {
+    "baseline_public": {
+      "status": "fail",
+      "category": null,
+      "tests": 5,
+      "passed": false
+    },
+    "baseline_host": {
+      "status": "fail",
+      "category": null,
+      "tests": 10,
+      "passed": false
+    },
+    "reference_public": {
+      "status": "pass",
+      "category": null,
+      "tests": 5,
+      "passed": true
+    },
+    "reference_host": {
+      "status": "pass",
+      "category": null,
+      "tests": 10,
+      "passed": true
+    }
+  },
+  "example_mock_fixture_head": "2731037fe8e5de9d33cadd5688ba15037d03b038",
+  "formal_fixture_head": "recorded at unique prepare in budget-evidence.json",
+  "workspace_files": 5,
+  "public_tests": 5,
+  "host_tests": 10,
+  "remote": null,
+  "actual_provider_requests": 0
+}
