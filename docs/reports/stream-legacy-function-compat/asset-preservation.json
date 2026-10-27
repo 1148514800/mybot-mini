@@ -1,0 +1,13 @@
+{
+  "old_harness_and_reports_unchanged": true,
+  "dependencies_unchanged": true,
+  "production_files_changed": [
+    "mybot/agent/streaming.py",
+    "mybot/web/static/app.js"
+  ],
+  "old_private_ledger_accessed": false,
+  "old_private_responses_accessed": false,
+  "main_merged": false,
+  "history_tags_modified": false,
+  "real_provider_requests": 0
+}

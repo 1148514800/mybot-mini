@@ -1,0 +1,125 @@
+{
+  "status": "OFFLINE_PASS",
+  "unique_unittest_total": 2051,
+  "executed_tests": 2051,
+  "duplicate_ids": 0,
+  "runs": [
+    {
+      "name": "check_phase",
+      "tests_observed": 1734,
+      "seconds": 367.23128120903857
+    },
+    {
+      "name": "check_uat_preflight",
+      "unique_tests": 9,
+      "passed": true,
+      "seconds": 2.169269833015278
+    },
+    {
+      "name": "check_patch_diagnostics",
+      "unique_tests": 9,
+      "passed": true,
+      "seconds": 0.5305062078405172
+    },
+    {
+      "name": "check_adaptive_compaction",
+      "unique_tests": 14,
+      "passed": true,
+      "seconds": 0.031248499872162938
+    },
+    {
+      "name": "check_remediation_e2e",
+      "unique_tests": 5,
+      "passed": true,
+      "seconds": 1.0141845839098096
+    },
+    {
+      "name": "check_agent_instruction_quality",
+      "unique_tests": 5,
+      "passed": true,
+      "seconds": 0.00854279100894928
+    },
+    {
+      "name": "check_real_user_uat",
+      "unique_tests": 13,
+      "passed": true,
+      "seconds": 0.9286790420301259
+    },
+    {
+      "name": "check_targeted_user_uat_v2",
+      "unique_tests": 24,
+      "passed": true,
+      "seconds": 6.069344624876976
+    },
+    {
+      "name": "check_persistent_session_uat",
+      "unique_tests": 22,
+      "passed": true,
+      "seconds": 3.595996791962534
+    },
+    {
+      "name": "check_source_aware_uat",
+      "unique_tests": 28,
+      "passed": true,
+      "seconds": 1.9301680421922356
+    },
+    {
+      "name": "check_streaming_steer_uat",
+      "unique_tests": 30,
+      "passed": true,
+      "seconds": 0.3282277910038829
+    },
+    {
+      "name": "check_stream_protocol_diagnostics",
+      "unique_tests": 39,
+      "passed": true,
+      "seconds": 0.04742829198949039
+    },
+    {
+      "name": "check_stream_shutdown",
+      "unique_tests": 11,
+      "passed": true,
+      "seconds": 21.693054834147915
+    },
+    {
+      "name": "check_stream_sse_lifecycle",
+      "unique_tests": 8,
+      "passed": true,
+      "seconds": 0.5313762500882149
+    },
+    {
+      "name": "check_stream_diagnostic_canary",
+      "unique_tests": 33,
+      "passed": true,
+      "seconds": 2.5512534158769995
+    },
+    {
+      "name": "check_stream_legacy_function",
+      "unique_tests": 34,
+      "passed": true,
+      "seconds": 0.11391558311879635
+    },
+    {
+      "name": "check_stream_legacy_canary",
+      "unique_tests": 33,
+      "passed": true,
+      "seconds": 2.548776833107695
+    }
+  ],
+  "failures": [],
+  "source_hashes_unchanged": true,
+  "real_requests": 0,
+  "seconds": 411.4561934589874,
+  "previous_unique_baseline": 1984,
+  "new_legacy_tests": 34,
+  "new_D02_tests": 33,
+  "new_total": 67,
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "diff_check": "PASS",
+  "source_files": 292,
+  "source_hash_map_sha256": "b1edc79856762a04f66f9e6649d44f836fb46165cbd7ff41f5329d9df4fd1e76",
+  "test_ids_sha256": "b5dafc4ca3807f23394883bbc80454dfc3f91320d20525c9a64d7e8d99b60c2c",
+  "log_sha256": "b2d4f5c215da468c4e664bda3bda88b11efc0144db1f0853b2c7722439198f5a",
+  "deduplication": "Observed unittest result startTest IDs, then skipped already observed supplement IDs; browser scenarios and non-unittest helper assertions excluded"
+}

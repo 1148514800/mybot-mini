@@ -1,0 +1,149 @@
+{
+  "sdk": "2.32.0",
+  "cases": [
+    {
+      "label": "missing",
+      "raw_field_present": false,
+      "sdk_field_set": false,
+      "parsed_kind": "null",
+      "bool": false,
+      "name_kind": "null",
+      "arguments_kind": "null",
+      "fields_set": null,
+      "extra_count": null,
+      "parsed_empty_defaults": false,
+      "http": 1
+    },
+    {
+      "label": "null",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "null",
+      "bool": false,
+      "name_kind": "null",
+      "arguments_kind": "null",
+      "fields_set": null,
+      "extra_count": null,
+      "parsed_empty_defaults": false,
+      "http": 1
+    },
+    {
+      "label": "empty_dict",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "null",
+      "arguments_kind": "null",
+      "fields_set": [],
+      "extra_count": 0,
+      "parsed_empty_defaults": true,
+      "http": 1
+    },
+    {
+      "label": "null_fields",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "null",
+      "arguments_kind": "null",
+      "fields_set": [
+        "arguments",
+        "name"
+      ],
+      "extra_count": 0,
+      "parsed_empty_defaults": true,
+      "http": 1
+    },
+    {
+      "label": "empty_strings",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "string",
+      "arguments_kind": "string",
+      "fields_set": [
+        "arguments",
+        "name"
+      ],
+      "extra_count": 0,
+      "parsed_empty_defaults": false,
+      "http": 1
+    },
+    {
+      "label": "real_name",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "string",
+      "arguments_kind": "null",
+      "fields_set": [
+        "name"
+      ],
+      "extra_count": 0,
+      "parsed_empty_defaults": false,
+      "http": 1
+    },
+    {
+      "label": "real_arguments",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "null",
+      "arguments_kind": "string",
+      "fields_set": [
+        "arguments"
+      ],
+      "extra_count": 0,
+      "parsed_empty_defaults": false,
+      "http": 1
+    },
+    {
+      "label": "extra",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "null",
+      "arguments_kind": "null",
+      "fields_set": [
+        "unknown"
+      ],
+      "extra_count": 1,
+      "parsed_empty_defaults": true,
+      "http": 1
+    },
+    {
+      "label": "wrong_type",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "string",
+      "bool": true,
+      "name_kind": "null",
+      "arguments_kind": "null",
+      "fields_set": null,
+      "extra_count": null,
+      "parsed_empty_defaults": true,
+      "http": 1
+    },
+    {
+      "label": "wrong_field",
+      "raw_field_present": true,
+      "sdk_field_set": true,
+      "parsed_kind": "object",
+      "bool": true,
+      "name_kind": "other",
+      "arguments_kind": "null",
+      "fields_set": [
+        "name"
+      ],
+      "extra_count": 0,
+      "parsed_empty_defaults": false,
+      "http": 1
+    }
+  ]
+}

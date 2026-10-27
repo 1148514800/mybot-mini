@@ -2,16 +2,16 @@
 
 ## 当前状态
 
-分支codex/stream-diagnostic-canary。新GRANTED_1_REQUEST后唯一D01已执行：Protocol FAIL、Clean Shutdown PASS，真实1/1、DeepSeek1/GLM0/摘要0/Judge0，无fallback/重试/工具。冻结源码SHA c87a26b3532a640b4c604b5870c5bf638c095960；输入HEAD506ea5ba6289994b3de31bed3a409b2d57057ad6。未改源码或prepare/freeze。
+codex/stream-legacy-function-compat基于72e5ef74fb574dc9212fca188112ef058e4762e1。空legacy兼容修复与全部离线验收完成；真实模型授权0/请求0。D02新批次尚未创建，下一步先Implementation/Preregistration提交，再唯一prepare/freeze。
 
-## 真实结果
+## 实现与验证
 
-221 Chunk，第221块protocol_validation拒绝stream_after_finish_payload；stop观察1次但accepted finish null、EOF false、SDK close true，无可信完整回复。该错误也覆盖legacy function_call真值；ring缺此字段，代码推断指向该分支但对象内容/SDK作用/责任仍UNKNOWN，不能直接说终态后输出正文。观察Usage480/219/699，ledger可信结算全null，cost=null。
+生产只改streaming.py与app.js。已知空dict/SDK模型按name/arguments/extra判断，不用对象真值；非空/未知legacy为unsupported、错误类型invalid，真正终态后输出独立AFTER_FINISH。8块ring含固定类型/饱和长度/计数/empty标志，无函数名/参数正文。不改工具、Failover、Pin/TaskContract/Decision/EventStore权限语义。
 
-浏览器同钟提交→可见2.500s；独立headed Chrome及双profile隔离通过。服务正常SIGINT/wait exit0，约1.518s，端口/Lease/两PID释放，SQLite一致、无uncertain/unsettled、workspace字节不变；本次profile清理。Case failed/HALT diagnostic_failed保留。完整报告docs/reports/stream-diagnostic-canary/live-results/execution-01/。
+SDK2.32.0原始SSE证明{}解析成truthy模型，缺失/null与空对象字段集合不同。221块Synthetic空对象自然EOF、带尾块Usage可信，真实函数名Synthetic拒绝。D01可达legacy分支确认，原字段值无法恢复，旧FAIL不改判。
 
-## 验证与下一步
+权威最终源码check_phase1734+补充317=2051个去重unittest PASS，新增67（Legacy34、D02门33）；source hash运行前后及结束后保持，compileall/JS/diff通过。headed独立Chrome双profile隔离与Legacy5场景、Steer/恢复8场景通过，共15次Mock模型HTTP、7次自身服务exit0/资源释放，真实0。报告docs/reports/stream-legacy-function-compat/。
 
-此前离线252项（新增33）通过，本次未重跑全量；Live前后冻结源码/Provider/工作区字节与inode/两库inode验证通过。无原始Prompt/Chunk/回复正文导出；预览遮蔽竞态图已删除，仅提交无回复正文终态图。旧8765 launcher/用户Chrome/旧私有HALT库未操作，旧R01与离线报告原样保留。
+## 下一步与禁止事项
 
-本批次额度已用尽，禁止重启D01、补跑、修改冻结、复用旧7次或继续Steer。下一步单独离线任务改进legacy字段诊断/错误分类及SDK空对象Mock回归；任何新Live必须新合同与授权。本轮只交付真实证据，不修协议或改判历史，不合main、不动历史Tag/ZIP。
+完成Implementation与Preregistration提交，工作树干净后对~/.mybot-mini/uat/stream-legacy-canary-20261027/执行唯一prepare/freeze/verify；只能更新后续报告，不再改冻结源码。D02端口8900、唯一新消息、空Registry、1次物理/HTTP硬上限。必须未来新的精确GRANTED_1_REQUEST才能Live。旧D01/R01私有数据库未打开、旧报告/Tag/ZIP/main不变，不补跑、不复用额度、不操作用户Chrome/8765。

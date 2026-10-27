@@ -25,7 +25,7 @@ function renderPreview(){
   container.hidden=!v.stream_id || (current.status==='completed' && v.status==='complete') || v.status==='tool_calls';
   if(container.hidden)return;
   const streamErrors={stream_transport_interrupted:'流中断',stream_local_timeout:'流等待超时',stream_close_unconfirmed:'关闭状态未知',stream_local_buffer_limit:'本地输出上限',stream_terminal_missing:'结束状态未确认',stream_host_failure:'宿主处理失败'};
-  const protocolCodes=new Set(['stream_choices_invalid','stream_choice_index_invalid','stream_role_invalid','stream_content_type_invalid','stream_after_finish_payload','stream_duplicate_finish','stream_tool_fragment_invalid','stream_tool_arguments_invalid','stream_tool_index_gap','stream_provider_error_frame']);
+  const protocolCodes=new Set(['stream_choices_invalid','stream_choice_index_invalid','stream_role_invalid','stream_content_type_invalid','stream_legacy_function_call_unsupported','stream_legacy_function_call_invalid','stream_after_finish_payload','stream_duplicate_finish','stream_tool_fragment_invalid','stream_tool_arguments_invalid','stream_tool_index_gap','stream_provider_error_frame']);
   $('stream-label').textContent=v.status==='generating'?'生成中 · 临时预览，尚未正式保存':v.status==='complete'?'生成结束 · 正在可靠保存':'回复不完整 · '+v.status;
   if(v.error_code)$('stream-label').textContent+=' · '+(streamErrors[v.error_code] || (protocolCodes.has(v.error_code)?'协议结构不兼容':'本轮未完成'));
   $('stream-body').replaceChildren(markdown(v.text || '等待可安全展示的文本…'));

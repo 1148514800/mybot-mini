@@ -7,6 +7,7 @@ from collections import deque
 from enum import StrEnum
 
 import httpx
+from openai.types.chat.chat_completion_chunk import ChoiceDeltaFunctionCall
 from openai import APIError
 
 PROGRESS=ContextVar('stream_progress',default=None)
@@ -52,6 +53,8 @@ class StreamErrorCode(StrEnum):
     CHOICE_INDEX = 'stream_choice_index_invalid'
     ROLE = 'stream_role_invalid'
     CONTENT = 'stream_content_type_invalid'
+    LEGACY_UNSUPPORTED = 'stream_legacy_function_call_unsupported'
+    LEGACY_INVALID = 'stream_legacy_function_call_invalid'
     AFTER_FINISH = 'stream_after_finish_payload'
     DUPLICATE_FINISH = 'stream_duplicate_finish'
     TOOL_FRAGMENT = 'stream_tool_fragment_invalid'
@@ -81,6 +84,30 @@ def _kind(value):
 
 def _finish(value):
     return value if value in ('stop', 'tool_calls', 'length', 'content_filter', None) else 'unknown'
+
+
+def _legacy(delta):
+    """No invocation authority: only known empty dict/SDK fields are ignorable.
+
+    SDK construct parsing may retain invalid types and unknown fields. Never use
+    model truthiness or dump its values into diagnostics. Counts are saturated.
+    """
+    value = get(delta, 'function_call')
+    present = ('function_call' in delta if isinstance(delta, dict) else
+               'function_call' in getattr(delta, 'model_fields_set', vars(delta) if hasattr(delta, '__dict__') else ()))
+    fields = value if isinstance(value, dict) else vars(value) if isinstance(value, ChoiceDeltaFunctionCall) else {}
+    extras = (getattr(value, 'model_extra', None) or {}) if isinstance(value, ChoiceDeltaFunctionCall) else {}
+    extra_count = len((fields.keys() | extras.keys()) - {'name', 'arguments'})
+    name, arguments = get(value, 'name'), get(value, 'arguments')
+    valid = (value is None or isinstance(value, (dict, ChoiceDeltaFunctionCall))) and all(v is None or isinstance(v, str) for v in (name, arguments))
+    empty = valid and extra_count == 0 and name in (None, '') and arguments in (None, '')
+    metadata = dict(legacy_function_call_present=present,
+        legacy_function_call_kind='object' if isinstance(value, ChoiceDeltaFunctionCall) else _kind(value),
+        legacy_name_kind=_kind(name), legacy_name_length=min(len(name), 65536) if isinstance(name, str) else None,
+        legacy_arguments_kind=_kind(arguments), legacy_arguments_length=min(len(arguments), 65536) if isinstance(arguments, str) else None,
+        legacy_extra_field_count=min(extra_count, 256), legacy_semantically_empty=empty)
+    code = None if empty else StreamErrorCode.LEGACY_INVALID if not valid else StreamErrorCode.LEGACY_UNSUPPORTED
+    return metadata, code
 
 
 async def consume(stream, *, record=None, notify=None, secrets=()):
@@ -145,22 +172,24 @@ async def consume(stream, *, record=None, notify=None, secrets=()):
             delta = get(choice, 'delta'); content = get(delta, 'content'); parts = get(delta, 'tool_calls')
             reason = get(choice, 'finish_reason')
             if reason is not None: terminals += 1
+            legacy, legacy_error = _legacy(delta)
             recent.append(dict(chunk_index=count,
                 choices_count=len(choices) if isinstance(choices, list) else None,
                 delta_present=delta is not None, role_present=get(delta, 'role') is not None,
                 content_type=_kind(content), content_length=len(content) if isinstance(content, str) else None,
                 tool_calls_count=len(parts) if isinstance(parts, list) else None,
-                finish_reason=_finish(reason)))
+                finish_reason=_finish(reason), **legacy))
             if get(chunk, 'error'): reject(StreamErrorCode.PROVIDER_FRAME)
             if get(chunk, 'usage') is not None: usage = get(chunk, 'usage')
             if not isinstance(choices, list): reject(StreamErrorCode.CHOICES)
             if not choices: continue  # Standard usage-only trailer, including after finish.
             if len(choices) != 1 or type(get(choice, 'index', 0)) is not int or get(choice, 'index', 0) != 0:
                 reject(StreamErrorCode.CHOICE_INDEX)
-            if delta is not None and not isinstance(delta, dict) and not hasattr(delta, 'model_fields'):
+            if delta is not None and not isinstance(delta, dict) and not hasattr(type(delta), 'model_fields'):
                 reject(StreamErrorCode.CHOICES)
             if get(delta, 'role') not in (None, 'assistant'): reject(StreamErrorCode.ROLE)
-            if get(delta, 'function_call') or (finish is not None and (content or parts)):
+            if legacy_error is not None: reject(legacy_error)
+            if finish is not None and (content or parts):
                 reject(StreamErrorCode.AFTER_FINISH)
             if content is not None:
                 if not isinstance(content, str): reject(StreamErrorCode.CONTENT)

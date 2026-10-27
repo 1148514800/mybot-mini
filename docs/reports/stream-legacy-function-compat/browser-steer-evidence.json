@@ -1,0 +1,89 @@
+{
+  "launcher_stdin_is_tty": false,
+  "real_requests": 0,
+  "cases": {
+    "A": {
+      "status": "PASS",
+      "sdk_requests": 1,
+      "complete": true
+    },
+    "H": {
+      "status": "PASS",
+      "queued": true,
+      "not_applied": true,
+      "no_extra_request": true
+    },
+    "B": {
+      "status": "PASS",
+      "error_code": "stream_duplicate_finish",
+      "complete": false
+    },
+    "D": {
+      "status": "PASS",
+      "executed_tools": [
+        "read_file"
+      ],
+      "incomplete_tool_executed": false
+    },
+    "E": {
+      "status": "PASS",
+      "queued": true,
+      "applied": true,
+      "original_unchanged": true,
+      "next_request_steer": true,
+      "old_tool_skipped": true
+    },
+    "C": {
+      "status": "PASS",
+      "browser_kept_open": true
+    },
+    "G": {
+      "status": "PASS",
+      "session_restored": true,
+      "no_replay": true,
+      "no_partial_complete": true
+    },
+    "F": {
+      "status": "PASS",
+      "new_request_refused": true,
+      "halt_preserved": true
+    }
+  },
+  "shutdowns": [
+    {
+      "label": "C-open-EventSource-active-stream",
+      "exit_code": 0,
+      "seconds": 1.8616529169958085,
+      "verified_child_sigint": false,
+      "lease_released": true,
+      "port_released": true
+    },
+    {
+      "label": "F-halted-open-EventSource",
+      "exit_code": 0,
+      "seconds": 1.0599074999336153,
+      "verified_child_sigint": false,
+      "lease_released": true,
+      "port_released": true
+    }
+  ],
+  "profile_initially_empty": true,
+  "chrome": "152.0.7977.83",
+  "headed": true,
+  "actual_profile_verified": true,
+  "mock_http_requests": 10,
+  "mock_sdk_request_hashes": [
+    "65ef8a4fad07f984c9d13a7b1312e6771a0f6ffe82ed5a85b231637c38a1a6af",
+    "8efdcc061ecb81e92de800c22f7048fb31bb544683d3b0c86a7d811a8f5060c6",
+    "9717cf87a2d215406eb9350c7fe62048f7cd805a624a2bfe171a9a96afaf0164",
+    "5c9c3edf8dbea026a393cc8545fcc67d67a8e42007292ccb79abf8e51b34d003",
+    "9cf8d5198b17072df9a1e55c65c70d155651f5395c48deeac83c23b7c9483a5f",
+    "9b6421bba5d2d285c0db6af1768d65025c999eb1eef993646d3a2040c896eab4",
+    "195dcbf11305b6fd5c0e4da18c941c6bb2547125a5eefcbe9fc85a003dc11f06",
+    "c700a75860071fdddc08518ed8290ef6fc0bf5acc9c2986295ccd7459fcb07c9",
+    "251bed52ffd40dc3fc70aa43d1539f389e8ec84c0bd7f9267c117fd540c34b5f",
+    "ffd4fac588d8be94c5b5d090aaecfc50a70c3a3625db3bb0ea6bdd4174a3ca6a"
+  ],
+  "mock_stream_closes": 10,
+  "profile_removed": true
+}

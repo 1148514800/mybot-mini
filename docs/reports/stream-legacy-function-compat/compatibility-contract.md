@@ -1,0 +1,9 @@
+# Empty legacy compatibility contract
+
+生产修改限mybot/agent/streaming.py和Web固定错误码展示集合。_legacy接受缺失、null、空dict，以及已知SDK ChoiceDeltaFunctionCall模型中name/arguments均缺失/null/空字符串且无额外字段的情况；使用字段语义，不使用对象truthiness。不会strip非空空白字符串为“空”。
+
+外层结构或已知字段类型不合法→stream_legacy_function_call_invalid。非空name/arguments、未知额外字段（即使值null）→stream_legacy_function_call_unsupported。未知Python对象保守拒绝，不转换为可执行tool_calls，不自动构造参数。
+
+语义空的legacy字段继续同Chunk的常规终态验证。stop后额外正文或非空tool_calls仍stream_after_finish_payload；重复finish仍stream_duplicate_finish；缺终态、未自然EOF、工具参数不完整、超缓冲、关闭不确认均不能complete。合法空choices Usage trailer继续支持。
+
+可信完成仍由原consumer决定：合法终态、自然EOF、完整工具结构验证、关闭确认、无协议错误。原ProviderFailover首Chunk边界、SDK retries=0、Token预算、Steer安全步骤、原非流式CLI、Pin/TaskContract/Decision/EventStore业务语义均不改。新D02单次预算仍在SDK和HTTP边界持久拒绝第二次发送。
