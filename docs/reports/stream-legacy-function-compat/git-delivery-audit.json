@@ -1,0 +1,11 @@
+{
+  "sidecar_exists": true,
+  "canonical_index_exists": true,
+  "sidecar_modified_by_operator": false,
+  "sidecar_magic": "00051607",
+  "sidecar_size": 4096,
+  "is_appledouble_header": true,
+  "canonical_index_magic": "ff744f63",
+  "canonical_pack_verify_exit_code": 0,
+  "canonical_pack_valid": true
+}

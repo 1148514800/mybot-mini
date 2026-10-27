@@ -15,3 +15,5 @@ SDK2.32.0原始SSE证明{}解析成truthy模型，缺失/null与空对象字段�
 ## 下一步与禁止事项
 
 ~/.mybot-mini/uat/stream-legacy-canary-20261027/已唯一prepare/freeze，verify通过，0 Attempt/reservation/HTTP，事件库空、8900/Lease可用。禁止重新prepare/freeze或修改冻结源码。Acceptance仅文档。D02端口8900、唯一新消息、空Registry、1次物理/HTTP硬上限。必须未来新的精确GRANTED_1_REQUEST才能Live。旧D01/R01私有数据库未打开、旧报告/Tag/ZIP/main不变，不补跑、不复用额度、不操作用户Chrome/8765。
+
+交付环境：Push出现ExFAT共享.git的._pack…idx警告，已只读确认AppleDouble头；正式pack verify exit0，旁文件未处理。远程HEAD与冻结verify成功，后续Git操作可能继续警告，详情git-delivery-audit.json。

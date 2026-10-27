@@ -1,5 +1,5 @@
 {
-  "acceptance-report.md": "5ec1335312fb7bb21f34164135a172c2e0d980a70deff0ace0c47dc27d8e36e0",
+  "acceptance-report.md": "b61eff6690a7487c7df51f70d6f60b650652bf3a3cc1741c4b041245f20d6e9b",
   "asset-preservation.json": "6d3a13e73703f87b2faa70841a0fe66b5cbafd7c764ad5943d86daa37ee09f66",
   "browser-acceptance.md": "c7164fabe66e089d61470e317cd10bcf02edc1aedcd42e42a3e935a127c207bb",
   "browser-isolation-evidence.json": "f749397ac985a23c6d642021ac5cdb7b1193396a7f5a31b997daa1a4e541e73b",
@@ -10,9 +10,10 @@
   "d02-freeze-evidence.json": "3b24dd8e30ca20a3764fac4449f6abe2dfb8921748adb394b8c15c512605e194",
   "d02-preregistration.md": "047c879cccff170b2e57f164ad1104d7e5f21db1bf5838dc0fc33fdd35931a2e",
   "executed-test-ids.json": "b5dafc4ca3807f23394883bbc80454dfc3f91320d20525c9a64d7e8d99b60c2c",
+  "git-delivery-audit.json": "12a58d9430169ca1192b0f7c0e9fb04710d4b9ebf65899ebc1f7ce4f1f584495",
   "offline-validation.json": "dfdd3d32233b96b8b9a352c5f6c5ec81a5121bca7931102a7e6d28d2aaa4817b",
   "protocol-error-classification.md": "c1c685979cab7a2547f24c4f31e7280b365fa08c99e661f9f20ed768d7f22656",
-  "remaining-risks.md": "beee0c965ed040252f61512620fe43a852720ba7591153dee3dc82c52e7af03b",
+  "remaining-risks.md": "f996d1f736bc3eced8b7b3e7b162c478d30bc09cb4169ae3c3e2a103b7923481",
   "screenshots/E-steer.png": "fb7e57f393a7e99eebb9ea31f03f4af59cee4be623af162c300f84e03e5ea264",
   "screenshots/H-not-applied.png": "e8065ada4155f4271febdeeed9446a55e7c8baddfb65383ed9866df2e639fe4a",
   "screenshots/empty-preview.png": "07a39c780eaba6ed78779a28f213c086a7b52ea55c3e910660f379302b6aebad",

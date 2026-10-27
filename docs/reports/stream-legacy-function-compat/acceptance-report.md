@@ -15,3 +15,5 @@ Implementation `3a906311a196f23e01227fd3ec9f0b212047b70b`，Preregistration/冻�
 原Provider真实行为仍UNKNOWN；本轮不宣称真实DeepSeek兼容已经PASS。旧R01/D01结果保持失败，不能补跑或挪用额度。
 
 本次没有新的真实D02终态、EOF、延迟、Usage或费用证据；模型窗口/远程凭证有效性/真实兼容性均未验证，未来需新的精确GRANTED_1_REQUEST。冻结证据见d02-freeze-evidence.json；最终Acceptance提交及远程HEAD由Git交付核对。
+
+交付附注：Push成功后只读核实外置盘._pack索引警告为AppleDouble旁文件，正式pack验证exit0；未清理共享Git对象库。远程HEAD已核对，源码/冻结不受影响，环境警告保留记录。
