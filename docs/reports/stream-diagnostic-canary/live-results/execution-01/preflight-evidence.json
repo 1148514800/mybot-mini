@@ -1,0 +1,31 @@
+{
+  "authorization": "GRANTED_1_REQUEST",
+  "head": "506ea5ba6289994b3de31bed3a409b2d57057ad6",
+  "preregistration": "c87a26b3532a640b4c604b5870c5bf638c095960",
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "ports_listening": {
+    "8765": false,
+    "8899": false
+  },
+  "lease_available": true,
+  "batch_open_by_other_process": false,
+  "processes": [
+    {
+      "pid": 39852,
+      "uid": 501,
+      "ppid": 84752,
+      "module": "mybot.web",
+      "cwd": [
+        "/Users/godblack/.codex/worktrees/post-live-quality-hardening/mybot-mini"
+      ],
+      "port_8765_flag": true
+    }
+  ],
+  "old_private_ledger_accessed": false,
+  "operator_probe_correction": "initial holder assertion counted verifier own read-only SQLite handles; independently established current PID only, no external holder"
+}

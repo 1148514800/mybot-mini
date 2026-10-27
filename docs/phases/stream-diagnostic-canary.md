@@ -11,3 +11,5 @@ macOS/Python3.12+/uv运行：`uv run python -m scripts.check_stream_diagnostic_c
 常见误区：stop不证明EOF；GeneratorExit不证明Provider断流；端口释放不证明exit0；Usage缺失不必然协议FAIL；被拒绝的备用准入不是第二次HTTP；合成PASS不证明DeepSeek兼容。原R01证据与HALT不可改判。
 
 状态及准确统计见[验收报告](../reports/stream-diagnostic-canary/acceptance-report.md)。下一步仅在新授权GRANTED_1_REQUEST后verify并执行一次D01，不复用旧余量。
+
+本次新授权后的唯一Live已执行，见[独立真实报告](../reports/stream-diagnostic-canary/live-results/execution-01/acceptance-report.md)：1/1、Protocol FAIL、Clean Shutdown PASS。第221块stream_after_finish_payload，观察stop1次、accepted finish null、EOF false、SDK close true。旧式function_call与终态后负载共用拒绝码，结构ring缺此字段，责任仍UNKNOWN。观察Usage480/219/699但结算null，费用null。首Chunk约1.725s、浏览器同钟可见2.500s；服务wait exit0、资源释放。唯一批次failed/HALT保留，不再启动。此前离线测试及报告不改判。

@@ -1,0 +1,19 @@
+{
+  "acceptance-report.md": "9ae81c65b6f2dd50e22b6eb030bf55014bb397377d89609488f88cec745d2277",
+  "browser-acceptance.md": "b010789536c9ca5a18df0ae7aa3256026e4b6697aa73e7cd38d57b5346021f40",
+  "browser-evidence.json": "54f36d77824546f9a55be4089cfd657539ec4a230dbcae05702bcb73d2ba3ab7",
+  "browser-isolation-evidence.json": "712ad5887e50872d47dac889c2ac2d5c38741623578d8e96f9b5f1374ed1aad3",
+  "case-results.md": "07389f325541de318d7c3a06b3f301914d53011824a4da294243b70d13cbbc67",
+  "integrity-evidence.json": "1018e43d4f5d801f734ecdba2ed11ed38e63d9eabd13741505e3caef28d25bae",
+  "next-stage-recommendations.md": "c89ff3fae93e9f208d6954abd0b6bb2c0bc0c394692cc6bd7a1be5a15236569d",
+  "preflight-evidence.json": "a6c1db24b1c9d6639b8732ef7cca6bfc45fec05c73d5c0b10fbccc0d53c38303",
+  "private-evidence-hashes.json": "81c7eba7af6422a7b039c2630a685c2cb522abf69834d166a70764ed2535107b",
+  "protocol-diagnostics.md": "fa390d1418787a5abc143982da3f32baa4657ee9397130661de88e1391761640",
+  "protocol-evidence.json": "6a295f6d48216c869f0a7146b782d904edf7a44e0db26ae189c0b7ea33d9e2b2",
+  "resource-usage.json": "a6fbda019f145dfa192d908c70e24875457c819c26860b1889036322c212fd0b",
+  "screenshots/D01-terminal-redacted.png": "1aab3d79a8f3aaffb3ced83f351f5fbde6d1ef0330c6e50c3aca0d72c1115f42",
+  "security-audit.md": "03559e19f095ec157f1608f839672a60ad73ced5bb61834e3314bd180a7761f2",
+  "security-evidence.json": "dfd962c61d1888083df6646cd106b92bb75e5f286f434035c038f1b89ed3a02c",
+  "shutdown-evidence.json": "b1f81e14648a7df646b568f8267a7cb932a2cad452ba168df6d487a5726b9ab2",
+  "stream-timing.json": "f73943407f06cdff10df40a78903ca81a7bd72b137662b38a041309d61bc46f8"
+}

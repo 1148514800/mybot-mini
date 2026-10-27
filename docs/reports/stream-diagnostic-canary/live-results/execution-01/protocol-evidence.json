@@ -1,0 +1,149 @@
+{
+  "protocol": "FAIL",
+  "session_id": "b39ed0afa50f450aaf89ac3fdfb2bb77",
+  "status": "provider_error",
+  "streams": [
+    {
+      "reservation": 1,
+      "clock": "server_monotonic",
+      "request_started": 1682580.262505458,
+      "chunks": 221,
+      "first_chunk": 1682581.987929166,
+      "first_text_chunk": 1682581.988216583,
+      "first_sse_preview": 1682582.630085208,
+      "first_chunk_seconds": 1.7254237080924213,
+      "first_text_seconds": 1.7257111249491572,
+      "first_sse_seconds": 2.3675797500181943,
+      "natural_eof": false,
+      "sdk_closed": true,
+      "assembled_sha256": "c688ac82c0a3fea6e99a14ffd2589db62f08f2d12cc5ccd0675397b660be9007",
+      "assembled_stripped_sha256": "c688ac82c0a3fea6e99a14ffd2589db62f08f2d12cc5ccd0675397b660be9007",
+      "stream_status": "provider_error",
+      "terminal_trusted": false,
+      "diagnostic": {
+        "stream_id": "4d07ec505d5b4ad0a79b6135e1d46715",
+        "error_code": "stream_after_finish_payload",
+        "origin": "protocol_validation",
+        "phase": "protocol_validation",
+        "chunk_index": 221,
+        "chunks_observed": 221,
+        "finish_reason": null,
+        "terminal_count": 1,
+        "text_received": true,
+        "natural_eof": false,
+        "close_called": true,
+        "closed": true,
+        "recent_chunks": [
+          {
+            "chunk_index": 214,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 2,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 215,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 1,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 216,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 2,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 217,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 1,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 218,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 1,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 219,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 2,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 220,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": false,
+            "content_type": "string",
+            "content_length": 1,
+            "tool_calls_count": 0,
+            "finish_reason": null
+          },
+          {
+            "chunk_index": 221,
+            "choices_count": 1,
+            "delta_present": true,
+            "role_present": true,
+            "content_type": "string",
+            "content_length": 0,
+            "tool_calls_count": 0,
+            "finish_reason": "stop"
+          }
+        ]
+      },
+      "usage": {
+        "prompt_tokens": 480,
+        "completion_tokens": 219,
+        "total_tokens": 699
+      },
+      "usage_complete": true
+    }
+  ],
+  "saved_reply_sha256": "710f448b2fd983c1a7d224da9c88b308029e183f82e1a1789f92a354b2214619",
+  "trusted_final_persisted": false,
+  "physical_requests": 1,
+  "http_attempts": 1,
+  "providers": [
+    "coco"
+  ],
+  "models": [
+    "deepseek-v4.1-flash"
+  ],
+  "opening_error_types": [],
+  "usage": [
+    {
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null
+    }
+  ],
+  "cost": null,
+  "fallback_dispatch_blocked": false,
+  "accounting_admission_records": 1,
+  "accounting_note": "includes blocked fallback admission; durable reservations and HTTP hook are authoritative physical counts"
+}

@@ -1,0 +1,23 @@
+{
+  "clock_semantics": {
+    "sdk": "server monotonic, relative to SDK admission immediately before create",
+    "browser": "performance.now in the same isolated page",
+    "sse": "host model_text_delta emission, not network-arrival timestamp",
+    "cross_clock_latency": "UNKNOWN"
+  },
+  "request_started": 1682580.262505458,
+  "first_chunk": 1682581.987929166,
+  "first_text_chunk": 1682581.988216583,
+  "first_sse_preview_emission": 1682582.630085208,
+  "first_chunk_seconds": 1.7254237080924213,
+  "first_text_seconds": 1.7257111249491572,
+  "first_sse_emission_seconds": 2.3675797500181943,
+  "browser_performance_ms": {
+    "submit": 970.8999998569489,
+    "visible": 3470.899999856949
+  },
+  "browser_submit_to_visible_ms": 2500.0,
+  "browser_terminal_observed_ms": 4995.200000047684,
+  "preview_seen_during_running": true,
+  "controlled_barrier_seconds": 0
+}

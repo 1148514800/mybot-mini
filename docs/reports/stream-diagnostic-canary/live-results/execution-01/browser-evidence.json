@@ -1,0 +1,26 @@
+{
+  "browser": {
+    "version": "152.0.7977.83",
+    "headed": true,
+    "chromium_sandbox": true,
+    "profile_fresh_0700": true,
+    "actual_profile_verified": true,
+    "initial_cookies_empty": true,
+    "profile_path_sha256": "0b969964c3ef80d342983f2107ad12bd606c15c1a53663a8aca0c998fe09c84c",
+    "pid": 97253
+  },
+  "dom_submit_attempts": 1,
+  "message_post_status": 202,
+  "session_id": "b39ed0afa50f450aaf89ac3fdfb2bb77",
+  "browser_status": "provider_error",
+  "preview_seen_during_running": true,
+  "browser_submit_to_visible_ms": 2500.0,
+  "steer_count": 0,
+  "cookie_conflict": false,
+  "profile_removed": true,
+  "private_reply_exported": false,
+  "preview_capture_discarded": "DOM grew between mask geometry and screenshot; no preview image exported",
+  "preview_screenshot_exported": false,
+  "terminal_screenshot_exported": true,
+  "old_service_operated": false
+}

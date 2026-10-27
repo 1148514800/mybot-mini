@@ -1,0 +1,14 @@
+{
+  "actual_key_matches": 0,
+  "forbidden_runtime_assets": 0,
+  "tracked_and_new_files_scanned": 1340,
+  "production_source_and_dependencies_unchanged": true,
+  "old_live_reports_unchanged": true,
+  "offline_canary_reports_unchanged": true,
+  "old_private_ledger_accessed": false,
+  "frozen_verify_allow_halt": true,
+  "read_only_halt_preserved": true,
+  "real_requests": 1,
+  "model_reply_body_exported": false,
+  "preview_capture_removed_after_privacy_review": true
+}

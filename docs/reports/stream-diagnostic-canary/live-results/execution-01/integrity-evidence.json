@@ -1,0 +1,55 @@
+{
+  "usage": {
+    "real_requests": 1,
+    "attempts": 1,
+    "unsettled": 0,
+    "http_attempts": 1
+  },
+  "rows": [
+    {
+      "id": 1,
+      "case_id": "D01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "failed",
+      "http_attempts": 1,
+      "usage": "{\"prompt_tokens\": null, \"completion_tokens\": null, \"total_tokens\": null}",
+      "error_type": null,
+      "status_code": null
+    }
+  ],
+  "cases": [
+    {
+      "id": "D01",
+      "status": "failed"
+    }
+  ],
+  "halt": "diagnostic_failed",
+  "event_counts": {
+    "sessions": 2,
+    "events": 8,
+    "turns": 1,
+    "messages": 2,
+    "tools": 0
+  },
+  "turn_states": [
+    "provider_error"
+  ],
+  "uncertain": 0,
+  "workspace_unchanged": true,
+  "lease_available": true,
+  "port_released": true,
+  "frozen_hashes_verified": true,
+  "admission_rejects_halt": true,
+  "freeze_prepared_probe_unchanged": {
+    "prepared.json": true,
+    "freeze.json": true,
+    "browser-isolation.json": true
+  },
+  "owned_processes_exited": {
+    "97278": true,
+    "97279": true
+  },
+  "profile_removed": true
+}

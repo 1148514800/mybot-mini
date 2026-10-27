@@ -2,14 +2,16 @@
 
 ## 当前状态
 
-独立分支codex/stream-diagnostic-canary，基线ba759de36418d67008e98c8c7ddf05566dc520e5。D01只做离线准备，LIVE_AUTHORIZATION NOT_GRANTED；唯一新批次~/.mybot-mini/uat/stream-diagnostic-canary-20261026/。真实模型0，旧R01 FAIL/HALT/Case running及其余7次不触碰、不继承。
+分支codex/stream-diagnostic-canary。新GRANTED_1_REQUEST后唯一D01已执行：Protocol FAIL、Clean Shutdown PASS，真实1/1、DeepSeek1/GLM0/摘要0/Judge0，无fallback/重试/工具。冻结源码SHA c87a26b3532a640b4c604b5870c5bf638c095960；输入HEAD506ea5ba6289994b3de31bed3a409b2d57057ad6。未改源码或prepare/freeze。
 
-## 实现与验证
+## 真实结果
 
-新增scripts/stream_diagnostic_canary/：单次SQLite/HTTP预算、透明SDK结构诊断、新Web入口、MockTransport/Chrome演练、唯一prepare/freeze/verify。正式create_app→Runtime→AgentLoop→ProviderFailover→SDK不替换，生产源码/依赖/旧UAT脚本报告不改。失败HALT与自有服务关闭分离，不清HALT换PASS。正文仅原生私有事件库，诊断导出元数据/哈希，报告不提交私有数据库。
+221 Chunk，第221块protocol_validation拒绝stream_after_finish_payload；stop观察1次但accepted finish null、EOF false、SDK close true，无可信完整回复。该错误也覆盖legacy function_call真值；ring缺此字段，代码推断指向该分支但对象内容/SDK作用/责任仍UNKNOWN，不能直接说终态后输出正文。观察Usage480/219/699，ledger可信结算全null，cost=null。
 
-252项去重专项回归通过（新增33），compileall/JS语法/diff通过。双profile Cookie/LocalStorage双向隔离通过；独立headed Chrome正常流与重复终态合成验证，两次打开SSE时exit0，端口/Lease/库一致。合成不证明真实DeepSeek兼容；旧问题原因仍UNKNOWN。完整报告docs/reports/stream-diagnostic-canary/。
+浏览器同钟提交→可见2.500s；独立headed Chrome及双profile隔离通过。服务正常SIGINT/wait exit0，约1.518s，端口/Lease/两PID释放，SQLite一致、无uncertain/unsettled、workspace字节不变；本次profile清理。Case failed/HALT diagnostic_failed保留。完整报告docs/reports/stream-diagnostic-canary/live-results/execution-01/。
 
-## 下一步与禁止重复
+## 验证与下一步
 
-唯一prepare/freeze已完成，冻结源码SHA c87a26b3532a640b4c604b5870c5bf638c095960；verify通过，真实请求/Attempt/reservation/HTTP均0。Acceptance只更新文档与证据。不要重复prepare/freeze、不要重建新账本。未收到新的GRANTED_1_REQUEST不得启动Live入口。授权后先verify，再查端口/Lease/进程/独立Chrome/库；新Session DOM发送唯一冻结消息一次，无重试/补跑/Steer。关闭只处理自有服务并实际wait exit0。原8765 launcher/用户Chrome不操作；不合main、不改历史Tag/ZIP。
+此前离线252项（新增33）通过，本次未重跑全量；Live前后冻结源码/Provider/工作区字节与inode/两库inode验证通过。无原始Prompt/Chunk/回复正文导出；预览遮蔽竞态图已删除，仅提交无回复正文终态图。旧8765 launcher/用户Chrome/旧私有HALT库未操作，旧R01与离线报告原样保留。
+
+本批次额度已用尽，禁止重启D01、补跑、修改冻结、复用旧7次或继续Steer。下一步单独离线任务改进legacy字段诊断/错误分类及SDK空对象Mock回归；任何新Live必须新合同与授权。本轮只交付真实证据，不修协议或改判历史，不合main、不动历史Tag/ZIP。

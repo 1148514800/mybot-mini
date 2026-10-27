@@ -1,0 +1,36 @@
+{
+  "authorization": "GRANTED_1_REQUEST",
+  "global_limit": 1,
+  "case": "D01",
+  "attempts": 1,
+  "physical_requests": 1,
+  "http_attempts": 1,
+  "deepseek": 1,
+  "glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "retry": 0,
+  "fallback_dispatch": 0,
+  "fallback_admission_blocked": false,
+  "accounting_admission_records": 1,
+  "provider_observed_usage": {
+    "prompt_tokens": 480,
+    "completion_tokens": 219,
+    "total_tokens": 699
+  },
+  "observed_usage_numeric_fields_complete": true,
+  "provider_observed_usage_origin": "unchanged SDK chunk before protocol rejection; metadata only, not input estimate",
+  "settled_ledger_usage": {
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "total_tokens": null
+  },
+  "usage_trusted_complete": false,
+  "usage_compatibility": "UNKNOWN",
+  "natural_eof": false,
+  "sdk_closed": true,
+  "estimated_input_is_not_provider_usage": true,
+  "cost": null,
+  "price_verified": false,
+  "billing_verified": false
+}
