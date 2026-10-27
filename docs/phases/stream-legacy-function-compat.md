@@ -15,3 +15,5 @@ macOS/Python3.12+/uv：`uv run python -m scripts.check_stream_legacy_function`�
 当前验收、统计、冻结与限制见[专题报告](../reports/stream-legacy-function-compat/acceptance-report.md)。本轮真实请求0，D02须未来新的GRANTED_1_REQUEST；旧R01/D01不改判、不补跑。
 
 最终验收：2051个去重unittest PASS（新增67），13个Chrome合成场景、7次自身服务exit0；真实模型0。D02已唯一prepare/freeze，源码SHA 06d53077c3f35985506c835b42d29fd8cd394aa7，verify通过、Attempt/reservation/HTTP均0。新Live须另有明确授权。
+
+独立D02真实Live已在新精确授权后完成，见[Live报告](../reports/stream-legacy-function-compat/live-results/execution-01/acceptance-report.md)：实际1/1，514块，末块legacy空串/0extra正常接受，stop/自然EOF/关闭/持久hash均成立，Protocol PASS、Clean Shutdown PASS。可信Usage475/512/987、cost=null，浏览器同钟可见2.700s。另有7个段落块的格式偏离，不宣称所有任务语义通过。旧R01/D01失败不改，D02额度耗尽，不再启动。

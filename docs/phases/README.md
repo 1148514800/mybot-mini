@@ -80,4 +80,4 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 
 - [Streaming Diagnostic Canary](stream-diagnostic-canary.md)：原离线冻结保留；新授权后唯一Live实际1/1，Protocol FAIL、Clean Shutdown PASS，见[真实报告](../reports/stream-diagnostic-canary/live-results/execution-01/acceptance-report.md)。
 
-- [Streaming Legacy Function Call兼容](stream-legacy-function-compat.md)：SDK语义空对象、严格legacy拒绝、有界诊断、D02独立冻结准备；零真实模型，最新验收见[报告](../reports/stream-legacy-function-compat/acceptance-report.md)。
+- [Streaming Legacy Function Call兼容](stream-legacy-function-compat.md)：原离线修复/冻结保留；新D02 Live实际1/1，Protocol/Clean Shutdown PASS，格式有偏离，见[真实报告](../reports/stream-legacy-function-compat/live-results/execution-01/acceptance-report.md)。

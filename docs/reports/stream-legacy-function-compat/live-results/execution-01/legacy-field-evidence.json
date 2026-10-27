@@ -1,0 +1,30 @@
+{
+  "case": "D02",
+  "last_chunk": {
+    "chunk_index": 514,
+    "choices_count": 1,
+    "delta_present": true,
+    "role_present": true,
+    "content_type": "string",
+    "content_length": 0,
+    "tool_calls_count": 0,
+    "finish_reason": "stop",
+    "legacy_function_call_present": true,
+    "legacy_function_call_kind": "object",
+    "legacy_name_kind": "string",
+    "legacy_name_length": 0,
+    "legacy_arguments_kind": "string",
+    "legacy_arguments_length": 0,
+    "legacy_extra_field_count": 0,
+    "legacy_semantically_empty": true
+  },
+  "ring_size": 8,
+  "accepted_finish": "stop",
+  "terminal_count": 1,
+  "protocol": "complete",
+  "error_code": null,
+  "natural_eof": true,
+  "sdk_closed": true,
+  "wire_json_reconstructed": false,
+  "old_D01_payload_reconstructed": false
+}

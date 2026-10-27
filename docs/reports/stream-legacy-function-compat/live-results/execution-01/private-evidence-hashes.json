@@ -1,0 +1,17 @@
+{
+  "operator_files": {
+    "preflight.json": "3ccd7b0f14961531ed39a21eb607555ea872c7cc36ba631d1f0f4179ac03d77b",
+    "browser-isolation.json": "8889744494edb6bc0a3091f3a11743a0fcadf742fca3aedf69de8255a406cc92",
+    "execution.json": "491f5b13befd88ce2b6ae5f1d189f915e864bc4ffb192d8355747ad208f6b0ca",
+    "postflight.json": "aef84f588100d1d5f69aea649bdda4c250758ab0dea5b8e72f815c8a2f3fbff2",
+    "execute.py": "cc54fa85747499052acfb94a7e8c8fba2febe106b23e31f880ff64388f2905d2"
+  },
+  "batch_files": {
+    "prepared.json": "a5b60407c612744a26018e41d76c2118d064097a500b9be4da6b27d87aaf7841",
+    "freeze.json": "e9178322238ccddc6f51dbb38d82dfef4e494aff7ba5dc0b7201c11066bee4af",
+    "private/diagnostics.json": "6b0ced16cecc9c2960f4d49ce0d16a6a1b08edf2a03b64774a09ad55f151877f",
+    "private/cleanup.json": "589a3f11cb60aae340fbe0b6ba3608466720f45797adaa79a4aa876c76d76369",
+    "private/requests.sqlite": "2bfa51af50c027c5d26a628bc3c77ce6ece80290a889d41f7b0e4a147dd3bf23",
+    "private/session-events.sqlite3": "2d1e5a11c4b8f2f7eb1ce6d2ed84564dbd15fdb8e513ca7aa497a142d8a569c8"
+  }
+}

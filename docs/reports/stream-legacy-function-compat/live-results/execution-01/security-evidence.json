@@ -1,0 +1,18 @@
+{
+  "tracked_and_new_files_scanned": 1404,
+  "actual_key_matches": 0,
+  "forbidden_runtime_assets": 0,
+  "frozen_source_matches": true,
+  "authority_offline_source_hashes_match": true,
+  "source_dependencies_and_old_reports_unchanged": true,
+  "original_offline_reports_unchanged": true,
+  "old_private_assets_opened": false,
+  "raw_model_reply_exported": false,
+  "usage": {
+    "real_requests": 1,
+    "attempts": 1,
+    "unsettled": 0,
+    "http_attempts": 1
+  },
+  "real_requests": 1
+}

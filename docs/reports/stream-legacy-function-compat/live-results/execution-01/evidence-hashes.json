@@ -1,0 +1,20 @@
+{
+  "acceptance-report.md": "e42d323797406cb7fad9f39f65b14107777581e1135fa6580f5e2f71c1218038",
+  "browser-acceptance.md": "ec7c33534858f6cdc67f5a27b4a8d5d07ddfb9deca40058c05243944d9047ca3",
+  "browser-evidence.json": "f496e0a3ad0da6192f13d6ea27e67ad0db2bb333bc6f93792ef38e22e8aad964",
+  "browser-isolation-evidence.json": "8889744494edb6bc0a3091f3a11743a0fcadf742fca3aedf69de8255a406cc92",
+  "case-results.md": "f51528f6d3f90430d814ee2bb34557f84e8d3a84521ae7d8d646406810a22db2",
+  "integrity-evidence.json": "aef84f588100d1d5f69aea649bdda4c250758ab0dea5b8e72f815c8a2f3fbff2",
+  "legacy-field-evidence.json": "f603df187265012170b0ae99a0f95a9fc19769fb1ca4d2a9b631ec1e716cca3b",
+  "next-stage-recommendations.md": "3b46fbc1aaadedb04b087385bb790e2c7f6ff94930a5922349bb1bbd32a0064f",
+  "preflight-evidence.json": "3ccd7b0f14961531ed39a21eb607555ea872c7cc36ba631d1f0f4179ac03d77b",
+  "private-evidence-hashes.json": "ac457800caf7303a8d9c3f7d3835071408912435265f3fb5c1094b8610760fb7",
+  "protocol-diagnostics.md": "5201c525ba99ee08772dc41b5aa138fd33da88660242f053fa4b32f1ed490abb",
+  "protocol-evidence.json": "ebacd54e3e1d2ea1f82b53cd83e27a0b126044ae21bb0d055e90b27d8178a933",
+  "resource-usage.json": "68689f8b79d06e46d0505f257983845b55897c4aab5351baee23cc9232cb38b2",
+  "screenshots/D02-terminal-redacted.png": "bfe2c9e1d1b54ddd1260ce13e1cc21d88a84a547f1595b82874dd0cc9ce87d72",
+  "security-audit.md": "2ff4ee60113013ef55944a171a45c6ad950b3c7930d1dab07dd7ecbda1c5b276",
+  "security-evidence.json": "7def246297d3c743d427af3070c5fcaa1c4f9fcf5bfa0142b3b6504cc6ee0323",
+  "shutdown-evidence.json": "189fa067b371d24bb499baaf7d17b0ca6ae7916c0eb886ec19c35d466f849d00",
+  "stream-timing.json": "1aec599a4e87eb0cb0faf6b9c223d5aa9827afd1402d60fa8dc7300799ad1a80"
+}

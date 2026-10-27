@@ -1,0 +1,29 @@
+{
+  "operator_wait": {
+    "exit_code": 0,
+    "seconds": 1.1137695421930403,
+    "verified_child_sigint": false,
+    "port_released": true
+  },
+  "native_runtime": {
+    "runtime_closed": true,
+    "cleanup_uncertain": false,
+    "sdk_streams_closed": true,
+    "lease_released": true,
+    "database_consistent": true,
+    "process_exit_code": null,
+    "note": "operator must independently verify exit code and port; this is lifespan evidence only"
+  },
+  "owned_processes_exited": {
+    "42744": true,
+    "42745": true
+  },
+  "independent_lease_available": true,
+  "port": 8900,
+  "port_released": true,
+  "database_integrity": "ok",
+  "execution_uncertain_count": 0,
+  "unsettled_reservations": 0,
+  "profile_removed": true,
+  "clean_shutdown": "PASS"
+}

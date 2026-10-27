@@ -1,0 +1,25 @@
+{
+  "browser": {
+    "version": "152.0.7977.83",
+    "headed": true,
+    "chromium_sandbox": true,
+    "profile_fresh_0700": true,
+    "actual_profile_verified": true,
+    "initial_cookie_jar_empty": true,
+    "profile_path_sha256": "becdb6aaf4792363f6315ab0f45b329dc0f97a5402e95e106818d34c0f7eacde",
+    "pid": 42719
+  },
+  "dom_submit_attempts": 1,
+  "message_post_status": 202,
+  "session_id": "895125dd435d44ccb0436c525d350fea",
+  "status": "completed",
+  "preview_seen_during_running": true,
+  "browser_submit_to_visible_ms": 2700.0,
+  "steer_count": 0,
+  "profile_removed": true,
+  "cookie_conflict": false,
+  "user_chrome_operated": false,
+  "old_service_operated": false,
+  "raw_reply_exported": false,
+  "only_terminal_activity_screenshot": true
+}

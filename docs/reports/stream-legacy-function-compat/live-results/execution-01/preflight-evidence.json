@@ -1,0 +1,38 @@
+{
+  "authorization": "GRANTED_1_REQUEST",
+  "input_head": "18f89ddd63e1b5fe6d429424cdcd5a6f3e520450",
+  "preregistration": "06d53077c3f35985506c835b42d29fd8cd394aa7",
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "ports_listening": {
+    "8765": false,
+    "8899": false,
+    "8900": false
+  },
+  "lease_available": true,
+  "batch_open_by_other_process": false,
+  "processes": [
+    {
+      "pid": 39852,
+      "uid": 501,
+      "ppid": 84752,
+      "module": "mybot.web",
+      "cwd": [
+        "/Users/godblack/.codex/worktrees/post-live-quality-hardening/mybot-mini"
+      ]
+    }
+  ],
+  "old_private_assets_opened": false,
+  "original_freeze_verified": true
+}

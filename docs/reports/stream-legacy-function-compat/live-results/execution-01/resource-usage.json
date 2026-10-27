@@ -1,0 +1,37 @@
+{
+  "authorization": "GRANTED_1_REQUEST",
+  "case": "D02",
+  "global_limit": 1,
+  "attempts": 1,
+  "physical_requests": 1,
+  "http_attempts": 1,
+  "deepseek": 1,
+  "glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "retry": 0,
+  "fallback": 0,
+  "fallback_admission_blocked": false,
+  "accounting_admission_records": 1,
+  "observed_provider_usage": {
+    "prompt_tokens": 475,
+    "completion_tokens": 512,
+    "total_tokens": 987
+  },
+  "observed_usage_fields_complete": true,
+  "settled_ledger_usage": {
+    "prompt_tokens": 475,
+    "completion_tokens": 512,
+    "total_tokens": 987
+  },
+  "usage_trusted_complete": true,
+  "observed_equals_settled": true,
+  "usage_compatibility": "PASS for this sample",
+  "provider_input_tokens": 475,
+  "provider_output_tokens": 512,
+  "provider_total_tokens": 987,
+  "input_estimate_is_not_provider_usage": true,
+  "cost": null,
+  "price_verified": false,
+  "billing_verified": false
+}
