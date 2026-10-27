@@ -1,0 +1,25 @@
+{
+  "authorization": "GRANTED_2_REQUESTS",
+  "input_head": "8a01520d7c8c7c60735f193e9afc5ae6a1f51a09",
+  "preregistration": "4a8fdb64a22811b20aebb85d1e1d25e9f385ad67",
+  "frozen_verify": "PASS",
+  "source_files": 320,
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "lease_available": true,
+  "port": 8902,
+  "port_acquired_released": true,
+  "external_database_holders": false,
+  "old_assets_accessed": false
+}

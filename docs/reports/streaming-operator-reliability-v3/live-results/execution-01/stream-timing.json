@@ -1,0 +1,28 @@
+{
+  "clock": "host monotonic; not browser visibility clock",
+  "browser_first_visible_preview_latency": null,
+  "stop_to_sdk_close_latency": null,
+  "streams": {
+    "N01": {
+      "sdk_admission_monotonic": 1718137.697470958,
+      "http_dispatch_monotonic": 1718137.858174541,
+      "first_chunk": 1718153.212429916,
+      "first_nonterminal_delivery_monotonic": 1718153.213007541,
+      "first_text": 1718161.215992083,
+      "first_sse_emit": 1718161.221177875,
+      "barrier_planned_seconds": 8,
+      "controlled_barrier_seconds": 8.001271292101592
+    },
+    "N02": {
+      "sdk_admission_monotonic": 1718167.227831458,
+      "http_dispatch_monotonic": 1718167.37071475,
+      "first_chunk": 1718169.905031375,
+      "first_nonterminal_delivery_monotonic": 1718169.905454541,
+      "first_text": null,
+      "first_sse_emit": null,
+      "barrier_planned_seconds": 8,
+      "controlled_barrier_seconds": 0.09916204097680748
+    }
+  },
+  "note": "N01 actual barrier 8.001s; N02 planned 8s interrupted after 0.099s; barriers are not natural provider latency"
+}

@@ -1,0 +1,16 @@
+{
+  "N01": {
+    "graceful": true,
+    "pid": 30211,
+    "port": 8902,
+    "ready": false,
+    "state": "closed"
+  },
+  "N02": {
+    "graceful": true,
+    "pid": 30475,
+    "port": 8902,
+    "ready": false,
+    "state": "closed"
+  }
+}

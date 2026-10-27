@@ -1,0 +1,93 @@
+{
+  "frozen_verify": "PASS",
+  "source_files": 320,
+  "usage": {
+    "real_requests": 2,
+    "attempts": 2,
+    "unsettled": 0,
+    "http_attempts": 2
+  },
+  "lease_available": true,
+  "port_acquired_released": true,
+  "sqlite_integrity": {
+    "ledger": "ok",
+    "event_store": "ok"
+  },
+  "event_counts": {
+    "sessions": 3,
+    "events": 15,
+    "turns": 2,
+    "messages": 3,
+    "tools": 0
+  },
+  "turn_states": [
+    {
+      "state": "cancelled",
+      "count": 1
+    },
+    {
+      "state": "completed",
+      "count": 1
+    }
+  ],
+  "cases": [
+    {
+      "id": "N01",
+      "status": "completed"
+    },
+    {
+      "id": "N02",
+      "status": "completed"
+    }
+  ],
+  "reservations": [
+    {
+      "id": 1,
+      "case_id": "N01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 447,
+        "completion_tokens": 111,
+        "total_tokens": 558
+      }
+    },
+    {
+      "id": 2,
+      "case_id": "N02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "cancelled",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      }
+    }
+  ],
+  "halt": [],
+  "frozen_assets_unchanged": true,
+  "steer_source": {
+    "event_id": "96566e89cc9a4231907af57a3d257f59",
+    "source": "user",
+    "sequence": 5,
+    "frozen_text_matches": true,
+    "session_id": "e57ebf465ff644e19b945ef2e551e601",
+    "turn_id": "f5af4464ba7042e78e298f757994866a",
+    "matches_browser_session_turn": true
+  },
+  "private_asset_hashes": {
+    "prepared.json": "037dbc2a71c304e0e5f42b7a0cd6c4f48d0197e5c0bfe039f6623cb16355f59d",
+    "freeze.json": "39e49dc1b1c6c376a4bbdfe0fcb50ca795d67878e8cc248f0ea95c9c9b31eedd",
+    "browser-isolation.json": "f5fe1c8cdac9a5b0b51ae27d0f9f83cda8317972fb17455c7fdb85e1c20946df"
+  },
+  "assistant_messages_by_case": {
+    "N01": 1,
+    "N02": 0
+  }
+}

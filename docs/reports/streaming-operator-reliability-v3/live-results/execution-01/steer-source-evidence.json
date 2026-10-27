@@ -1,0 +1,58 @@
+{
+  "sqlite_source": {
+    "event_id": "96566e89cc9a4231907af57a3d257f59",
+    "source": "user",
+    "sequence": 5,
+    "frozen_text_matches": true,
+    "session_id": "e57ebf465ff644e19b945ef2e551e601",
+    "turn_id": "f5af4464ba7042e78e298f757994866a",
+    "matches_browser_session_turn": true
+  },
+  "events": [
+    {
+      "monotonic": 1718153.322806583,
+      "stage": "queued",
+      "steer_id": "0a6e30dde56248c7ab3d0864aace6711",
+      "source_event_id": "96566e89cc9a4231907af57a3d257f59",
+      "turn_id": "f5af4464ba7042e78e298f757994866a",
+      "registered_text_match": true
+    },
+    {
+      "monotonic": 1718153.323015416,
+      "stage": "web_steer_accepted",
+      "turn_id": "f5af4464ba7042e78e298f757994866a",
+      "steer_id": "0a6e30dde56248c7ab3d0864aace6711",
+      "source_event_id": "96566e89cc9a4231907af57a3d257f59",
+      "in_flight_request_unchanged": true
+    },
+    {
+      "monotonic": 1718161.236699875,
+      "stage": "not_applied",
+      "steer_id": "0a6e30dde56248c7ab3d0864aace6711",
+      "source_event_id": "96566e89cc9a4231907af57a3d257f59",
+      "turn_id": "f5af4464ba7042e78e298f757994866a",
+      "registered_text_match": true
+    }
+  ],
+  "steers": [
+    {
+      "steer_id": "0a6e30dde56248c7ab3d0864aace6711",
+      "source_event_id": "96566e89cc9a4231907af57a3d257f59",
+      "turn_id": "f5af4464ba7042e78e298f757994866a",
+      "status": "not_applied",
+      "cause": "no_next_step"
+    }
+  ],
+  "next_step_admitted": false,
+  "subsequent_model_request": false,
+  "in_flight_unchanged": true,
+  "operator_review": {
+    "original_reply_language": "Chinese",
+    "four_numbered_natural_sentences": true,
+    "original_task_purpose_accurate": true,
+    "heuristic_count": 8,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "explanation": "List numbering dots plus four sentence endings; independent review finds four sentences, not an automatic eight-sentence FAIL",
+    "raw_reply_published": false
+  }
+}

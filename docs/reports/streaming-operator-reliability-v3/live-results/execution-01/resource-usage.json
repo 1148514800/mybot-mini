@@ -1,0 +1,91 @@
+{
+  "global_limit": 2,
+  "case_limits": {
+    "N01": 1,
+    "N02": 1
+  },
+  "physical_reservations": 2,
+  "logical_requests": 2,
+  "actual_http_attempts": 2,
+  "attempts": 2,
+  "unsettled": 0,
+  "deepseek": 2,
+  "glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "retries": 0,
+  "fallback_attempts": 0,
+  "returned": 1,
+  "cancelled": 1,
+  "failed_model_requests": 0,
+  "provider_usage_complete": false,
+  "known_usage_subtotal": {
+    "prompt_tokens": 447,
+    "completion_tokens": 111,
+    "total_tokens": 558
+  },
+  "whole_batch_usage": {
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "total_tokens": null
+  },
+  "usage_by_case": {
+    "N01": {
+      "observed": {
+        "prompt_tokens": 447,
+        "completion_tokens": 111,
+        "total_tokens": 558
+      },
+      "settled": {
+        "prompt_tokens": 447,
+        "completion_tokens": 111,
+        "total_tokens": 558
+      }
+    },
+    "N02": {
+      "observed": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      },
+      "settled": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      }
+    }
+  },
+  "cost": null,
+  "cost_reason": "Deployment price unavailable and N02 usage unconfirmed",
+  "provider_side_compute_or_billing_after_cancel": "UNKNOWN",
+  "ledger_rows": [
+    {
+      "id": 1,
+      "case_id": "N01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 447,
+        "completion_tokens": 111,
+        "total_tokens": 558
+      }
+    },
+    {
+      "id": 2,
+      "case_id": "N02",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "cancelled",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      }
+    }
+  ]
+}

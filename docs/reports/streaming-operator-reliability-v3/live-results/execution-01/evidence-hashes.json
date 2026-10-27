@@ -1,0 +1,23 @@
+{
+  "steer-source-evidence.json": "67e88d644a87d8189babef1bce222945f90e620f9c99de0d507fa67196a59f55",
+  "protocol-diagnostics.md": "e792a02213eaa963cc7a7f75d003162b390e51f91c02eaab687ed12c82cde64c",
+  "browser-acceptance.md": "2ef9ed7c9651276c801da23455bd3a208db2730aae315a3b52fdf443887782db",
+  "postflight.json": "d2f4d027c46e6181f809bc6f0ea8b1879c6388249eda816f31ae5b796f86acbf",
+  "browser-operator-evidence.json": "7c404e9bc18b5f1f9feac47ccbad0c5f63cb9217d507befbb0bde34649f79ece",
+  "browser-isolation.json": "b98421063b02b4b1537f758afc3091f9656d4e103be87afe44f8490d1fa42a6f",
+  "service-status-evidence.json": "ef14e96cf27b7926d0ff3f4275ed109c48272670fd9c418ada9ba533542aac42",
+  "security-audit.md": "27245308ffafc787d2dc94a95bf45c2a832e3e5f15405dcbf5fbdada50a4a9cf",
+  "stream-timing.json": "882ec9a2eabbf43dba65efb0fca84432576ecc942b72202bc357110ddadb73ee",
+  "resource-usage.json": "d75d33858fd500276601bbce18f5b0f95563488c6ad565fb2342dcfd69822f7f",
+  "shutdown-evidence.json": "7a015e16c08bf602621e9046ab23580685535d20b04b8d170b50840d48d17410",
+  "next-stage-recommendations.md": "75bdecd3e2fa42928a9f5fbfbb97ea14c67d3e8fa51d9ae8613cd95f07b6a87f",
+  "delivery-validation.json": "3d2b36c067f5628d4d6add2d45edcc47326421c044aba3108bc43c740a92ba66",
+  "protocol-evidence.json": "3bc191bd61dcee8f09207f25f368d3bb6200424ca3fd1fc48b1e1ff083d40b16",
+  "private-log-hashes.json": "c4ebc30df2c21e47261a2ebbed98900189b20352e9bdbf34cce7e36fd62fe0cd",
+  "preflight.json": "ea537679b5407892369420cf6233d430760aaa2a303fba3c583e7718f4e1fd8e",
+  "case-results.md": "a3d187f4e02c46032c28ed5506596df15c402133c62130d5e42b2b5e00668dad",
+  "acceptance-report.md": "1ee826f38d6061a5351ff09ee96bce8ad1efd72436836559b4d9017877b9ba4f",
+  "screenshots/N01-terminal.png": "1234704cf357d48fcf34b08bf624797702b57d23e42c282ac3a378c09587d907",
+  "screenshots/N01-notice.png": "2e70dcbc75fe7700f24c501a2397c9272e8041b0ce40a6efa3c95808fa945f22",
+  "screenshots/N02-terminal.png": "e2c96940abf3e20fa759b29878359a385c8b8eca266afb6123b31657e6bb6536"
+}

@@ -15,3 +15,5 @@ macOS/Python3.12+/uv：`uv sync --frozen`；`uv run python -m unittest scripts.c
 最终离线2097去重unittest（新增78）与完整check_phase程序式检查通过；正常及业务异常Chrome自动清理通过，故障注入保留主/清理错误；N01/N02真实Chrome+SDK MockTransport通过、真实Provider0。唯一新批次prepare/freeze/verify完成，320源码hash一致，两库/工作区/配置身份完整、0 Attempt/reservation/HTTP，停在新授权门。实现SHA 07c25ce181b2af3dc368815ec4956a3ff05c75a2，预注册/冻结SHA 4a8fdb64a22811b20aebb85d1e1d25e9f385ad67。无编号归档，不生成或移动历史Tag/ZIP。
 
 archive-ready: true
+
+新GRANTED_2_REQUESTS后真实N01/N02各一次完成，2/2请求耗尽；N01 queued→not_applied、113chunks完整持久、UI/刷新通过；N02首块无文本后Stop、SDK关闭、cancelled/不可信/Usage null。两服务同8902 exit0、Chrome/Profile自动清理通过，冻结320源码/两库/配置保持。DeepSeek2、GLM/重试/摘要0；可确认N01 Token447/111/558，N02未知故全批合计null，cost=null。计数器对四条编号句给出8并要求review，独立审阅四句；不篡改原观察或旧T01 FAIL。见[新Live验收](../reports/streaming-operator-reliability-v3/live-results/execution-01/acceptance-report.md)，本样本不能推断后期可见文本取消或远端计费停止。

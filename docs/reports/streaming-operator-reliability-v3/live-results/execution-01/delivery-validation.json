@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "source_files": 320,
+  "frozen_verify": "PASS",
+  "source_and_previous_reports_modified": 0,
+  "credentials_found": 0,
+  "raw_response_published": false,
+  "forbidden_assets": 0,
+  "reviewed_files": 1533,
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "diff_check": "PASS",
+  "new_unit_tests": 0,
+  "prior_offline_tests_not_recounted": true,
+  "authoritative_usage": {
+    "real_requests": 2,
+    "attempts": 2,
+    "unsettled": 0,
+    "http_attempts": 2
+  }
+}

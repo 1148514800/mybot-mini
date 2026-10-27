@@ -1,0 +1,9 @@
+# Live security and integrity audit
+
+Preflight exact input HEAD/clean branch and original320 frozen source hashes/configuration/workspace identity, private event/ledger DB inodes/permissions/integrity, empty events/Attempts/reservations, no external DB holders, Lease and8902 single-bind availability verified. New browser isolation probe passed before either Case. Grant applies only to this batch; old balances/old private stores not opened.
+
+Postflight original freeze verify PASS, both integrity_check=ok, original prepared/freeze/browser-proof hashes unchanged, workspace/provider bytes and identities unchanged. Two returned/cancelled reservations each HTTP1, two unique case Attempts, zero unsettled, no HALT or execution_uncertain. User Steer source event exact frozen text/source=user/sequence5 verified directly against this new SQLite; only event IDs, match booleans and hashes exported.
+
+Registry empty; zero tool execution, commands/MCP/Skills/Coding/summary/Judge. No source/parameter/scoring edits, retry, fallback, rerun, extra budget or permission expansion. Stop's unknown Usage and untrusted response remain unknown/untrusted. Both own processes exit0, port reacquired/released, Lease available, Context closed once and own browser/profile cleanup automatic. No unknown process signalled or lock removed.
+
+Original user Chrome/8765 and other workspaces/settings/chat/cookies untouched; no promises about ancient memory sessions. Old T01 Semantic FAIL/T02 startup FAIL/T03 BLOCKED,3/6 and3011 tokens, R01/D01/D02 reports/HALT and databases remain unmodified. Main/Tag/ZIP/shared Git AppleDouble files not processed. Reports only contain bounded structural metadata and redacted screenshots, no original full prompt/reply/chunk/tool args, credentials, Cookie, CSRF, Receipt/nonce, browser data or SQLite. Real credential-value and tracked-asset scan plus protected-diff/source-hash checks recorded in delivery-validation.json.
