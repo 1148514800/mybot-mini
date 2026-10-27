@@ -12,6 +12,6 @@ codex/streaming-steer-real-uat-v2，基线54eeeb80be0cdef65f25affc6eae6c907474cb
 
 ## 下一步与边界
 
-先提交全部UAT与合同，干净后唯一prepare/freeze/verify到~/.mybot-mini/uat/streaming-steer-real-v2-20261026/；端口8901。Acceptance只文档，不再改冻结源码，不重复prepare/freeze。未来须新GRANTED_6_REQUESTS及当前环境隔离核验，T01→02→03每Case一次、不可挪预算或补跑；协议/权限/预算/存储/不确定异常HALT，清理不清HALT。语义失败独立记分。
+预注册/冻结源码6337a20ae926f28cae0446f5e008bc754d2e14e0；~/.mybot-mini/uat/streaming-steer-real-v2-20261026/已唯一prepare/freeze/verify，0请求/Attempt/reservation/HTTP、事件库空、8901/Lease可用。Acceptance只文档，不再改冻结源码，不重复prepare/freeze。未来须新GRANTED_6_REQUESTS及当前环境隔离核验，T01→02→03每Case一次、不可挪预算或补跑；协议/权限/预算/存储/不确定异常HALT，清理不清HALT。语义失败独立记分。
 
 旧R01/D01/D02私有资产未打开，旧真实成绩保持；用户Chrome/8765/私人workspace未操作。main/Tag/ZIP不动。共享.git AppleDouble旁索引只读核对，正式pack verify0，旁文件不处理。

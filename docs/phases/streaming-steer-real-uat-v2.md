@@ -13,3 +13,5 @@ macOS/Python3.12+/uv：`uv run python -m scripts.check_streaming_steer_real_uat_
 本次相关388去重测试（新增47），不称2051全量重跑；三个Chrome合成场景5次Mock模型HTTP、三个服务exit0，真实0。首轮元数据字段重名在UAT内修复，配对证据增加批次索引。常见误区：queued/applied/HTTP/返回/遵从不等价；8秒屏障不是Provider延迟；stop/GeneratorExit不是EOF；空场景前提不能用补问制造成功。
 
 最终状态见[报告](../reports/streaming-steer-real-uat-v2/acceptance-report.md)。原R01/D01/D02不改判，下一步仅新授权后的原冻结Live，不复用旧额度。
+
+唯一prepare/freeze已完成，冻结源码SHA 6337a20ae926f28cae0446f5e008bc754d2e14e0；verify通过，Live请求/Attempt/reservation/HTTP均0，事件库空，停在NOT_GRANTED。

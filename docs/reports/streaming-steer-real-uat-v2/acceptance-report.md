@@ -1,6 +1,6 @@
-# OFFLINE PREPARATION PASS / LIVE BLOCKED — freeze pending
+# OFFLINE PREPARATION PASS / LIVE BLOCKED
 
-LIVE_AUTHORIZATION: NOT_GRANTED。本轮真实DeepSeek/GLM/摘要/Judge请求均0，T01–T03 Live未执行，0 Attempt/0 reservation的唯一Live批次尚待提交后prepare/freeze。旧D02已耗尽的授权不继承。
+LIVE_AUTHORIZATION: NOT_GRANTED。本轮真实DeepSeek/GLM/摘要/Judge请求均0，T01–T03 Live未执行，唯一Live批次已prepare/freeze，0 Attempt/0 reservation/0 HTTP，事件库空。旧D02已耗尽的授权不继承。
 
 独立分支codex/streaming-steer-real-uat-v2，基线54eeeb80be0cdef65f25affc6eae6c907474cb19。只新增UAT与报告，生产mybot、静态JS、依赖及旧脚本/报告均未改；保留旧R01/D01/D02真实成绩、HALT与私有库，不合main、不改Tag/ZIP。合同原文和评分见preregistration.md。
 
@@ -12,4 +12,4 @@ LIVE_AUTHORIZATION: NOT_GRANTED。本轮真实DeepSeek/GLM/摘要/Judge请求均
 
 SDK/HTTP/来源证据只证明对应层级。原生applied是on_dispatch准入（甚至早于UAT reservation），不能推出远端处理或语义遵从；真正Semantic Adherence仍须未来实际工具顺序与回复独立评审。不因直接答复/时序错过补跑，也不扩大预算。
 
-最终冻结及零计数由独立Acceptance提交补充；此后不修改已验证UAT源码。Live仍需新GRANTED_6_REQUESTS和全部当前环境预检，只可T01→T02→T03一次。cost=null，原真实能力未知见remaining-risks。
+预注册/冻结源码提交`6337a20ae926f28cae0446f5e008bc754d2e14e0`，唯一prepare、唯一freeze与verify完成；302源文件hash等于权威回归版本，原配置/workspace字节与inode/两库inode及完整性一致，8901可绑定、Lease可用。Acceptance只改文档和脱敏证据，冻结后源码未改。Live仍需新GRANTED_6_REQUESTS和全部当前环境预检，只可T01→T02→T03一次。cost=null，原真实能力未知见remaining-risks。

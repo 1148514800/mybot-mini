@@ -1,0 +1,49 @@
+{
+  "status": "OFFLINE_PREPARATION_PASS_LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "preregistration_sha": "6337a20ae926f28cae0446f5e008bc754d2e14e0",
+  "frozen_source_sha": "6337a20ae926f28cae0446f5e008bc754d2e14e0",
+  "plan_sha256": "54f0625a10e083c8709fbbe1881f9d14db0afb4c71edb9a1c5c0bebb1592d59c",
+  "global_limit": 6,
+  "case_limits": {
+    "T01": 4,
+    "T02": 1,
+    "T03": 1
+  },
+  "attempt_limit_per_case": 1,
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "reservation_rows": 0,
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "unique_prepare": true,
+  "unique_freeze": true,
+  "source_files": 302,
+  "authority_test_hashes_match": true,
+  "provider_bytes_verified": true,
+  "workspace_bytes_and_inode_verified": true,
+  "database_inodes_verified": true,
+  "sqlite_integrity": "ok",
+  "lease": "acquired_and_released",
+  "port": 8901,
+  "port_bind": "PASS",
+  "private_asset_hashes": {
+    "prepared.json": "99f9054265d3a4ab8e7c27f4e72047667bf1c7bb5f5376cfa405424ca2531def",
+    "freeze.json": "33643e0913e76ac723382ac50bd8fb4b6dcd1ccb036f485bdbf13eee0d13b4e1",
+    "browser-isolation.json": "bb69e956403a00ba22a8013397c2ca0fc39fa512f92289ce91099101bafbdded"
+  },
+  "real_deepseek": 0,
+  "real_glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "cost": null
+}
