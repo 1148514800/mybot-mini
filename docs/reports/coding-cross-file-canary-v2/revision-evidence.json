@@ -1,0 +1,223 @@
+{
+  "a": {
+    "revision": 1,
+    "initial_hashes": {
+      "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+      "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+    },
+    "final_hashes": {
+      "csvmini/parser.py": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+      "csvmini/report.py": "1e9660266a34f4bac57bd478d30422900c07fee4c01c65d42f797f0c317afbc9"
+    },
+    "native_patch_chain": [
+      {
+        "revision": 1,
+        "before_hashes": {
+          "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+          "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+        },
+        "after_hashes": {
+          "csvmini/parser.py": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+          "csvmini/report.py": "1e9660266a34f4bac57bd478d30422900c07fee4c01c65d42f797f0c317afbc9"
+        },
+        "changed_files": [
+          "csvmini/parser.py",
+          "csvmini/report.py"
+        ],
+        "cumulative_owned": [
+          "csvmini/parser.py",
+          "csvmini/report.py"
+        ],
+        "receipt_commit_success": true,
+        "preview_to_commit_consistent": true,
+        "native_journal": {
+          "agent_owned_files": 2,
+          "preexisting_user_dirty_files": 0,
+          "files": [
+            {
+              "path": "csvmini/parser.py",
+              "source": "native_patch",
+              "operation": "updated",
+              "preexisting_git_state": "clean_or_not_reported",
+              "original_sha256": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+              "final_sha256": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+              "current_matches": true,
+              "current_state": "matches_agent_result",
+              "first_revision": 1,
+              "last_revision": 1
+            },
+            {
+              "path": "csvmini/report.py",
+              "source": "native_patch",
+              "operation": "updated",
+              "preexisting_git_state": "clean_or_not_reported",
+              "original_sha256": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723",
+              "final_sha256": "1e9660266a34f4bac57bd478d30422900c07fee4c01c65d42f797f0c317afbc9",
+              "current_matches": true,
+              "current_state": "matches_agent_result",
+              "first_revision": 1,
+              "last_revision": 1
+            }
+          ],
+          "other_git_changes": [],
+          "baseline": {
+            "head": "1cc2d7112b375b64528092fc82caa22191687519",
+            "complete": true,
+            "truncated": false,
+            "index_fingerprint": "available",
+            "staged": [],
+            "unstaged": [],
+            "untracked": [],
+            "conflicts": [],
+            "reason": ""
+          },
+          "git_metadata_unchanged": true,
+          "current_status_complete": true,
+          "external_side_effects_possible": false,
+          "undo_status": "undo_unavailable",
+          "undo_eligible": false,
+          "journal_valid": true,
+          "review_scope": "native Patch delta; Git status is not a complete filesystem audit"
+        }
+      }
+    ]
+  },
+  "b": {
+    "revision": 2,
+    "initial_hashes": {
+      "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+      "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+    },
+    "final_hashes": {
+      "csvmini/parser.py": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+      "csvmini/report.py": "1e9660266a34f4bac57bd478d30422900c07fee4c01c65d42f797f0c317afbc9"
+    },
+    "native_patch_chain": [
+      {
+        "revision": 1,
+        "before_hashes": {
+          "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+          "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+        },
+        "after_hashes": {
+          "csvmini/parser.py": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+          "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+        },
+        "changed_files": [
+          "csvmini/parser.py"
+        ],
+        "cumulative_owned": [
+          "csvmini/parser.py"
+        ],
+        "receipt_commit_success": true,
+        "preview_to_commit_consistent": true,
+        "native_journal": {
+          "agent_owned_files": 1,
+          "preexisting_user_dirty_files": 0,
+          "files": [
+            {
+              "path": "csvmini/parser.py",
+              "source": "native_patch",
+              "operation": "updated",
+              "preexisting_git_state": "clean_or_not_reported",
+              "original_sha256": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+              "final_sha256": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+              "current_matches": true,
+              "current_state": "matches_agent_result",
+              "first_revision": 1,
+              "last_revision": 1
+            }
+          ],
+          "other_git_changes": [],
+          "baseline": {
+            "head": "9ea0d74e9323bf3045055211b456f31375195df1",
+            "complete": true,
+            "truncated": false,
+            "index_fingerprint": "available",
+            "staged": [],
+            "unstaged": [],
+            "untracked": [],
+            "conflicts": [],
+            "reason": ""
+          },
+          "git_metadata_unchanged": true,
+          "current_status_complete": true,
+          "external_side_effects_possible": false,
+          "undo_status": "undo_unavailable",
+          "undo_eligible": false,
+          "journal_valid": true,
+          "review_scope": "native Patch delta; Git status is not a complete filesystem audit"
+        }
+      },
+      {
+        "revision": 2,
+        "before_hashes": {
+          "csvmini/parser.py": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+          "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+        },
+        "after_hashes": {
+          "csvmini/parser.py": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+          "csvmini/report.py": "1e9660266a34f4bac57bd478d30422900c07fee4c01c65d42f797f0c317afbc9"
+        },
+        "changed_files": [
+          "csvmini/report.py"
+        ],
+        "cumulative_owned": [
+          "csvmini/parser.py",
+          "csvmini/report.py"
+        ],
+        "receipt_commit_success": true,
+        "preview_to_commit_consistent": true,
+        "native_journal": {
+          "agent_owned_files": 2,
+          "preexisting_user_dirty_files": 0,
+          "files": [
+            {
+              "path": "csvmini/parser.py",
+              "source": "native_patch",
+              "operation": "updated",
+              "preexisting_git_state": "clean_or_not_reported",
+              "original_sha256": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+              "final_sha256": "deb5c5bfb3267c5ecf818c9c5dfe5c7070b09566908fd920ceeb85d3a5a248df",
+              "current_matches": true,
+              "current_state": "matches_agent_result",
+              "first_revision": 1,
+              "last_revision": 1
+            },
+            {
+              "path": "csvmini/report.py",
+              "source": "native_patch",
+              "operation": "updated",
+              "preexisting_git_state": "clean_or_not_reported",
+              "original_sha256": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723",
+              "final_sha256": "1e9660266a34f4bac57bd478d30422900c07fee4c01c65d42f797f0c317afbc9",
+              "current_matches": true,
+              "current_state": "matches_agent_result",
+              "first_revision": 2,
+              "last_revision": 2
+            }
+          ],
+          "other_git_changes": [],
+          "baseline": {
+            "head": "9ea0d74e9323bf3045055211b456f31375195df1",
+            "complete": true,
+            "truncated": false,
+            "index_fingerprint": "available",
+            "staged": [],
+            "unstaged": [],
+            "untracked": [],
+            "conflicts": [],
+            "reason": ""
+          },
+          "git_metadata_unchanged": true,
+          "current_status_complete": true,
+          "external_side_effects_possible": false,
+          "undo_status": "undo_unavailable",
+          "undo_eligible": false,
+          "journal_valid": true,
+          "review_scope": "native Patch delta; Git status is not a complete filesystem audit"
+        }
+      }
+    ]
+  }
+}

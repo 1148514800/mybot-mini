@@ -1,0 +1,47 @@
+{
+  "authorization": "NOT_GRANTED",
+  "case": "C02",
+  "global_physical_limit": 18,
+  "case_physical_limit": 18,
+  "real_physical_requests": 0,
+  "real_http_attempts": 0,
+  "real_deepseek": 0,
+  "real_glm": 0,
+  "model_summary": 0,
+  "paid_judge": 0,
+  "real_supplier_input_tokens": 0,
+  "real_supplier_output_tokens": 0,
+  "real_supplier_total_tokens": 0,
+  "cost": null,
+  "price_basis": "No real request; no verified deployment unit price. Synthetic usage is not supplier usage.",
+  "canonical_batch": {
+    "prepared": false,
+    "frozen": false,
+    "attempts": 0,
+    "reservations": 0,
+    "unsettled": 0
+  },
+  "mock_paths": {
+    "a": {
+      "synthetic_sdk_requests": 7,
+      "synthetic_http_attempts": 7,
+      "synthetic_reported_tokens": 140,
+      "real_requests": 0
+    },
+    "b": {
+      "synthetic_sdk_requests": 9,
+      "synthetic_http_attempts": 9,
+      "synthetic_reported_tokens": 180,
+      "real_requests": 0
+    }
+  },
+  "cap_boundary_test": {
+    "prior_seventeen_rows": "synthetic durable prefill only, not seventeen SDK sends",
+    "one_actual_mock_http": "18th reservation receives HTTP503",
+    "fallback": "budget refuses reservation19 before any backup HTTP",
+    "implicit_sdk_retries": 0,
+    "real_requests": 0
+  },
+  "all_cases_single_attempt": true,
+  "old_C01_remaining_allowance_reused": false
+}

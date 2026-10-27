@@ -1,0 +1,9 @@
+{
+  "README.md": "31941564309b1b1925eaeb7f9768c27a503cf9994adf1ce875939a550e989456",
+  "csvmini/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+  "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723",
+  "tests/test_csvmini.py": "4318c31a4cfcc7ae2ff0b8a624b18e82cd683c4d1a7761d0ecaf92eec76629a0",
+  ".gitignore": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793",
+  "hidden/test_hidden.py": "20045997afa4675691cb87713c37c149e6ca473f65e8a4ec520cfa71e9d00bff"
+}

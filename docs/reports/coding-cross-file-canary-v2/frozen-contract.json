@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "baseline": "c56a03813f9a0472d72d96e5bc3915ff667f0d60",
+  "authorization": "NOT_GRANTED",
+  "required_authorization": "GRANTED_18_REQUESTS",
+  "batch": "/Users/godblack/.mybot-mini/uat/coding-cross-file-canary-v2-20261027",
+  "port": 8904,
+  "cases": {
+    "C02": 18
+  },
+  "global_limit": 18,
+  "message": "请修复 csvmini/parser.py 和 csvmini/report.py，使 parse_records 能使用 csv.DictReader 正确解析带 id、category、amount 表头的 CSV，支持引号和逗号字段，保持 id 原文，去除 category 首尾空白，并将合法金额精确转换为 Decimal；非法或非有限金额、超过两位的小数必须抛出 ValueError。category_totals 必须调用 parse_records，按照类别首次出现顺序精确汇总，返回类别与固定两位小数字符串组成的元组列表，不允许排序或去重。请同时修复这两个模块，不修改其他文件。先阅读代码和测试，使用原生 apply_patch 预览、Receipt 提交，然后运行 python -m unittest discover -s tests -v。测试失败时不得声明修复完成。",
+  "allowed_paths": [
+    "csvmini/parser.py",
+    "csvmini/report.py"
+  ],
+  "final_required_paths": [
+    "csvmini/parser.py",
+    "csvmini/report.py"
+  ],
+  "public_command": [
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-v"
+  ],
+  "command_approval": "independent one-call real WebApproval; Live operator never approves; timeout/deny/unattended means no command/no strict PASS",
+  "stream": true,
+  "include_usage": true,
+  "sdk_retries": 0,
+  "models": {
+    "coco": "deepseek-v4.1-flash",
+    "coco2": "glm-5.3-flash"
+  },
+  "tool_names": [
+    "apply_patch",
+    "create_plan",
+    "git_diff",
+    "git_status",
+    "list_files",
+    "read_file",
+    "read_file_range",
+    "record_task_contract",
+    "run_command",
+    "search_code",
+    "update_plan"
+  ],
+  "autonomy": {
+    "enabled": true,
+    "max_model_requests": 18,
+    "max_tool_calls": 64,
+    "max_patch_write_attempts": 3,
+    "max_command_attempts": 3,
+    "max_no_progress": 4,
+    "max_task_seconds": 900
+  },
+  "input_limit": 32000,
+  "tool_result_max_chars": 16000,
+  "context_max_chars": 120000,
+  "output_reserve": 1800,
+  "timeout_seconds": 90,
+  "web_task_seconds": 1200,
+  "summary": false,
+  "judge_llm": false,
+  "MCP": false,
+  "skills": false,
+  "git_remote": false,
+  "host_score": "existing Seatbelt isolated run_suite, post-turn only, no output to model",
+  "source_integrity": "native Journal + exact bytes/hashes and revision chain, full protected images and Git metadata, no reset/replay",
+  "scoring": [
+    "model_workflow",
+    "patch_committed",
+    "scope",
+    "preview_receipt",
+    "current_revision_tests",
+    "controller_verified",
+    "public_tests",
+    "independent_acceptance",
+    "git_journal",
+    "tool_authority",
+    "human_command_approval",
+    "stream_protocol",
+    "request_usage",
+    "cleanup",
+    "task_correctness"
+  ],
+  "stop": "one Attempt; no rerun; unknown side effects/request/metadata HALT, cleanup remains permitted",
+  "cost": null
+}

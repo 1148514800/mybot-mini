@@ -1,0 +1,268 @@
+{
+  "a": {
+    "mode": "MOCK",
+    "real_requests": 0,
+    "approval_mode": "SYNTHETIC_APPROVAL",
+    "message_submissions": 1,
+    "synthetic_approval_count": 1,
+    "full_effective_argv_inspected": true,
+    "approval_dialog_seen": true,
+    "preview_visible": true,
+    "controller": {
+      "state": "verified",
+      "current_revision": 1,
+      "committed_patches": 1,
+      "test_runs": 1,
+      "test_passes": 1,
+      "test_failures": 0,
+      "tests_passed_after_last_patch": 8,
+      "verification": "valid",
+      "model_requests": 7
+    },
+    "status": "completed",
+    "refresh_requests": 7,
+    "refresh_no_resend": true,
+    "revision_visible": true,
+    "physical_requests": 7,
+    "actual_http_attempts": 7,
+    "shutdown": {
+      "exit_code": 0,
+      "seconds": 2.1155071661341935,
+      "verified_child_sigint": false,
+      "listener_absent": true,
+      "was_ready": true
+    },
+    "native_cleanup": {
+      "runtime_closed": true,
+      "sdk_closed": true,
+      "lease_released": true,
+      "database_consistent": true,
+      "cleanup_uncertain": false
+    },
+    "cleanup": {
+      "primary_error": null,
+      "service_start_error": null,
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "independent_score": {
+      "public": {
+        "status": "pass",
+        "category": null,
+        "tests": 8,
+        "passed": true
+      },
+      "host_acceptance": {
+        "status": "pass",
+        "category": null,
+        "tests": 18,
+        "passed": true
+      },
+      "isolated": true,
+      "strict_functional_pass": true
+    },
+    "assessment": {
+      "dimensions": {
+        "model_workflow": true,
+        "actual_patch_committed": true,
+        "source_scope_compliance": true,
+        "preview_receipt_integrity": true,
+        "current_revision_test_evidence": true,
+        "host_controller_verified": true,
+        "public_tests": true,
+        "independent_acceptance_tests": true,
+        "git_diff_journal_integrity": true,
+        "tool_authority": true,
+        "human_command_approval": false,
+        "streaming_protocol_integrity": true,
+        "request_usage_accounting": true,
+        "workspace_process_cleanup": true,
+        "user_task_correctness": true,
+        "both_files_legally_modified": true
+      },
+      "strict_success": false,
+      "synthetic_workflow_pass": true,
+      "command_approval": "SYNTHETIC_APPROVAL",
+      "usage_complete": true,
+      "cost": null,
+      "contract_metadata": {
+        "contract_tool_calls": 0,
+        "contract_tool_success": 0,
+        "contract_tool_rejection": 0,
+        "provenance_coverage": "UNKNOWN",
+        "independent_requirement_coverage": "UNKNOWN"
+      }
+    },
+    "read_targets": [
+      "tests/test_csvmini.py",
+      "csvmini/parser.py",
+      "csvmini/report.py"
+    ],
+    "native_tool_calls": 6,
+    "all_streams_complete": true,
+    "persistent_audit_after_refresh": {
+      "tool_rows_after_refresh": 6,
+      "tool_states": {
+        "finished": 6
+      },
+      "event_counts": {
+        "assistant.message": 1,
+        "conversation.created": 2,
+        "model.finished": 7,
+        "model.started": 7,
+        "tool.finished": 6,
+        "tool.started": 6,
+        "turn.finished": 1,
+        "turn.started": 1,
+        "user.message": 1
+      },
+      "sqlite_consistent": true,
+      "tool_replay_absent": true
+    }
+  },
+  "b": {
+    "mode": "MOCK",
+    "real_requests": 0,
+    "approval_mode": "SYNTHETIC_APPROVAL",
+    "message_submissions": 1,
+    "synthetic_approval_count": 1,
+    "full_effective_argv_inspected": true,
+    "approval_dialog_seen": true,
+    "preview_visible": true,
+    "controller": {
+      "state": "verified",
+      "current_revision": 2,
+      "committed_patches": 2,
+      "test_runs": 1,
+      "test_passes": 1,
+      "test_failures": 0,
+      "tests_passed_after_last_patch": 8,
+      "verification": "valid",
+      "model_requests": 9
+    },
+    "status": "completed",
+    "refresh_requests": 9,
+    "refresh_no_resend": true,
+    "revision_visible": true,
+    "physical_requests": 9,
+    "actual_http_attempts": 9,
+    "shutdown": {
+      "exit_code": 0,
+      "seconds": 2.115420457907021,
+      "verified_child_sigint": false,
+      "listener_absent": true,
+      "was_ready": true
+    },
+    "native_cleanup": {
+      "runtime_closed": true,
+      "sdk_closed": true,
+      "lease_released": true,
+      "database_consistent": true,
+      "cleanup_uncertain": false
+    },
+    "cleanup": {
+      "primary_error": null,
+      "service_start_error": null,
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "independent_score": {
+      "public": {
+        "status": "pass",
+        "category": null,
+        "tests": 8,
+        "passed": true
+      },
+      "host_acceptance": {
+        "status": "pass",
+        "category": null,
+        "tests": 18,
+        "passed": true
+      },
+      "isolated": true,
+      "strict_functional_pass": true
+    },
+    "assessment": {
+      "dimensions": {
+        "model_workflow": true,
+        "actual_patch_committed": true,
+        "source_scope_compliance": true,
+        "preview_receipt_integrity": true,
+        "current_revision_test_evidence": true,
+        "host_controller_verified": true,
+        "public_tests": true,
+        "independent_acceptance_tests": true,
+        "git_diff_journal_integrity": true,
+        "tool_authority": true,
+        "human_command_approval": false,
+        "streaming_protocol_integrity": true,
+        "request_usage_accounting": true,
+        "workspace_process_cleanup": true,
+        "user_task_correctness": true,
+        "both_files_legally_modified": true
+      },
+      "strict_success": false,
+      "synthetic_workflow_pass": true,
+      "command_approval": "SYNTHETIC_APPROVAL",
+      "usage_complete": true,
+      "cost": null,
+      "contract_metadata": {
+        "contract_tool_calls": 0,
+        "contract_tool_success": 0,
+        "contract_tool_rejection": 0,
+        "provenance_coverage": "UNKNOWN",
+        "independent_requirement_coverage": "UNKNOWN"
+      }
+    },
+    "read_targets": [
+      "tests/test_csvmini.py",
+      "csvmini/parser.py",
+      "csvmini/report.py"
+    ],
+    "native_tool_calls": 8,
+    "all_streams_complete": true,
+    "persistent_audit_after_refresh": {
+      "tool_rows_after_refresh": 8,
+      "tool_states": {
+        "finished": 8
+      },
+      "event_counts": {
+        "assistant.message": 1,
+        "conversation.created": 2,
+        "model.finished": 9,
+        "model.started": 9,
+        "tool.finished": 8,
+        "tool.started": 8,
+        "turn.finished": 1,
+        "turn.started": 1,
+        "user.message": 1
+      },
+      "sqlite_consistent": true,
+      "tool_replay_absent": true
+    }
+  }
+}
