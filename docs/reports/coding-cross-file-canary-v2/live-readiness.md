@@ -8,3 +8,5 @@ Only model-approved physical sends are budgeted; max18 is not a dollar cap. Ever
 
 Live results must be separate live-results/execution-01 and independently scored across the original15 dimensions plus explicit both-file attribution. A verified Controller alone is insufficient; require native receipt/journal, current-revision Public8, independent Host18, true human approval, complete streaming/accounting and cleanup. cost=null without trustworthy deployment prices.
 
+
+Unique prepare/freeze completed against Preregistration `4b30a26b0482eb27185e668d6337fbafe2f44e34`; frozen verify PASS,344 sources, canonical Attempt/reservation/HTTP/model counts all0, Lease available. Future operator must ONLY verify this batch. See freeze-evidence.json.

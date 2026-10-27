@@ -7,4 +7,3 @@ Path A: 7 synthetic physical SDK/HTTP sends, one two-file commit, Revision 1. Pa
 Negative cases cover parser-only/report-only, no Patch, preview-only, invalid receipt after valid preview, one stale SHA, externally changed file after preview, out-of-scope README, failing public suite, no post-Patch test, post-test new Revision, interrupted SDK, broken tool arguments, publication/Journal faults, malformed chain/file set/hash proof, approval denial/timeout, Stop retains real modifications, unknown file/Git drift and no replay.
 
 Strict Success is never awarded to synthetic human approval, regardless of functional result. No real provider or true human command grant has occurred for C02.
-

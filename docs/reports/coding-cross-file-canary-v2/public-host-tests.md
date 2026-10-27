@@ -9,4 +9,3 @@ Host: parser keys/order/id/input preservation; parser/report integration depende
 Integration spying accepts both module-qualified and ordinary directly imported aliases of parse_records. An alternate legitimate direct-import implementation is independently tested. The scorer compares behavior, never candidate bytes against Reference. Other exotic Python indirection and actively hostile interpreter/test tampering are outside this bounded nonadversarial canary.
 
 Hidden test assertions and outputs are never sent back into the AgentLoop. Independently passing tests do not establish native receipt, authority, current revision or human approval: those dimensions have separate evidence.
-

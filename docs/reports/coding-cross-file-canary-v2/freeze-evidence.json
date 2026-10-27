@@ -1,0 +1,52 @@
+{
+  "status": "OFFLINE_PREPARATION_PASS_LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "prepare_invocations": 1,
+  "freeze_invocations": 1,
+  "preregistration_commit": "4b30a26b0482eb27185e668d6337fbafe2f44e34",
+  "implementation_commit": "2ac5032767ea5f51f4fd69b6b1e515ac64cedbfc",
+  "plan_sha256": "59c59c575c4bcc0129686f610b262785f2dc405d5d59c0940b477d4c12cd5c1c",
+  "prepared_sha256": "e13250355c29d6d3c1d6b5aa9200d88c6c8a5bdb2fd1589923c31e486edeaff0",
+  "freeze_sha256": "512ed762de5307dc2e176f6979afeb5a414e8a66239a15eb0ae699312fe59d56",
+  "source_files": 344,
+  "source_manifest_matches_full_validation": true,
+  "fixture_head": "463850e3f4eca50de2eb4e4ca8afe5da9ecde1a8",
+  "fixture_validation": {
+    "baseline_public": {
+      "status": "fail",
+      "category": null,
+      "tests": 8,
+      "passed": false
+    },
+    "baseline_host": {
+      "status": "fail",
+      "category": null,
+      "tests": 18,
+      "passed": false
+    },
+    "reference_public": {
+      "status": "pass",
+      "category": null,
+      "tests": 8,
+      "passed": true
+    },
+    "reference_host": {
+      "status": "pass",
+      "category": null,
+      "tests": 18,
+      "passed": true
+    }
+  },
+  "original_provider_config_bytes_unchanged": true,
+  "database_identities_and_integrity_verified": true,
+  "workspace_identity_and_lease_verified": true,
+  "revision": 0,
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "private_batch": "~/.mybot-mini/uat/coding-cross-file-canary-v2-20261027/",
+  "port": 8904
+}

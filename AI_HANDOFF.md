@@ -14,4 +14,4 @@ Mock正式运行路径和 headed Chrome 两条修复路径 verified Revision1/2�
 
 ## 下一步与边界
 
-完整报告 docs/reports/coding-cross-file-canary-v2/，学习专题 docs/phases/coding-cross-file-canary-v2.md。Implementation后创建Preregistration提交，再唯一 prepare/freeze/verify；Acceptance仅改文档并Push独立分支、核对远程及再次verify。不得改冻结源码/Fixture/评分、重做prepare/freeze、重跑旧Case或访问旧私库。未来仅新精确 GRANTED_18_REQUESTS，且每次命令仍需真实人通过原WebApproval，Live operator禁止代批。用户Chrome/8765/真实项目、main/Tag/ZIP/共享AppleDouble不触碰。
+完整报告 docs/reports/coding-cross-file-canary-v2/，学习专题 docs/phases/coding-cross-file-canary-v2.md。Implementation 2ac5032767ea5f51f4fd69b6b1e515ac64cedbfc；Preregistration 4b30a26b0482eb27185e668d6337fbafe2f44e34。新批次 ~/.mybot-mini/uat/coding-cross-file-canary-v2-20261027/ 已唯一 prepare/freeze，344源码/两库inode/原配置/workspace及Lease verify PASS；真实请求、HTTP、Attempt、reservation/unsettled均0。Acceptance仅改文档，Push后再次verify并核对远程。不得改冻结源码/Fixture/评分、重做prepare/freeze、重跑旧Case或访问旧私库。未来仅新精确 GRANTED_18_REQUESTS，且每次命令仍需真实人通过原WebApproval，Live operator禁止代批。用户Chrome/8765/真实项目、main/Tag/ZIP/共享AppleDouble不触碰。

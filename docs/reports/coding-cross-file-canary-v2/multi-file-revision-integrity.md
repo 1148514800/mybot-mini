@@ -9,4 +9,3 @@ A native Journal is cumulative: after separate commits its files contains both t
 A one-Receipt two-file commit is Revision 1; two distinct Receipt commits are Revision 2. Later legal edits within three write attempts are accepted but invalidate old test evidence. Unknown drift, malformed chains/file sets, Git changes or publication uncertainty HALT; no reset/checkout/repair/reprepare. Native Journal is sampled after each successful patch because runtime legitimately destroys the in-memory capsule at turn close. Persisted summaries are host evidence, not model self-attestation or adversarial-host signatures.
 
 Publication is per-file POSIX replacement with native best-effort recovery. Fault injection on the second publish and on Journal commit proves no false success and fail-closed behavior. This is not unconditional cross-file crash atomicity; uncertain original state remains preserved for investigation.
-

@@ -1,0 +1,51 @@
+{
+  "origin": "Actual Reference Seatbelt preparation validation; no model or receipt workflow",
+  "functional": {
+    "public": {
+      "status": "pass",
+      "category": null,
+      "tests": 8,
+      "passed": true
+    },
+    "host_acceptance": {
+      "status": "pass",
+      "category": null,
+      "tests": 18,
+      "passed": true
+    },
+    "strict_functional_pass": true
+  },
+  "assessment": {
+    "dimensions": {
+      "model_workflow": false,
+      "actual_patch_committed": false,
+      "source_scope_compliance": true,
+      "preview_receipt_integrity": false,
+      "current_revision_test_evidence": false,
+      "host_controller_verified": false,
+      "public_tests": true,
+      "independent_acceptance_tests": true,
+      "git_diff_journal_integrity": false,
+      "tool_authority": true,
+      "human_command_approval": false,
+      "streaming_protocol_integrity": false,
+      "request_usage_accounting": false,
+      "workspace_process_cleanup": false,
+      "user_task_correctness": false,
+      "both_files_legally_modified": false
+    },
+    "strict_success": false,
+    "synthetic_workflow_pass": false,
+    "command_approval": "NOT_APPROVED",
+    "usage_complete": false,
+    "cost": null,
+    "contract_metadata": {
+      "contract_tool_calls": 0,
+      "contract_tool_success": 0,
+      "contract_tool_rejection": 0,
+      "provenance_coverage": "UNKNOWN",
+      "independent_requirement_coverage": "UNKNOWN"
+    }
+  },
+  "real_requests": 0
+}

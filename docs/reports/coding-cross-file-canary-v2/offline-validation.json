@@ -96,6 +96,13 @@
   "fixture_host_tests": 18,
   "dedup_method": "actual TestResult test.id inventory; child fixture tests and procedural assertions are not invented additions",
   "real_provider_requests": 0,
-  "canonical_batch_prepared": false,
-  "canonical_batch_frozen": false
+  "canonical_batch_prepared": true,
+  "canonical_batch_frozen": true,
+  "frozen_verify": "PASS",
+  "canonical_real_usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  }
 }

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "credential_matches": 0,
+  "forbidden_tracked_assets": [],
+  "unexpected_changed_paths": [],
+  "tracked_and_report_files_reviewed": 1639,
+  "real_provider_requests": 0,
+  "production_code_unchanged": true,
+  "historical_assets_unchanged": true,
+  "frozen_source_verified": true,
+  "canonical_real_requests": 0
+}

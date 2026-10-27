@@ -7,4 +7,3 @@ Native TaskContract requires arrays, at most 12 requirements, text length 1..320
 New synthetic legal proposal: exact user quote before edits, native tool success. New illegal proposal: unobserved-test evidence link, native rejection retained. Both run the ordinary native coding path; the rejected optional metadata call is not a code correctness failure, does not trigger repair/retry requests and does not weaken source validation. Valid sources do not prove requirement-level acceptance; independent_requirement_coverage and provenance_coverage remain UNKNOWN unless independently established.
 
 Normal browser paths have zero contract calls/success/rejection. The dedicated negative fixture has two calls, one accepted and one rejected; dedicated legal fixture has one accepted call. Unit evidence and actual fixed rejection code distinguish this from the historical C01 event. No production Contract rules were modified.
-

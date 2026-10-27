@@ -7,4 +7,3 @@ The six public files form a separate clean buggy Git repository without a remote
 Public interface parse_records returns ordered dictionaries with exactly id/category/amount, id unchanged and amount Decimal. category_totals calls that parser, sums Decimal without float or deduplication and returns first-seen categories with fixed-two-place amounts. Extremely long valid fixed-point amounts are summed exactly under a sufficiently large local Decimal context. Header-only returns []. Input is immutable text. No installation, network or dependencies.
 
 All samples, expected results, Reference and public/host suite bytes are fixed in fixture.py and included in source/prepared hashes. Host tests never reside in the model workspace; the README exposes the format ambiguities before coding. These are bounded synthetic cases, not a universal CSV conformance proof.
-

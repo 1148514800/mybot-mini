@@ -15,11 +15,12 @@
   "cost": null,
   "price_basis": "No real request; no verified deployment unit price. Synthetic usage is not supplier usage.",
   "canonical_batch": {
-    "prepared": false,
-    "frozen": false,
+    "prepared": true,
+    "frozen": true,
     "attempts": 0,
     "reservations": 0,
-    "unsettled": 0
+    "unsettled": 0,
+    "verified": true
   },
   "mock_paths": {
     "a": {

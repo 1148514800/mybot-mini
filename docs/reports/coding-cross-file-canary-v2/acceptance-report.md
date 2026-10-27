@@ -1,6 +1,6 @@
 # C02 Cross-File Canary v2 — Offline acceptance
 
-OFFLINE PASS / LIVE BLOCKED (NOT_GRANTED). No real DeepSeek, GLM, summary or paid Judge request; no real human WebApproval. Synthetic workflow success is explicitly not Live Strict Success. The unique real batch is prepared/frozen only after Implementation and Preregistration commits; final freeze status is recorded in freeze-evidence.json by Acceptance.
+OFFLINE PASS / LIVE BLOCKED (NOT_GRANTED). No real DeepSeek, GLM, summary or paid Judge request; no real human WebApproval. Synthetic workflow success is explicitly not Live Strict Success. The unique real batch was prepared once and frozen once after the Implementation and Preregistration commits; verify PASS with0 requests/HTTP,0 Attempt,0 reservation and0 unsettled. freeze-evidence.json records the immutable identities and344 source hashes.
 
 Baseline c56a03813f9a0472d72d96e5bc3915ff667f0d60; branch codex/coding-cross-file-canary-v2; separate managed worktree. Production code, original C01 source/fix/10-of12 ledger/history/Strict PASS, old HALT/assets, main/Tag/ZIP and shared AppleDouble sidecars remain unchanged.
 
@@ -19,3 +19,5 @@ Final source-stable full check_phase plus all independent supplements: 2205 uniq
 Canonical real request count remains0/18; no old allowance reuse. Mock Usage is invented test data, not supplier Usage; real supplier tokens0 because no real sends, cost=null (no verified deployment price). Future exact GRANTED_18_REQUESTS plus each native human command approval is required, with no new prepare/freeze/resend/rerun.
 
 Remaining limits: estimated input32000/output reserve1800/context120000/tool result16000 can still cause clipping; no budget increase or semantic-correctness claim. Real DeepSeek cross-file planning, metadata behavior, streaming, human command approval, supplier Usage/cost and long-run reliability await the separately authorized frozen Live. See remaining-risks and live-readiness.
+
+Final unique freeze: Implementation `2ac5032767ea5f51f4fd69b6b1e515ac64cedbfc`; Preregistration `4b30a26b0482eb27185e668d6337fbafe2f44e34`. SQLite identities/integrity, workspace inode/Lease, original configuration bytes, fixture/source hashes and source-ancestor relation verified. Acceptance is documentation-only. Final report whitespace checks pass after removal of trailing blank lines.
