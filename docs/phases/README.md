@@ -87,3 +87,5 @@ Phase25归档后离线可靠性修复见[Phase25-R](phase-25-r.md)，不属于�
 - [Operator Reliability与Steer/Stop Canary v3](streaming-operator-reliability-v3.md)：单socket交接、Chrome异常清理及句数诊断；2097项去重/78新增离线与headed Mock通过，原离线冻结保留；新授权N01/N02真实目标PASS、实际2/2，取消Usage未知，见[Live报告](../reports/streaming-operator-reliability-v3/live-results/execution-01/acceptance-report.md)。
 
 - [Coding Workflow Canary v1](coding-workflow-canary-v1.md)：原生Preview/Receipt/Patch/审批/测试与Revision-aware完整性；2142去重/45新增及headed Synthetic闭环通过，原离线冻结保留；新授权C01真实10/12、Revision1/Public5/Host10/真人批准/Strict PASS，附带合同提议拒绝，见[Live报告](../reports/coding-workflow-canary-v1/live-results/execution-01/acceptance-report.md)。
+
+- [C02 双文件 Coding Canary v2](coding-cross-file-canary-v2.md)：独立分支 OFFLINE PASS，真实模型0，Live授权未给；双文件累计Journal、实际Chrome合成和全量去重验证完成，不新建Tag/ZIP。
