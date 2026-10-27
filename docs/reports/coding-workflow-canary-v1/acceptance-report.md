@@ -1,6 +1,6 @@
 # Coding Agent Workflow Canary v1
 
-OFFLINE VALIDATION PASS / FREEZE PENDING / LIVE BLOCKED。真实DeepSeek/GLM/摘要/JudgeLLM请求0；没有真实模型能力或真人Live Strict Success结论。
+OFFLINE PASS / LIVE BLOCKED。真实DeepSeek/GLM/摘要/JudgeLLM请求0；没有真实模型能力或真人Live Strict Success结论。
 
 新notesearch-mini干净Bug Git Fixture（无remote），存在大小写/title-only/排序去重/空白查询缺陷。实际Seatbelt隔离基线Public5/Host10均fail，Reference均pass。只允许notesearch/search.py经原生Preview/Receipt Patch改变；其余公开文件、Gold、配置、源码、Git metadata和数据库身份冻结。
 
@@ -14,4 +14,10 @@ Revision Gate在每SDK/HTTP和每工具前后核验：真实Patch成功+有效Re
 
 完整check_phase和独立补充通过：2142个去重unittest，新增45项，实际执行2142，重复0。程序式检查已运行，不另伪造数量。源码运行前后hash一致；compileall、JS、diff与真实凭证/保护资产审计见delivery-validation.json。无真实Provider请求，无安装脚本或新依赖。
 
-新唯一prepare/freeze和空库身份最终证据见budget-evidence.json（完成前为pending）；无需历史额度、不改旧成绩。剩余能力边界见remaining-risks/live-readiness，完整审批与Revision设计分别在approval-boundary/revision-integrity。源码/隐藏测试/评分冻结后不改；最终提交和远程HEAD以交付核对为准。
+新唯一prepare/freeze/verify及空库身份最终证据见budget-evidence.json；无需历史额度、不改旧成绩。剩余能力边界见remaining-risks/live-readiness，完整审批与Revision设计分别在approval-boundary/revision-integrity。源码/隐藏测试/评分冻结后不改；最终提交和远程HEAD以交付核对为准。
+
+## 最终冻结
+
+Implementation `d679d21914adc1e8b9a758b2611d1b35d80c4c2c`；Preregistration/冻结源码 `0807b612e734c212588045107ba33f992adecba0`。干净树唯一prepare/freeze/verify已通过；正式Fixture HEAD `12f2b1df12dffe89f719796c725afb7a481ba4f0`、Revision0、无remote、Public/Host源hash固定；332个全类型源码hash匹配，回归325个Python/依赖文件运行前后hash另保存。Provider配置字节/workspace inode/Git metadata/事件库与账本身份核验通过，0 Attempt/reservation/HTTP，事件库空、Lease/8903可用。
+
+原生Web持久最终回复由原Host Coding报告生成，不用模型自述代替完成证据。人工批准维度在本次Mock中明确false；真实C01仍未执行。后续新精确GRANTED_12_REQUESTS只授模型额度，命令批准仍需实际用户逐次确认。冻结后不改源码或Fixture/Gold/评分，不再prepare/freeze。

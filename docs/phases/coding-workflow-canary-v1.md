@@ -13,3 +13,7 @@ macOS/Python3.12+/uv：`uv sync --frozen`；`uv run python -m unittest scripts.c
 案例与排错：小只读上下文不能容纳Coding Schema或完整Receipt；需在预注册前固定足够但有界的预算。/private/tmp可能继承wheel，新Fixture明确设置当前组，不能关Patch ownership校验。waiting_approval是活跃状态，不可被操作器误判终态；主异常与清理错误分别保留。Stop后已提交Patch仍在，未验证或uncertain不能假称回滚/成功。
 
 最终离线数量/真实Chrome/唯一冻结及审批边界见[报告](../reports/coding-workflow-canary-v1/acceptance-report.md)。原N01/N02 PASS/旧T01 FAIL及旧私库、Phase25 Benchmark、main/Tag/ZIP不动。
+
+最终：2142个去重unittest通过（新增45），完整check_phase程序式断言和独立补充实际执行，源码前后hash一致；headed Chrome固定8903 Synthetic闭环与双Profile隔离通过，Public5/Host10、Controller Revision1 verified，但真人批准维度false/真实Strict未执行。正式新批次唯一prepare/freeze/verify完成，332源码、配置/初始Git/workspace/两库身份一致，Revision0、0 Attempt/reservation/HTTP，停在授权门。实现SHA d679d21914adc1e8b9a758b2611d1b35d80c4c2c；预注册/冻结SHA 0807b612e734c212588045107ba33f992adecba0。
+
+archive-ready: true

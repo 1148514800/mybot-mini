@@ -2,7 +2,7 @@
 
 ## 当前目标与状态
 
-codex/coding-workflow-canary-v1，基线16f25f74db78089bf1bc697022e53f46473449bd。C01离线实现/验证完成，待Implementation/Preregistration提交和唯一新prepare/freeze。真实Provider授权NOT_GRANTED，DeepSeek/GLM/摘要/JudgeLLM0，旧GRANTED_2_REQUESTS已耗尽不继承。
+codex/coding-workflow-canary-v1，基线16f25f74db78089bf1bc697022e53f46473449bd。C01离线实现/验证完成，Implementation/Preregistration与唯一新prepare/freeze/verify均完成。真实Provider授权NOT_GRANTED，DeepSeek/GLM/摘要/JudgeLLM0，旧GRANTED_2_REQUESTS已耗尽不继承。
 
 ## 已完成
 
@@ -14,7 +14,7 @@ codex/coding-workflow-canary-v1，基线16f25f74db78089bf1bc697022e53f46473449bd
 
 ## 下一步与边界
 
-报告docs/reports/coding-workflow-canary-v1/。提交实现和预注册后，干净树唯一prepare/freeze/verify ~/.mybot-mini/uat/coding-workflow-canary-v1-20261027/，固定8903，C01单Attempt/最多12物理请求，工具≤40、写≤2、命令≤2、无进展4、任务600s/命令30s/Web900s，SDK重试0。freeze后不得改源码/Fixture/Host测试/评分。
+报告docs/reports/coding-workflow-canary-v1/。Implementation d679d21914adc1e8b9a758b2611d1b35d80c4c2c、Preregistration/冻结源码 0807b612e734c212588045107ba33f992adecba0。~/.mybot-mini/uat/coding-workflow-canary-v1-20261027/已唯一prepare/freeze/verify，干净Bug Fixture HEAD 12f2b1df12dffe89f719796c725afb7a481ba4f0，Revision0，两库完整/身份固定且0 Attempt/reservation/HTTP、事件空，固定8903，C01单Attempt/最多12物理请求，工具≤40、写≤2、命令≤2、无进展4、任务600s/命令30s/Web900s，SDK重试0。freeze后不得改源码/Fixture/Host测试/评分。
 
 未来必须新GRANTED_12_REQUESTS及原冻结/当前环境/独立Chrome核验；每次命令另需真实用户在原WebApproval确认，Live operator不代点/不自动批准，拒绝超时无人值守不执行、不重问。不把模型额度当命令批准，不因失败补跑。Host Score在已验证Seatbelt进程运行、绝不宿主import候选，结果不回模型。
 

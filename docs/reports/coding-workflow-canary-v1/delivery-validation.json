@@ -8,9 +8,15 @@
   "diff_check": "PASS",
   "credential_value_matches": 0,
   "forbidden_assets": 0,
-  "reviewed_files": 1569,
+  "reviewed_files": 1571,
   "production_old_report_changes": 0,
   "real_provider_requests": 0,
   "synthetic_approval_count": 1,
-  "strict_live_success": false
+  "strict_live_success": false,
+  "unique_prepare_freeze_verify": "PASS",
+  "formal_attempts": 0,
+  "formal_reservations": 0,
+  "formal_http_attempts": 0,
+  "fixture_revision": 0,
+  "sqlite_integrity": "ok"
 }

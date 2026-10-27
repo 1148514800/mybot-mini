@@ -1,0 +1,96 @@
+{
+  "status": "OFFLINE_PREPARATION_PASS_LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "global_physical_limit": 12,
+  "case_limits": {
+    "C01": 12
+  },
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "source_files": 332,
+  "source_hashes_match": true,
+  "implementation_sha": "d679d21914adc1e8b9a758b2611d1b35d80c4c2c",
+  "preregistration_sha": "0807b612e734c212588045107ba33f992adecba0",
+  "fixture_head": "12f2b1df12dffe89f719796c725afb7a481ba4f0",
+  "fixture_hashes": {
+    "README.md": "c04f0e79171267536bf3ae11a77a71a79100e11bb0fe53034a40e5f7d4420064",
+    "notesearch/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "notesearch/search.py": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+    "tests/test_search.py": "ed93dff57fd7057f0eb41725740db195633f8c5a2c8e0698622a151ab9b06186",
+    ".gitignore": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793",
+    "hidden/test_hidden.py": "7b970e5bcf46d61828798fc88042521549f7d34d57e997f8c0ec2e7c2a22b478"
+  },
+  "plan_sha256": "d97fc9310bcf8981b54e03b9a36976490c5831775414ddcc3a258b13b424e6c1",
+  "revision": 0,
+  "public_baseline": {
+    "baseline_public": {
+      "status": "fail",
+      "category": null,
+      "tests": 5,
+      "passed": false
+    },
+    "baseline_host": {
+      "status": "fail",
+      "category": null,
+      "tests": 10,
+      "passed": false
+    },
+    "reference_public": {
+      "status": "pass",
+      "category": null,
+      "tests": 5,
+      "passed": true
+    },
+    "reference_host": {
+      "status": "pass",
+      "category": null,
+      "tests": 10,
+      "passed": true
+    }
+  },
+  "counts": {
+    "requests.sqlite": {
+      "cases": 0,
+      "reservations": 0
+    },
+    "session-events.sqlite3": {
+      "sessions": 0,
+      "events": 0,
+      "turns": 0,
+      "messages": 0,
+      "tools": 0
+    }
+  },
+  "database_identities": {
+    "requests.sqlite": [
+      16777231,
+      15707509
+    ],
+    "session-events.sqlite3": [
+      16777231,
+      15707507
+    ]
+  },
+  "workspace_bytes_and_git_unchanged": true,
+  "provider_config_bytes_verified": true,
+  "port": 8903,
+  "port_available": true,
+  "lease_available": true,
+  "sqlite_integrity": "ok",
+  "unique_prepare": true,
+  "unique_freeze": true,
+  "private_asset_hashes": {
+    "prepared.json": "516ca3a1780408a782a0be555887249bb8fecdf825db73fd29137a64de36a808",
+    "freeze.json": "c44e1685f536e7c3ec008fc84ae053bd74755ab2e4089ede3909371fc15a013f",
+    "browser-isolation.json": "717f6cce1f5f40efa2779974df7075af6d00512ed3c6f8d3d0f269f0b71b99a0"
+  },
+  "deepseek": 0,
+  "glm": 0,
+  "summary": 0,
+  "paid_judge": 0,
+  "cost": null
+}
