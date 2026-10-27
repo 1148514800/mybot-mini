@@ -1,6 +1,6 @@
 # Operator Reliability Hardening + Steer/Stop Canary v3
 
-OFFLINE VALIDATION PASS / FREEZE PENDING / LIVE BLOCKED。LIVE_AUTHORIZATION: NOT_GRANTED，真实请求0；未来仅新GRANTED_2_REQUESTS有效。原T01 Semantic FAIL、T02 Startup FAIL、T03 BLOCKED和3/6、3011 Token证据不改判、不补跑。
+OFFLINE PASS / LIVE BLOCKED。LIVE_AUTHORIZATION: NOT_GRANTED，真实请求0；未来仅新GRANTED_2_REQUESTS有效。原T01 Semantic FAIL、T02 Startup FAIL、T03 BLOCKED和3/6、3011 Token证据不改判、不补跑。
 
 原T02根因UNKNOWN。独立实验观察到TIME_WAIT与普通bind失败、connect无Listener但bind不可用等情况，仅证明机制差异，不能回溯证明历史根因。新操作员入口仅127.0.0.1、SO_REUSEADDR、无SO_REUSEPORT，单bind/listen后同一socket交Uvicorn；不释放探测socket后重绑。app factory及Attempt都在成功bind后，真实外部Listener测试拒绝且0 Attempt/SDK请求。ready在Uvicorn真实startup后发出，PID/UID/PPID/启动时间/cwd/argv/实际监听归属独立验证。
 
@@ -17,3 +17,9 @@ N01/N02真实Chrome合成端到端PASS（实际SDK MockTransport，非真实Live
 新唯一批次streaming-steer-recovery-v3-20261027、N01/N02各1/总2、固定8902，准备与冻结最终身份/提交见freeze-evidence.json；未授权维持0 Attempt/reservation/HTTP。后续真实not_applied/Stop行为、供应商Usage兼容与长时稳定性仍UNKNOWN。
 
 见[t02根因](t02-startup-root-cause.md)、[socket设计](socket-lifecycle-design.md)、[清理证据](browser-cleanup-evidence.json)、[句数](sentence-diagnostics.md)、[预注册](n01-n02-preregistration.md)、[安全](security-audit.md)。历史资产、main/Tag/ZIP及共享AppleDouble旁文件均未处理。
+
+## 唯一冻结与交付
+
+Implementation `07c25ce181b2af3dc368815ec4956a3ff05c75a2`；Preregistration/冻结源码 `4a8fdb64a22811b20aebb85d1e1d25e9f385ad67`。唯一prepare/freeze及verify已通过，320个全类型已跟踪源码hash与验收源码一致（回归运行前后313个Python/依赖文件hash另有记录，差额为shell等已跟踪源码）。固定8902单bind可取得/释放、WorkspaceLease可取得/释放，两库inode/权限/完整性通过，sessions/events/turns/messages/tools/Case/Attempt/reservation/HTTP全部0。
+
+Acceptance只更新文档与脱敏证据，不改冻结源码或配置。报告所在分支codex/streaming-operator-reliability-v3，提交与远程HEAD以最终交付核对为准。真实执行仍需新精确GRANTED_2_REQUESTS，不连接供应商验证凭证，也不继承历史余额。

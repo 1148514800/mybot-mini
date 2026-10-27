@@ -11,3 +11,7 @@ macOS/Python3.12+/uv：`uv sync --frozen`；`uv run python -m unittest scripts.c
 案例：旧T01真实工具/Steer链路成功但全回复三句，旧结果FAIL保留；旧T02无Listener检查与bind差异导致启动失败的具体根因仍UNKNOWN。新独立实验区分socket绑定与应用ready，30轮原生Web同端口重启另有证据；不能倒填历史。原浏览器finally顺序问题通过资源生命周期修复，保留主错误和清理错误；句数不再漏掉相邻中文，但复杂文本仍要求审查。
 
 实际最终测试数、Chrome异常路径及唯一prepare/freeze状态以[报告](../reports/streaming-operator-reliability-v3/acceptance-report.md)为准。旧报告、旧批次、用户Chrome/8765、main/Tag/ZIP不动。未授权不连接供应商。
+
+最终离线2097去重unittest（新增78）与完整check_phase程序式检查通过；正常及业务异常Chrome自动清理通过，故障注入保留主/清理错误；N01/N02真实Chrome+SDK MockTransport通过、真实Provider0。唯一新批次prepare/freeze/verify完成，320源码hash一致，两库/工作区/配置身份完整、0 Attempt/reservation/HTTP，停在新授权门。实现SHA 07c25ce181b2af3dc368815ec4956a3ff05c75a2，预注册/冻结SHA 4a8fdb64a22811b20aebb85d1e1d25e9f385ad67。无编号归档，不生成或移动历史Tag/ZIP。
+
+archive-ready: true

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-codex/streaming-operator-reliability-v3，基线e9d04f2c28fb46c0216df362170beaeaeccd452d。Operator Reliability离线实现/验证完成，待唯一新N01/N02 prepare/freeze与Acceptance。LIVE_AUTHORIZATION NOT_GRANTED，真实DeepSeek/GLM/摘要/Judge0，不继承旧v2剩余3次。
+codex/streaming-operator-reliability-v3，基线e9d04f2c28fb46c0216df362170beaeaeccd452d。Operator Reliability离线实现/验证完成，唯一新N01/N02 prepare/freeze/verify及离线Acceptance完成。LIVE_AUTHORIZATION NOT_GRANTED，真实DeepSeek/GLM/摘要/Judge0，不继承旧v2剩余3次。
 
 ## 实现与验证
 
@@ -14,6 +14,6 @@ Context仅在Playwright有效期间close一次，再核实本profile进程退出
 
 ## 下一步与边界
 
-实现及预注册提交后，仅干净工作树对~/.mybot-mini/uat/streaming-steer-recovery-v3-20261027/唯一prepare/freeze/verify，端口8902，N01/N02各1/总2。freeze后不得改源码。未来必须新精确GRANTED_2_REQUESTS和原冻结/环境/浏览器身份检查，不补跑旧T02/T03、不复用旧余额。当前Mock不代表真实DeepSeek not_applied/Stop成功。
+Implementation 07c25ce181b2af3dc368815ec4956a3ff05c75a2，Preregistration/冻结源码 4a8fdb64a22811b20aebb85d1e1d25e9f385ad67。~/.mybot-mini/uat/streaming-steer-recovery-v3-20261027/已唯一prepare/freeze/verify，端口8902，N01/N02各1/总2。320源码hash/原配置/workspace/两库inode及完整性通过，0 Attempt/reservation/HTTP、事件库空、Lease可用。freeze后不得改源码或再prepare/freeze。未来必须新精确GRANTED_2_REQUESTS和原冻结/环境/浏览器身份检查，不补跑旧T02/T03、不复用旧余额。当前Mock不代表真实DeepSeek not_applied/Stop成功。
 
-旧T01 Semantic FAIL、T02 Startup FAIL、T03 BLOCKED、3/6/3011 Token/原HALT私库均保留；旧Chrome/8765未操作。main/历史Tag/ZIP与共享Git AppleDouble旁文件不处理。完整报告提交/Push后核对远程HEAD及再verify。
+旧T01 Semantic FAIL、T02 Startup FAIL、T03 BLOCKED、3/6/3011 Token/原HALT私库均保留；旧Chrome/8765未操作。main/历史Tag/ZIP与共享Git AppleDouble旁文件不处理。验收结果已固定；最终提交/远程HEAD通过Git确认。后续只能在新授权门继续。

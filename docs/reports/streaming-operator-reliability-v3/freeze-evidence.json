@@ -1,0 +1,61 @@
+{
+  "status": "OFFLINE_PREPARATION_PASS_LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "real_requests": 0,
+  "attempts": 0,
+  "reservations": 0,
+  "http_attempts": 0,
+  "unique_prepare": true,
+  "unique_freeze": true,
+  "implementation_sha": "07c25ce181b2af3dc368815ec4956a3ff05c75a2",
+  "preregistration_sha": "4a8fdb64a22811b20aebb85d1e1d25e9f385ad67",
+  "plan_sha256": "dc46c85f2ac6d68dbd033b8fa305b1d7ae7e414276a1385ae28589d19d648539",
+  "source_files": 320,
+  "global_limit": 2,
+  "case_limits": {
+    "N01": 1,
+    "N02": 1
+  },
+  "port": 8902,
+  "port_bind": "acquired_and_released",
+  "lease": "acquired_and_released",
+  "frozen_source_hashes_match": true,
+  "provider_bytes_verified": true,
+  "workspace_bytes_inode_verified": true,
+  "sqlite_integrity": "ok",
+  "database_identities": {
+    "requests.sqlite": {
+      "dev": 16777231,
+      "inode": 15540714,
+      "private_mode": "0o600"
+    },
+    "session-events.sqlite3": {
+      "dev": 16777231,
+      "inode": 15540712,
+      "private_mode": "0o600"
+    }
+  },
+  "counts": {
+    "requests.sqlite": {
+      "cases": 0,
+      "reservations": 0
+    },
+    "session-events.sqlite3": {
+      "sessions": 0,
+      "events": 0,
+      "turns": 0,
+      "messages": 0,
+      "tools": 0
+    }
+  },
+  "private_asset_hashes": {
+    "prepared.json": "037dbc2a71c304e0e5f42b7a0cd6c4f48d0197e5c0bfe039f6623cb16355f59d",
+    "freeze.json": "39e49dc1b1c6c376a4bbdfe0fcb50ca795d67878e8cc248f0ea95c9c9b31eedd",
+    "browser-isolation.json": "f5fe1c8cdac9a5b0b51ae27d0f9f83cda8317972fb17455c7fdb85e1c20946df"
+  },
+  "deepseek": 0,
+  "glm": 0,
+  "summary": 0,
+  "judge": 0,
+  "cost": null
+}
