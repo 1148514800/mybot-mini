@@ -1,0 +1,11 @@
+# Playwright异常清理
+
+旧版将ctx.close放在sync_playwright退出后的finally，主异常触发上下文管理器退出后，次级event-loop-closed掩盖原错误并跳过profile删除。本轮不修改旧冻结browser.py，而在新操作员共享模块复用新的资源管理器。
+
+新顺序：创建本轮0700私有目录→进入Playwright→启动并验证真实Chrome profile参数/UID/空Cookie→业务→在driver仍有效时只close Context一次→退出Playwright→独立检查本profile进程退出→核对真实目录父级、非符号链接、dev/inode/UID/0700→删除自己目录。没有任何Context API在Playwright退出后执行，不操作用户默认profile。
+
+分别记录primary_error、service_start_error、service_shutdown_error、context_close_error、browser_process_exit_status、profile_cleanup_error。仅固定错误类别，不导出异常私有字符串。服务清理位于Chrome Context内部，清理失败不会替换已有主异常。Context关闭失败后仍做进程/目录核验，但automatic_cleanup_pass保留false；不因最终资源清理成功而改判自动流程PASS。
+
+无法确认浏览器退出、目录身份或实际launch profile时不删除，标cleanup_uncertain。Chrome启动失败也要检查可能残留的部分进程；无Context且本轮目录/进程状态可证才清理。真实headed异常验收包含外部端口占用、Context后异常、导航/Steer/截图失败、实际Chrome关闭后报告合成关闭错误、删除故障。注入错误的测试目录后续单独核实清理，不把此后续动作当成自动清理通过。
+
+单元测试另覆盖SSE断开、任务失败、双重异常、删除失败、身份不符及服务停止超时；它们是离线注入，不代表真实DeepSeek故障已观察。

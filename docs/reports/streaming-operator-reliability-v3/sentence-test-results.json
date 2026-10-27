@@ -1,0 +1,134 @@
+{
+  "adjacent_chinese": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": 2,
+    "format_check": "PASS",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "chinese_question_exclamation": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "NOT_EVALUATED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "english": {
+    "deterministic_sentence_count": 3,
+    "expected_sentences": null,
+    "format_check": "NOT_EVALUATED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "mixed": {
+    "deterministic_sentence_count": 3,
+    "expected_sentences": null,
+    "format_check": "NOT_EVALUATED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "whitespace": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "NOT_EVALUATED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "heading": {
+    "deterministic_sentence_count": 1,
+    "expected_sentences": null,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [
+      "markdown_structure"
+    ],
+    "rewritten": false
+  },
+  "code": {
+    "deterministic_sentence_count": 1,
+    "expected_sentences": null,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [
+      "markdown_structure"
+    ],
+    "rewritten": false
+  },
+  "list": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [
+      "markdown_structure"
+    ],
+    "rewritten": false
+  },
+  "decimal": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "NOT_EVALUATED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "abbreviation": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [
+      "abbreviation"
+    ],
+    "rewritten": false
+  },
+  "ellipsis": {
+    "deterministic_sentence_count": 1,
+    "expected_sentences": null,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [
+      "ellipsis"
+    ],
+    "rewritten": false
+  },
+  "quotes": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "FORMAT_REVIEW_REQUIRED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [
+      "quoted_punctuation"
+    ],
+    "rewritten": false
+  },
+  "colon": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": 2,
+    "format_check": "PASS",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "tool_status": {
+    "deterministic_sentence_count": 2,
+    "expected_sentences": null,
+    "format_check": "NOT_EVALUATED",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  },
+  "status_plus_two": {
+    "deterministic_sentence_count": 3,
+    "expected_sentences": 2,
+    "format_check": "FAIL",
+    "independent_semantic_review": "NOT_PERFORMED",
+    "review_reasons": [],
+    "rewritten": false
+  }
+}

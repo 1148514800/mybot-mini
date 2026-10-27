@@ -1,0 +1,7 @@
+# 仍未知与后续限制
+
+原T02根因UNKNOWN；新离线实验不能回溯证明TIME_WAIT。操作系统和进程身份可能在核验之后变化，发现异常即停止。服务未ready超时不会升级权限去结束未知进程。Context.close报错或Chrome进程未退出、Profile身份异常时不会伪报自动清理成功。
+
+句数诊断为有限启发式；复杂缩写/Markdown/引用/省略号需人工格式审查，不是语义Judge。原T01失败不改判。queued/applied/HTTP发送/供应商响应/模型遵从仍是不同层级。
+
+本轮真实Provider调用0，N01/N02只有SDK MockTransport与真实Chrome合成证据，不代表真实DeepSeek下的not_applied/Stop时序已PASS。后续真实模型须新GRANTED_2_REQUESTS、原冻结校验与当前环境隔离。本轮不使用任何历史剩余额度、不补跑旧T02/T03，不操作旧HALT。

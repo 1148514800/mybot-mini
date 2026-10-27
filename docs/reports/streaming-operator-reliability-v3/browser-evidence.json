@@ -1,0 +1,488 @@
+{
+  "mode": "MOCK",
+  "real_requests": 0,
+  "port": 64397,
+  "cases": {
+    "N01": {
+      "session_id": "96e1a5ecb689428591faff2d2a58fee6",
+      "message_submissions": 1,
+      "steer_submissions": 1,
+      "stop_clicks": 0,
+      "ready_identity_verified": true,
+      "message_http_status": 202,
+      "first_nonterminal_delivered_before_action": true,
+      "steer_http_status": 200,
+      "status": "completed",
+      "steer_states": [
+        "not_applied"
+      ],
+      "evidence": {
+        "case": "N01",
+        "session_id": "96e1a5ecb689428591faff2d2a58fee6",
+        "status": "completed",
+        "scenario_premise": "MET",
+        "streams": [
+          {
+            "case": "N01",
+            "reservation": 1,
+            "provider": "coco",
+            "model": "deepseek-v4.1-flash",
+            "native_is_fallback": false,
+            "sdk_admission_monotonic": 1716937.841457625,
+            "http_attempts": 1,
+            "provider_http_response_observed": true,
+            "sdk_request_sha256": "b2ade4be2afc66e68d9b3d56d609938889ba51c9b63fc5f4f0578c6a52204c0d",
+            "sdk_messages_sha256": "7ca54ec70e52da5082ab5633f7cc2eb0624c0bbc9a4fe6e4625e02b44de80b6d",
+            "steer_sources": [],
+            "assembled_calls": [],
+            "tool_results": [],
+            "all_tool_results_paired": true,
+            "identifier_present_in_messages": false,
+            "http_dispatch_monotonic": 1716937.959696458,
+            "wire_body_sha256": "b2ade4be2afc66e68d9b3d56d609938889ba51c9b63fc5f4f0578c6a52204c0d",
+            "wire_messages_match_sdk": true,
+            "first_chunk_terminal": false,
+            "first_sse_emit": 1716938.104375125,
+            "first_nonterminal_delivery_monotonic": 1716938.104377958,
+            "sdk_request_unchanged_at_close": true,
+            "chunks": 5,
+            "first_chunk": 1716938.103647583,
+            "first_text": 1716938.103647583,
+            "first_nonterminal_delivered": true,
+            "controlled_barrier_seconds": 8.002175584202632,
+            "barrier_planned_seconds": 8,
+            "natural_eof": true,
+            "sdk_closed": true,
+            "terminal_trusted": true,
+            "stream_status": "complete",
+            "diagnostic": {
+              "stream_id": "9e2a4f4ad2854733bd8fa93e7e498f2f",
+              "error_code": null,
+              "origin": null,
+              "phase": "terminal_validation",
+              "chunk_index": 5,
+              "chunks_observed": 5,
+              "finish_reason": "stop",
+              "terminal_count": 1,
+              "text_received": true,
+              "natural_eof": true,
+              "close_called": true,
+              "closed": true,
+              "recent_chunks": [
+                {
+                  "chunk_index": 1,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 14,
+                  "tool_calls_count": null,
+                  "finish_reason": null,
+                  "legacy_function_call_present": false,
+                  "legacy_function_call_kind": "null",
+                  "legacy_name_kind": "null",
+                  "legacy_name_length": null,
+                  "legacy_arguments_kind": "null",
+                  "legacy_arguments_length": null,
+                  "legacy_extra_field_count": 0,
+                  "legacy_semantically_empty": true
+                },
+                {
+                  "chunk_index": 2,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 5,
+                  "tool_calls_count": null,
+                  "finish_reason": null,
+                  "legacy_function_call_present": false,
+                  "legacy_function_call_kind": "null",
+                  "legacy_name_kind": "null",
+                  "legacy_name_length": null,
+                  "legacy_arguments_kind": "null",
+                  "legacy_arguments_length": null,
+                  "legacy_extra_field_count": 0,
+                  "legacy_semantically_empty": true
+                },
+                {
+                  "chunk_index": 3,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 5,
+                  "tool_calls_count": null,
+                  "finish_reason": null,
+                  "legacy_function_call_present": false,
+                  "legacy_function_call_kind": "null",
+                  "legacy_name_kind": "null",
+                  "legacy_name_length": null,
+                  "legacy_arguments_kind": "null",
+                  "legacy_arguments_length": null,
+                  "legacy_extra_field_count": 0,
+                  "legacy_semantically_empty": true
+                },
+                {
+                  "chunk_index": 4,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 4,
+                  "tool_calls_count": null,
+                  "finish_reason": "stop",
+                  "legacy_function_call_present": false,
+                  "legacy_function_call_kind": "null",
+                  "legacy_name_kind": "null",
+                  "legacy_name_length": null,
+                  "legacy_arguments_kind": "null",
+                  "legacy_arguments_length": null,
+                  "legacy_extra_field_count": 0,
+                  "legacy_semantically_empty": true
+                },
+                {
+                  "chunk_index": 5,
+                  "choices_count": 0,
+                  "delta_present": false,
+                  "role_present": false,
+                  "content_type": "null",
+                  "content_length": null,
+                  "tool_calls_count": null,
+                  "finish_reason": null,
+                  "legacy_function_call_present": false,
+                  "legacy_function_call_kind": "null",
+                  "legacy_name_kind": "null",
+                  "legacy_name_length": null,
+                  "legacy_arguments_kind": "null",
+                  "legacy_arguments_length": null,
+                  "legacy_extra_field_count": 0,
+                  "legacy_semantically_empty": true
+                }
+              ]
+            },
+            "observed_usage": {
+              "prompt_tokens": 10,
+              "completion_tokens": 20,
+              "total_tokens": 30
+            },
+            "settled_usage": {
+              "prompt_tokens": 10,
+              "completion_tokens": 20,
+              "total_tokens": 30
+            },
+            "reply_sha256": "4e60fdfda92678b26560775161afeb9eb19d21786786cbe16489876b78a1d102"
+          }
+        ],
+        "requests": [
+          {
+            "case": "N01",
+            "reservation": 1,
+            "provider": "coco",
+            "model": "deepseek-v4.1-flash",
+            "native_is_fallback": false,
+            "sdk_admission_monotonic": 1716937.841457625,
+            "http_attempts": 1,
+            "provider_http_response_observed": true,
+            "sdk_request_sha256": "b2ade4be2afc66e68d9b3d56d609938889ba51c9b63fc5f4f0578c6a52204c0d",
+            "sdk_messages_sha256": "7ca54ec70e52da5082ab5633f7cc2eb0624c0bbc9a4fe6e4625e02b44de80b6d",
+            "steer_sources": [],
+            "assembled_calls": [],
+            "tool_results": [],
+            "all_tool_results_paired": true,
+            "identifier_present_in_messages": false,
+            "http_dispatch_monotonic": 1716937.959696458,
+            "wire_body_sha256": "b2ade4be2afc66e68d9b3d56d609938889ba51c9b63fc5f4f0578c6a52204c0d",
+            "wire_messages_match_sdk": true,
+            "first_chunk_terminal": false,
+            "first_sse_emit": 1716938.104375125,
+            "first_nonterminal_delivery_monotonic": 1716938.104377958,
+            "sdk_request_unchanged_at_close": true
+          }
+        ],
+        "host_events": [
+          {
+            "monotonic": 1716938.166023333,
+            "stage": "queued",
+            "steer_id": "887a7a5e4fa34d5291efd1c0080edf9a",
+            "source_event_id": "8cb7eb7f45ae491f9f21cf17ed51e35f",
+            "turn_id": "26912cbd81164f86be01d2277eba6625",
+            "registered_text_match": true
+          },
+          {
+            "monotonic": 1716938.166324541,
+            "stage": "web_steer_accepted",
+            "turn_id": "26912cbd81164f86be01d2277eba6625",
+            "steer_id": "887a7a5e4fa34d5291efd1c0080edf9a",
+            "source_event_id": "8cb7eb7f45ae491f9f21cf17ed51e35f",
+            "in_flight_request_unchanged": true
+          },
+          {
+            "monotonic": 1716946.690442625,
+            "stage": "not_applied",
+            "steer_id": "887a7a5e4fa34d5291efd1c0080edf9a",
+            "source_event_id": "8cb7eb7f45ae491f9f21cf17ed51e35f",
+            "turn_id": "26912cbd81164f86be01d2277eba6625",
+            "registered_text_match": true
+          }
+        ],
+        "steers": [
+          {
+            "steer_id": "887a7a5e4fa34d5291efd1c0080edf9a",
+            "source_event_id": "8cb7eb7f45ae491f9f21cf17ed51e35f",
+            "turn_id": "26912cbd81164f86be01d2277eba6625",
+            "status": "not_applied",
+            "cause": "no_next_step"
+          }
+        ],
+        "logical_requests": 1,
+        "physical_reservations": 1,
+        "actual_http_attempts": 1,
+        "provider_models": [
+          {
+            "provider": "coco",
+            "model": "deepseek-v4.1-flash"
+          }
+        ],
+        "fallback_dispatches": 0,
+        "saved_reply_sha256": "4e60fdfda92678b26560775161afeb9eb19d21786786cbe16489876b78a1d102",
+        "final_persistence_matches_sdk": true,
+        "reply_features": {
+          "sentence_diagnostics": {
+            "deterministic_sentence_count": 4,
+            "expected_sentences": 4,
+            "format_check": "PASS",
+            "independent_semantic_review": "NOT_PERFORMED",
+            "review_reasons": [],
+            "rewritten": false
+          },
+          "characters": 28,
+          "semantic_adherence": "REQUIRES_INDEPENDENT_OPERATOR_REVIEW"
+        },
+        "protocol_security_halt": false,
+        "cost": null
+      },
+      "not_applied_notice_visible": true,
+      "explicit_next_turn_action_visible": true,
+      "refresh_completed": true,
+      "refresh_no_resend": true,
+      "ledger_count_after_refresh": 1
+    },
+    "N02": {
+      "session_id": "8514d6e91e764ef98284e8b0d7d2176f",
+      "message_submissions": 1,
+      "steer_submissions": 0,
+      "stop_clicks": 1,
+      "ready_identity_verified": true,
+      "message_http_status": 202,
+      "first_nonterminal_delivered_before_action": true,
+      "stop_http_status": 200,
+      "status": "cancelled",
+      "steer_states": [],
+      "evidence": {
+        "case": "N02",
+        "session_id": "8514d6e91e764ef98284e8b0d7d2176f",
+        "status": "cancelled",
+        "scenario_premise": "MET",
+        "streams": [
+          {
+            "case": "N02",
+            "reservation": 2,
+            "provider": "coco",
+            "model": "deepseek-v4.1-flash",
+            "native_is_fallback": false,
+            "sdk_admission_monotonic": 1716952.374508833,
+            "http_attempts": 1,
+            "provider_http_response_observed": true,
+            "sdk_request_sha256": "5dd3f04a5e61002a2a0c7b4931eeacf184fe06ddb5f1b383d5604a43513974a8",
+            "sdk_messages_sha256": "571d15908a83e6f851d97b7848d5b0bb68d88adb0d595f0aad776aef33cd836b",
+            "steer_sources": [],
+            "assembled_calls": [],
+            "tool_results": [],
+            "all_tool_results_paired": true,
+            "identifier_present_in_messages": false,
+            "http_dispatch_monotonic": 1716952.475925291,
+            "wire_body_sha256": "5dd3f04a5e61002a2a0c7b4931eeacf184fe06ddb5f1b383d5604a43513974a8",
+            "wire_messages_match_sdk": true,
+            "first_chunk_terminal": false,
+            "first_sse_emit": 1716952.620496083,
+            "first_nonterminal_delivery_monotonic": 1716952.620501291,
+            "sdk_request_unchanged_at_close": true,
+            "chunks": 1,
+            "first_chunk": 1716952.619692166,
+            "first_text": 1716952.619692166,
+            "first_nonterminal_delivered": true,
+            "controlled_barrier_seconds": 0.026197999948635697,
+            "barrier_planned_seconds": 8,
+            "natural_eof": false,
+            "sdk_closed": true,
+            "terminal_trusted": false,
+            "stream_status": "cancelled",
+            "diagnostic": {
+              "stream_id": "560757ac90b6490fbaa8025e2afc7029",
+              "error_code": "stream_user_or_caller_cancelled",
+              "origin": "caller_cancellation",
+              "phase": "sdk_iteration",
+              "chunk_index": 1,
+              "chunks_observed": 1,
+              "finish_reason": null,
+              "terminal_count": 0,
+              "text_received": true,
+              "natural_eof": false,
+              "close_called": true,
+              "closed": true,
+              "recent_chunks": [
+                {
+                  "chunk_index": 1,
+                  "choices_count": 1,
+                  "delta_present": true,
+                  "role_present": false,
+                  "content_type": "string",
+                  "content_length": 25,
+                  "tool_calls_count": null,
+                  "finish_reason": null,
+                  "legacy_function_call_present": false,
+                  "legacy_function_call_kind": "null",
+                  "legacy_name_kind": "null",
+                  "legacy_name_length": null,
+                  "legacy_arguments_kind": "null",
+                  "legacy_arguments_length": null,
+                  "legacy_extra_field_count": 0,
+                  "legacy_semantically_empty": true
+                }
+              ]
+            },
+            "observed_usage": {
+              "prompt_tokens": null,
+              "completion_tokens": null,
+              "total_tokens": null
+            },
+            "settled_usage": {
+              "prompt_tokens": null,
+              "completion_tokens": null,
+              "total_tokens": null
+            },
+            "reply_sha256": "077eba69b5cc5a22657453a2d99e7daf8fb8fe97fd9d467ecbe1544116804aa9"
+          }
+        ],
+        "requests": [
+          {
+            "case": "N02",
+            "reservation": 2,
+            "provider": "coco",
+            "model": "deepseek-v4.1-flash",
+            "native_is_fallback": false,
+            "sdk_admission_monotonic": 1716952.374508833,
+            "http_attempts": 1,
+            "provider_http_response_observed": true,
+            "sdk_request_sha256": "5dd3f04a5e61002a2a0c7b4931eeacf184fe06ddb5f1b383d5604a43513974a8",
+            "sdk_messages_sha256": "571d15908a83e6f851d97b7848d5b0bb68d88adb0d595f0aad776aef33cd836b",
+            "steer_sources": [],
+            "assembled_calls": [],
+            "tool_results": [],
+            "all_tool_results_paired": true,
+            "identifier_present_in_messages": false,
+            "http_dispatch_monotonic": 1716952.475925291,
+            "wire_body_sha256": "5dd3f04a5e61002a2a0c7b4931eeacf184fe06ddb5f1b383d5604a43513974a8",
+            "wire_messages_match_sdk": true,
+            "first_chunk_terminal": false,
+            "first_sse_emit": 1716952.620496083,
+            "first_nonterminal_delivery_monotonic": 1716952.620501291,
+            "sdk_request_unchanged_at_close": true
+          }
+        ],
+        "host_events": [
+          {
+            "monotonic": 1716952.646567166,
+            "stage": "web_stop_accepted"
+          }
+        ],
+        "steers": [],
+        "logical_requests": 1,
+        "physical_reservations": 1,
+        "actual_http_attempts": 1,
+        "provider_models": [
+          {
+            "provider": "coco",
+            "model": "deepseek-v4.1-flash"
+          }
+        ],
+        "fallback_dispatches": 0,
+        "saved_reply_sha256": null,
+        "final_persistence_matches_sdk": false,
+        "reply_features": {
+          "sentence_diagnostics": {
+            "deterministic_sentence_count": 0,
+            "expected_sentences": null,
+            "format_check": "NOT_EVALUATED",
+            "independent_semantic_review": "NOT_PERFORMED",
+            "review_reasons": [],
+            "rewritten": false
+          },
+          "characters": 0,
+          "semantic_adherence": "REQUIRES_INDEPENDENT_OPERATOR_REVIEW"
+        },
+        "protocol_security_halt": false,
+        "cost": null
+      },
+      "refresh_completed": true,
+      "refresh_no_resend": true,
+      "ledger_count_after_refresh": 2
+    }
+  },
+  "shutdowns": [
+    {
+      "exit_code": 0,
+      "seconds": 2.1344182919710875,
+      "verified_child_sigint": false,
+      "listener_absent": true,
+      "was_ready": true,
+      "case": "N01",
+      "native": {
+        "runtime_closed": true,
+        "cleanup_uncertain": false,
+        "sdk_streams_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "process_exit_code": null
+      }
+    },
+    {
+      "exit_code": 0,
+      "seconds": 2.1418350841850042,
+      "verified_child_sigint": false,
+      "listener_absent": true,
+      "was_ready": true,
+      "case": "N02",
+      "native": {
+        "runtime_closed": true,
+        "cleanup_uncertain": false,
+        "sdk_streams_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "process_exit_code": null
+      }
+    }
+  ],
+  "operator_resends": 0,
+  "cleanup": {
+    "primary_error": null,
+    "service_start_error": null,
+    "service_shutdown_error": null,
+    "context_close_error": null,
+    "profile_cleanup_error": null,
+    "context_close_calls": 1,
+    "browser_process_exit_status": "EXITED",
+    "profile_removed": true,
+    "cleanup_uncertain": false,
+    "actual_profile_verified": true,
+    "profile_0700_fresh": true,
+    "browser_version": "152.0.7977.83",
+    "headed": true,
+    "sandbox": true,
+    "initial_cookie_jar_empty": true,
+    "automatic_cleanup_pass": true
+  },
+  "physical_reservations": 2,
+  "actual_http_attempts": 2
+}

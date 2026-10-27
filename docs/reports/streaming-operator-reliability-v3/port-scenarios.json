@@ -1,0 +1,15 @@
+{
+  "socket_options": {
+    "reuseaddr_raw": 4,
+    "reuseport_raw": 0,
+    "loopback_only": true
+  },
+  "connect_ex_after_close": 61,
+  "plain_bind": "failed",
+  "plain_bind_errno": 48,
+  "time_wait_observed_for_own_port": true,
+  "single_reuse_bind_after_close": "success",
+  "self_pid": 17888,
+  "original_t02_root_cause": "UNKNOWN",
+  "actual_provider_requests": 0
+}

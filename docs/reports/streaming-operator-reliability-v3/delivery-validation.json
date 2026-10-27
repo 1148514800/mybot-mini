@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "reviewed_files": 1510,
+  "source_files": 320,
+  "source_hashes_match_executed_python_suite": true,
+  "source_hashes_match_full_frozen_scope": true,
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "diff_check": "PASS",
+  "actual_credential_matches": 0,
+  "forbidden_assets": 0,
+  "production_changes": 0,
+  "old_uat_or_report_changes": 0,
+  "real_provider_requests": 0
+}

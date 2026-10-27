@@ -1,0 +1,9 @@
+# 原T02与本轮可复现实验
+
+ORIGINAL_T02_ROOT_CAUSE: UNKNOWN
+
+历史事实保持：旧T01退出0、connect/listener检查无监听；旧T02在make_app之前普通bind报EADDRINUSE、exit1，无Attempt/模型请求；旧T03 BLOCKED。没有读取旧私库或重跑旧Case，未修改旧结果和3011 Token证据。
+
+本轮独立macOS实验：非监听但已绑定的socket可使connect_ex失败，而另一bind被拒绝；主动关闭本地已接受连接后，无Listener也可出现普通bind失败，同端口SO_REUSEADDR绑定可成功。30轮原生Web/SSE/keep-alive同端口重启为独立修复证据，不能证明历史T02当时必为TIME_WAIT，也不能证明当时不存在竞态/其他短时状态。未修改系统TCP参数。
+
+新实现消除本地探测socket释放后再次bind的窗口。首轮测试还发现直接Server.run和uvicorn.run的SIGINT处理差异，以及macOS getsockopt(SO_REUSEADDR)返回非零位值4而非整数1；测试应验证布尔启用。最终实现仅在已验证Uvicorn生命周期完整关闭时处理重新抛出的KeyboardInterrupt，不把不完整清理改判exit0。

@@ -1,0 +1,212 @@
+{
+  "external_listener": {
+    "cleanup": {
+      "primary_error": "port_in_use",
+      "service_start_error": "port_in_use",
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "no_attempt_or_sdk": true,
+    "startup_exit_code": 1
+  },
+  "after_context": {
+    "cleanup": {
+      "primary_error": "injected_after_context",
+      "service_start_error": null,
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "shutdowns": [],
+    "mock_http_attempts": 0
+  },
+  "navigation": {
+    "cleanup": {
+      "primary_error": "page_navigation_failed",
+      "service_start_error": null,
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "shutdowns": [
+      {
+        "exit_code": 0,
+        "seconds": 0.44284524978138506,
+        "verified_child_sigint": false,
+        "listener_absent": true,
+        "was_ready": true,
+        "case": "N01",
+        "native": {
+          "runtime_closed": true,
+          "cleanup_uncertain": false,
+          "sdk_streams_closed": true,
+          "lease_released": true,
+          "database_consistent": true,
+          "process_exit_code": null
+        }
+      }
+    ],
+    "mock_http_attempts": 0
+  },
+  "steer": {
+    "cleanup": {
+      "primary_error": "steer_submission_failed",
+      "service_start_error": null,
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "shutdowns": [
+      {
+        "exit_code": 0,
+        "seconds": 1.7658725411165506,
+        "verified_child_sigint": false,
+        "listener_absent": true,
+        "was_ready": true,
+        "case": "N01",
+        "native": {
+          "runtime_closed": true,
+          "cleanup_uncertain": false,
+          "sdk_streams_closed": true,
+          "lease_released": true,
+          "database_consistent": true,
+          "process_exit_code": null
+        }
+      }
+    ],
+    "mock_http_attempts": 0
+  },
+  "screenshot": {
+    "cleanup": {
+      "primary_error": "page_screenshot_failed",
+      "service_start_error": null,
+      "service_shutdown_error": null,
+      "context_close_error": null,
+      "profile_cleanup_error": null,
+      "context_close_calls": 1,
+      "browser_process_exit_status": "EXITED",
+      "profile_removed": true,
+      "cleanup_uncertain": false,
+      "actual_profile_verified": true,
+      "profile_0700_fresh": true,
+      "browser_version": "152.0.7977.83",
+      "headed": true,
+      "sandbox": true,
+      "initial_cookie_jar_empty": true,
+      "automatic_cleanup_pass": true
+    },
+    "shutdowns": [
+      {
+        "exit_code": 0,
+        "seconds": 2.2719387081451714,
+        "verified_child_sigint": false,
+        "listener_absent": true,
+        "was_ready": true,
+        "case": "N01",
+        "native": {
+          "runtime_closed": true,
+          "cleanup_uncertain": false,
+          "sdk_streams_closed": true,
+          "lease_released": true,
+          "database_consistent": true,
+          "process_exit_code": null
+        }
+      }
+    ],
+    "mock_http_attempts": 1
+  },
+  "combined_primary_and_context_close": {
+    "primary_error": "page_navigation_failed",
+    "service_start_error": null,
+    "service_shutdown_error": null,
+    "context_close_error": "context_close_failed",
+    "profile_cleanup_error": null,
+    "context_close_calls": 1,
+    "browser_process_exit_status": "EXITED",
+    "profile_removed": true,
+    "cleanup_uncertain": false,
+    "actual_profile_verified": true,
+    "profile_0700_fresh": true,
+    "browser_version": "152.0.7977.83",
+    "headed": true,
+    "sandbox": true,
+    "initial_cookie_jar_empty": true,
+    "automatic_cleanup_pass": false
+  },
+  "profile_remove_failure": {
+    "primary_error": null,
+    "service_start_error": null,
+    "service_shutdown_error": null,
+    "context_close_error": null,
+    "profile_cleanup_error": "profile_remove_failed",
+    "context_close_calls": 1,
+    "browser_process_exit_status": "EXITED",
+    "profile_removed": false,
+    "cleanup_uncertain": true,
+    "actual_profile_verified": true,
+    "profile_0700_fresh": true,
+    "browser_version": "152.0.7977.83",
+    "headed": true,
+    "sandbox": true,
+    "initial_cookie_jar_empty": true,
+    "automatic_cleanup_pass": false,
+    "owned_test_artifact_separately_removed": true
+  },
+  "chrome_launch_failure": {
+    "primary_error": "browser_operation_failed",
+    "service_start_error": null,
+    "service_shutdown_error": null,
+    "context_close_error": null,
+    "profile_cleanup_error": null,
+    "context_close_calls": 0,
+    "browser_process_exit_status": "EXITED",
+    "profile_removed": true,
+    "cleanup_uncertain": false,
+    "automatic_cleanup_pass": true
+  }
+}
