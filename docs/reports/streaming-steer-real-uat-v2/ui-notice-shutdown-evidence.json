@@ -1,0 +1,52 @@
+{
+  "shutdowns": [
+    {
+      "case": "T01",
+      "exit_code": 0,
+      "seconds": 0.9174564161803573,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "native": {
+        "runtime_closed": true,
+        "cleanup_uncertain": false,
+        "sdk_streams_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "process_exit_code": null
+      }
+    },
+    {
+      "case": "T02",
+      "exit_code": 0,
+      "seconds": 1.8997184168547392,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "native": {
+        "runtime_closed": true,
+        "cleanup_uncertain": false,
+        "sdk_streams_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "process_exit_code": null
+      }
+    },
+    {
+      "case": "T03",
+      "exit_code": 0,
+      "seconds": 1.494415125111118,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "native": {
+        "runtime_closed": true,
+        "cleanup_uncertain": false,
+        "sdk_streams_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "process_exit_code": null
+      }
+    }
+  ],
+  "profile_removed": true,
+  "mock_http": 5,
+  "real_requests": 0
+}

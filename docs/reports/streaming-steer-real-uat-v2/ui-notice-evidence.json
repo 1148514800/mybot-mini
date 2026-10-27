@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "DOM": {
+    "T01": {
+      "native_applied_notice_visible": true,
+      "explicit_non_adherence_warning": true
+    },
+    "T02": {
+      "native_not_applied_notice_visible": true,
+      "explicit_user_next_turn_button": true
+    }
+  },
+  "read_only_observation": true,
+  "frozen_source_changed": false,
+  "real_requests": 0,
+  "mock_http": 5,
+  "reader_sha256": "1ddda2979623c7bec95b9de9f73d18395fc3102d35e78c14095595bba7098c38",
+  "source": "read-only DOM at screenshot boundary in a separate disposable MOCK rehearsal; no backend or page mutation",
+  "not_added_to_unittest_count": true
+}

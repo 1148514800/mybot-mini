@@ -5,3 +5,5 @@
 T01 DOM新Session/发送/Steer一次；T02新Session/自然首块Steer、not_applied提示并真实刷新，未重发模型；T03新Session/首块后Stop。消息、Steer、Stop没有后端写API替代。只读状态与SDK文件核验实际层级。
 
 三次自有服务保持EventSource时正常SIGINT/wait exit0，端口/Lease释放、SQLite一致、所有SDK owner关闭；只关闭自己的Chrome/profile。截图只含安全终态面板及非生产探针。SDK/浏览器时钟不相减，屏障耗时不算自然Provider延迟。Live未运行、真实清理仍待新授权验证。
+
+另以完全相同冻结Mock流程补充只读DOM观察：T01原生applied提示明确含“不代表模型遵从”；T02原生not_applied提示可见并含“填入下一轮消息”按钮。只在终态截图边界读取DOM，没有修改页面/后端/请求，独立可丢弃Mock演练再5次HTTP、3服务exit0，真实0；两项DOM检查不计入388个unittest。

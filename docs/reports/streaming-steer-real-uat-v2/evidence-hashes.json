@@ -1,8 +1,8 @@
 {
-  "acceptance-report.md": "e3f5917c63a2470b1d4a37e0710f874ad2f2e6f3a574b228e1e09c81a5ae1431",
+  "acceptance-report.md": "dd3c7be1ad3a84c2d4713ef009acc39943cf47c3d5dcb82e8caed9afd8d093d0",
   "browser-evidence.json": "f620759ae48eb2c8bcc400a3be2a6c782c9a87c1f53989fcd979a931486ae5c7",
   "browser-isolation-evidence.json": "e3aa37b18714bb0598c93aece55740a6e4cc00770bd17a85001329780c1c0e58",
-  "browser-isolation.md": "b9e792d1d95c31610e25a7239d2bc2ee1ae6cfde3276365eb327f519a49be440",
+  "browser-isolation.md": "f038655257f0e446bec631aad9f5ad1e14ac4ee1a90e0d5362302137cb83e33e",
   "budget-evidence.json": "1cb163564d450ab64d66f8f6d2def6a6ef8fd26ff8f74940ba18114a26a4ebfa",
   "case-results.md": "6e8d72cbf5e8bb9d7d9513a6a0fadc5cbd41ed96a9a22e1b2db29ea7a923a046",
   "executed-test-ids.json": "f19b128d1fe16e9c7aceda11dd5dd0b3d53b500b26e6cec7bcb40db0219e35c9",
@@ -12,7 +12,9 @@
   "preregistration.md": "1bb67a238117da98323b8d8adb035ea24df2ffec35212b935b7416f5404c5421",
   "remaining-risks.md": "1ed75d0c34f2f6c80c839d6dc0f3cb7129c121395b34379258478e50a3b11daa",
   "request-admission-vs-dispatch.md": "64ba58a621e51b21a8a79e68348509e50d31b7f6e6d7af46f03159a80cdf498e",
+  "screenshots/T01-admitted-notice.png": "92073d871df3997086d5eea9e670ee4b2a94f6034564f2764dbfb138ee0d95e5",
   "screenshots/T01-terminal.png": "edfc9b027d510781b8642857d22b6477c485034b5c45598c1d2ec43f5578c775",
+  "screenshots/T02-not-applied-notice.png": "2e70dcbc75fe7700f24c501a2397c9272e8041b0ce40a6efa3c95808fa945f22",
   "screenshots/T02-terminal.png": "5eb3d62e5c2c59d9e9ddffa86e2ad2647a7359798b8f2c9176fb96db7935d7c5",
   "screenshots/T03-terminal.png": "1f65cb385638c1da30003ddb8b022595a23965c8e08e6e16f4911a0007b378f6",
   "screenshots/probe-A.png": "4bb9a92308cbd58a99b451e802716c4d9dbb9486489bab6fe4f91bf9224b4185",
@@ -22,5 +24,7 @@
   "steer-source-contract.md": "c1bec514f52c951ef106fe3ce128b2ebaee4321507a047474a73b6dcd7cf2e17",
   "streaming-integrity.md": "b7b46ebaf605636c4e4e3a9bb51cfd714983de66aedf321785ed869100976251",
   "tool-call-contract.md": "b01f3de100ccf3ff029bdc605737d3306b6f61a3012bbc1b40c4e56757f1d788",
+  "ui-notice-evidence.json": "73952b19d035088ea02d015fad14f5ab3809e729a5c8199038f2dc27a87b990c",
+  "ui-notice-shutdown-evidence.json": "383b12eff60a572a8c71e6b55f3b4dc890c9c6b386dc3ac65dae3b1fd068b60c",
   "validated-source-hashes.json": "9fc917d298e8bf6d6d47768633b0933634081c90428a87e6c68fe0f76cf3ec8a"
 }

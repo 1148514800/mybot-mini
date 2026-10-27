@@ -13,3 +13,5 @@ LIVE_AUTHORIZATION: NOT_GRANTED。本轮真实DeepSeek/GLM/摘要/Judge请求均
 SDK/HTTP/来源证据只证明对应层级。原生applied是on_dispatch准入（甚至早于UAT reservation），不能推出远端处理或语义遵从；真正Semantic Adherence仍须未来实际工具顺序与回复独立评审。不因直接答复/时序错过补跑，也不扩大预算。
 
 预注册/冻结源码提交`6337a20ae926f28cae0446f5e008bc754d2e14e0`，唯一prepare、唯一freeze与verify完成；302源文件hash等于权威回归版本，原配置/workspace字节与inode/两库inode及完整性一致，8901可绑定、Lease可用。Acceptance只改文档和脱敏证据，冻结后源码未改。Live仍需新GRANTED_6_REQUESTS和全部当前环境预检，只可T01→T02→T03一次。cost=null，原真实能力未知见remaining-risks。
+
+补充终态只读DOM检查直接确认T01“不代表模型遵从”提示与T02“未生效/填入下一轮消息”提示可见，截图附后。该独立相同脚本Mock演练另5次本地SDK HTTP、3服务exit0，非Live且不重复计入388个unittest；冻结源码、模型参数和评分未修改。
