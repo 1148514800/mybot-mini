@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-codex/stream-legacy-function-compat基于72e5ef74fb574dc9212fca188112ef058e4762e1。空legacy兼容修复与全部离线验收完成；真实模型授权0/请求0。D02新批次尚未创建，下一步先Implementation/Preregistration提交，再唯一prepare/freeze。
+codex/stream-legacy-function-compat基于72e5ef74fb574dc9212fca188112ef058e4762e1。空legacy兼容修复与全部离线验收完成；真实模型授权0/请求0。Implementation 3a906311a196f23e01227fd3ec9f0b212047b70b；D02 Preregistration/冻结源码 06d53077c3f35985506c835b42d29fd8cd394aa7。
 
 ## 实现与验证
 
@@ -14,4 +14,4 @@ SDK2.32.0原始SSE证明{}解析成truthy模型，缺失/null与空对象字段�
 
 ## 下一步与禁止事项
 
-完成Implementation与Preregistration提交，工作树干净后对~/.mybot-mini/uat/stream-legacy-canary-20261027/执行唯一prepare/freeze/verify；只能更新后续报告，不再改冻结源码。D02端口8900、唯一新消息、空Registry、1次物理/HTTP硬上限。必须未来新的精确GRANTED_1_REQUEST才能Live。旧D01/R01私有数据库未打开、旧报告/Tag/ZIP/main不变，不补跑、不复用额度、不操作用户Chrome/8765。
+~/.mybot-mini/uat/stream-legacy-canary-20261027/已唯一prepare/freeze，verify通过，0 Attempt/reservation/HTTP，事件库空、8900/Lease可用。禁止重新prepare/freeze或修改冻结源码。Acceptance仅文档。D02端口8900、唯一新消息、空Registry、1次物理/HTTP硬上限。必须未来新的精确GRANTED_1_REQUEST才能Live。旧D01/R01私有数据库未打开、旧报告/Tag/ZIP/main不变，不补跑、不复用额度、不操作用户Chrome/8765。

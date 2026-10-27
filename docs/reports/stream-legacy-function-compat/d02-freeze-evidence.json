@@ -1,0 +1,43 @@
+{
+  "status": "OFFLINE_PREPARATION_PASS_LIVE_BLOCKED",
+  "authorization": "NOT_GRANTED",
+  "baseline": "72e5ef74fb574dc9212fca188112ef058e4762e1",
+  "implementation_sha": "3a906311a196f23e01227fd3ec9f0b212047b70b",
+  "preregistration_sha": "06d53077c3f35985506c835b42d29fd8cd394aa7",
+  "freeze_source_sha": "06d53077c3f35985506c835b42d29fd8cd394aa7",
+  "case": "D02",
+  "plan_sha256": "c41054b037c633fb2df9a4a17716a054158052274e00e526b3b716a67a5b28b6",
+  "source_hashes_equal_authoritative_validation": true,
+  "source_files": 292,
+  "source_hash_map_sha256": "b1edc79856762a04f66f9e6649d44f836fb46165cbd7ff41f5329d9df4fd1e76",
+  "private_asset_hashes": {
+    "prepared.json": "a5b60407c612744a26018e41d76c2118d064097a500b9be4da6b27d87aaf7841",
+    "freeze.json": "e9178322238ccddc6f51dbb38d82dfef4e494aff7ba5dc0b7201c11066bee4af",
+    "browser-isolation.json": "31a24fe6d58d968bcec84fb0535fa285998a3ee83ffe2be6a823641e0aebece0"
+  },
+  "database_inodes_verified": true,
+  "workspace_inode_and_bytes_verified": true,
+  "provider_original_bytes_verified": true,
+  "sqlite_integrity": "ok",
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "reservation_rows": 0,
+  "halt": false,
+  "port": 8900,
+  "port_bind": "PASS",
+  "lease": "acquired_and_released",
+  "unique_prepare": true,
+  "unique_freeze": true,
+  "real_requests": 0
+}

@@ -1,4 +1,4 @@
-# OFFLINE PASS — implementation validated / D02 preparation pending
+# OFFLINE PASS / D02 LIVE BLOCKED
 
 本轮真实模型请求0，DeepSeek/GLM/语义摘要/Judge均0，不继承旧D01授权。基线72e5ef74fb574dc9212fca188112ef058e4762e1，独立worktree/分支codex/stream-legacy-function-compat，旧R01/D01及其HALT/评分/私有资产不改。
 
@@ -10,6 +10,8 @@
 
 221块明确Synthetic空对象样本PASS；带Usage尾块222块并可信记录Mock7/9/16；同结构含真实函数名FAIL且0工具，每个SDK回归1次Mock HTTP。浏览器A–E及Steer/恢复A–H全部验收通过，5+10次Mock模型HTTP，7次自有服务正常wait exit0，端口/Lease/库一致，新profile清理。queued/applied/not_applied分别验证，原请求未被改写，无旧工具重放。
 
-Implementation已完成待提交，随后将单独提交完整D02预注册，再执行唯一prepare/freeze/verify；当前未创建新私有批次。D02独立端口8900、单Attempt、全局1次预算、stream/include_usage保持，工具/MCP/Skills/Coding/Steer/摘要关闭，SDK retries0。最终冻结状态仅由后续Acceptance证据更新，不修改已验证源码。
+Implementation `3a906311a196f23e01227fd3ec9f0b212047b70b`，Preregistration/冻结源码 `06d53077c3f35985506c835b42d29fd8cd394aa7`。已按顺序唯一prepare、唯一freeze、verify；292源文件hash与权威回归完全一致，原Provider字节、workspace字节/inode、两库inode/完整性验证通过。D02独立端口8900可绑定、Lease可用、事件库空、0 Attempt/0 reservation/0 HTTP/0真实请求。单Attempt、全局1次预算、stream/include_usage保持，工具/MCP/Skills/Coding/Steer/摘要关闭，SDK retries0。Acceptance仅更新文档和脱敏证据，冻结后无源码修改。
 
 原Provider真实行为仍UNKNOWN；本轮不宣称真实DeepSeek兼容已经PASS。旧R01/D01结果保持失败，不能补跑或挪用额度。
+
+本次没有新的真实D02终态、EOF、延迟、Usage或费用证据；模型窗口/远程凭证有效性/真实兼容性均未验证，未来需新的精确GRANTED_1_REQUEST。冻结证据见d02-freeze-evidence.json；最终Acceptance提交及远程HEAD由Git交付核对。

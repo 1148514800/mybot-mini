@@ -1,7 +1,17 @@
 {
-  "tracked_files_scanned": 1381,
+  "tracked_and_new_files_scanned": 1384,
   "actual_key_matches": 0,
   "forbidden_runtime_files": 0,
   "authoritative_source_hashes_match": true,
-  "real_requests": 0
+  "frozen_source_hashes_match": true,
+  "old_reports_and_harness_unchanged": true,
+  "dependencies_unchanged": true,
+  "old_private_assets_opened": false,
+  "real_requests": 0,
+  "d02_usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  }
 }

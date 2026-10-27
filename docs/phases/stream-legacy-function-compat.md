@@ -13,3 +13,5 @@ macOS/Python3.12+/uv：`uv run python -m scripts.check_stream_legacy_function`�
 实际Synthetic：221块末尾空legacy对象自然EOF，带尾块则222块且Usage可信；同结构含真实函数名被拒绝。SDK2.32.0可把{}构造为truthy模型，不能用`if function_call`。D01原字段未保存，不能以Synthetic冒充原始重放。相较上阶段新增两种legacy码与结构元数据，没有重写流消费器或扩大权限。
 
 当前验收、统计、冻结与限制见[专题报告](../reports/stream-legacy-function-compat/acceptance-report.md)。本轮真实请求0，D02须未来新的GRANTED_1_REQUEST；旧R01/D01不改判、不补跑。
+
+最终验收：2051个去重unittest PASS（新增67），13个Chrome合成场景、7次自身服务exit0；真实模型0。D02已唯一prepare/freeze，源码SHA 06d53077c3f35985506c835b42d29fd8cd394aa7，verify通过、Attempt/reservation/HTTP均0。新Live须另有明确授权。
