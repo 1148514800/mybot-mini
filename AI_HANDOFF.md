@@ -2,16 +2,16 @@
 
 ## 当前状态
 
-codex/streaming-steer-real-uat-v2，基线54eeeb80be0cdef65f25affc6eae6c907474cb19。仅离线准备，LIVE_AUTHORIZATION NOT_GRANTED，真实Provider0。T01/T02/T03预算4/1/1、全局6，原D02授权已耗尽不继承。
+分支codex/streaming-steer-real-uat-v2。冻结源码6337a20ae926f28cae0446f5e008bc754d2e14e0，Live输入41fcea237ed1c5be522c44d1cbc373e04acee8ea。新GRANTED_6_REQUESTS后唯一Live部分执行：T01完成但Task/Semantic FAIL（完整回复3句而非2句）；T02启动bind EADDRINUSE、exit1，尚未创建Attempt；T03安全BLOCKED。全批停止，不补跑、不使用余下3次。
 
-## 实现与验证
+## 已验证
 
-只增scripts/streaming_steer_real_uat_v2/及专项/文档，生产/依赖/旧脚本报告不变。原native Web→Agent→Failover→SDK；T01原生read_file/list_files，其他空Registry；MCP/Skills/Coding关闭。分开queued、native admitted、reservation、HTTP、response、semantic；applied不等于HTTP。原请求hash不变，Source ID/原文精确匹配，工具跳过executed=false与批次配对保留，不导出参数/请求/正文。
+T01三次真实DeepSeek/HTTP、GLM/重试/Fallback/摘要/Judge0；供应商2834输入/177输出/3011总Token，cost=null。真实工具流23/24/85 chunks均合法终态、自然EOF、SDK关闭；初始list_files明确跳过executed=false且配对，后续SDK/HTTP确含可信用户Steer并收到供应商响应，实际只读README，标识来自真实结果、无示例读取。用途正确但额外状态句违反两句要求。applied仅表示native准入，分层证据保留。UAT句数正则漏计相邻中文句，原记录2不改，独立审阅3。
 
-最终388项去重相关测试PASS，新增47，未重跑历史2051全量；源码hash权威运行前后一致。双profile隔离与新headed Chrome T01→02→03通过，5次Mock模型HTTP、3服务exit0/端口Lease库释放，真实0；另独立只读DOM演练确认T01准入警示及T02未生效按钮可见（5 Mock HTTP、3exit0，不计入unit数）。初始UAT字段重名已修并保留日志hash，无生产缺陷修复。报告docs/reports/streaming-steer-real-uat-v2/。
+原302源码/配置/workspace/库inode及冻结文件verify PASS，两库ok、0reserved/uncertain，T01唯一completed Attempt（非Task PASS）。T01服务exit0/SDK/Lease释放；T02启动exit1不能称Clean Shutdown PASS。浏览器异常finally在Playwright退出后close，次级错误阻止profile自动删除；独立核实自己的Chrome已退出后仅清理自有新profile。最终8901空闲、Lease可用、自有进程0。T02端口错误根因未证，不推断未知进程或TIME_WAIT。
 
-## 下一步与边界
+新双profile Cookie/LocalStorage隔离PASS，第三新headed Chrome真实DOM。旧Chrome/8765/launcher39852/旧Live私库未触碰；共享Git AppleDouble只读警告不处理。生产、UAT冻结源码、依赖、旧报告/账本不变。原离线388去重/47新增结果保持，本轮文档无新增unit测试，不声称重跑2051。
 
-预注册/冻结源码6337a20ae926f28cae0446f5e008bc754d2e14e0；~/.mybot-mini/uat/streaming-steer-real-v2-20261026/已唯一prepare/freeze/verify，0请求/Attempt/reservation/HTTP、事件库空、8901/Lease可用。Acceptance只文档，不再改冻结源码，不重复prepare/freeze。未来须新GRANTED_6_REQUESTS及当前环境隔离核验，T01→02→03每Case一次、不可挪预算或补跑；协议/权限/预算/存储/不确定异常HALT，清理不清HALT。语义失败独立记分。
+## 下一步
 
-旧R01/D01/D02私有资产未打开，旧真实成绩保持；用户Chrome/8765/私人workspace未操作。main/Tag/ZIP不动。共享.git AppleDouble旁索引只读核对，正式pack verify0，旁文件不处理。
+报告docs/reports/streaming-steer-real-uat-v2/live-results/execution-01/。后续独立修复任务调查macOS快速重启plain bind、浏览器异常清理顺序及诊断句数；不得修改当前冻结批次继续Live。T02 not_applied与T03真实Stop本批未验证；若再Live，须新合同/批次/授权，不能重启已有Case或复用余额。旧R01/D01/D02真实结果与HALT原样保留；main/Tag/ZIP不动。

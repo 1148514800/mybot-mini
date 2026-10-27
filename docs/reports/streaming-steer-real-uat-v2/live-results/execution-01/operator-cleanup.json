@@ -1,0 +1,10 @@
+{
+  "owned_profile_removed": true,
+  "owned_profile_processes": 0,
+  "playwright_context_close_error": "event_loop_already_closed_after_service_start_failure",
+  "cleanup_mode": "verified_owned_profile_after_browser_process_exit",
+  "port_listeners": {
+    "8765": false,
+    "8901": false
+  }
+}

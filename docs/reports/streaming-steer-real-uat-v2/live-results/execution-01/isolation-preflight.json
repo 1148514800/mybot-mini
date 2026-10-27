@@ -1,0 +1,37 @@
+{
+  "authorization": "GRANTED_6_REQUESTS",
+  "input_head": "41fcea237ed1c5be522c44d1cbc373e04acee8ea",
+  "preregistration": "6337a20ae926f28cae0446f5e008bc754d2e14e0",
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "ports_listening": {
+    "8765": false,
+    "8901": false
+  },
+  "lease_available": true,
+  "external_batch_holders": false,
+  "processes": [
+    {
+      "pid": 39852,
+      "uid": 501,
+      "ppid": 84752,
+      "module": "mybot.web",
+      "cwd_sha256": [
+        "39143cade26e4a0feb146df47d7f7bc44ef654d66b6d1caa25fdda00cf1c4186"
+      ]
+    }
+  ],
+  "old_private_assets_opened": false,
+  "frozen_source_and_configuration_verified": true
+}

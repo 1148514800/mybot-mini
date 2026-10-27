@@ -1,0 +1,17 @@
+{
+  "document_and_evidence_checks": "PASS",
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "git_diff_check": "PASS",
+  "frozen_source_changes": 0,
+  "original_reports_modified": 0,
+  "secret_value_matches": 0,
+  "forbidden_tracked_assets": 0,
+  "reviewed_unique_files": 1468,
+  "new_unit_tests": 0,
+  "prior_distinct_related_tests": 388,
+  "prior_new_tests": 47,
+  "full_historical_suite_rerun": false,
+  "semantic_review": "FAIL recorded, not overridden by metadata",
+  "model_request_count": 3
+}

@@ -1,0 +1,57 @@
+{
+  "services": [
+    {
+      "case": "T01",
+      "exit_code": 0,
+      "seconds": 2.356541750021279,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "native": {
+        "runtime_closed": true,
+        "cleanup_uncertain": false,
+        "sdk_streams_closed": true,
+        "lease_released": true,
+        "database_consistent": true,
+        "process_exit_code": null
+      }
+    },
+    {
+      "case": "T02",
+      "exit_code": 1,
+      "seconds": 4.854099825024605e-05,
+      "verified_child_sigint": false,
+      "port_released": true,
+      "native": {}
+    }
+  ],
+  "operator_cleanup": {
+    "owned_profile_removed": true,
+    "owned_profile_processes": 0,
+    "playwright_context_close_error": "event_loop_already_closed_after_service_start_failure",
+    "cleanup_mode": "verified_owned_profile_after_browser_process_exit",
+    "port_listeners": {
+      "8765": false,
+      "8901": false
+    }
+  },
+  "postflight_ports": {
+    "8765": {
+      "listening": false,
+      "plain_bind": "available"
+    },
+    "8901": {
+      "listening": false,
+      "plain_bind": "available"
+    }
+  },
+  "postflight_processes": {
+    "owned_uat_servers": 0,
+    "owned_chrome_profile_processes": 0,
+    "old_launcher_alive": true
+  },
+  "overall_clean_shutdown": "FAIL",
+  "t01_clean_shutdown": "PASS",
+  "t02_startup_exit_code": 1,
+  "t02_sdk_or_runtime_started": false,
+  "uncertain_execution": false
+}

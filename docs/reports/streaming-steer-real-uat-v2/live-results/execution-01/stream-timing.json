@@ -1,0 +1,60 @@
+{
+  "clock": "host monotonic seconds; browser preview same-clock latency not captured",
+  "browser_first_visible_preview_seconds": null,
+  "streams": [
+    {
+      "reservation": 1,
+      "chunks": 23,
+      "sdk_admission_monotonic": 1700931.780832125,
+      "http_dispatch_monotonic": 1700931.928333791,
+      "first_chunk": 1700933.783285166,
+      "first_text": 1700941.786708166,
+      "first_nonterminal_delivery_monotonic": 1700933.784141666,
+      "first_sse_emit": 1700941.793435083,
+      "controlled_barrier_seconds": 8.001019207993522,
+      "barrier_planned_seconds": 8,
+      "natural_eof": true,
+      "sdk_closed": true,
+      "terminal_trusted": true,
+      "stream_status": "tool_calls",
+      "http_to_first_chunk_seconds": 1.854951374931261,
+      "http_to_first_sse_seconds": 9.865101292030886
+    },
+    {
+      "reservation": 2,
+      "chunks": 24,
+      "sdk_admission_monotonic": 1700941.861892291,
+      "http_dispatch_monotonic": 1700941.904220166,
+      "first_chunk": 1700944.728652666,
+      "first_text": 1700944.730658,
+      "first_nonterminal_delivery_monotonic": 1700944.729592541,
+      "first_sse_emit": 1700945.109297541,
+      "controlled_barrier_seconds": 0,
+      "barrier_planned_seconds": 0,
+      "natural_eof": true,
+      "sdk_closed": true,
+      "terminal_trusted": true,
+      "stream_status": "tool_calls",
+      "http_to_first_chunk_seconds": 2.8244325001724064,
+      "http_to_first_sse_seconds": 3.205077375052497
+    },
+    {
+      "reservation": 3,
+      "chunks": 85,
+      "sdk_admission_monotonic": 1700945.191741416,
+      "http_dispatch_monotonic": 1700945.236134208,
+      "first_chunk": 1700947.496033583,
+      "first_text": 1700947.498038833,
+      "first_nonterminal_delivery_monotonic": 1700947.4970305,
+      "first_sse_emit": 1700947.691312875,
+      "controlled_barrier_seconds": 0,
+      "barrier_planned_seconds": 0,
+      "natural_eof": true,
+      "sdk_closed": true,
+      "terminal_trusted": true,
+      "stream_status": "complete",
+      "http_to_first_chunk_seconds": 2.2598993750289083,
+      "http_to_first_sse_seconds": 2.455178666859865
+    }
+  ]
+}

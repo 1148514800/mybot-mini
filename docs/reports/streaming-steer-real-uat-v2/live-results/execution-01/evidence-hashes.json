@@ -1,0 +1,33 @@
+{
+  "private_operator_files": {
+    "operator.py": "7148b41fe848ef4a78b81dc547b03683ff407dfa19a5cfa135eac317f2200a3e",
+    "operator.log": "adddf4fc8d7b079a40ae7bdad3da22cb464aae543f08eafd2ec7d1273fb94adc",
+    "T01-server.log": "fea20b8ba9056656f8cc741f60fb2c289790ea7e4c4dc79f435413836313e778",
+    "T02-server.log": "5514949192e78503da1c8524738ed934012156f81c69bdd76c3666657c35a637"
+  },
+  "public_files": {
+    "operator-cleanup.json": "6a3d630d8a1ee006370c813090fa557d280ba07fe0ab874dfd065e9026260e63",
+    "tool-and-steer-evidence.json": "ac5b34d320f157e19578043ce2212ea769db2d94a374e5e9592b9652309cae0b",
+    "isolation-preflight.json": "87c8aacb23f966708b4a080c62a9090639999cc0841c408b532eb04ba1b3c095",
+    "semantic-review.json": "299189a6339309b5066a22bf1b3e9c999fb7fc5fcb69656a83cf3c481c91e258",
+    "browser-acceptance.md": "fdd4129867550406a4053ded3c5723d400c54e5850f56a51d3ed3db01066d589",
+    "postflight.json": "5dab7076f9b97a577cdec4461594f2126048b4f7b826f752a20ba1dec0e663f1",
+    "browser-operator-evidence.json": "dfa7175cd6bbc985688b5e995b92607e587dea23bf1db399816f101315c42e0d",
+    "security-audit.md": "0cc737b43d67f74535dd1bde246aaf62f23e3b9ce8d1c83644ee77a24ae6389e",
+    "stream-timing.json": "4fe2a2dd7918d2f383a137b95b45fb9070c189435f28ea2ef9f65dd8d0a5d238",
+    "resource-usage.json": "643a5b835cbc0c978d43062ce6ab5d22e331777af662576c96cf1b27f1fad988",
+    "shutdown-evidence.json": "9f80c99a74b7f1cf1e0d5e9272d9d06430cab8e0cbf59108cc9e8992c22166f8",
+    "next-stage-recommendations.md": "7d31529d03abd1088763908c802e56b9380d36a4ff203bd150b08669c9eaf211",
+    "streaming-integrity.md": "7338ba4f7d229083dfa6cfe64575a587f9066bd4296cb8ad85d03e0498f67d2c",
+    "delivery-validation.json": "3c84dbf02347b6f55963e97b203272c56f2160d9b8a49803b1555c5228469b6d",
+    "ui-notice-evidence.json": "141081d5f9e5d2279b50a4c9210aca390ba0daa222dc1596f6d38f63de2ae121",
+    "case-results.md": "ca4dec6cd98a16e5dbe82d3d6dc9b0d752c9eeac08b5a0ca15c94e74bf7d2c91",
+    "acceptance-report.md": "17cf806829d5d0d27d0e0c0a5d356477e2b97d5568cfadc607ee979fa76d8303",
+    "request-admission-vs-dispatch.md": "888470fc82da54f4fde831f528b81a7d66b2c7eb8d231b4d51cb57cf1588c5d3",
+    "offline-validation.md": "311681a5f84e2169a53c73a9042e2a328957407dbe655062e4e3a8a529cc66a9",
+    "browser-isolation-evidence.json": "211a36b04caa04e86f7ab2fee757bbeae024de86c1d9e4dc1d04093ec697536d",
+    "screenshots/T01-steer-notice.png": "92073d871df3997086d5eea9e670ee4b2a94f6034564f2764dbfb138ee0d95e5",
+    "screenshots/T01-terminal.png": "7d4b0b9cf8583d36a8eafbd4ecedf3dd7f939a156ddc355241bad96eac16ab84"
+  },
+  "raw_private_logs_exported": false
+}

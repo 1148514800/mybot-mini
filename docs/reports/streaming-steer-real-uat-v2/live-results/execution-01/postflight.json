@@ -1,0 +1,108 @@
+{
+  "usage": {
+    "real_requests": 3,
+    "attempts": 1,
+    "unsettled": 0,
+    "http_attempts": 3
+  },
+  "source_files": 302,
+  "frozen_verify": "PASS",
+  "lease_available": true,
+  "database_integrity": {
+    "event_store": "ok",
+    "ledger": "ok"
+  },
+  "event_counts": {
+    "sessions": 2,
+    "events": 16,
+    "turns": 1,
+    "messages": 2,
+    "tools": 1
+  },
+  "turn_states": [
+    {
+      "state": "completed",
+      "count": 1
+    }
+  ],
+  "cases": [
+    {
+      "id": "T01",
+      "status": "completed"
+    }
+  ],
+  "reservations": [
+    {
+      "id": 1,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 808,
+        "completion_tokens": 46,
+        "total_tokens": 854
+      }
+    },
+    {
+      "id": 2,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 964,
+        "completion_tokens": 48,
+        "total_tokens": 1012
+      }
+    },
+    {
+      "id": 3,
+      "case_id": "T01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 1062,
+        "completion_tokens": 83,
+        "total_tokens": 1145
+      }
+    }
+  ],
+  "halt": [],
+  "private_asset_hashes": {
+    "prepared.json": "99f9054265d3a4ab8e7c27f4e72047667bf1c7bb5f5376cfa405424ca2531def",
+    "freeze.json": "33643e0913e76ac723382ac50bd8fb4b6dcd1ccb036f485bdbf13eee0d13b4e1",
+    "browser-isolation.json": "bb69e956403a00ba22a8013397c2ca0fc39fa512f92289ce91099101bafbdded"
+  },
+  "ports": {
+    "8765": {
+      "listening": false,
+      "plain_bind": "available"
+    },
+    "8901": {
+      "listening": false,
+      "plain_bind": "available"
+    }
+  },
+  "processes": {
+    "owned_uat_servers": 0,
+    "owned_chrome_profile_processes": 0,
+    "old_launcher_alive": true
+  },
+  "frozen_assets_hashes_unchanged": true,
+  "final_reply_audit": {
+    "sha256": "4b2f0d68da2ad0d07c47603010b199971140d626c46bd189967c19f6c0e40897",
+    "characters": 169,
+    "chinese_sentence_end_count": 3,
+    "exactly_two_sentences": false,
+    "semantic_operator_review": "correct_readme_purpose_identifier_and_no_fabricated_listing; extra_execution_status_sentence_breaks_two_sentence_contract",
+    "raw_body_exported": false
+  }
+}

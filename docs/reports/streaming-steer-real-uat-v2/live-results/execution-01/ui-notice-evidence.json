@@ -1,0 +1,12 @@
+{
+  "T01-terminal": {
+    "visible": true,
+    "states": {
+      "未生效": false,
+      "不代表模型遵从": true,
+      "填入下一轮消息": false,
+      "已应用": false,
+      "已排队": false
+    }
+  }
+}

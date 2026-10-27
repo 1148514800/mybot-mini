@@ -1,0 +1,7 @@
+# Next steps — no automatic continuation
+
+1. Separate repair task: reproduce rapid stop/start with the current plain bind precheck on macOS, distinguish transient socket state from real listener conflict, and preserve safe conflict detection. EADDRINUSE root cause is unknown in this run; do not bypass the frozen guard or change port to continue.
+2. Fix the UAT browser failure cleanup ordering so owned context cleanup occurs before Playwright exits, profile cleanup is guaranteed after verified browser exit, and secondary cleanup exceptions do not mask the original startup failure. Keep actual process exit codes and cleanup errors independently.
+3. Fix sentence-count diagnostic limitations in a later UAT revision, preserving this recorded count and independent FAIL. Adjacent Chinese punctuation is missed; a counter is not a semantic judge. Do not silently reinterpret two sentences as only the trailing purpose section.
+4. After fixes, create and preregister any new batch and seek fresh explicit authorization. Do not reuse this batch's remaining three requests, restart T02 or run T03 now. T02 no-next-step/not_applied and T03 real Stop remain unproven here.
+5. Preserve the demonstrated layered evidence for subsequent Live tests. This one T01 supports real tool assembly, deferred pairing, source inclusion and successful README action; it does not prove all Steer instructions or long-term provider compatibility.

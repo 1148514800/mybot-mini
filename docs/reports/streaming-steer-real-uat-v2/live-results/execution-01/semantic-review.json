@@ -1,0 +1,30 @@
+{
+  "T01": {
+    "task_success": "FAIL",
+    "semantic_adherence": "FAIL",
+    "readme_priority": "PASS",
+    "no_example_reads": "PASS",
+    "identifier_from_real_tool_result": "PASS",
+    "purpose_description": "PASS",
+    "no_fabricated_listing": "PASS",
+    "two_sentence_whole_answer": "FAIL",
+    "operator_review": {
+      "sha256": "4b2f0d68da2ad0d07c47603010b199971140d626c46bd189967c19f6c0e40897",
+      "characters": 169,
+      "chinese_sentence_end_count": 3,
+      "exactly_two_sentences": false,
+      "semantic_operator_review": "correct_readme_purpose_identifier_and_no_fabricated_listing; extra_execution_status_sentence_breaks_two_sentence_contract",
+      "raw_body_exported": false
+    },
+    "observer_sentence_terminal_marks": 2,
+    "observer_feature_limitation": "Regex only counts terminal marks followed by whitespace or EOF; adjacent Chinese sentences undercounted. Not a semantic grader."
+  },
+  "T02": {
+    "result": "BLOCKED",
+    "reason": "Service startup plain bind EADDRINUSE before make_app / Attempt / message"
+  },
+  "T03": {
+    "result": "BLOCKED",
+    "reason": "Stopped after T02 startup failure; no attempt or message"
+  }
+}
