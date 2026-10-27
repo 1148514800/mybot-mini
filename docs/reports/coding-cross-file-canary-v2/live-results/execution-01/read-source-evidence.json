@@ -1,0 +1,377 @@
+{
+  "method": "Actual final SDK paired read_file ToolResult hashes compared to unchanged frozen public fixture UTF8 text; no argument guessing",
+  "proof": [
+    {
+      "source_match": "README.md",
+      "result_sha256": "31941564309b1b1925eaeb7f9768c27a503cf9994adf1ce875939a550e989456",
+      "paired": true
+    },
+    {
+      "source_match": "csvmini/parser.py",
+      "result_sha256": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+      "paired": true
+    },
+    {
+      "source_match": "csvmini/report.py",
+      "result_sha256": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723",
+      "paired": true
+    },
+    {
+      "source_match": "tests/test_csvmini.py",
+      "result_sha256": "4318c31a4cfcc7ae2ff0b8a624b18e82cd683c4d1a7761d0ecaf92eec76629a0",
+      "paired": true
+    },
+    {
+      "source_match": "UNKNOWN",
+      "result_sha256": "c88a0b907419a70c27ab7c1f8e5fb54441a4d9c3567e4c928fa7b2091194aecf",
+      "paired": true
+    }
+  ],
+  "all_actual_sdk_tool_results_paired": true,
+  "request_hash_metadata": [
+    {
+      "reservation": 1,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "native_is_fallback": false,
+      "http_attempts": 1,
+      "sdk_request_sha256": "c207baa1e4751e3911879500da33f375b8a4563e4ad7db19fd5f0a784c72fb88",
+      "sdk_messages_sha256": "3cf1d32cdcb536b4b5b66394d67384d5ba8ba9119d76623e78af9bd5e911cff8",
+      "wire_body_sha256": "c207baa1e4751e3911879500da33f375b8a4563e4ad7db19fd5f0a784c72fb88",
+      "wire_messages_match_sdk": true,
+      "all_tool_results_paired": true,
+      "assembled_calls": [],
+      "tool_results": []
+    },
+    {
+      "reservation": 2,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "native_is_fallback": false,
+      "http_attempts": 1,
+      "sdk_request_sha256": "a6bbf7787152253348d514b906314bc09b4ea31a991e9eaf2a6938f5657fc5d8",
+      "sdk_messages_sha256": "9984a6bd7480519de0ccda6f52bac877eba7fdc6693685543b6a93676a45f45d",
+      "wire_body_sha256": "a6bbf7787152253348d514b906314bc09b4ea31a991e9eaf2a6938f5657fc5d8",
+      "wire_messages_match_sdk": true,
+      "all_tool_results_paired": true,
+      "assembled_calls": [
+        {
+          "assistant_message_index": 2,
+          "call_id_sha256": "15b8c2e5320e5ff9c8725e892a769be1ebb48a7bc287dde9b10f8052011b1956",
+          "tool": "list_files",
+          "target": "directory",
+          "arguments_sha256": "9148ca1635096205f1465607bf9ab03093cf749749806bdd57cfdbead44c6777"
+        },
+        {
+          "assistant_message_index": 2,
+          "call_id_sha256": "dd328430db37001126f10b3a4e96ab7de5eac4173e2e23f7f2810feae81c0c11",
+          "tool": "unknown",
+          "target": "unknown",
+          "arguments_sha256": "a3f891e4f9ac372308de08e0096264f91b9cd10e8841bc0ff1ee06b97f199145"
+        }
+      ],
+      "tool_results": [
+        {
+          "call_id_sha256": "15b8c2e5320e5ff9c8725e892a769be1ebb48a7bc287dde9b10f8052011b1956",
+          "tool_message_index": 3,
+          "assistant_message_index": 2,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "f77aefd9fb686e11a7510368c549e80781d3aff502b378f763776da575e31339"
+        },
+        {
+          "call_id_sha256": "dd328430db37001126f10b3a4e96ab7de5eac4173e2e23f7f2810feae81c0c11",
+          "tool_message_index": 4,
+          "assistant_message_index": 2,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "48916cb15e2c8f8d23d1023a823fa5ffd1c2636c89a71812ec727251a8778596"
+        }
+      ]
+    },
+    {
+      "reservation": 3,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "native_is_fallback": false,
+      "http_attempts": 1,
+      "sdk_request_sha256": "128338d57c5072d2d67377a1c0243edd1a931db0f0bcb682e547187e39e0fb07",
+      "sdk_messages_sha256": "bfde65731d1c89d3d599fd125d859a462488ac2300fd711ff0f413fe8021ed74",
+      "wire_body_sha256": "128338d57c5072d2d67377a1c0243edd1a931db0f0bcb682e547187e39e0fb07",
+      "wire_messages_match_sdk": true,
+      "all_tool_results_paired": true,
+      "assembled_calls": [
+        {
+          "assistant_message_index": 2,
+          "call_id_sha256": "15b8c2e5320e5ff9c8725e892a769be1ebb48a7bc287dde9b10f8052011b1956",
+          "tool": "list_files",
+          "target": "directory",
+          "arguments_sha256": "9148ca1635096205f1465607bf9ab03093cf749749806bdd57cfdbead44c6777"
+        },
+        {
+          "assistant_message_index": 2,
+          "call_id_sha256": "dd328430db37001126f10b3a4e96ab7de5eac4173e2e23f7f2810feae81c0c11",
+          "tool": "unknown",
+          "target": "unknown",
+          "arguments_sha256": "a3f891e4f9ac372308de08e0096264f91b9cd10e8841bc0ff1ee06b97f199145"
+        },
+        {
+          "assistant_message_index": 5,
+          "call_id_sha256": "ae0dcfc8a88010588256fb05fb97825e1d7510ca199fcd6c6c7612e6f88b2962",
+          "tool": "list_files",
+          "target": "unknown",
+          "arguments_sha256": "52a989a65cc1343c580cdd822b793e264978ff8082f0abf7b096e3f521251ed2"
+        },
+        {
+          "assistant_message_index": 5,
+          "call_id_sha256": "520e716d2226434eba08180200b8b5c9fa1a7dd889b33097d69c7f65a6fe026e",
+          "tool": "list_files",
+          "target": "unknown",
+          "arguments_sha256": "834dd3dbd04347a441b4609cc206fa1bd5d1c3171c1f38a73f2ce1723a010a08"
+        },
+        {
+          "assistant_message_index": 5,
+          "call_id_sha256": "b0f2bc0249bd13dcbc8d755f11cb7cb4299ce633855d4ad170b776da35f1f4d1",
+          "tool": "read_file",
+          "target": "registered_readme",
+          "arguments_sha256": "19b4e2f4c9a2ed43afc86e1b6ec5ab348ad83d1407b08122436a948943be83b2"
+        }
+      ],
+      "tool_results": [
+        {
+          "call_id_sha256": "15b8c2e5320e5ff9c8725e892a769be1ebb48a7bc287dde9b10f8052011b1956",
+          "tool_message_index": 3,
+          "assistant_message_index": 2,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "f77aefd9fb686e11a7510368c549e80781d3aff502b378f763776da575e31339"
+        },
+        {
+          "call_id_sha256": "dd328430db37001126f10b3a4e96ab7de5eac4173e2e23f7f2810feae81c0c11",
+          "tool_message_index": 4,
+          "assistant_message_index": 2,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "48916cb15e2c8f8d23d1023a823fa5ffd1c2636c89a71812ec727251a8778596"
+        },
+        {
+          "call_id_sha256": "ae0dcfc8a88010588256fb05fb97825e1d7510ca199fcd6c6c7612e6f88b2962",
+          "tool_message_index": 6,
+          "assistant_message_index": 5,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "531ba9cdf7110c3eb7f7d77de655d92bb04b60e3c974a6b37c86d09ecf94eabf"
+        },
+        {
+          "call_id_sha256": "520e716d2226434eba08180200b8b5c9fa1a7dd889b33097d69c7f65a6fe026e",
+          "tool_message_index": 7,
+          "assistant_message_index": 5,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "88dac01230916ef2ddb90dfde8d8781cac9a6468ffc0d1dfc4ff0f90a6a4fb08"
+        },
+        {
+          "call_id_sha256": "b0f2bc0249bd13dcbc8d755f11cb7cb4299ce633855d4ad170b776da35f1f4d1",
+          "tool_message_index": 8,
+          "assistant_message_index": 5,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "31941564309b1b1925eaeb7f9768c27a503cf9994adf1ce875939a550e989456"
+        }
+      ]
+    },
+    {
+      "reservation": 4,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "native_is_fallback": false,
+      "http_attempts": 1,
+      "sdk_request_sha256": "4e626869e89b4de92a2e7e39a28c0c3329564cea1ac945b8879058f6fa83af36",
+      "sdk_messages_sha256": "6f74578219fc8445466dac6f15158f605fbf094ae6291900e435074e95be093c",
+      "wire_body_sha256": "4e626869e89b4de92a2e7e39a28c0c3329564cea1ac945b8879058f6fa83af36",
+      "wire_messages_match_sdk": true,
+      "all_tool_results_paired": true,
+      "assembled_calls": [
+        {
+          "assistant_message_index": 2,
+          "call_id_sha256": "15b8c2e5320e5ff9c8725e892a769be1ebb48a7bc287dde9b10f8052011b1956",
+          "tool": "list_files",
+          "target": "directory",
+          "arguments_sha256": "9148ca1635096205f1465607bf9ab03093cf749749806bdd57cfdbead44c6777"
+        },
+        {
+          "assistant_message_index": 2,
+          "call_id_sha256": "dd328430db37001126f10b3a4e96ab7de5eac4173e2e23f7f2810feae81c0c11",
+          "tool": "unknown",
+          "target": "unknown",
+          "arguments_sha256": "a3f891e4f9ac372308de08e0096264f91b9cd10e8841bc0ff1ee06b97f199145"
+        },
+        {
+          "assistant_message_index": 5,
+          "call_id_sha256": "ae0dcfc8a88010588256fb05fb97825e1d7510ca199fcd6c6c7612e6f88b2962",
+          "tool": "list_files",
+          "target": "unknown",
+          "arguments_sha256": "52a989a65cc1343c580cdd822b793e264978ff8082f0abf7b096e3f521251ed2"
+        },
+        {
+          "assistant_message_index": 5,
+          "call_id_sha256": "520e716d2226434eba08180200b8b5c9fa1a7dd889b33097d69c7f65a6fe026e",
+          "tool": "list_files",
+          "target": "unknown",
+          "arguments_sha256": "834dd3dbd04347a441b4609cc206fa1bd5d1c3171c1f38a73f2ce1723a010a08"
+        },
+        {
+          "assistant_message_index": 5,
+          "call_id_sha256": "b0f2bc0249bd13dcbc8d755f11cb7cb4299ce633855d4ad170b776da35f1f4d1",
+          "tool": "read_file",
+          "target": "registered_readme",
+          "arguments_sha256": "19b4e2f4c9a2ed43afc86e1b6ec5ab348ad83d1407b08122436a948943be83b2"
+        },
+        {
+          "assistant_message_index": 9,
+          "call_id_sha256": "5315976ca742812428f684cd4bc4817b836ccd7f056c26a302f94e38418dd1a2",
+          "tool": "read_file",
+          "target": "unknown",
+          "arguments_sha256": "c99f9c139ef209f5860e7e4ab88268dc3a54d39836dfaeb22f17842205faee12"
+        },
+        {
+          "assistant_message_index": 9,
+          "call_id_sha256": "f3f815f9248767972200ae7b49047d125efdad7c154364464d3ffca197748067",
+          "tool": "read_file",
+          "target": "unknown",
+          "arguments_sha256": "8402f4409aec9104fc61d7afff2bd9b13c58e54abbd7a8bec7d54d284f42bd20"
+        },
+        {
+          "assistant_message_index": 9,
+          "call_id_sha256": "a9d7f357edc13aecc1db01b93cd11007955aaae041f7bf58e9c0e948c50a8259",
+          "tool": "read_file",
+          "target": "unknown",
+          "arguments_sha256": "38c16674a59784e06f673f194aed93f860fce798e1cbd1f3bc313d47e153b789"
+        },
+        {
+          "assistant_message_index": 9,
+          "call_id_sha256": "7b73dd4727c841e368235612d8da1df4690f5cd692c64dfb889dd3fbdb4ea588",
+          "tool": "read_file",
+          "target": "unknown",
+          "arguments_sha256": "c4fe2e7d6489cca4ca9282c236db07bc3c190d49b196dabb7af01fc05164511c"
+        }
+      ],
+      "tool_results": [
+        {
+          "call_id_sha256": "15b8c2e5320e5ff9c8725e892a769be1ebb48a7bc287dde9b10f8052011b1956",
+          "tool_message_index": 3,
+          "assistant_message_index": 2,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "f77aefd9fb686e11a7510368c549e80781d3aff502b378f763776da575e31339"
+        },
+        {
+          "call_id_sha256": "dd328430db37001126f10b3a4e96ab7de5eac4173e2e23f7f2810feae81c0c11",
+          "tool_message_index": 4,
+          "assistant_message_index": 2,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "48916cb15e2c8f8d23d1023a823fa5ffd1c2636c89a71812ec727251a8778596"
+        },
+        {
+          "call_id_sha256": "ae0dcfc8a88010588256fb05fb97825e1d7510ca199fcd6c6c7612e6f88b2962",
+          "tool_message_index": 6,
+          "assistant_message_index": 5,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "531ba9cdf7110c3eb7f7d77de655d92bb04b60e3c974a6b37c86d09ecf94eabf"
+        },
+        {
+          "call_id_sha256": "520e716d2226434eba08180200b8b5c9fa1a7dd889b33097d69c7f65a6fe026e",
+          "tool_message_index": 7,
+          "assistant_message_index": 5,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "88dac01230916ef2ddb90dfde8d8781cac9a6468ffc0d1dfc4ff0f90a6a4fb08"
+        },
+        {
+          "call_id_sha256": "b0f2bc0249bd13dcbc8d755f11cb7cb4299ce633855d4ad170b776da35f1f4d1",
+          "tool_message_index": 8,
+          "assistant_message_index": 5,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "31941564309b1b1925eaeb7f9768c27a503cf9994adf1ce875939a550e989456"
+        },
+        {
+          "call_id_sha256": "5315976ca742812428f684cd4bc4817b836ccd7f056c26a302f94e38418dd1a2",
+          "tool_message_index": 10,
+          "assistant_message_index": 9,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e"
+        },
+        {
+          "call_id_sha256": "f3f815f9248767972200ae7b49047d125efdad7c154364464d3ffca197748067",
+          "tool_message_index": 11,
+          "assistant_message_index": 9,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+        },
+        {
+          "call_id_sha256": "a9d7f357edc13aecc1db01b93cd11007955aaae041f7bf58e9c0e948c50a8259",
+          "tool_message_index": 12,
+          "assistant_message_index": 9,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "4318c31a4cfcc7ae2ff0b8a624b18e82cd683c4d1a7761d0ecaf92eec76629a0"
+        },
+        {
+          "call_id_sha256": "7b73dd4727c841e368235612d8da1df4690f5cd692c64dfb889dd3fbdb4ea588",
+          "tool_message_index": 13,
+          "assistant_message_index": 9,
+          "paired": true,
+          "explicitly_skipped": false,
+          "executed_false": false,
+          "identifier_present": false,
+          "result_sha256": "c88a0b907419a70c27ab7c1f8e5fb54441a4d9c3567e4c928fa7b2091194aecf"
+        }
+      ]
+    }
+  ],
+  "native_tool_counts": {
+    "git_status": 1,
+    "list_files": 3,
+    "read_file": 5
+  },
+  "started": 9,
+  "finished": 9,
+  "successful": 9,
+  "partial_fourth_stream_executed_tools": 0,
+  "limitations": "Generic inherited observer labels git_status/CSV paths unknown. Four exact read-result hashes independently identify README/parser/report/public tests; fifth read path remains unasserted. No argument guessing or full prompts exported."
+}

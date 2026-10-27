@@ -2,16 +2,18 @@
 
 ## 当前状态
 
-codex/coding-cross-file-canary-v2，从 C01 Live c56a03813f9a0472d72d96e5bc3915ff667f0d60 独立工作树开发。C02 OFFLINE PASS / LIVE BLOCKED，真实模型/摘要/Judge0，未发生真人命令审批；旧 C01 10/12 及 Strict PASS/元数据失败/私有账本均保留，余额不转移。
+codex/coding-cross-file-canary-v2。新 GRANTED_18_REQUESTS 后 C02 唯一 Live 已执行，Task/Workflow/Strict FAIL；输入 ea8eb3fa0f474cb29e806a3ec03bab5761a97951，冻结 Preregistration 4b30a26b0482eb27185e668d6337fbafe2f44e34。真实4/18物理及HTTP，DeepSeek4，GLM/重试/Fallback/摘要/Judge0。余下14不用、不转移、不补跑。
 
-## 实现与验证
+## 真实结果
 
-仅新 scripts/coding_cross_file_canary_v2、专项测试和文档，生产 mybot/ 与依赖无改动。csvmini parser/report 双模块，Public8/Host18；真实 Seatbelt Bug 均失败、Reference均通过。Gate 每 Revision 完整双文件 before/after maps、真实 delta、累计 Native Journal/Receipt、原 HEAD/Index/protected bytes；最终两文件均必须实际合法改变，未知漂移/发布不确定 HALT，不 reset。
+9次原生只读工具全部完成（list_files3/git_status1/read_file5），SDK配对结果hash独立匹配README/parser/report/Public测试；第五读取路径未独立确认。无read_file_range/Preview/Receipt/Patch/命令/Contract提议，Revision0。Controller blocked/verification invalid；独立Seatbelt Public8、Host18均FAIL，Bug文件不变。没有请求真人审批；Live operator synthetic clicks0。
 
-Mock正式运行路径和 headed Chrome 两条修复路径 verified Revision1/2，Public8/Host18、刷新无请求/工具重放、exit0/SDK/DB/Lease/端口及独立 Profile 自动清理。双 Profile Cookie/LocalStorage隔离通过。第三个断流浏览器负例保留 HALT、正常清理。全部审批为 SYNTHETIC_APPROVAL，不作 Live Strict PASS。
+前三流合法tool_calls/EOF/close；第4流228 chunks、无finish/EOF，44.968秒后caller cancellation，固定stream_user_or_caller_cancelled/sdk_iteration。首Chunk43.555秒；结合冻结Provider主请求45秒窗口，强烈指向本地超时取消，但持久证据未直接导出deadline owner，不归咎供应商或代码质量。全部SDK已关闭。供应商已知小计输入8608/输出313/总8921；第4Usage缺失，全批Token未知、cost=null，不用估算冒充Usage。
 
-最终全量 check_phase + 补充实际 2205 去重/63新增，失败0、源码快照不变；compileall/JS/diff/凭证资产审计通过。单文件/Receipt/SHA/部分发布/时序/审批/预算/断流等负例通过。可选 Contract 合法/拒绝独立记录，旧 C01 具体非法字段和需求覆盖仍 UNKNOWN。上下文仍可能裁剪，非通用语义保证。
+独立headed Chrome及双Profile隔离通过，刷新仍4请求/9完成工具/Revision0；服务wait exit0/端口/Lease/两库/SDK及Chrome/Profile清理通过。无execution_uncertain、reserved或文件污染。344源码/原配置/原冻结文件/工作区与两库身份postflight verify PASS。原ledger Case completed仅代表结算，实际turn failed；HALT原本为空，不改账本。唯一Attempt门已消耗，verify通过不允许重跑。
 
-## 下一步与边界
+## 保留与下一步
 
-完整报告 docs/reports/coding-cross-file-canary-v2/，学习专题 docs/phases/coding-cross-file-canary-v2.md。Implementation 2ac5032767ea5f51f4fd69b6b1e515ac64cedbfc；Preregistration 4b30a26b0482eb27185e668d6337fbafe2f44e34。新批次 ~/.mybot-mini/uat/coding-cross-file-canary-v2-20261027/ 已唯一 prepare/freeze，344源码/两库inode/原配置/workspace及Lease verify PASS；真实请求、HTTP、Attempt、reservation/unsettled均0。Acceptance仅改文档，Push后再次verify并核对远程。不得改冻结源码/Fixture/评分、重做prepare/freeze、重跑旧Case或访问旧私库。未来仅新精确 GRANTED_18_REQUESTS，且每次命令仍需真实人通过原WebApproval，Live operator禁止代批。用户Chrome/8765/真实项目、main/Tag/ZIP/共享AppleDouble不触碰。
+新真实报告 docs/reports/coding-cross-file-canary-v2/live-results/execution-01/。原Offline2205去重/63新增PASS、两条Synthetic Revision1/2及Public8/Host18、Preregistration和所有旧Live/私库/C01余额与失败原样保留。生产mybot/、新UAT源码/Fixture/评分冻结后无修改。没有重新prepare/freeze。
+
+下一独立工程任务可离线调查45秒primary完整流截止与长TTFT，以及安全deadline-origin/读取目标诊断；本轮未修复、未扩大窗口或预算。新Live需独立合同/批次/冻结/授权，不能用14次续跑C02。真实多文件修复能力、Receipt/真人审批使用、完整供应商Usage仍未验证。用户Chrome/8765/真实项目、main/Tag/ZIP/共享AppleDouble不触碰。最终报告提交/远程HEAD及推送后verify见交付与Git。

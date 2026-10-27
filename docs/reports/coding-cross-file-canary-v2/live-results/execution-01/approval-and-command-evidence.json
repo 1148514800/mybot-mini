@@ -1,0 +1,29 @@
+{
+  "real_human_approvals": 0,
+  "approval_requested": false,
+  "approval_denied": false,
+  "approval_timed_out": false,
+  "synthetic_clicks": 0,
+  "operator_live_resolve_calls": 0,
+  "native_approval_audit": [],
+  "run_command_count": 0,
+  "agent_public_test_runs": 0,
+  "public_command_status": "NOT_REACHED",
+  "reason": "Turn blocked before Patch/command phase; not a missing-human-approval failure",
+  "post_turn_independent_sandbox_score": {
+    "public": {
+      "status": "fail",
+      "category": null,
+      "tests": 8,
+      "passed": false
+    },
+    "host_acceptance": {
+      "status": "fail",
+      "category": null,
+      "tests": 18,
+      "passed": false
+    },
+    "isolated": true,
+    "strict_functional_pass": false
+  }
+}

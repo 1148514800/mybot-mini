@@ -1,0 +1,43 @@
+{
+  "shutdown": {
+    "exit_code": 0,
+    "seconds": 2.131064541870728,
+    "verified_child_sigint": false,
+    "listener_absent": true,
+    "was_ready": true
+  },
+  "native": {
+    "runtime_closed": true,
+    "sdk_closed": true,
+    "lease_released": true,
+    "database_consistent": true,
+    "cleanup_uncertain": false
+  },
+  "browser": {
+    "primary_error": null,
+    "service_start_error": null,
+    "service_shutdown_error": null,
+    "context_close_error": null,
+    "profile_cleanup_error": null,
+    "context_close_calls": 1,
+    "browser_process_exit_status": "EXITED",
+    "profile_removed": true,
+    "cleanup_uncertain": false,
+    "actual_profile_verified": true,
+    "profile_0700_fresh": true,
+    "browser_version": "152.0.7977.83",
+    "headed": true,
+    "sandbox": true,
+    "initial_cookie_jar_empty": true,
+    "automatic_cleanup_pass": true
+  },
+  "ledger_sqlite_consistent": true,
+  "event_sqlite_consistent": true,
+  "execution_uncertain": false,
+  "refresh_no_resend": true,
+  "request_count_after_refresh": 4,
+  "tool_rows_after_refresh": 9,
+  "tool_rows_match_original_native_events": true,
+  "revision_after_refresh": 0,
+  "restart_or_resend": false
+}

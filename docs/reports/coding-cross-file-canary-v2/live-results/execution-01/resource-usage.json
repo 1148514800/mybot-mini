@@ -1,0 +1,100 @@
+{
+  "authorization": "GRANTED_18_REQUESTS",
+  "global_limit": 18,
+  "physical_requests": 4,
+  "http_attempts": 4,
+  "attempts": 1,
+  "unsettled": 0,
+  "remaining_unused": 14,
+  "remaining_reusable": false,
+  "deepseek": 4,
+  "glm": 0,
+  "retries": 0,
+  "fallback_dispatches": 0,
+  "model_summaries": 0,
+  "paid_judge": 0,
+  "states": {
+    "returned": 3,
+    "cancelled": 1
+  },
+  "usage_complete": false,
+  "supplier_input_tokens": null,
+  "supplier_output_tokens": null,
+  "supplier_total_tokens": null,
+  "known_reported_subtotal": {
+    "prompt_tokens": 8608,
+    "completion_tokens": 313,
+    "total_tokens": 8921
+  },
+  "requests_with_complete_usage": 3,
+  "request_with_unknown_usage": [
+    4
+  ],
+  "cost": null,
+  "cost_reason": "No trustworthy deployment price; fourth request lacks usage and may still be billable. Subtotal is not batch total.",
+  "ledger_and_private_stream_usage_match": true,
+  "requests": [
+    {
+      "request": 1,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "state": "returned",
+      "http_attempts": 1,
+      "elapsed_seconds": 5.943014144897461,
+      "supplier_usage": {
+        "prompt_tokens": 2655,
+        "completion_tokens": 77,
+        "total_tokens": 2732
+      },
+      "usage_complete": true,
+      "estimated_input_tokens": 15702
+    },
+    {
+      "request": 2,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "state": "returned",
+      "http_attempts": 1,
+      "elapsed_seconds": 3.0317940711975098,
+      "supplier_usage": {
+        "prompt_tokens": 2825,
+        "completion_tokens": 96,
+        "total_tokens": 2921
+      },
+      "usage_complete": true,
+      "estimated_input_tokens": 16609
+    },
+    {
+      "request": 3,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "state": "returned",
+      "http_attempts": 1,
+      "elapsed_seconds": 2.7553353309631348,
+      "supplier_usage": {
+        "prompt_tokens": 3128,
+        "completion_tokens": 140,
+        "total_tokens": 3268
+      },
+      "usage_complete": true,
+      "estimated_input_tokens": 18274
+    },
+    {
+      "request": 4,
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "state": "cancelled",
+      "http_attempts": 1,
+      "elapsed_seconds": 44.9679799079895,
+      "supplier_usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      },
+      "usage_complete": false,
+      "estimated_input_tokens": 20887
+    }
+  ],
+  "browser_original_real_requests_field": null,
+  "authoritative_count_source": "Original durable reservations + HTTP hook; do not replace original nullable browser field"
+}

@@ -1,0 +1,22 @@
+{
+  "revision": 0,
+  "committed_patches": 0,
+  "native_patch_chain": [],
+  "before_hashes": {
+    "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+    "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+  },
+  "after_hashes": {
+    "csvmini/parser.py": "7bc6730ca720f5419d40ef012a90f827da70a33610826ef70049c4f789989f4e",
+    "csvmini/report.py": "76900548272d4d2aaf80b083712ff9b31eb5a57dd1ac03f2b481abaac35af723"
+  },
+  "both_files_legally_modified": false,
+  "preview_count": 0,
+  "receipt_commit_count": 0,
+  "read_file_range_count": 0,
+  "original_head_unchanged": true,
+  "git_metadata_and_index_unchanged": true,
+  "whole_workspace_byte_and_mode_maps_unchanged": true,
+  "source_files_verified": 344,
+  "status": "NO_PATCH_WORKFLOW_REACHED; no corruption or rollback inferred"
+}

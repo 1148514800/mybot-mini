@@ -52,3 +52,9 @@ Controller verified 不是独立业务验收；合成工作流通过不是 Live 
 最终离线回归：2205 个去重 unittest ID，其中新增 63，原有 2142；全部通过，源码稳定。独立子进程 Fixture 测试不重复计入总数。
 
 archive-ready: true
+
+## 唯一真实 Live 的独立结果
+
+GRANTED_18_REQUESTS 后，C02 一次执行4/18真实请求，任务/工作流/Strict FAIL。九个只读工具后，第4流约44.968秒调用方取消（首Chunk约43.555秒，228 chunks，无合法终态/EOF），Revision0，无Patch/Receipt/命令或真人审批；原Bug未变，事后独立Public8/Host18均FAIL。固定错误码仍为stream_user_or_caller_cancelled，不改称供应商协议错误；冻结45秒primary窗口是有源码和时序支持的本地超时解释，尚缺明确deadline-owner持久字段。
+
+前三请求真实Usage小计8608输入/313输出/8921总Token；第4缺Usage，全批总数未知，cost=null。所有SDK关闭，自有服务exit0、端口/Lease/数据库/独立Chrome清理通过，344源码冻结postflight通过。唯一Attempt消耗，余14次不用，原Offline PASS不改判成Live PASS，也不重跑。本次Live不是跨文件修复能力的充分样本；新阶段只可另立任务调查超时。详见[独立Live报告](../reports/coding-cross-file-canary-v2/live-results/execution-01/acceptance-report.md)。

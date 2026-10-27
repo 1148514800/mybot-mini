@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "credential_matches": 0,
+  "forbidden_assets": [],
+  "unexpected_changed_paths": [],
+  "reviewed_files": 1657,
+  "new_json_documents_validated": 11,
+  "source_files_unchanged": 344,
+  "frozen_postflight_verify": "PASS",
+  "physical_requests": 4,
+  "attempts": 1,
+  "unsettled": 0,
+  "source_or_scoring_changes": false,
+  "historical_report_changes": false,
+  "execution_uncertain": false
+}

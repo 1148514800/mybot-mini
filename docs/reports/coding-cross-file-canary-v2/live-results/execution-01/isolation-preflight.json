@@ -1,0 +1,38 @@
+{
+  "input_head": "ea8eb3fa0f474cb29e806a3ec03bab5761a97951",
+  "frozen_preregistration": "4b30a26b0482eb27185e668d6337fbafe2f44e34",
+  "source_files": 344,
+  "preflight_usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "port_8904_free_before_start": true,
+  "workspace_lease_available_before_start": true,
+  "existing_services": [
+    {
+      "pid": 39852,
+      "uid": 501,
+      "ppid": 84752,
+      "module": "mybot.web",
+      "cwd_sha256": "39143cade26e4a0feb146df47d7f7bc44ef654d66b6d1caa25fdda00cf1c4186",
+      "references_uat_batch": false
+    }
+  ],
+  "old_service_or_user_browser_accessed": false,
+  "canonical_assets_hashes": {
+    "prepared.json": "e13250355c29d6d3c1d6b5aa9200d88c6c8a5bdb2fd1589923c31e486edeaff0",
+    "freeze.json": "512ed762de5307dc2e176f6979afeb5a414e8a66239a15eb0ae699312fe59d56",
+    "browser-isolation.json": "9d81bf863db267b5c2cf43d74c08fa7f876537e1c586047ca40d43c0f228c9a4"
+  },
+  "provider_bytes_unchanged": true,
+  "postflight_usage": {
+    "real_requests": 4,
+    "attempts": 1,
+    "unsettled": 0,
+    "http_attempts": 4
+  },
+  "postflight_frozen_verify": "PASS",
+  "new_prepare_or_freeze": false
+}
