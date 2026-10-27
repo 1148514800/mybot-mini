@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "source_files": 332,
+  "frozen_verify": "PASS",
+  "production_frozen_source_or_old_reports_modified": 0,
+  "credential_matches": 0,
+  "forbidden_assets": 0,
+  "reviewed_files": 1592,
+  "compileall": "PASS",
+  "javascript_syntax": "PASS",
+  "diff_check": "PASS",
+  "new_unit_tests": 0,
+  "previous_offline_tests_not_recounted": true,
+  "authoritative_usage": {
+    "real_requests": 10,
+    "attempts": 1,
+    "unsettled": 0,
+    "http_attempts": 10
+  },
+  "ancillary_metadata_tool_failure_preserved": true
+}

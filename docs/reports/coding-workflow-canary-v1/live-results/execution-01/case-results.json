@@ -1,0 +1,70 @@
+{
+  "case": "C01",
+  "frozen_assessment": {
+    "dimensions": {
+      "model_workflow": true,
+      "actual_patch_committed": true,
+      "source_scope_compliance": true,
+      "preview_receipt_integrity": true,
+      "current_revision_test_evidence": true,
+      "host_controller_verified": true,
+      "public_tests": true,
+      "independent_acceptance_tests": true,
+      "git_diff_journal_integrity": true,
+      "tool_authority": true,
+      "human_command_approval": true,
+      "streaming_protocol_integrity": true,
+      "request_usage_accounting": true,
+      "workspace_process_cleanup": true,
+      "user_task_correctness": true
+    },
+    "strict_success": true,
+    "synthetic_workflow_pass": false,
+    "command_approval": "REAL_HUMAN",
+    "usage_complete": true,
+    "cost": null
+  },
+  "independent_functional": {
+    "public": {
+      "status": "pass",
+      "category": null,
+      "tests": 5,
+      "passed": true
+    },
+    "host_acceptance": {
+      "status": "pass",
+      "category": null,
+      "tests": 10,
+      "passed": true
+    },
+    "isolated": true,
+    "strict_functional_pass": true
+  },
+  "controller": {
+    "state": "verified",
+    "current_revision": 1,
+    "committed_patches": 1,
+    "test_runs": 1,
+    "test_passes": 1,
+    "test_failures": 0,
+    "tests_passed_after_last_patch": 5,
+    "verification": "valid",
+    "model_requests": 10
+  },
+  "ancillary_contract_tool": {
+    "started": 13,
+    "finished": 13,
+    "unresolved": 0,
+    "all_finished_success": false,
+    "effects": [
+      "changed",
+      "none"
+    ],
+    "success_count": 12,
+    "failure_count": 1,
+    "failed_tool": "record_task_contract",
+    "failure_reason": "contract_proposal_rejected",
+    "reason_verified_by_actual_sdk_result_hash": true
+  },
+  "one_sample_only": true
+}

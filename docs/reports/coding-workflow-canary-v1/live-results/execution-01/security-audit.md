@@ -1,0 +1,11 @@
+# Live integrity/security audit
+
+Before the unique Attempt: exact input HEAD/clean branch,332 source hashes, original Provider bytes, Bug baseline/Revision0, immutable Public/Host assets, workspace/Git and DB identities, empty ledger/events, no external DB holders, Lease/8903 and actual Seatbelt probe verified. Fresh independent browser isolation passed. New grant only, no historical allowance or private-store access.
+
+Each actual SDK/HTTP and tool step used original revision-aware checks. Only one native Receipt-backed allowed source update; original Fixture HEAD/Index/Git metadata and protected files unchanged. Actual Diff hash/current file hash/native Journal/Revision1 match. Postflight verify accepts that legitimate change without restoring Bug bytes or ignoring whole-workspace drift. Both SQLite checks ok;13 tool starts/finishes,0 unresolved; one non-side-effect contract proposal rejection recorded. No HALT/unknown execution/reserved request or unauthorized write found.
+
+RunCommand stayed original macos_readonly/real WebApproval; full effective launch was inspectable and approved once by the human, synthetic clicks0. Exact registered command, no install/shell/Git Commit/Push. Real native sandbox test and post-turn independent grading were bounded, no host import of candidate, no hidden feedback to model. No proxy approval or permission expansion by assistant/model.
+
+SDK retries0, request12 cap enforced;10 actual reservations/sends, no fallback or summary/JudgeLLM. Supplier Usage complete and matched, estimates not substituted. All streams consumed to legal terminal/EOF/SDK close. Service exit0 plus actual resource/port/Lease/DB/profile release independently confirmed; no source/parameter/Fixture/Gold/scoring edits or repeated prepare/freeze/Attempt.
+
+No original chats/settings/cookies or user workspace/8765/default Chrome touched. Old Coding Offline and previous Live scores/ledgers/HALT/Benchmark, main/Tags/ZIP and shared Git AppleDouble left intact. Only new redacted report files plus current handoff/topic/index. Before commit actual credential values, forbidden assets, JSON, evidence hashes and protected-source diff are audited. No full model request/reply/chunk, Receipt/approval nonce/Cookie/CSRF, raw tool args, SQLite/Profile or candidate source in public evidence. Raw logs private with hashes only.

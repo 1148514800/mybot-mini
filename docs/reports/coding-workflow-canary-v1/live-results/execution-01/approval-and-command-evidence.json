@@ -1,0 +1,57 @@
+{
+  "mode": "LIVE_REAL_HUMAN_REQUIRED",
+  "synthetic_approval_count": 0,
+  "approval_dialog_seen": true,
+  "full_effective_argv_inspected": true,
+  "canonical_argv": [
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-v"
+  ],
+  "cwd": ".",
+  "maximum_timeout_seconds": 30,
+  "sandbox": "macos_readonly",
+  "native_approval_audit": [
+    {
+      "kind": "command",
+      "approved": true
+    }
+  ],
+  "native_commands": [
+    {
+      "tool": "run_command",
+      "success": true,
+      "metadata": {
+        "status": "completed",
+        "approved": true,
+        "completed": true,
+        "spawned": true,
+        "sandbox_applied": true,
+        "exit_code": 0,
+        "execution_mode": "macos_readonly",
+        "execution_evidence": true,
+        "process_terminated": false,
+        "output_truncated": false,
+        "timed_out": false
+      },
+      "revision": 1
+    }
+  ],
+  "controller": {
+    "state": "verified",
+    "current_revision": 1,
+    "committed_patches": 1,
+    "test_runs": 1,
+    "test_passes": 1,
+    "test_failures": 0,
+    "tests_passed_after_last_patch": 5,
+    "verification": "valid",
+    "model_requests": 10
+  },
+  "approval_nonce_or_cookie_exported": false,
+  "live_dialog_screenshot_captured": false
+}

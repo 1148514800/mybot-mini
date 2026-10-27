@@ -1,0 +1,7 @@
+# Real isolated headed Chrome
+
+Fresh0700 non-symlink Profile, actual user_data_dir/current UID/empty Cookie jar verified; sandbox enabled, Chrome152.0.7977.83. Separate fresh A/B profiles passed same-origin Cookie/LocalStorage isolation both ways, probe closed and profiles removed. User default Chrome/8765 not opened or operated.
+
+Real DOM created one Session and sent the frozen text once. Native Preview was visible. The effective argv/cwd/timeout/sandbox in the actual approval dialog were read and validated; the assistant notified the user to act in that original dialog. LIVE code has no approve click/resolve call, synthetic count0. Native audit then recorded approved=true and real RunCommand spawn/Seatbelt/exit0. No Live dialog screenshot was captured by the frozen operator; do not substitute old Mock approval screenshots or publish nonce details.
+
+After native verified completion, refresh and waiting beyond the finite SSE period kept the persistent request total10 and Patch Revision1. Status/Revision visible in terminal activity screenshot; timeline/Pin/contract masked. Source/body/receipt not exported. Own service same8903 wait exit0; Context close once inside live Playwright context, own Chrome exited/Profile removed automatically, all primary/start/shutdown/context/profile errors null. Final socket reacquired/released and Lease available, no uncertainty or manual cleanup.

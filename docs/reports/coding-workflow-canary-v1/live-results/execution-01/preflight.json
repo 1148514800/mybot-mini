@@ -1,0 +1,28 @@
+{
+  "authorization": "GRANTED_12_REQUESTS",
+  "input_head": "7cca3f0528c3c357f64c3de126beb846551636b1",
+  "preregistration": "0807b612e734c212588045107ba33f992adecba0",
+  "source_files": 332,
+  "frozen_verify": "PASS",
+  "usage": {
+    "real_requests": 0,
+    "attempts": 0,
+    "unsettled": 0,
+    "http_attempts": 0
+  },
+  "revision": 0,
+  "event_counts": {
+    "sessions": 0,
+    "events": 0,
+    "turns": 0,
+    "messages": 0,
+    "tools": 0
+  },
+  "port": 8903,
+  "port_acquired_released": true,
+  "lease_available": true,
+  "external_database_holders": false,
+  "seatbelt_probe": true,
+  "command_approval": "REAL_HUMAN_REQUIRED_SEPARATE",
+  "old_private_assets_opened": false
+}

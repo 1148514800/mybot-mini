@@ -1,0 +1,122 @@
+{
+  "revision": 1,
+  "changed_paths": [
+    "notesearch/search.py"
+  ],
+  "fixture_head": "12f2b1df12dffe89f719796c725afb7a481ba4f0",
+  "git_metadata_unchanged": true,
+  "git_diff_sha256": "c6994156b924d36d11d5faf761edbca9b7a4a682cf1b98fa0b2b2cf7197f9d17",
+  "candidate_sha256": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6",
+  "native_patch_chain": [
+    {
+      "revision": 1,
+      "before_sha256": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+      "after_sha256": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6",
+      "preview_to_commit_consistent": true,
+      "receipt_commit_success": true,
+      "native_journal": {
+        "agent_owned_files": 1,
+        "preexisting_user_dirty_files": 0,
+        "files": [
+          {
+            "path": "notesearch/search.py",
+            "source": "native_patch",
+            "operation": "updated",
+            "preexisting_git_state": "clean_or_not_reported",
+            "original_sha256": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+            "final_sha256": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6",
+            "current_matches": true,
+            "current_state": "matches_agent_result",
+            "first_revision": 1,
+            "last_revision": 1
+          }
+        ],
+        "other_git_changes": [],
+        "baseline": {
+          "head": "12f2b1df12dffe89f719796c725afb7a481ba4f0",
+          "complete": true,
+          "truncated": false,
+          "index_fingerprint": "available",
+          "staged": [],
+          "unstaged": [],
+          "untracked": [],
+          "conflicts": [],
+          "reason": ""
+        },
+        "git_metadata_unchanged": true,
+        "current_status_complete": true,
+        "external_side_effects_possible": false,
+        "undo_status": "undo_unavailable",
+        "undo_eligible": false,
+        "journal_valid": true,
+        "review_scope": "native Patch delta; Git status is not a complete filesystem audit"
+      }
+    }
+  ],
+  "patch_tools": [
+    {
+      "tool": "apply_patch",
+      "success": true,
+      "metadata": {
+        "error_category": null,
+        "safe_error_code": null,
+        "failure_phase": "unknown",
+        "safe_to_retry": false,
+        "file_metadata_supported": null,
+        "dry_run": true,
+        "applied": false,
+        "receipt_created": true,
+        "receipt_commit_success": false,
+        "preview_to_commit_consistent": null,
+        "file_revision_verified": false,
+        "after_sha256": {
+          "notesearch/search.py": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6"
+        },
+        "before_sha256": {
+          "notesearch/search.py": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3"
+        },
+        "changed_files": [
+          "notesearch/search.py"
+        ],
+        "execution_evidence": false
+      },
+      "revision": 0
+    },
+    {
+      "tool": "apply_patch",
+      "success": true,
+      "metadata": {
+        "error_category": null,
+        "safe_error_code": null,
+        "failure_phase": "unknown",
+        "safe_to_retry": false,
+        "file_metadata_supported": null,
+        "dry_run": false,
+        "applied": true,
+        "receipt_created": false,
+        "receipt_commit_success": true,
+        "preview_to_commit_consistent": true,
+        "file_revision_verified": true,
+        "after_sha256": {
+          "notesearch/search.py": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6"
+        },
+        "before_sha256": {
+          "notesearch/search.py": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3"
+        },
+        "changed_files": [
+          "notesearch/search.py"
+        ],
+        "execution_evidence": true
+      },
+      "revision": 1
+    }
+  ],
+  "independent_code_review": {
+    "query_trim_and_casefold": true,
+    "title_or_body_match": true,
+    "empty_query_returns_empty": true,
+    "input_order_and_duplicate_ids_preserved": true,
+    "input_not_mutated": true,
+    "raw_code_published": false
+  }
+}

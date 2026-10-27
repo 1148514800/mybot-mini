@@ -1,0 +1,263 @@
+{
+  "frozen_verify": "PASS",
+  "source_files": 332,
+  "usage": {
+    "real_requests": 10,
+    "attempts": 1,
+    "unsettled": 0,
+    "http_attempts": 10
+  },
+  "revision": 1,
+  "fixture_head": "12f2b1df12dffe89f719796c725afb7a481ba4f0",
+  "fixture_remote": "",
+  "changed_paths": [
+    "notesearch/search.py"
+  ],
+  "source_scope_compliance": true,
+  "git_metadata_unchanged": true,
+  "native_patch_chain": [
+    {
+      "revision": 1,
+      "before_sha256": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+      "after_sha256": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6",
+      "preview_to_commit_consistent": true,
+      "receipt_commit_success": true,
+      "native_journal": {
+        "agent_owned_files": 1,
+        "preexisting_user_dirty_files": 0,
+        "files": [
+          {
+            "path": "notesearch/search.py",
+            "source": "native_patch",
+            "operation": "updated",
+            "preexisting_git_state": "clean_or_not_reported",
+            "original_sha256": "dd11a5b4ff4ad5bc9c806117556125d72ccdc89f33da71f88cd31fd840655fd3",
+            "final_sha256": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6",
+            "current_matches": true,
+            "current_state": "matches_agent_result",
+            "first_revision": 1,
+            "last_revision": 1
+          }
+        ],
+        "other_git_changes": [],
+        "baseline": {
+          "head": "12f2b1df12dffe89f719796c725afb7a481ba4f0",
+          "complete": true,
+          "truncated": false,
+          "index_fingerprint": "available",
+          "staged": [],
+          "unstaged": [],
+          "untracked": [],
+          "conflicts": [],
+          "reason": ""
+        },
+        "git_metadata_unchanged": true,
+        "current_status_complete": true,
+        "external_side_effects_possible": false,
+        "undo_status": "undo_unavailable",
+        "undo_eligible": false,
+        "journal_valid": true,
+        "review_scope": "native Patch delta; Git status is not a complete filesystem audit"
+      }
+    }
+  ],
+  "port_available": true,
+  "lease_available": true,
+  "sqlite_integrity": {
+    "ledger": "ok",
+    "event_store": "ok"
+  },
+  "event_counts": {
+    "sessions": 2,
+    "events": 52,
+    "turns": 1,
+    "messages": 2,
+    "tools": 13
+  },
+  "turn_states": [
+    {
+      "state": "completed",
+      "count": 1
+    }
+  ],
+  "reservations": [
+    {
+      "id": 1,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3650,
+        "completion_tokens": 74,
+        "total_tokens": 3724
+      }
+    },
+    {
+      "id": 2,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3811,
+        "completion_tokens": 95,
+        "total_tokens": 3906
+      }
+    },
+    {
+      "id": 3,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3997,
+        "completion_tokens": 74,
+        "total_tokens": 4071
+      }
+    },
+    {
+      "id": 4,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4274,
+        "completion_tokens": 75,
+        "total_tokens": 4349
+      }
+    },
+    {
+      "id": 5,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4493,
+        "completion_tokens": 256,
+        "total_tokens": 4749
+      }
+    },
+    {
+      "id": 6,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 5572,
+        "completion_tokens": 283,
+        "total_tokens": 5855
+      }
+    },
+    {
+      "id": 7,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 6603,
+        "completion_tokens": 93,
+        "total_tokens": 6696
+      }
+    },
+    {
+      "id": 8,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7169,
+        "completion_tokens": 59,
+        "total_tokens": 7228
+      }
+    },
+    {
+      "id": 9,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7469,
+        "completion_tokens": 131,
+        "total_tokens": 7600
+      }
+    },
+    {
+      "id": 10,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7622,
+        "completion_tokens": 283,
+        "total_tokens": 7905
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "C01",
+      "status": "completed"
+    }
+  ],
+  "halt": [],
+  "private_asset_hashes": {
+    "prepared.json": "516ca3a1780408a782a0be555887249bb8fecdf825db73fd29137a64de36a808",
+    "freeze.json": "c44e1685f536e7c3ec008fc84ae053bd74755ab2e4089ede3909371fc15a013f",
+    "browser-isolation.json": "717f6cce1f5f40efa2779974df7075af6d00512ed3c6f8d3d0f269f0b71b99a0"
+  },
+  "frozen_assets_unchanged": true,
+  "git_diff_sha256": "c6994156b924d36d11d5faf761edbca9b7a4a682cf1b98fa0b2b2cf7197f9d17",
+  "candidate_sha256": "a65e52842fb4b8bb399af8310c7d74f2946d8b55a5dea58fa893c78a624d19c6",
+  "independent_code_review": {
+    "query_trim_and_casefold": true,
+    "title_or_body_match": true,
+    "empty_query_returns_empty": true,
+    "input_order_and_duplicate_ids_preserved": true,
+    "input_not_mutated": true,
+    "raw_code_published": false
+  },
+  "tool_intent_audit": {
+    "started": 13,
+    "finished": 13,
+    "unresolved": 0,
+    "all_finished_success": false,
+    "effects": [
+      "changed",
+      "none"
+    ],
+    "success_count": 12,
+    "failure_count": 1,
+    "failed_tool": "record_task_contract",
+    "failure_reason": "contract_proposal_rejected",
+    "reason_verified_by_actual_sdk_result_hash": true
+  }
+}

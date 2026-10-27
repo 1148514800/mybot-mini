@@ -1,0 +1,23 @@
+{
+  "case-results.json": "c73f5b6155b3e929dd67caca1a9082aa6825080ce6ccfa9e20a99f93454bd491",
+  "browser-acceptance.md": "c10aba6182df5b98487db1a53bc559476e7763a52d39ee4bd6ca7ccb688bd80e",
+  "postflight.json": "154ce5c365150605eb7aae5dfb512ba7022156acb517d33e6eae4919eca64b26",
+  "revision-and-receipt-evidence.json": "b6f9bd57b384ec050a3980ce2f99a04f16e537adb3e513931375f4b59620c078",
+  "browser-operator-evidence.json": "749190f8d9551206c81e9a75699553ea3af590591f8ef14854ff5edd0a1d5780",
+  "browser-isolation.json": "efa55b844487148df76076eb12821ae41cfd97efef6953c0cff713218cb52bb6",
+  "read-source-evidence.json": "7d1383b2f79019c6f9a36b93b0e242aaca965dc073411784f4085f96b8bd9969",
+  "security-audit.md": "889a6d1e0ef4d458fc5951d1e3dd4f12a7bdc5aa3d148a76dd2d06cf9b70dd5b",
+  "resource-usage.json": "5af1d17a041cce593c55ea8ddfa6dc7e13239367d2060325c699b86ec3d7e94b",
+  "approval-and-command-evidence.json": "c108acdc041369001c7870b869c88aab9cf33880849887bb82a97cb4abcdbbeb",
+  "shutdown-evidence.json": "3038da523507621fecf1fdbc4e620cc412d0a8114aa314d13d1c9fb7ec96a515",
+  "next-stage-recommendations.md": "98b57464df502764c60a0b469e9e80982ecb0f94554a20c3ec1d1864bfbfc29d",
+  "user-input-evidence.json": "98930b0d94d970078ea43a1dcecfa9dcac2eac9c41cb7a9dcc4ae0ce1face30a",
+  "delivery-validation.json": "3ae3dfe9c4f2c7932d718d83e11cbd979ab397d517a36c82fffcda2b9b774e9d",
+  "protocol-evidence.json": "bfe29ecedbb779d2dd7423d2e7d1595c91880c6d4e188ed08e3b77a1d41ec549",
+  "private-log-hashes.json": "00f8d0c8f02efdd5bf3a4f49ba6dda6288dd550b9bc28fa43c526c8ea41ddf49",
+  "preflight.json": "5e0f554a6dc9e88206a7f6a168476354fd5afbddd2f5e9ea5181847cafced555",
+  "case-results.md": "7cfa54a77ba159eaf613293b67f5e92d45ab0d204b587bafa12594990aa034d0",
+  "acceptance-report.md": "2cc04c2468cd79e79f0b16e772478907f73519d05d82cced2d7aa980a5e152a9",
+  "semantic-adherence.md": "913792d0b50f80274bcf69e1784e0b540b3337ee40dffb032f0138ca46be47c6",
+  "screenshots/terminal.png": "77ed8d5a849f274f7f49cb309daacda170ff62347b51e4955b4c2976f76869f7"
+}

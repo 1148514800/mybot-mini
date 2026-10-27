@@ -1,0 +1,171 @@
+{
+  "global_limit": 12,
+  "actual_physical_requests": 10,
+  "actual_http_attempts": 10,
+  "logical_requests": 10,
+  "attempts": 1,
+  "unsettled": 0,
+  "deepseek": 10,
+  "glm": 0,
+  "fallback_attempts": 0,
+  "retries": 0,
+  "model_summaries": 0,
+  "paid_judges": 0,
+  "observed_usage": {
+    "prompt_tokens": 54660,
+    "completion_tokens": 1423,
+    "total_tokens": 56083
+  },
+  "settled_usage": {
+    "prompt_tokens": 54660,
+    "completion_tokens": 1423,
+    "total_tokens": 56083
+  },
+  "usage_complete": true,
+  "remaining_unused": 2,
+  "cost": null,
+  "cost_reason": "No reliable deployment price available",
+  "ledger_rows": [
+    {
+      "id": 1,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3650,
+        "completion_tokens": 74,
+        "total_tokens": 3724
+      }
+    },
+    {
+      "id": 2,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3811,
+        "completion_tokens": 95,
+        "total_tokens": 3906
+      }
+    },
+    {
+      "id": 3,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 3997,
+        "completion_tokens": 74,
+        "total_tokens": 4071
+      }
+    },
+    {
+      "id": 4,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4274,
+        "completion_tokens": 75,
+        "total_tokens": 4349
+      }
+    },
+    {
+      "id": 5,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 4493,
+        "completion_tokens": 256,
+        "total_tokens": 4749
+      }
+    },
+    {
+      "id": 6,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 5572,
+        "completion_tokens": 283,
+        "total_tokens": 5855
+      }
+    },
+    {
+      "id": 7,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 6603,
+        "completion_tokens": 93,
+        "total_tokens": 6696
+      }
+    },
+    {
+      "id": 8,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7169,
+        "completion_tokens": 59,
+        "total_tokens": 7228
+      }
+    },
+    {
+      "id": 9,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7469,
+        "completion_tokens": 131,
+        "total_tokens": 7600
+      }
+    },
+    {
+      "id": 10,
+      "case_id": "C01",
+      "provider": "coco",
+      "model": "deepseek-v4.1-flash",
+      "purpose": "agent",
+      "state": "returned",
+      "http_attempts": 1,
+      "usage": {
+        "prompt_tokens": 7622,
+        "completion_tokens": 283,
+        "total_tokens": 7905
+      }
+    }
+  ],
+  "operator_manifest_real_requests_null": "incomplete field; original ledger and SDK counts are authoritative"
+}

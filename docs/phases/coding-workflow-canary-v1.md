@@ -17,3 +17,5 @@ macOS/Python3.12+/uv：`uv sync --frozen`；`uv run python -m unittest scripts.c
 最终：2142个去重unittest通过（新增45），完整check_phase程序式断言和独立补充实际执行，源码前后hash一致；headed Chrome固定8903 Synthetic闭环与双Profile隔离通过，Public5/Host10、Controller Revision1 verified，但真人批准维度false/真实Strict未执行。正式新批次唯一prepare/freeze/verify完成，332源码、配置/初始Git/workspace/两库身份一致，Revision0、0 Attempt/reservation/HTTP，停在授权门。实现SHA d679d21914adc1e8b9a758b2611d1b35d80c4c2c；预注册/冻结SHA 0807b612e734c212588045107ba33f992adecba0。
 
 archive-ready: true
+
+新GRANTED_12_REQUESTS后唯一真实C01完成：10/12物理请求，DeepSeek10、GLM/摘要/重试0；原生Preview/Receipt/Patch一次、真实用户WebApproval批准一次、command exit0/Public5、Controller verified Revision1、独立Host10通过，冻结15维Strict PASS。仅允许source改变且Git/Journal/hash一致；10流EOF/close、服务exit0/Profile自动清理/332冻结源码verify通过。供应商Token54660/1423/56083，cost=null，余下2次不使用。附带最后一次record_task_contract返回contract_proposal_rejected，保留失败，不推论全需求覆盖正确或全部工具无误。见[Live报告](../reports/coding-workflow-canary-v1/live-results/execution-01/acceptance-report.md)。
