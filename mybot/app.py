@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from .agent import AgentLoop, ContextBuilder
 from .config import GatewayConfig
-from .provider_failover import build_gateway_client as build_client, ProviderFailoverClient
-from .tools import build_default_tool_registry
+from .provider_failover import build_gateway_client as build_client
+from .tools.registry import build_configured_tool_registry
 from .workspace import init_workspace
 from .mcp_client.manager import MCPClientManager
 from .mcp_client.approval import cli_approval
@@ -25,10 +25,8 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     try:
         if not config.coding_enabled:
             init_workspace(config.workspace)
-        tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled,
-            patch_mode=config.coding_patch_mode, preview_receipt=config.coding_preview_receipt,
-            file_access=config.coding_file_access, file_approval_provider=cli_file_approval,
-            command=config.coding_command, command_approval_provider=cli_command_approval)
+        tools = build_configured_tool_registry(config, file_approval_provider=cli_file_approval,
+            command_approval_provider=cli_command_approval)
         async with MCPClientManager(config, tools, approval_provider=cli_approval):
             llm_client = build_client(config)
             agent = AgentLoop(
@@ -38,10 +36,6 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
                 context=ContextBuilder(config.workspace),
                 undo_approval_provider=cli_undo_approval,
             )
-            if isinstance(llm_client, ProviderFailoverClient):
-                llm_client.before_fallback = lambda definitions: (
-                    agent.coding_controller is None
-                    or agent.coding_controller.before_request(definitions))
 
             print("Gateway started. Channel: cli\n")
             await agent.run()

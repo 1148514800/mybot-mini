@@ -133,6 +133,8 @@ async def run_live(mode: str, *, timeout: float = 30.0) -> dict:
             await original.close()
         else:
             gateway._primary = meter.wrap(gateway._primary, 'coco', EXPECTED_PRIMARY)
+        # The ordered chain dispatches and closes clients from this table.
+        gateway._clients[0] = gateway._primary
         factory = gateway._factory
         gateway._factory = lambda cfg: meter.wrap(factory(cfg), 'coco2', EXPECTED_BACKUP)
         for number in range(2 if mode == 'forced' else 1):

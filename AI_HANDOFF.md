@@ -2,20 +2,25 @@
 
 ## 当前目标与状态
 
-codex/repo-map-scoped-v2，基线601d2d9fd65f0de477a0abcef5d9ea9542c32583。Repo Map v2目录范围开发完成；新增6项，地图专项19项；连同Repository/Patch/Tool Authority/Web相关专项共187项通过。真实模型请求0，无Canary/冻结/完整Benchmark。
+Core Refactor R1，分支 codex/lean-core-refactor-v1，精确基线 1b5af3543dde6bde51c3863a6d88b3c40ab8d778（codex/repo-map-scoped-v2）。实现和离线回归完成，交付为本分支提交并 Push；最终 SHA 由交付消息给出，或 git log -1 --format=%H。不是新 Phase，不创建 Tag/ZIP。
 
-## 实现与权限
+## 实现与决定
 
-repo_map新增可选path，默认.，max_files仍为1–120。仓库相对目录在Git ls-files枚举阶段限定，先筛范围后应用数量/输出上限；复用RepositoryTool原GIT_LITERAL_PATHSPECS=1机制，目录名不解释为通配符。拒绝绝对路径、..、符号链接目录、受保护路径、非目录；不扩大workspace权限。新增scope字段，其余原调用及结构保持。有限索引只含本次目录内的已枚举文件，范围外import保持external_or_unresolved，明确未确认而非不存在依赖。
+- 唯一 AgentLoop 保留构造、handle_message、循环和请求调度；context_preparation、tool_dispatch、turn_lifecycle 三个函数模块承接上下文、工具批次/安全事件和任务持久化/清理。状态仍由 AgentLoop 持有，转发入口与 Evaluation 子类兼容；14 个提取函数 AST 与基线一致。
+- AgentLoop 唯一组合宿主 before_fallback 和 CodingController 预算；删除 CLI/Web 的覆盖，宿主先检查，拒绝不发送备用请求。Provider Chain 顺序、任务内保持、新任务重置不变。
+- 共享 config → ToolRegistry 参数映射；合并相同停止结果分支、重复结果类型检查与 session/context/skills 配置取值逻辑。MCP owning task、CLI/Web 审批与关闭边界分开保留；严格 Web launch 校验不强行合并。
+- Patch/Receipt、命令审批/Seatbelt、Session/EventStore 格式、Streaming 终态、请求预算未放宽。历史 Benchmark/Fixture/Gold、冻结材料、账本和 C01/C02 未改；真实模型请求 0。
 
-Web弹窗新增默认.的目录输入与查看按钮，打开不扫描，显式提交才读取，可重复换目录；返回范围/数量/截断状态。原POST Cookie/CSRF/CSP及固定进程workspace不变，不构造模型Client。工具仍只在Coding模式注册，原AST、隐私规则、120文件/512KiB/12KiB上限保持。只修改地图、其Web接口/静态页面和相关测试文档；AgentLoop主体、Provider Chain、Patch/Receipt、RunCommand、WebApproval、WorkspaceLease及权限不变。
+## 文件、计量和验证
 
-## 验证与限制
+生产：agent/loop.py、context_preparation.py、tool_dispatch.py、turn_lifecycle.py、app.py、web/runtime.py、tools/registry.py、config.py。详见 docs/core-refactor-r1.md（架构、差异、复测命令与局限）。运行方式未变，README 不改。
 
-新增：默认根兼容、Git枚举先范围（140个前置文件后仍定位目标）、目录前缀/字面量/规范化、非法/私有/链接目录拒绝、跨范围import未确认、范围内隐私/无执行/文件与Index字节不变。Web测试扩展输入表单、目录过滤、再次查询及非法范围拒绝，保留原鉴权/无自动扫描/无Provider断言。Python编译、JS语法和diff检查通过。
+Python 文件 106→109，总物理行数 13989→14063（+74），loop 844→361；整体代码量没有下降，主要收益是职责与少量重复逻辑精简。同机同 Python/依赖无并发测试计量：模块导入基本持平，固定 Mock 单轮中位数 0.4671→0.4550ms，不宣称显著加速。
 
-地图仅跟踪文件，scope为仓库相对目录；有限索引不证明动态导入、sys.path、src布局或重导出。index_incomplete为false也不证明范围外完整。每文件是读取时观察，非全库原子快照；沿用原路径保护，不是恶意并发改写的完整OS沙盒或通用源码秘密检测器。详见README和docs/repo-map.md。
+专项 436 项、Streaming 补充 92 项、新增 R1 5 项通过。全量发现两处基线已有问题，均在原 SHA 复现：Campaign 旧工具计数更新为完整 11 项名称/重复数量断言；smoke 测试使用完整合成 GatewayConfig，旧探针替换客户端同步 _clients 表。所有旧断言保留或加强；分别 33/13 项通过，未运行真实 smoke。剩余 32 组718项通过。最终完整 check_phase：60组1739项、零失败/跳过，354.28秒，退出码0（专项与全量有重叠）。Python compileall、两份 JS 语法和 diff --check 通过。
 
-## 下一步与保留
+## 边界、下一步与不要重复
 
-提交并Push codex/repo-map-scoped-v2，核对远程HEAD。不创建Phase/Tag/ZIP，不改main/旧C01/C02报告/冻结/账本/额度，不操作用户Chrome或旧服务。未来真实模型验证须另获授权。共享Git AppleDouble可产生non-monotonic警告，本轮未操作其共享元数据。
+本轮完成；下一步仅按新需求推进，不自动进入新 Phase。未来可继续减少共享状态耦合，但不要为缩短文件删除安全门，也不要无授权运行模型评测。历史 scripts/Evaluation 不迁移。
+
+工作位于独立 APFS 工作树；原 ExFAT 目录 main、app.py 中文注释及 workspace/instructions/USER.md 未提交偏好保留。共享 Git 有 AppleDouble pack index 警告，未改共享元数据；未提交凭证、真实配置、会话历史或临时计量文件。旧 Phase/Tag/ZIP、历史 UAT 结论保持原状。

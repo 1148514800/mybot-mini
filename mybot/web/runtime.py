@@ -13,7 +13,7 @@ from ..agent import AgentLoop, ContextBuilder
 from ..agent.session import Session
 from ..config import GatewayConfig
 from ..provider_failover import build_gateway_client, ProviderFailoverClient
-from ..tools import build_default_tool_registry
+from ..tools.registry import build_configured_tool_registry
 from ..mcp_client.manager import MCPClientManager
 from ..workspace import init_workspace
 from .approval import WebApproval
@@ -181,10 +181,8 @@ class ChatRuntime:
                 if config.coding_enabled or not self.initialize_workspace:
                     if not config.workspace.is_dir(): raise ValueError('workspace_missing')
                 else: init_workspace(config.workspace)
-                tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled,
-                    patch_mode=config.coding_patch_mode, preview_receipt=config.coding_preview_receipt,
-                    file_access=config.coding_file_access, file_approval_provider=c.approval,
-                    command=config.coding_command, command_approval_provider=c.approval)
+                tools = build_configured_tool_registry(config, file_approval_provider=c.approval,
+                    command_approval_provider=c.approval)
                 # MCP enter/call/exit MUST stay in this SAME task, per existing manager fences.
                 manager = MCPClientManager(config, tools, approval_provider=c.approval)
                 await manager.__aenter__()
@@ -195,8 +193,6 @@ class ChatRuntime:
                     c.title = redact(c.title, c.secret_values)
                 agent = AgentLoop(client, config, tools, ContextBuilder(config.workspace), session=c.session,
                     undo_approval_provider=c.approval, event_callback=c.emit,history=c.history,steer_inbox=c.steer_inbox,stream_secrets=c.secret_values)
-                if isinstance(client, ProviderFailoverClient):
-                    client.before_fallback = lambda definitions: agent.coding_controller is None or agent.coding_controller.before_request(definitions)
                 reply = await agent.handle_message(text)
                 report = agent.last_coding_report
                 if report:

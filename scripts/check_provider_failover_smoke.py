@@ -6,6 +6,7 @@ from types import SimpleNamespace as N
 from unittest.mock import AsyncMock, Mock, patch
 
 from mybot.provider_failover import ProviderFailoverClient
+from mybot.config import GatewayConfig
 from scripts.smoke_provider_failover import main, run_live, RequestMeter, SmokeFailure
 
 
@@ -19,10 +20,11 @@ def fake_client(effects):
 
 class SmokeChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.cfg = N(provider='coco', model='deepseek-v4.1-flash', request_timeout_seconds=2)
+        self.cfg = GatewayConfig(provider='coco', model='deepseek-v4.1-flash', request_timeout_seconds=2,
+            api_key='synthetic-only', base_url='https://offline.invalid/v1', session_persist=False, skills_enabled=False)
         self.primary = fake_client([model_reply()])
         self.backup = fake_client([model_reply(), model_reply()])
-        self.gateway = ProviderFailoverClient(self.primary, self.cfg, N(model='glm-5.3-flash'), Mock(return_value=self.backup))
+        self.gateway = ProviderFailoverClient(self.primary, self.cfg, N(provider='coco2', model='glm-5.3-flash'), Mock(return_value=self.backup))
         self.settings = [patch('mybot.config.GatewayConfig', return_value=self.cfg),
                          patch('mybot.config._PROVIDERS', {'coco2': {'model': 'glm-5.3-flash'}}),
                          patch('mybot.provider_failover.build_gateway_client', return_value=self.gateway)]
@@ -116,7 +118,7 @@ class SmokeChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_new_client_starts_primary_after_previous_failover(self):
         await self.probe('forced')
-        fresh=ProviderFailoverClient(fake_client([model_reply()]),self.cfg,N(model='glm-5.3-flash'),Mock())
+        fresh=ProviderFailoverClient(fake_client([model_reply()]),self.cfg,N(provider='coco2', model='glm-5.3-flash'),Mock())
         self.gateway=fresh
         with self.settings[0],self.settings[1],patch('mybot.provider_failover.build_gateway_client',return_value=fresh):
             r=await run_live('natural',timeout=1)
@@ -137,7 +139,7 @@ class SmokeChecks(unittest.IsolatedAsyncioTestCase):
             return AsyncOpenAI(api_key=key,base_url='https://offline.invalid/v1',max_retries=0,
                 http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
         primary=sdk('synthetic-primary');backup=sdk('synthetic-backup')
-        gateway=ProviderFailoverClient(primary,self.cfg,N(model='glm-5.3-flash'),lambda cfg:backup)
+        gateway=ProviderFailoverClient(primary,self.cfg,N(provider='coco2', model='glm-5.3-flash'),lambda cfg:backup)
         messages=[{'role':'user','content':'synthetic context'}]
         try:
             with contextlib.redirect_stdout(io.StringIO()):

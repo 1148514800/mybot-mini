@@ -70,7 +70,7 @@ class DiagnosticChecks(unittest.IsolatedAsyncioTestCase):
         for key in ('safe_error_code','operation_intent','check_workspace_metadata','文件所有权或属组','relative_path'):self.assertIn(key,text)
     async def test_mcp_metadata_not_promoted(self):
         # Tool identity gate is native-only, even a remote name that resembles a reader.
-        text=Path('mybot/agent/loop.py').read_text()
+        text=Path('mybot/agent/tool_dispatch.py').read_text()
         self.assertIn('type(self.tools.get_tool(call.function.name)) in (ReadFileRangeTool, ReadFileTool)',text)
         self.assertNotIn('safe_meta.update(result.metadata)',text)
 

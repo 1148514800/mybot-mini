@@ -216,3 +216,6 @@ from scripts.check_steer_inbox import check_steer_inbox
 check_steer_inbox()
 from scripts.check_streaming_steer_web import check_streaming_steer_web
 check_streaming_steer_web()
+
+from scripts.check_core_refactor import check_core_refactor
+check_core_refactor()

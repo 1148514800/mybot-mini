@@ -83,9 +83,7 @@ class ToolRegistry:
         if not isinstance(result, ToolResult):
             result = ToolResult(success=False, error=f"tool returned {type(result).__name__}")
         if observer is not None: observer.complete(token, result)
-        if isinstance(result, ToolResult):
-            return result
-        return ToolResult(success=False, error=f"tool returned {type(result).__name__}")
+        return result
 
 
 def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_mode='off', preview_receipt=False, command=None, command_approval_provider=None, file_access='read_only', file_approval_provider=None) -> ToolRegistry:
@@ -123,3 +121,11 @@ def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_
         from .run_command import RunCommandTool
         registry.register(RunCommandTool(workspace, command=command, patch_mode=patch_mode, approval_provider=command_approval_provider))
     return registry
+
+
+def build_configured_tool_registry(config, *, file_approval_provider, command_approval_provider):
+    """Map shared config fields; approvals and resource ownership belong to the host."""
+    return build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled,
+        patch_mode=config.coding_patch_mode, preview_receipt=config.coding_preview_receipt,
+        file_access=config.coding_file_access, file_approval_provider=file_approval_provider,
+        command=config.coding_command, command_approval_provider=command_approval_provider)

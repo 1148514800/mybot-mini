@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 
 from openai import AsyncOpenAI
@@ -43,25 +44,16 @@ def _llm_value(key: str, default):
     return _LLM.get(key, _PROVIDER_CONFIG.get(key, default))
 
 
-def _session_value(key: str, default):
-    section = _CONFIG.get("session", {})
+def _section_value(section_name: str, key: str, default):
+    section = _CONFIG.get(section_name, {})
     if not isinstance(section, dict):
-        raise ValueError("session must be a JSON object")
+        raise ValueError(f"{section_name} must be a JSON object")
     return section.get(key, default)
 
 
-def _context_value(key: str, default):
-    section = _CONFIG.get("context", {})
-    if not isinstance(section, dict):
-        raise ValueError("context must be a JSON object")
-    return section.get(key, default)
-
-
-def _skills_value(key: str, default):
-    section = _CONFIG.get("skills", {})
-    if not isinstance(section, dict):
-        raise ValueError("skills must be a JSON object")
-    return section.get(key, default)
+_session_value = partial(_section_value, 'session')
+_context_value = partial(_section_value, 'context')
+_skills_value = partial(_section_value, 'skills')
 
 
 def _coding_value(key='enabled', default=False):

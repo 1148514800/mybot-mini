@@ -219,7 +219,11 @@ class CampaignChecks(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('revision_or_journal_mismatch',labels)
 
     def test_full_frozen_tools_include_plan_and_sampling(self):
-        self.assertEqual(len(self.freeze['tool_schemas']),10)
+        # Repo Map is already part of the R1 baseline. Pin the complete inventory,
+        # including uniqueness, instead of the obsolete pre-Repo-Map count.
+        self.assertCountEqual([t['function']['name'] for t in self.freeze['tool_schemas']],
+            ['read_file', 'list_files', 'search_code', 'repo_map', 'read_file_range',
+             'git_status', 'git_diff', 'apply_patch', 'run_command', 'create_plan', 'update_plan'])
         self.assertTrue({'create_plan','update_plan'}<={t['function']['name'] for t in self.freeze['tool_schemas']})
         self.assertEqual(self.freeze['temperature'],0.1);self.assertEqual(self.freeze['max_retries'],0)
 
