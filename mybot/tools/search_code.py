@@ -11,7 +11,8 @@ from .base import ToolResult
 class SearchCodeTool(RepositoryTool):
     name='search_code'
     description=('Search workspace code using literal or Rust regex (no PCRE2). Respects gitignore; '
-                 'skips hidden/private/cache/dependency/binary files. Returns bounded paths, lines and UTF-8 byte columns.')
+                 'For broad cross-file structure you may first use repo_map, then read_file_range. '
+                 'Skips hidden/private/cache/dependency/binary files. Returns bounded paths, lines and UTF-8 byte columns.')
     parameters={'type':'object','properties':{
         'query':{'type':'string','minLength':1,'maxLength':256},'path':{'type':'string','minLength':1,'maxLength':4096},
         'mode':{'type':'string','enum':['literal','regex']},'case_sensitive':{'type':'boolean'},

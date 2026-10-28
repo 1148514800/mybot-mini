@@ -2,22 +2,20 @@
 
 ## 当前目标与状态
 
-codex/coding-project-launch，基线f9fe98d06975fb0770b55a133f4b127a9a85d60a。真实项目Web入口开发完成；新增--workspace和--check，相关离线专项125通过（新增启动专项24），真实模型0，不创建Canary/冻结或完整Benchmark。
+codex/repo-map-v1，基线470433685a90aac3dacd0536dddb1f9fbd2332c1。Repo Map v1已实现；13项新增专项，连同Repository/Patch/Tool Authority/Web/Provider Chain共200项相关离线测试通过。Python编译、JS语法及diff检查通过。真实模型请求0，无Canary/冻结/完整Benchmark。
 
 ## 实现与权限
 
-mybot/web/launch.py只读校验JSON、默认Provider/字段/声明顺序、规范化路径、Git根/HEAD/Index。缺失/非法路径拒绝，支持linked worktree、detached/unborn；禁用hooks/fsmonitor/filters与可选Index写锁，不执行项目代码。JSON错误固定CONFIG_JSON_INVALID+行列，检查不输出Key/URL、不构造SDK/WebRuntime或打开Session数据库。
+mybot/tools/repo_map.py复用RepositoryTool，Git已跟踪文件按需扫描，标准库AST提取顶层函数/类/直接方法及静态import/行号；仓库内目标明确标静态候选/歧义，不声称运行时图或业务语义。最多120文件、512KiB/文件、12KiB含元数据输出；有界名称编码、AST节点/记录/进程限制及截断提示；单文件AST失败不终止。非Python不读正文，私有路径及所有符号链接跳过。RepositoryTool.read_bytes新增可选更严大小限制，默认行为不变。
 
-mybot/web/__main__.py在预检后才导入/启动服务；覆盖仅dataclasses.replace本进程workspace，不写配置。mybot和agent包延迟导入，保证JSON错误不会抢先终止--check，公共AgentLoop/ContextBuilder/Session/run_gateway身份不变。
-
-Web runtime项目模式不初始化目录/instructions；原配置的Coding/Patch/Receipt/RunCommand权限保持，--workspace不升级写权限。侧栏/设置显示项目名、Git启动分支和Coding/Patch状态。原WorkspaceLease、工具根目录限制、WebApproval及Seatbelt不变，网页消息不可切换workspace。Provider Chain共享纯配置顺序/字段校验，与上轮功能兼容。
+仅Coding模式原生Registry注册；read_only授权及AgentLoop undo白名单认定原生类型，不自动扫描/增加调用。原search/read/Patch/Receipt/Approval/Provider Chain保留。Web项目区域显式按钮POST /api/repo-map，沿用同源Cookie/CSRF/CSP，固定进程workspace；不构造模型Client，不返回绝对路径，不编辑项目。普通聊天不注册模型工具，用户仍可只读点击查看。
 
 ## 验证与限制
 
-启动专项24+原Web/Patch/审批与Failover/Streaming相关专项125通过；Python编译、JS和diff检查见交付。包括默认/覆盖/不存在/非法/不可访问目录、Git损坏与恶意filter不执行、JSON/字段/脱敏、预检不启动服务、Mock真实源码读取、无自动文件创建、workspace消息拒绝及Lease互斥。--check只验证本地字段，不证明远端Key有效；没有真实API验证。Git分支为启动快照，不实现运行中多项目切换。
+新增专项覆盖函数/类/方法/行号、相对导入/歧义、无效AST、私有文件/链接、文件数/大小/输出上限、控制字符、无执行/Index及工作区字节不变、Coding注册、AgentLoop Mock调用/简单消息不扫描、Web按需与鉴权。原关键Patch及权限断言保留，仅更新新增只读工具导致的Registry数量。
 
-先前主仓库真实配置有JSON语法错误；本次只读语法检查已为合法JSON，未改动该凭证文件。配置及命令详见README、docs/coding-project-launch.md。新项目根必须预先存在并为Git工作树，状态数据库必须在项目之外。
+地图仅跟踪文件；有限索引/src/sys.path/动态import/重导出无法证明，index_incomplete不能解释成无依赖。每文件是读取时观察，非全库原子快照；沿用原仓库工具路径权限，非恶意并发改写的完整OS沙盒。普通源码命名不做通用秘密识别。详见README和docs/repo-map.md。
 
 ## 下一步与保留
 
-本轮只交付入口功能，Commit/Push到codex/coding-project-launch并核对远程HEAD。不拆Phase、不新建Tag/ZIP。C01/C02报告、旧私库/冻结/账本及14次余额不修改或复用；main/用户服务/Chrome/共享AppleDouble不操作。实际使用时由用户配置Coding写权限并逐条批准测试命令；未来真实模型验证仍需明确授权。
+本轮提交Push codex/repo-map-v1并核对远程HEAD，不创建Phase/Tag/ZIP。main、旧C01/C02报告/私库/冻结/账本/剩余额度和用户Chrome/Web服务不改动；真实模型验证须另获授权。已存在项目启动--workspace/--check、Provider Chain及原Coding写权限策略继续复用。共享Git的AppleDouble副文件可能产生non-monotonic警告，不操作该共享元数据。

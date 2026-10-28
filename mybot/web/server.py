@@ -91,6 +91,23 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
             'busy': runtime.owner, 'cleanup_uncertain': runtime.cleanup_uncertain,
             'streaming_enabled':runtime.config.web_streaming,'steer_enabled':runtime.config.web_steer,'conversations': [{'id': c.id, 'title': c.title, 'status': c.status} for c in runtime.conversations.values()]})
 
+    map_lock = asyncio.Lock()
+
+    async def repo_map(request):
+        # Explicit user action only; fixed process workspace, no model or write authority.
+        try: value = await body(request)
+        except (ValueError,UnicodeError,RecursionError): return JSONResponse({'error':'invalid_repo_map_request'},status_code=400)
+        if value: return JSONResponse({'error':'invalid_repo_map_request'},status_code=400)
+        if runtime.owner is not None or runtime.cleanup_uncertain or map_lock.locked():
+            return JSONResponse({'error':'workspace_busy'},status_code=409)
+        from ..tools.registry import ToolRegistry
+        from ..tools.repo_map import RepoMapTool
+        async with map_lock:
+            tools = ToolRegistry(); tools.register(RepoMapTool(runtime.config.workspace))
+            result = await tools.execute('repo_map',{})
+        if not result.success: return JSONResponse({'error':'repo_map_unavailable','reason':result.error},status_code=400)
+        return JSONResponse(json.loads(result.output))
+
     def find(request):
         runtime.sync()
         return runtime.conversations.get(request.path_params['id'])
@@ -246,7 +263,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
                 except TimeoutError: return  # Native EventSource reconnects with Last-Event-ID.
         return StreamingResponse(stream(), media_type='text/event-stream', headers={'X-Accel-Buffering': 'no'})
 
-    routes = [Route('/', home), Route('/static/{name}', asset), Route('/api/bootstrap', bootstrap),
+    routes = [Route('/', home), Route('/static/{name}', asset), Route('/api/bootstrap', bootstrap), Route('/api/repo-map',repo_map,methods=['POST']),
         Route('/api/conversations', conversations, methods=['POST']), Route('/api/conversations/{id}', state),
         Route('/api/conversations/{id}/messages', message, methods=['POST']),
         Route('/api/conversations/{id}/steer',steer,methods=['POST']),

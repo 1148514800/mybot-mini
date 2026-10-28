@@ -672,13 +672,14 @@ class AgentLoop:
     def _validate_undo_registry(self):
         from ..tools.file import ReadFileTool
         from ..tools.list_files import ListFilesTool
+        from ..tools.repo_map import RepoMapTool
         from ..tools.search_code import SearchCodeTool
         from ..tools.read_file_range import ReadFileRangeTool
         from ..tools.git_tools import GitStatusTool, GitDiffTool
         from ..tools.patch import ApplyPatchTool
         from ..tools.run_command import RunCommandTool
         from .task_contract import ContractTool
-        allowed = {ContractTool, ReadFileTool, ListFilesTool, SearchCodeTool, ReadFileRangeTool, GitStatusTool, GitDiffTool,
+        allowed = {RepoMapTool, ContractTool, ReadFileTool, ListFilesTool, SearchCodeTool, ReadFileRangeTool, GitStatusTool, GitDiffTool,
                    ApplyPatchTool, RunCommandTool, PlanningTool, SkillTool, DiscoveryTool}
         if any(type(t) not in allowed for t in self.tools.iter_tools()): raise ValueError('unsupported_undo_registry')
         native = self.tools.get_tool('run_command')

@@ -59,14 +59,14 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(GatewayConfig().coding_patch_mode, 'off')
         self.assertEqual([t.name for t in build_default_tool_registry(self.root, file_access='legacy_confirm').iter_tools()], ['read_file','write_file','list_files'])
         off = build_default_tool_registry(self.root, coding_enabled=True, file_access='legacy_confirm')
-        self.assertEqual(len(off.iter_tools()), 7)
+        self.assertEqual(len(off.iter_tools()), 8)
         self.assertFalse(off.has_tool('apply_patch'))
         self.assertEqual(off.get_parameters('read_file_range'), self.tools.get_parameters('read_file_range'))
 
     async def test_patch_only_registry_cannot_guess_write(self):
         for mode in ('preview','write'):
             tools = build_default_tool_registry(self.root, coding_enabled=True, patch_mode=mode)
-            self.assertEqual(len(tools.iter_tools()), 7)
+            self.assertEqual(len(tools.iter_tools()), 8)
             self.assertFalse(tools.has_tool('write_file'))
             self.assertFalse((await tools.execute('write_file', {'path':'notes.txt','content':'BAD'})).success)
             self.assertTrue(tools.has_tool('apply_patch'))

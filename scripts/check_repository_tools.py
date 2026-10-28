@@ -44,7 +44,8 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_default_registry_and_config(self):
         self.assertEqual([t.name for t in build_default_tool_registry(self.repo, file_access='legacy_confirm').iter_tools()],['read_file','write_file','list_files'])
-        self.assertEqual(len(self.tools.iter_tools()),7)
+        self.assertEqual(len(self.tools.iter_tools()),8)
+        self.assertTrue(self.tools.permitted('repo_map'))
         self.assertFalse(GatewayConfig().coding_enabled)
         for bad in (1,0,None,[],{},'true'):
             with self.assertRaises(ValueError):GatewayConfig(coding_enabled=bad)

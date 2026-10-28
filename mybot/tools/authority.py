@@ -13,6 +13,7 @@ def validate_file_access(value, patch_mode):
 def native_capability(tool):
     from .file import ReadFileTool, WriteFileTool
     from .list_files import ListFilesTool
+    from .repo_map import RepoMapTool
     from .search_code import SearchCodeTool
     from .read_file_range import ReadFileRangeTool
     from .git_tools import GitStatusTool, GitDiffTool
@@ -24,7 +25,7 @@ def native_capability(tool):
     from ..mcp_client.discovery import DiscoveryTool
     from ..mcp_client.adapter import MCPToolAdapter
     groups = {
-        'read_only': (ReadFileTool, ListFilesTool, SearchCodeTool, ReadFileRangeTool,
+        'read_only': (RepoMapTool, ReadFileTool, ListFilesTool, SearchCodeTool, ReadFileRangeTool,
                       GitStatusTool, GitDiffTool, SkillTool),
         'metadata_only': (PlanningTool, DiscoveryTool, ContractTool),
         'workspace_mutation': (WriteFileTool, ApplyPatchTool),

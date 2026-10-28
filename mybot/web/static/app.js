@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const node = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
 let boot, selected, stream, current, approvalId = null, approving = false, nearBottom = true;
 const labels = {output_truncated:'输出截断，回答不完整',content_filtered:'回复被过滤',empty_response:'空回复，未完成',provider_error:'供应商状态异常',response_unconfirmed:'结束状态未确认',idle:'准备就绪',running:'正在分析问题',waiting_approval:'正在等待审批',completed:'模型回复已返回',failed:'执行失败',cancelled:'已停止',stopped:'已停止',interrupted:'任务中断，未自动续跑',execution_uncertain:'执行结果不确定',pending:'任务尚未完成',cleanup_uncertain:'清理状态不确定',stopping:'正在停止并清理',settling:'正在完成资源清理'};
-const toolLabels = {list_files:'正在查看项目结构',search_code:'正在查找代码',read_file_range:'正在读取文件',read_file:'正在读取文件',apply_patch:'正在处理代码修改',run_command:'正在执行命令',create_plan:'正在制定计划',update_plan:'正在更新计划'};
+const toolLabels = {repo_map:'正在生成项目结构地图',list_files:'正在查看项目结构',search_code:'正在查找代码',read_file_range:'正在读取文件',read_file:'正在读取文件',apply_patch:'正在处理代码修改',run_command:'正在执行命令',create_plan:'正在制定计划',update_plan:'正在更新计划'};
 let olderMessages = [], pinSource = null, pendingDataAction = null;
 const busy = () => current && ['running','waiting_approval','stopping','settling'].includes(current.status);
 function notice(text) { $('notice').textContent = text; $('notice').hidden = !text; }
@@ -293,4 +293,25 @@ $('steer-form').addEventListener('submit',async event=>{
   try{await api(`conversations/${selected}/steer`,'POST',{expected_turn_id:current.active_turn_id,client_request_id:crypto.randomUUID(),text});$('steer-input').value='';await refresh();}
   catch(e){notice(e.message);}
   finally{renderSteer();}
+});
+
+$('repo-map-close').addEventListener('click',()=>$('repo-map-dialog').close());
+$('repo-map-open').addEventListener('click',async()=>{
+  if(!boot)return;
+  const button=$('repo-map-open');button.disabled=true;
+  const dialog=$('repo-map-dialog'), files=$('repo-map-files');files.replaceChildren();
+  $('repo-map-status').textContent='正在读取项目结构…';dialog.showModal();
+  try{
+    const map=await api('repo-map','POST',{});
+    $('repo-map-status').textContent=`扫描 ${map.scanned_files} 个文件，显示 ${map.shown_files} 项${map.truncated?' · 已截断，请用搜索和按行读取继续定位':''}${map.skipped_files?' · 部分文件不可读取':''}`;
+    const states={parsed:'Python 静态结构',path_only:'仅路径',parse_error:'AST 解析失败',file_too_large:'超过文件大小限制'};
+    for(const file of map.files){
+      const section=node('section',undefined,'repo-map-file');section.append(node('h3',file.path),node('small',states[file.status] || file.status));
+      for(const symbol of file.symbols || [])section.append(node('p',`${symbol.kind} ${symbol.name} :${symbol.line}`));
+      for(const entry of file.imports || [])section.append(node('p',`${entry.kind} ${entry.names.map(n=>n.name+(n.alias?' as '+n.alias:'')).join(', ')} :${entry.line} → ${entry.targets.length?entry.targets.join(', '):'外部或未解析'}${entry.resolution==='ambiguous'?'（存在歧义）':''}`));
+      if(file.symbols_imports_truncated)section.append(node('small','该文件的结构信息有截断'));
+      files.append(section);
+    }
+  }catch(error){$('repo-map-status').textContent=error.message;}
+  finally{button.disabled=false;}
 });

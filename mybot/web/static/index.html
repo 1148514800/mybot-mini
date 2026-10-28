@@ -7,6 +7,7 @@
     <a class="brand" href="/"><span class="brand-icon">m<span>✦</span></span><span>mybot<span class="brand-mini">-mini</span></span></a>
     <button class="new-chat" id="new-chat"><span>＋</span> 新建对话 <kbd>新</kbd></button>
     <div class="nav-caption">工作空间</div><div class="workspace"><span class="folder-icon">⌘</span><div><strong id="workspace">本地工作区</strong><small id="project-status">文件与工具由后端权限控制</small></div><span class="online-dot"></span></div>
+    <button id="repo-map-open" class="settings-button">⌘ 查看项目结构</button>
     <div class="history-heading"><span class="nav-caption">最近对话</span><span id="history-count">0</span></div>
     <nav id="history" aria-label="对话历史"></nav>
     <div class="sidebar-bottom"><div class="memory-note"><span>◈</span> <span id="storage-label">对话仅保存在本次服务内存中</span></div><button id="settings" class="settings-button">⚙ <span>设置与连接</span><span>↗</span></button></div>
@@ -26,4 +27,5 @@
 <dialog id="settings-dialog"><div class="eyebrow">LOCAL WORKSPACE</div><h2>设置与连接</h2><p>模型与工具权限读取本地配置文件，浏览器不会接收 API Key。</p><dl id="settings-details"></dl><p class="muted" id="storage-notice"></p><div class="dialog-actions"><button id="clear-chat" class="secondary-button">清除模型上下文</button><button id="delete-chat" class="secondary-button">删除会话记录</button><button id="review-chat" class="secondary-button" hidden>确认已检查工作区与残留进程</button><button id="close-settings" class="primary-button">完成</button></div></dialog>
 <dialog id="pin-dialog"><h2>固定用户消息中的一段</h2><p>仅固定此用户消息中精确存在的原文。固定事项是任务参考，不扩大工具权限。</p><label>原文片段<textarea id="pin-quote" maxlength="512" aria-label="固定原文片段"></textarea></label><label>分类<select id="pin-category" aria-label="固定事项分类"><option value="user_constraint">用户约束</option><option value="current_goal">当前目标</option><option value="confirmed_decision">已确认决定</option><option value="open_question">未决事项</option><option value="pending_work">待完成工作</option></select></label><label>替换旧事项<select id="pin-replace" aria-label="替换旧事项"></select></label><p id="pin-error" role="status"></p><div class="dialog-actions"><button id="pin-cancel" class="secondary-button">取消</button><button id="pin-confirm" class="primary-button">确认固定</button></div></dialog>
 <dialog id="data-confirm"><h2>确认此用户操作</h2><p id="data-confirm-text"></p><div class="dialog-actions"><button id="data-cancel" class="secondary-button">取消</button><button id="data-approve" class="primary-button">确认操作</button></div></dialog>
+<dialog id="repo-map-dialog"><h2>项目结构</h2><p id="repo-map-status" role="status"></p><p class="muted">只读静态地图；导入目标是仓库路径候选，不是运行时调用图。未包含未跟踪或受保护文件。</p><div id="repo-map-files"></div><div class="dialog-actions"><button id="repo-map-close" class="primary-button">关闭</button></div></dialog>
 </body></html>

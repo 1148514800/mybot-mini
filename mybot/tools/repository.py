@@ -50,14 +50,15 @@ class RepositoryTool(FileTool):
         if root is not None and not target.is_relative_to(root):raise ValueError('path_outside_repository')
         return target
 
-    def read_bytes(self,target):
+    def read_bytes(self,target,*,max_bytes=MAX_FILE_BYTES):
+        if type(max_bytes) is not int or not 0<max_bytes<=MAX_FILE_BYTES:raise ValueError('invalid_read_limit')
         if not stat.S_ISREG(target.stat().st_mode):raise ValueError('not_regular_file')
-        if target.stat().st_size>MAX_FILE_BYTES:raise ValueError('file_too_large')
+        if target.stat().st_size>max_bytes:raise ValueError('file_too_large')
         fd=os.open(target,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
         with os.fdopen(fd,'rb') as f:
             if not stat.S_ISREG(os.fstat(f.fileno()).st_mode):raise ValueError('not_regular_file')
-            data=f.read(MAX_FILE_BYTES+1)
-        if len(data)>MAX_FILE_BYTES:raise ValueError('file_too_large')
+            data=f.read(max_bytes+1)
+        if len(data)>max_bytes:raise ValueError('file_too_large')
         if b'\0' in data:raise ValueError('binary_file')
         try:data.decode('utf-8')
         except UnicodeDecodeError:raise ValueError('invalid_utf8') from None

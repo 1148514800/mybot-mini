@@ -109,9 +109,11 @@ def build_default_tool_registry(workspace: Path, *, coding_enabled=False, patch_
         registry.register(tool)
     if coding_enabled:
         from .search_code import SearchCodeTool
+        from .repo_map import RepoMapTool
         from .read_file_range import ReadFileRangeTool
         from .git_tools import GitStatusTool,GitDiffTool
         registry.register(SearchCodeTool(workspace))
+        registry.register(RepoMapTool(workspace))
         registry.register(ReadFileRangeTool(workspace, include_version=patch_mode != 'off'))
         for cls in (GitStatusTool,GitDiffTool):registry.register(cls(workspace))
         if patch_mode != 'off':
