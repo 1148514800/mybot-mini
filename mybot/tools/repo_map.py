@@ -2,7 +2,7 @@
 import ast
 import asyncio
 import json
-from pathlib import PurePosixPath
+from pathlib import PurePosixPath, PureWindowsPath
 import unicodedata
 
 from .base import ToolResult
@@ -89,16 +89,35 @@ def facts(data, path, index):
 
 class RepoMapTool(RepositoryTool):
     name = 'repo_map'
-    description = ('Optional first step for broad cross-file Coding analysis: map tracked paths and Python AST '
-                   'functions/classes/methods/imports, then use search_code/read_file_range for real implementation. '
-                   'No business semantics inferred, no runtime import graph, no execution. Simple tasks need no map. '
+    description = ('Read-only Python AST structure of Git-tracked files. Small projects: repo_map({}); large projects: '
+                   'start with a bounded overview, then repo_map(path="relative/directory") once the target is known. '
+                   'Read discovered functions with read_file_range; use search_code for specific strings. '
+                   'No automatic scan needed for simple tasks. No execution, business semantics or runtime import graph. '
+                   'Import targets outside the finite scoped index remain unconfirmed. '
                    'At most120 files,512KiB/file,12KiB total; untracked/private/symlink files omitted.')
-    parameters = {'type':'object','properties':{'max_files':{'type':'integer','minimum':1,'maximum':MAX_FILES}},'additionalProperties':False}
+    parameters = {'type':'object','properties':{
+        'path':{'type':'string','minLength':1,'maxLength':256,'description':'Repository-relative directory; default .'},
+        'max_files':{'type':'integer','minimum':1,'maximum':MAX_FILES}},'additionalProperties':False}
+
+    def scope_directory(self, path, root):
+        relative = PurePosixPath(path)
+        if relative.is_absolute() or PureWindowsPath(path).is_absolute() or '..' in relative.parts:
+            raise ValueError('invalid_scope_path')
+        # Check lexical components before resolving: even internal directory aliases are rejected.
+        if any(root.joinpath(*relative.parts[:i]).is_symlink() for i in range(1,len(relative.parts)+1)):
+            raise ValueError('scope_symlink_denied')
+        if not eligible(path): raise ValueError('sensitive_path_denied')
+        target = self.resolve(path,root=root)
+        if not target.is_dir(): raise ValueError('scope_not_directory')
+        return relative.as_posix()
 
     async def _execute(self,**args):
         try:
             self.validate(args);maximum=args.get('max_files',MAX_FILES);root=await self.git_root('.')
-            listing=await self.git(['ls-files','--cached','-z'],root,stdout_limit=65536,separator=b'\0',record_limit=maximum+1,
+            scope=self.scope_directory(args.get('path','.'),root)
+            # Native Git runner sets GIT_LITERAL_PATHSPECS=1; scope at enumeration, before limits.
+            pathspec=[] if scope=='.' else ['--',scope+'/']
+            listing=await self.git(['ls-files','--cached','-z',*pathspec],root,stdout_limit=65536,separator=b'\0',record_limit=maximum+1,
                                    record_filter=lambda raw:eligible(raw.decode('utf-8')))
             if listing.timed_out:return ToolResult(False,error='repo_map_timeout',metadata={'truncated':True})
             if listing.code and not (listing.code<0 and listing.truncated):return ToolResult(False,error='repo_map_listing_failed')
@@ -106,7 +125,7 @@ class RepoMapTool(RepositoryTool):
             for raw in listing.stdout.split(b'\0')[:-1]:
                 try:
                     name=raw.decode('utf-8')
-                    if eligible(name) and name not in paths:paths.append(name)
+                    if eligible(name) and (scope=='.' or name.startswith(scope+'/')) and name not in paths:paths.append(name)
                 except (UnicodeError,ValueError):truncated=True
                 if len(paths)>maximum:truncated=True;break
             paths=paths[:maximum];index={}
@@ -118,8 +137,8 @@ class RepoMapTool(RepositoryTool):
                 except (OSError,ValueError):continue
                 name=module_name(path)
                 if name:index.setdefault(name,set()).add(path)
-            payload=dict(files=[],scanned_files=0,shown_files=0,skipped_files=0,truncated=truncated,tracked_only=True,
-                         static_only=True,import_resolution='bounded repository-path candidates; runtime search path/re-exports not proven',
+            payload=dict(scope=display(scope),files=[],scanned_files=0,shown_files=0,skipped_files=0,truncated=truncated,tracked_only=True,
+                         static_only=True,import_resolution='finite scoped repository-path candidates; outside-index targets unconfirmed; runtime search path/re-exports not proven',
                          limits=dict(files=maximum,file_bytes=MAX_FILE_BYTES,output_bytes=MAX_OUTPUT_BYTES))
             for path in paths:
                 await asyncio.sleep(0)  # Let the original RepositoryTool deadline interrupt between files.

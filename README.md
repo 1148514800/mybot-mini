@@ -50,11 +50,11 @@ uv run python -m mybot.web --workspace /absolute/path/to/project --port 8765
 保留 `file_access="read_only"`，测试命令配置为 `macos_readonly`；每次实际命令仍须真人WebApproval。
 完整配置、错误码与边界见[项目启动说明](docs/coding-project-launch.md)。
 
-### 按需查看项目结构（Repo Map）
+### 按目录查看项目结构（Repo Map v2）
 
-Coding 模式新增只读 `repo_map` 工具。跨文件任务可先查看地图，再用 `search_code`、`read_file_range` 定位实现；简单对话不会自动扫描或附加地图。Web 项目区域点击“查看项目结构”可直接查看，不调用模型，也不要求开启写权限。
+Coding 模式新增只读 `repo_map` 工具。跨文件任务可先查看地图，再用 `search_code`、`read_file_range` 定位实现；简单对话不会自动扫描或附加地图。Web 项目区域点击“查看项目结构”，输入相对目录（默认 `.`）后点击“查看”；支持重新输入目录查询，不调用模型，也不要求开启写权限。
 
-只列 Git 已跟踪且符合隐私策略的文件；Python 使用标准库 AST 提取顶层函数、类、直接方法、行号和静态 import。最多120文件、每文件512KiB、输出12KiB，超限明确标记截断；不执行项目代码。导入目标为仓库路径候选，不保证运行时搜索路径或重导出关系。详见[Repo Map 使用说明](docs/repo-map.md)。
+可用 `repo_map({"path":"mybot/agent","max_files":80})` 精准分析；Git 枚举时先限定目录，再应用数量上限，不会因仓库前120文件而漏掉目标目录。只列 Git 已跟踪且符合隐私策略的文件；Python 使用标准库 AST 提取顶层函数、类、直接方法、行号和静态 import。最多120文件、每文件512KiB、输出12KiB，超限明确标记截断；不执行项目代码。导入目标为仓库路径候选，不保证运行时搜索路径或重导出关系。详见[Repo Map 使用说明](docs/repo-map.md)。
 
 ## 启动
 

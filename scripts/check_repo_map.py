@@ -86,6 +86,50 @@ class RepoMapChecks(unittest.IsolatedAsyncioTestCase):
         tools=build_default_tool_registry(self.root,coding_enabled=True);self.assertTrue(tools.permitted('repo_map'))
         self.assertFalse(tools.mutation_enabled);self.assertFalse((await tools.execute('repo_map',dict(workspace='/tmp'))).success)
 
+    async def test_scope_root_default_compatibility(self):
+        default=await self.mapping();explicit=await self.mapping(path='.')
+        self.assertEqual(default,explicit);self.assertEqual(default['scope'],'.')
+
+    async def test_scope_filters_before_git_limit_and_reads_only_target(self):
+        for n in range(140):self.write(f'aaa/file{n:03}.txt','not the target\n')
+        self.write('zzz/final.py','def last(): pass\n');self.track()
+        self.assertNotIn('zzz/final.py',str(await self.mapping()))
+        with patch.object(self.tool,'git',wraps=self.tool.git) as calls, patch.object(self.tool,'read_bytes',wraps=self.tool.read_bytes) as reads:
+            scoped=await self.mapping(path='zzz',max_files=80)
+        self.assertEqual(scoped['scope'],'zzz');self.assertEqual(scoped['scanned_files'],1)
+        self.assertEqual([f['path'] for f in scoped['files']],['zzz/final.py']);self.assertFalse(scoped['truncated'])
+        listing=[c.args[0] for c in calls.call_args_list if c.args[0][0]=='ls-files']
+        self.assertEqual(listing,[['ls-files','--cached','-z','--','zzz/']])
+        self.assertEqual(reads.call_count,1);self.assertEqual(reads.call_args.args[0],self.root/'zzz/final.py')
+
+    async def test_scope_directory_boundary_literal_metacharacters_and_normalization(self):
+        self.write('pkg2/other.py','def outside():pass\n');self.write('pkg[1]/literal.py','def literal():pass\n');self.track()
+        scoped=await self.mapping(path='./pkg/');self.assertEqual(scoped['scope'],'pkg')
+        self.assertEqual(len(scoped['files']),3);self.assertTrue(all(f['path'].startswith('pkg/') for f in scoped['files']))
+        literal=await self.mapping(path='pkg[1]');self.assertEqual([f['path'] for f in literal['files']],['pkg[1]/literal.py'])
+
+    async def test_scope_rejects_traversal_absolute_symlinks_private_and_non_directories(self):
+        self.write('secrets/private.py','PRIVATE_SOURCE');(self.root/'alias').symlink_to(self.root/'pkg',target_is_directory=True)
+        (self.root/'outside').symlink_to(self.root.parent,target_is_directory=True)
+        for path in ('..','pkg/../pkg',str(self.root/'pkg'),'/tmp','C:\\Users\\private','alias','alias/nested','outside','.git','secrets','pkg/main.py','missing','',None,False):
+            with self.subTest(path=path), patch.object(self.tool,'read_bytes',side_effect=AssertionError('must reject before read')):
+                result=await self.tool.execute(path=path);self.assertFalse(result.success)
+
+    async def test_scope_imports_do_not_invent_outside_targets(self):
+        self.write('other.py','def outside():pass\n');self.write('pkg/refs.py','import other\nfrom .helper import answer\n');self.track()
+        m=await self.mapping(path='pkg');refs=next(f for f in m['files'] if f['path']=='pkg/refs.py')
+        self.assertEqual(refs['imports'][0]['targets'],[]);self.assertEqual(refs['imports'][0]['resolution'],'external_or_unresolved')
+        self.assertIn('pkg/helper.py',refs['imports'][1]['targets']);self.assertIn('outside-index targets unconfirmed',m['import_resolution'])
+        self.assertFalse(any(f['path']=='other.py' for f in m['files']))
+
+    async def test_scoped_scan_remains_private_readonly_and_bounded(self):
+        self.write('pkg/.env','PRIVATE_MARKER');self.write('pkg/cache/hidden.py','PRIVATE_MARKER')
+        self.write('pkg/unsafe.py','raise RuntimeError("must not execute")\n');self.write('pkg/big.py','#'*(512*1024+1));self.track()
+        before=self.image();m=await self.mapping(path='pkg')
+        self.assertNotIn('PRIVATE_MARKER',str(m));self.assertFalse(any(f['path'].startswith('pkg/cache/') for f in m['files']))
+        self.assertTrue(m['truncated']);self.assertEqual(next(f['status'] for f in m['files'] if f['path']=='pkg/big.py'),'file_too_large')
+        self.assertEqual(before,self.image())
+
     async def test_agent_can_call_without_auto_map_or_extra_model_requests(self):
         cfg=GatewayConfig(workspace=self.root,coding_enabled=True,skills_enabled=False,context_enabled=False,session_persist=False)
         seen=[]
@@ -110,13 +154,20 @@ class WebMapChecks(unittest.IsolatedAsyncioTestCase):
             def forbidden(_):raise AssertionError('repo map must not create a model client')
             app=create_app(cfg,client_factory=forbidden);http=httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://127.0.0.1:8765')
             try:
+                (root/'nested').mkdir();(root/'nested/child.py').write_text('def nested_function():pass\n');git(root,'add','.')
                 with patch.object(RepoMapTool,'execute',autospec=True) as scan:
-                    await http.get('/');boot=(await http.get('/api/bootstrap')).json();scan.assert_not_called()
+                    html=await http.get('/');self.assertIn('id="repo-map-path"',html.text);self.assertIn('id="repo-map-form"',html.text);boot=(await http.get('/api/bootstrap')).json();scan.assert_not_called()
                 self.assertEqual((await http.post('/api/repo-map',json={})).status_code,403)
                 headers={'origin':'http://127.0.0.1:8765','x-mybot-csrf':boot['csrf']}
                 self.assertEqual((await http.post('/api/repo-map',headers={**headers,'origin':'http://evil.invalid'},json={})).status_code,403)
                 self.assertEqual((await http.post('/api/repo-map',headers=headers,json=dict(workspace='/tmp'))).status_code,400)
                 result=await http.post('/api/repo-map',headers=headers,json={});self.assertEqual(result.status_code,200);self.assertIn('Example',result.text);self.assertNotIn(str(root),result.text)
+                scoped=await http.post('/api/repo-map',headers=headers,json={'path':'nested'})
+                self.assertEqual(scoped.status_code,200);self.assertEqual(scoped.json()['scope'],'nested');self.assertEqual([f['path'] for f in scoped.json()['files']],['nested/child.py'])
+                self.assertIn('nested_function',scoped.text);self.assertNotIn('Example',scoped.text)
+                for path in ('../','/tmp','.git'):
+                    self.assertEqual((await http.post('/api/repo-map',headers=headers,json={'path':path})).status_code,400)
+                again=await http.post('/api/repo-map',headers=headers,json={'path':'.'});self.assertEqual(again.status_code,200);self.assertIn('Example',again.text)
                 self.assertFalse(app.runtime.config.coding_enabled);self.assertEqual(len(app.runtime.conversations),0)
                 app.runtime.owner='busy';self.assertEqual((await http.post('/api/repo-map',headers=headers,json={})).status_code,409)
             finally:await http.aclose();await app.runtime.close()

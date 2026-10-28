@@ -296,19 +296,24 @@ $('steer-form').addEventListener('submit',async event=>{
 });
 
 $('repo-map-close').addEventListener('click',()=>$('repo-map-dialog').close());
-$('repo-map-open').addEventListener('click',async()=>{
+$('repo-map-open').addEventListener('click',()=>{
   if(!boot)return;
-  const button=$('repo-map-open');button.disabled=true;
-  const dialog=$('repo-map-dialog'), files=$('repo-map-files');files.replaceChildren();
-  $('repo-map-status').textContent='正在读取项目结构…';dialog.showModal();
+  $('repo-map-dialog').showModal();$('repo-map-path').focus();
+});
+$('repo-map-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(!boot)return;
+  const button=$('repo-map-view');if(button.disabled)return;button.disabled=true;
+  const files=$('repo-map-files');files.replaceChildren();
+  $('repo-map-status').textContent='正在读取项目结构…';
   try{
-    const map=await api('repo-map','POST',{});
-    $('repo-map-status').textContent=`扫描 ${map.scanned_files} 个文件，显示 ${map.shown_files} 项${map.truncated?' · 已截断，请用搜索和按行读取继续定位':''}${map.skipped_files?' · 部分文件不可读取':''}`;
+    const map=await api('repo-map','POST',{path:$('repo-map-path').value});
+    $('repo-map-status').textContent=`范围：${map.scope} · 扫描 ${map.scanned_files} 个文件，显示 ${map.shown_files} 项${map.truncated?' · 已截断，请用搜索和按行读取继续定位':''}${map.skipped_files?' · 部分文件不可读取':''}`;
     const states={parsed:'Python 静态结构',path_only:'仅路径',parse_error:'AST 解析失败',file_too_large:'超过文件大小限制'};
     for(const file of map.files){
       const section=node('section',undefined,'repo-map-file');section.append(node('h3',file.path),node('small',states[file.status] || file.status));
       for(const symbol of file.symbols || [])section.append(node('p',`${symbol.kind} ${symbol.name} :${symbol.line}`));
-      for(const entry of file.imports || [])section.append(node('p',`${entry.kind} ${entry.names.map(n=>n.name+(n.alias?' as '+n.alias:'')).join(', ')} :${entry.line} → ${entry.targets.length?entry.targets.join(', '):'外部或未解析'}${entry.resolution==='ambiguous'?'（存在歧义）':''}`));
+      for(const entry of file.imports || [])section.append(node('p',`${entry.kind} ${entry.names.map(n=>n.name+(n.alias?' as '+n.alias:'')).join(', ')} :${entry.line} → ${entry.targets.length?entry.targets.join(', '):'范围外、外部或未确认'}${entry.resolution==='ambiguous'?'（存在歧义）':''}`));
       if(file.symbols_imports_truncated)section.append(node('small','该文件的结构信息有截断'));
       files.append(section);
     }
