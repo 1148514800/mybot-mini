@@ -59,9 +59,9 @@ class Boundary:
 SSE_CONNECTION_SECONDS = 2.0  # Finite requests let Uvicorn drain before lifespan shutdown.
 
 
-def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=90, task_timeout=600):
+def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=90, task_timeout=600, project=None):
     options = {} if client_factory is None else {'client_factory': client_factory}
-    runtime = ChatRuntime(config, approval_timeout=approval_timeout, task_timeout=task_timeout, **options)
+    runtime = ChatRuntime(config, approval_timeout=approval_timeout, task_timeout=task_timeout, initialize_workspace=project is None, **options)
     cookie = secrets.token_hex(32); csrf = secrets.token_hex(32)
 
     @asynccontextmanager
@@ -85,7 +85,7 @@ def create_app(config=None, *, port=8765, client_factory=None, approval_timeout=
         except StoreError:return JSONResponse({'error':'storage_failed'},status_code=503)
         config = runtime.config
         return JSONResponse({'csrf': csrf, 'workspace': config.workspace.name, 'provider': redact(config.provider, (config.api_key,)),
-            'model': redact(config.model, (config.api_key,)), 'persistence': config.storage_backend=='event_sqlite', 'command_mode': config.coding_command['mode'],
+            'model': redact(config.model, (config.api_key,)), 'project': redact(project, (config.api_key,)) if project else None, 'patch_mode': config.coding_patch_mode, 'persistence': config.storage_backend=='event_sqlite', 'command_mode': config.coding_command['mode'],
             'receipt': config.coding_preview_receipt, 'coding': config.coding_enabled,
             'storage_notice': ('本地SQLite明文历史；不保存完整模型请求或授权。' if config.storage_backend=='event_sqlite' else '仅本次进程内存；固定事项也不跨重启。'),
             'busy': runtime.owner, 'cleanup_uncertain': runtime.cleanup_uncertain,

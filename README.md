@@ -34,6 +34,22 @@ uv sync
 Copy-Item config\config.example.json config\config.json
 ```
 
+### 在真实项目中使用 Web Coding Agent
+
+在 mybot-mini 目录先检查配置，再启动：
+
+```bash
+uv run python -m mybot.web --check --workspace /absolute/path/to/project
+uv run python -m mybot.web --workspace /absolute/path/to/project --port 8765
+```
+
+省略 `--workspace` 时使用配置的 `workspace.path`；目录必须已存在且是Git工作树根目录。
+不会创建目录、git init、写回配置或自动开启Coding写权限。界面展示项目、Git分支和Coding状态；工作区运行期间固定。
+`--check`只做本地只读预检，JSON错误给出固定类型和行列，不启动服务或请求模型，不显示Key。
+需要写入时由用户显式开启 `coding.enabled=true`、`patch_mode="write"`、`preview_receipt=true`，
+保留 `file_access="read_only"`，测试命令配置为 `macos_readonly`；每次实际命令仍须真人WebApproval。
+完整配置、错误码与边界见[项目启动说明](docs/coding-project-launch.md)。
+
 ## 启动
 
 ```bash

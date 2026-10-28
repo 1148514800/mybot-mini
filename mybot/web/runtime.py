@@ -93,8 +93,9 @@ class Conversation:
 
 
 class ChatRuntime:
-    def __init__(self, config=None, *, client_factory=build_gateway_client, approval_timeout=90, task_timeout=600):
+    def __init__(self, config=None, *, client_factory=build_gateway_client, approval_timeout=90, task_timeout=600, initialize_workspace=True):
         self.config = config or GatewayConfig()
+        self.initialize_workspace = initialize_workspace
         self.client_factory = client_factory
         self.approval_timeout = approval_timeout
         self.task_timeout = task_timeout
@@ -177,7 +178,7 @@ class ChatRuntime:
                 lease.acquire()
                 # Web histories are memory-only and never load/share the CLI disk Session.
                 config = replace(self.config, session_persist=False, session_backend='event_sqlite' if self.config.storage_backend=='event_sqlite' else 'memory', debug=False)
-                if config.coding_enabled:
+                if config.coding_enabled or not self.initialize_workspace:
                     if not config.workspace.is_dir(): raise ValueError('workspace_missing')
                 else: init_workspace(config.workspace)
                 tools = build_default_tool_registry(config.workspace, coding_enabled=config.coding_enabled,

@@ -2,24 +2,22 @@
 
 ## 当前目标与状态
 
-codex/provider-chain-failover，基线45da46ec4bdae88f0110edd7e34c9c5c95247ad5。通用Provider链开发完成，相关Mock专项243项通过；真实API0，不建立Canary、批次或冻结，不跑完整Benchmark。
+codex/coding-project-launch，基线f9fe98d06975fb0770b55a133f4b127a9a85d60a。真实项目Web入口开发完成；新增--workspace和--check，相关离线专项125通过（新增启动专项24），真实模型0，不创建Canary/冻结或完整Benchmark。
 
-## 实现
+## 实现与权限
 
-mybot/provider_failover.py 按默认项和JSON声明顺序循环各Provider一次，各自Key/URL/model、成功后任务内保持、新任务重置。保留旧双Client评测构造接口，生产路径无coco/coco2分支。网络/超时、401/403/404/408/429/5xx及原生确认关闭后的流中断可切换。宿主错误、权限、Schema、Stop、关闭不明均停止。
+mybot/web/launch.py只读校验JSON、默认Provider/字段/声明顺序、规范化路径、Git根/HEAD/Index。缺失/非法路径拒绝，支持linked worktree、detached/unborn；禁用hooks/fsmonitor/filters与可选Index写锁，不执行项目代码。JSON错误固定CONFIG_JSON_INVALID+行列，检查不输出Key/URL、不构造SDK/WebRuntime或打开Session数据库。
 
-每Provider完整请求窗口，不再/2；AgentLoop逻辑窗口覆盖整个链但仍受Controller剩余任务时间和Web截止约束。原consume未完成时不交付工具调用；安全关闭后撤销部分预览，重新生成当前响应，不拼接、不重放已完成工具。SDK retries0，每个失败尝试仍原生预算/HTTP/Token计数。RuntimeAccounting、AgentLoop、WebRuntime使用实际活动配置；全链Key参与脱敏。
+mybot/web/__main__.py在预检后才导入/启动服务；覆盖仅dataclasses.replace本进程workspace，不写配置。mybot和agent包延迟导入，保证JSON错误不会抢先终止--check，公共AgentLoop/ContextBuilder/Session/run_gateway身份不变。
 
-修改：provider_failover.py/runtime_accounting.py/agent/loop.py/web/runtime.py/static/app.js；新增check_provider_chain.py19项并更新相关新合同断言；README和docs/provider-failover.md。原Patch/权限/审批/工具实现无改动。
+Web runtime项目模式不初始化目录/instructions；原配置的Coding/Patch/Receipt/RunCommand权限保持，--workspace不升级写权限。侧栏/设置显示项目名、Git启动分支和Coding/Patch状态。原WorkspaceLease、工具根目录限制、WebApproval及Seatbelt不变，网页消息不可切换workspace。Provider Chain共享纯配置顺序/字段校验，与上轮功能兼容。
 
 ## 验证与限制
 
-Failover/Chain/Streaming/Accounting/诊断/Legacy/Web/Token专项243通过，compileall、JS、diff及凭证资产审查通过。覆盖三Provider、整流超时、默认回绕、原生Coding预算、Stop、关闭失败、宿主准入/预览错误不回退、已执行工具不重放与三模型Key脱敏。没有真实部署/API兼容性保证；未知Usage仍null，协议错误不是无限重试。
+启动专项24+原Web/Patch/审批与Failover/Streaming相关专项125通过；Python编译、JS和diff检查见交付。包括默认/覆盖/不存在/非法/不可访问目录、Git损坏与恶意filter不执行、JSON/字段/脱敏、预检不启动服务、Mock真实源码读取、无自动文件创建、workspace消息拒绝及Lease互斥。--check只验证本地字段，不证明远端Key有效；没有真实API验证。Git分支为启动快照，不实现运行中多项目切换。
 
-原C02唯一Live FAIL（4/18、Revision0、第四流取消）及历史报告/账本保持；剩14次不使用、不转移、不补跑。旧冻结需要原历史分支源码，本功能分支不重跑或重冻C02；main/Tag/ZIP/共享AppleDouble不修改。
+先前主仓库真实配置有JSON语法错误；本次只读语法检查已为合法JSON，未改动该凭证文件。配置及命令详见README、docs/coding-project-launch.md。新项目根必须预先存在并为Git工作树，状态数据库必须在项目之外。
 
-## 下一步
+## 下一步与保留
 
-本轮只交付功能代码和离线验证，Commit/Push新分支，核对远程HEAD。若以后需要真实部署验证，另行明确授权；不得从旧C02余额或授权推导。配置/使用说明见docs/provider-failover.md，不引入第二AgentLoop或自动工具批准。
-
-本机只读配置审计另发现：主仓库真实config/config.json第29行JSON格式错误，未修复或提交凭证文件；实际运行前需修正自己的配置。Mock不依赖真实配置。
+本轮只交付入口功能，Commit/Push到codex/coding-project-launch并核对远程HEAD。不拆Phase、不新建Tag/ZIP。C01/C02报告、旧私库/冻结/账本及14次余额不修改或复用；main/用户服务/Chrome/共享AppleDouble不操作。实际使用时由用户配置Coding写权限并逐条批准测试命令；未来真实模型验证仍需明确授权。

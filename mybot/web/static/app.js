@@ -242,7 +242,7 @@ $('approve').addEventListener('click',()=>decide(true)); $('deny').addEventListe
 $('approval-dialog').addEventListener('cancel',event=>{event.preventDefault();decide(false);});
 $('settings').addEventListener('click',()=>{
   const details=$('settings-details');details.replaceChildren();
-  for(const [label,value] of [['会话ID',current.id],['模型',`${boot.provider || '未配置'} / ${boot.model}`],['工作区',boot.workspace],['执行模式',boot.command_mode],['Patch 协议',boot.receipt?'Preview Receipt':'Legacy'],['历史存储',boot.persistence?'本地SQLite明文':'仅本次进程内存']]) details.append(node('dt',label),node('dd',value));
+  for(const [label,value] of [['会话ID',current.id],['模型',`${boot.provider || '未配置'} / ${boot.model}`],['工作区',boot.workspace],['Git 分支',boot.project?.branch || '未检测'],['Coding',boot.coding ? '开启 / Patch '+boot.patch_mode : '关闭'],['执行模式',boot.command_mode],['Patch 协议',boot.receipt?'Preview Receipt':'Legacy'],['历史存储',boot.persistence?'本地SQLite明文':'仅本次进程内存']]) details.append(node('dt',label),node('dd',value));
   $('storage-notice').textContent=boot.storage_notice+' CLI/Web默认隔离。清除上下文不会删除SQLite历史或固定事项；删除记录也不能保证备份或底层介质无残留。';
   $('review-chat').hidden=current.status!=='execution_uncertain';
   $('settings-dialog').showModal();
@@ -258,7 +258,7 @@ $('new-message').addEventListener('click',()=>{nearBottom=true;$('chat-scroll').
 for(const button of document.querySelectorAll('[data-prompt]')) button.addEventListener('click',()=>{$('message-input').value=button.dataset.prompt;$('message-input').dispatchEvent(new Event('input'));$('message-input').focus();});
 try {const theme=localStorage.getItem('mybot-theme');if(['light','dark'].includes(theme))document.documentElement.dataset.theme=theme;}catch{}
 if(innerWidth<1180)document.querySelector('.shell').classList.add('activity-hidden');
-try {boot=await api('bootstrap');$('workspace').textContent=boot.workspace;renderHistory();if(boot.conversations.length)await select(boot.busy || boot.conversations.at(-1).id);else await newChat();
+try {boot=await api('bootstrap');$('workspace').textContent=boot.project?.name || boot.workspace;$('project-status').textContent=`${boot.project?.branch || 'Git 未检测'} · ${boot.coding ? 'Coding / Patch '+boot.patch_mode : 'Coding 关闭'}`;renderHistory();if(boot.conversations.length)await select(boot.busy || boot.conversations.at(-1).id);else await newChat();
   setInterval(async()=>{try{const b=await api('bootstrap');boot={...boot,...b};renderHistory();controls();}catch{}},3000);
 }catch(error){notice(error.message);$('model-label').textContent='连接不可用';}
 
