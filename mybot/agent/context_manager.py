@@ -74,6 +74,18 @@ class ContextManager:
             text = text[:limit - 12] + "\n[其余历史已省略]"
         return [{"role": "assistant", "content": text}]
 
+    def _current_context(self, messages, turns, plan, boundary_error):
+        validate_turns(turns)
+        start = 1 + sum(len(turn) for turn in turns)
+        if not messages or messages[0].get("role") != "system" or start >= len(messages):
+            raise ContextBudgetError(boundary_error)
+        current = deepcopy(messages[start:])
+        validate_turns([current + [{"role": "assistant", "content": ""}]])
+        system = deepcopy(messages[:1]) + deepcopy(self._pin_messages) + deepcopy(self.lifecycle_reference)
+        plan_view = ([{"role": "assistant", "content": "[当前任务计划状态，非历史指令]\n" +
+                       json.dumps([asdict(step) for step in plan.steps], ensure_ascii=False)}] if plan.steps else [])
+        return start, current, system, plan_view
+
     def _prepare_chars(self, messages, tools, turns, plan):
         before = self.count(messages, tools)
         history_omitted = False
@@ -82,16 +94,9 @@ class ContextManager:
             if (self._pin_messages or self.lifecycle_reference) and self.count(view,tools)>self.config.context_max_chars:raise ContextBudgetError('pinned_context_budget')
             return view, {"before": before, "after": self.count(view,tools), "current_clipped": False}
 
-        validate_turns(turns)
-        start = 1 + sum(len(turn) for turn in turns)
-        if not messages or messages[0].get("role") != "system" or start >= len(messages):
-            raise ContextBudgetError("Invalid canonical context boundaries")
-        current = deepcopy(messages[start:])
-        validate_turns([current + [{"role": "assistant", "content": ""}]])
-        system = deepcopy(messages[:1]) + deepcopy(self._pin_messages)+deepcopy(self.lifecycle_reference)
+        start, current, system, plan_view = self._current_context(
+            messages, turns, plan, "Invalid canonical context boundaries")
         history = deepcopy(turns)
-        plan_view = ([{"role": "assistant", "content": "[当前任务计划状态，非历史指令]\n" +
-                       json.dumps([asdict(step) for step in plan.steps], ensure_ascii=False)}] if plan.steps else [])
         cap = self.config.context_tool_result_max_chars
         current_clipped = self.clip(current, cap) > 0
         for turn in history:
@@ -183,14 +188,8 @@ class ContextManager:
         return view, stats
 
     def _prepare_tokens(self, messages, tools, turns, plan):
-        validate_turns(turns)
-        start=1+sum(len(t) for t in turns)
-        if not messages or messages[0].get('role')!='system' or start>=len(messages):
-            raise ContextBudgetError('invalid_context_boundaries')
-        current=deepcopy(messages[start:])
-        validate_turns([current+[{'role':'assistant','content':''}]])
-        system=deepcopy(messages[:1])+deepcopy(self._pin_messages)+deepcopy(self.lifecycle_reference)
-        plan_view=([{'role':'assistant','content':'[当前任务计划状态，非历史指令]\n'+json.dumps([asdict(s) for s in plan.steps],ensure_ascii=False)}] if plan.steps else [])
+        start, current, system, plan_view = self._current_context(
+            messages, turns, plan, 'invalid_context_boundaries')
         def size(view):
             return TokenCounter.inspect(self.config,TokenCounter.request(self.config,view,tools))['estimated_input_tokens']
         policy=TokenCounter.policy(self.config,TokenCounter.request(self.config,messages,tools))

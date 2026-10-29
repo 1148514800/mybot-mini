@@ -29,9 +29,7 @@ class ToolResult:
             parts.append(self.output)
         if self.metadata:
             parts.append(_metadata_text(self.metadata))
-        return "\n\n".join(parts) or (
-            "Success" if self.success else "Error: tool execution failed"
-        )
+        return "\n\n".join(parts) or "Success"
 
 
 class Tool(ABC):

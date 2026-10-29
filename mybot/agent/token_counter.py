@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
 
 
 class ContextBudgetError(RuntimeError):
@@ -30,15 +29,6 @@ def validate_token_budget(value):
     return {**result, 'model_windows': dict(windows)}
 
 
-@dataclass(frozen=True)
-class Measurement:
-    request_chars: int
-    request_utf8_bytes: int
-    estimated_input_tokens: int
-    local_tokenizer_tokens: int | None = None
-    token_accuracy: str = 'conservative_utf8_estimate_v1'
-
-
 class TokenCounter:
     """One UTF-8 byte per estimated token + explicit framing/hidden-overhead margin.
 
@@ -52,7 +42,9 @@ class TokenCounter:
         text = json.dumps(request, ensure_ascii=False, allow_nan=False)
         size = len(text.encode('utf-8'))
         overhead = 256 + 32 * len(request.get('messages') or []) + 64 * len(request.get('tools') or [])
-        return asdict(Measurement(len(text), size, size + overhead))
+        return dict(request_chars=len(text), request_utf8_bytes=size,
+                    estimated_input_tokens=size + overhead, local_tokenizer_tokens=None,
+                    token_accuracy='conservative_utf8_estimate_v1')
 
     @staticmethod
     def request(config, messages, tools, *, max_tokens=None):
