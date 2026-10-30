@@ -86,53 +86,6 @@ class ContextManager:
                        json.dumps([asdict(step) for step in plan.steps], ensure_ascii=False)}] if plan.steps else [])
         return start, current, system, plan_view
 
-    def _prepare_chars(self, messages, tools, turns, plan):
-        before = self.count(messages, tools)
-        history_omitted = False
-        if not self.config.context_enabled:
-            view=deepcopy(messages[:1])+deepcopy(self._pin_messages)+deepcopy(self.lifecycle_reference)+deepcopy(messages[1:])
-            if (self._pin_messages or self.lifecycle_reference) and self.count(view,tools)>self.config.context_max_chars:raise ContextBudgetError('pinned_context_budget')
-            return view, {"before": before, "after": self.count(view,tools), "current_clipped": False}
-
-        start, current, system, plan_view = self._current_context(
-            messages, turns, plan, "Invalid canonical context boundaries")
-        history = deepcopy(turns)
-        cap = self.config.context_tool_result_max_chars
-        current_clipped = self.clip(current, cap) > 0
-        for turn in history:
-            self.clip(turn, cap)
-        flatten = lambda groups: [message for turn in groups for message in turn]
-        candidate = system + flatten(history) + plan_view + current
-        maximum = self.config.context_max_chars
-        if self.count(candidate, tools) > maximum:
-            # Give protected input/protocol priority over all historical material.
-            while self.count(system + plan_view + current, tools) > maximum and cap > 128:
-                cap = max(128, cap // 2)
-                current = deepcopy(messages[start:])
-                current_clipped = self.clip(current, cap) > 0 or current_clipped
-            required = self.count(system + plan_view + current, tools)
-            if required > maximum:
-                raise ContextBudgetError(f"Context budget exceeded: protected messages + schemas={required}, max_chars={maximum}")
-            recent = min(len(history), self.config.context_recent_turns)
-            kept = history[len(history) - recent:] if recent else []
-            while self.count(system + flatten(kept) + plan_view + current, tools) > maximum and kept:
-                kept.pop(0)
-            base = system + flatten(kept) + plan_view + current
-            room = min(self.config.context_summary_max_chars, maximum - self.count(base, tools))
-            summary = self.summary(turns[:len(turns) - len(kept)], room)
-            candidate = system + summary + flatten(kept) + plan_view + current
-            # JSON wrappers/escaping also occupy budget; shrink only the summary.
-            while self.count(candidate, tools) > maximum and summary:
-                room -= max(1, self.count(candidate, tools) - maximum)
-                summary = self.summary(turns[:len(turns) - len(kept)], room)
-                candidate = system + summary + flatten(kept) + plan_view + current
-            history_omitted = len(turns) > len(kept) and not summary
-        after = self.count(candidate, tools)
-        if after > maximum:
-            raise ContextBudgetError(f"Context budget exceeded: request={after}, max_chars={maximum}")
-        return candidate, {"before": before, "after": after, "current_clipped": current_clipped,
-                           "history_omitted": history_omitted}
-
     def prepare(self, messages, tools, turns, plan):
         if not self.pinned_context:
             self._pin_messages=[]
@@ -166,16 +119,7 @@ class ContextManager:
 
     def _prepare(self, messages, tools, turns, plan):
         """Synchronous projection is also used by local tool routing; never calls LLM."""
-        if self.config.context_token_budget['mode'] == 'legacy_chars':
-            view, stats = self._prepare_chars(messages, tools, turns, plan)
-            summarized = any((m.get('content') or '').startswith(self.summary_label) for m in view)
-            # Clipped retained turns differ in content; identify them by user-message boundaries.
-            kept = min(len(turns), max(0, sum(m['role']=='user' for m in view)-1-len(self._pin_messages)-len(self.lifecycle_reference)))
-            omitted = len(turns)-kept
-            stats.update(history_turns_kept=kept, history_turns_summarized=omitted if summarized else 0,
-                         history_turns_omitted=omitted, summary_present=summarized)
-        else:
-            view, stats = self._prepare_tokens(messages, tools, turns, plan)
+        view, stats = self._prepare_tokens(messages, tools, turns, plan)
         stats['before_estimated_input_tokens'] = TokenCounter.measure(TokenCounter.request(self.config,messages,tools))['estimated_input_tokens']
         stats['history_turns_summarized_indices'] = list(range(1, stats['history_turns_summarized']+1))
         stats.update(TokenCounter.inspect(self.config, TokenCounter.request(self.config,view,tools)))
@@ -188,6 +132,12 @@ class ContextManager:
         return view, stats
 
     def _prepare_tokens(self, messages, tools, turns, plan):
+        if not self.config.context_enabled:
+            view = deepcopy(messages[:1]) + deepcopy(self._pin_messages) + deepcopy(self.lifecycle_reference) + deepcopy(messages[1:])
+            TokenCounter.enforce(self.config, TokenCounter.request(self.config, view, tools))
+            return view, dict(before=self.count(messages, tools), after=self.count(view, tools),
+                current_clipped=False, history_omitted=False, history_turns_kept=len(turns),
+                history_turns_summarized=0, history_turns_omitted=0, summary_present=False)
         start, current, system, plan_view = self._current_context(
             messages, turns, plan, 'invalid_context_boundaries')
         def size(view):
@@ -227,17 +177,12 @@ class ContextManager:
         Units follow the active policy; UTF-8 estimates are not provider tokens.
         """
         empty = base[:1] + [{'role': 'assistant', 'content': ''}] + base[1:]
-        if self.config.context_token_budget['mode'] == 'legacy_chars':
-            return max(0, min(self.config.context_summary_max_chars,
-                              self.config.context_max_chars - self.count(empty, tools)))
         request = TokenCounter.request(self.config, empty, tools)
         measured = TokenCounter.inspect(self.config, request)
         return max(0, min(self.config.context_summary_max_chars,
                           measured['input_token_limit'] - measured['estimated_input_tokens']))
 
     def accepts(self, view, tools):
-        if self.config.context_token_budget['mode']=='legacy_chars':
-            return not self.config.context_enabled or self.count(view,tools)<=self.config.context_max_chars
         try:TokenCounter.enforce(self.config,TokenCounter.request(self.config,view,tools))
         except TokenBudgetError:return False
         return True

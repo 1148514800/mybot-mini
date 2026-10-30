@@ -51,9 +51,9 @@ def plan_hash():return hashlib.sha256(json.dumps(preregistration(),sort_keys=Tru
 
 def config_for(batch,provider):
     batch=Path(batch).resolve()
-    return GatewayConfig(workspace=batch/'workspace',session_backend='event_sqlite',session_persist=False,session_event_path=batch/'private/session-events.sqlite3',session_max_turns=6,
+    return GatewayConfig(workspace=batch/'workspace',session_backend='event_sqlite',session_event_path=batch/'private/session-events.sqlite3',session_max_turns=6,
         provider='coco',model=provider['model'],api_key=provider.get('api_key'),base_url=provider['base_url'],
-        coding_enabled=False,coding_file_access='read_only',coding_patch_mode='off',coding_preview_receipt=False,coding_command={'mode':'off'},coding_autonomy={'enabled':False},coding_git_workflow={'enabled':False},
+        coding_enabled=False,coding_patch_mode='off',coding_preview_receipt=False,coding_command={'mode':'off'},coding_autonomy={'enabled':False},coding_git_workflow={'enabled':False},
         mcp_enabled=False,mcp_servers={},mcp_discovery={},skills_enabled=False,debug=False,max_react_steps=2,max_completion_tokens=1800,request_timeout_seconds=90,
         context_enabled=True,context_max_chars=40000,context_recent_turns=2,context_summary_max_chars=1000,context_tool_result_max_chars=1000,
         context_token_budget={'mode':'estimate','input_limit':14000},context_compaction={'mode':'deterministic'})

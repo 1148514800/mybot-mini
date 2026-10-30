@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 from mybot.agent import AgentLoop, ContextBuilder
 from mybot.mcp_client.approval import ApprovalDecision as D, cli_approval, inspectable_request
 from mybot.mcp_client.manager import MCPClientManager
-from mybot.storage.session_store import SessionStore
+from mybot.storage.history import SessionHistory
 from scripts.check_mcp import MCPChecks
 from scripts.check_session import call, response, assert_pairs
 
@@ -40,7 +40,7 @@ class ApprovalChecks(unittest.IsolatedAsyncioTestCase):
 
     def agent(self, effects, persist=False):
         client = N(chat=N(completions=N(create=AsyncMock(side_effect=effects))))
-        config = replace(self.config,session_persist=persist,session_path=self.root/'state/session.json')
+        config = replace(self.config,session_backend='event_sqlite' if persist else 'memory',session_event_path=self.root.resolve()/'state/events.sqlite3')
         return AgentLoop(client,config,self.tools,ContextBuilder(self.workspace))
 
     async def test_policy_validation(self):
@@ -48,9 +48,10 @@ class ApprovalChecks(unittest.IsolatedAsyncioTestCase):
             cfg = self.config_for()
             cfg.mcp_servers['demo']['tool_policies'] = policies
             with self.assertRaises(ValueError): replace(cfg)
-        with patch('mybot.config._CONFIG',{'mcp':{'enabled':False,'extra':True}}):
-            from mybot.config import GatewayConfig
-            with self.assertRaises(ValueError):GatewayConfig()
+        from scripts.check_lean_core_v2 import document
+        from mybot.config import config_from_document
+        doc = document(); doc['mcp'] = {'enabled':False, 'extra':True}
+        with self.assertRaises(ValueError): config_from_document(doc)
         cfg=self.config_for();cfg.mcp_servers['demo']['policy']='allow'
         with self.assertRaises(ValueError):replace(cfg)
 
@@ -217,8 +218,9 @@ class ApprovalChecks(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([e['executed'] for e in m.audit[:2]],[True,False])
             history=agent.session.history();assert_pairs(self,history)
             self.assertEqual(len([x for x in history if x['role']=='tool']),6)
-            restored=SessionStore(agent.config.session_path,self.workspace).load()
-            self.assertEqual(restored,agent.session.export_turns())
+            restored=agent.history.model_turns()
+            self.assertEqual([m['role'] for m in restored[-1]], ['user', 'assistant'])
+            self.assertIn('不恢复授权', restored[-1][-1]['content'])
             agent.client.chat.completions.create.assert_awaited_once()
             self.assertEqual(agent.plan.steps[0].status,'failed')
 

@@ -31,11 +31,11 @@ class LeanChecks(unittest.TestCase):
     def test_context_outputs_errors_and_input_isolation_match_r1(self):
         old = baseline('mybot.agent.context_manager')['ContextManager']
         rng = random.Random(20261028)
-        config = GatewayConfig(skills_enabled=False, session_persist=False, context_enabled=True)
+        config = GatewayConfig(skills_enabled=False,  context_enabled=True)
         cases = 0
-        for mode in ('legacy_chars', 'estimate', 'strict'):
-            for iteration in range(60):
-                cfg = replace(config, context_enabled=mode != 'legacy_chars' or iteration % 3 != 0,
+        for mode in ('estimate', 'strict'):
+            for iteration in range(90):
+                cfg = replace(config, context_enabled=True,
                     context_max_chars=rng.choice((256, 900, 4000)),
                     context_token_budget={'mode':mode, 'input_limit':rng.choice((512, 1700, 8000))},
                     context_tool_result_max_chars=rng.choice((128, 300, 1000)))
@@ -96,7 +96,7 @@ sys.meta_path.insert(0, Boundary())
 for module in ('mybot.main', 'mybot.web.__main__', 'mybot.web.server'):
     importlib.import_module(module)
 from mybot.config import GatewayConfig
-GatewayConfig(skills_enabled=False, mcp_enabled=False, session_persist=False)
+GatewayConfig(skills_enabled=False, mcp_enabled=False, session_backend="memory")
 '''
         subprocess.run([sys.executable, '-c', code], check=True,
                        cwd=Path(__file__).resolve().parents[1])

@@ -2,19 +2,17 @@
 from __future__ import annotations
 
 from .agent import AgentLoop, ContextBuilder
-from .config import GatewayConfig
+from .config import GatewayConfig, load_config
 from .provider_failover import build_gateway_client as build_client
 from .tools.registry import build_configured_tool_registry
 from .workspace import init_workspace
-from .mcp_client.manager import MCPClientManager
 from .mcp_client.approval import cli_approval
 from .tools.command_approval import cli_command_approval
 from .tools.undo_approval import cli_undo_approval
-from .tools.file_approval import cli_file_approval
 
 
 async def run_gateway(config: GatewayConfig | None = None) -> None:
-    config = config or GatewayConfig()
+    config = config or load_config()
     if config.coding_enabled:
         if not config.workspace.is_dir():raise ValueError('Coding workspace must already exist')
     from .workspace_lease import WorkspaceLease
@@ -25,9 +23,13 @@ async def run_gateway(config: GatewayConfig | None = None) -> None:
     try:
         if not config.coding_enabled:
             init_workspace(config.workspace)
-        tools = build_configured_tool_registry(config, file_approval_provider=cli_file_approval,
+        tools = build_configured_tool_registry(config,
             command_approval_provider=cli_command_approval)
-        async with MCPClientManager(config, tools, approval_provider=cli_approval):
+        from contextlib import AsyncExitStack
+        async with AsyncExitStack() as stack:
+            if config.mcp_enabled:
+                from .mcp_client.manager import MCPClientManager
+                await stack.enter_async_context(MCPClientManager(config, tools, approval_provider=cli_approval))
             llm_client = build_client(config)
             agent = AgentLoop(
                 client=llm_client,

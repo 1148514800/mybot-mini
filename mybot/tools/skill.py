@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from .base import Tool, ToolResult
-from ..skills.registry import SkillRegistry
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..skills.registry import SkillRegistry
 
 
 class SkillTool(Tool):

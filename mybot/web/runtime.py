@@ -11,10 +11,9 @@ from ..runtime_accounting import OUTPUT_NOTICES
 from ..agent.streaming import StreamCleanupError
 from ..agent import AgentLoop, ContextBuilder
 from ..agent.session import Session
-from ..config import GatewayConfig
+from ..config import GatewayConfig, load_config
 from ..provider_failover import build_gateway_client, ProviderFailoverClient
 from ..tools.registry import build_configured_tool_registry
-from ..mcp_client.manager import MCPClientManager
 from ..workspace import init_workspace
 from .approval import WebApproval
 from .security import redact
@@ -94,7 +93,7 @@ class Conversation:
 
 class ChatRuntime:
     def __init__(self, config=None, *, client_factory=build_gateway_client, approval_timeout=90, task_timeout=600, initialize_workspace=True):
-        self.config = config or GatewayConfig()
+        self.config = config or load_config()
         self.initialize_workspace = initialize_workspace
         self.client_factory = client_factory
         self.approval_timeout = approval_timeout
@@ -176,16 +175,18 @@ class ChatRuntime:
         try:
             async with asyncio.timeout(self.task_timeout):
                 lease.acquire()
-                # Web histories are memory-only and never load/share the CLI disk Session.
-                config = replace(self.config, session_persist=False, session_backend='event_sqlite' if self.config.storage_backend=='event_sqlite' else 'memory', debug=False)
+                # Web owns a separate namespace; never load or migrate legacy CLI JSON.
+                config = replace(self.config, session_backend='event_sqlite' if self.config.storage_backend=='event_sqlite' else 'memory', debug=False)
                 if config.coding_enabled or not self.initialize_workspace:
                     if not config.workspace.is_dir(): raise ValueError('workspace_missing')
                 else: init_workspace(config.workspace)
-                tools = build_configured_tool_registry(config, file_approval_provider=c.approval,
+                tools = build_configured_tool_registry(config,
                     command_approval_provider=c.approval)
                 # MCP enter/call/exit MUST stay in this SAME task, per existing manager fences.
-                manager = MCPClientManager(config, tools, approval_provider=c.approval)
-                await manager.__aenter__()
+                if config.mcp_enabled:
+                    from ..mcp_client.manager import MCPClientManager
+                    manager = MCPClientManager(config, tools, approval_provider=c.approval)
+                    await manager.__aenter__()
                 client = self.client_factory(config)
                 if isinstance(client, ProviderFailoverClient):
                     c.secret_values = tuple(dict.fromkeys((config.api_key, *client.secret_values)))

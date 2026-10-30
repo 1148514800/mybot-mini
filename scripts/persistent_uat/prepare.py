@@ -35,7 +35,7 @@ def prepare(batch,provider_config):
     init_workspace(root)
     (root/'README.md').write_text('# Disposable Markdown design discussion\nNo real user project or data. Discussion only; no writes authorized.\n')
     cfg=config_for(batch,dict(model='deepseek-v4.1-flash',base_url='https://offline.invalid/v1',api_key=None))
-    tools=build_default_tool_registry(root,coding_enabled=False,file_access='read_only')
+    tools=build_default_tool_registry(root,coding_enabled=False)
     names=[t['function']['name'] for t in tools.get_definitions()]
     if set(names)!={'read_file','list_files'} or cfg.mcp_enabled or cfg.coding_enabled or cfg.context_compaction['mode']!='deterministic':raise BudgetStop('unsafe_config')
     lease=WorkspaceLease(root).acquire();lease.release()
@@ -43,7 +43,7 @@ def prepare(batch,provider_config):
     ledger=Ledger(batch/'private/requests.sqlite',plan_hash())
     value=dict(version=1,authorization='NOT_GRANTED',plan_sha256=plan_hash(),contract=preregistration(),provider=provider_snapshot(provider_config),workspace_hashes=fingerprint(root),
         event_identity=event_identity,event_path=str(cfg.session_event_path),ledger_path=str(ledger.path),
-        configuration={k:getattr(cfg,k) for k in ('session_max_turns','coding_enabled','coding_file_access','coding_patch_mode','mcp_enabled','skills_enabled','max_react_steps','max_completion_tokens','request_timeout_seconds','context_token_budget','context_compaction')},
+        configuration={k:getattr(cfg,k) for k in ('session_max_turns','coding_enabled','coding_patch_mode','mcp_enabled','skills_enabled','max_react_steps','max_completion_tokens','request_timeout_seconds','context_token_budget','context_compaction')},
         environment=dict(status='OFFLINE_PASS',workspace_lease='acquired_and_released',tool_names=names,event_store='private v1 opened and closed',credential_check='local presence/model match only; remote validity unverified',real_requests=0))
     private_json(batch/'prepared.json',value);return value
 

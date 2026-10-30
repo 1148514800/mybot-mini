@@ -118,7 +118,8 @@ class WebPersistenceChecks(unittest.IsolatedAsyncioTestCase):
         await self.app.runtime.close();await self.open();self.assertEqual(self.app.runtime.conversations,{})
     async def test_legacy_json_not_read_or_migrated_by_web(self):
         old=self.root/'old.json';old.write_text('old JSON preserved')
-        self.config=replace(self.config,session_backend=None,session_persist=True,session_path=old)
+        with self.assertRaises(TypeError): replace(self.config,session_persist=True,session_path=old)
+        self.config=replace(self.config,session_backend='memory')
         await self.open();sid=await self.new();await self.chat(sid)
         self.assertEqual(old.read_text(),'old JSON preserved');self.assertFalse((await self.http.get('/api/bootstrap')).json()['persistence'])
     async def test_external_process_delete_invalidates_cached_conversation(self):

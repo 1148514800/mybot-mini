@@ -27,7 +27,7 @@ async def approve(request): return ApprovalDecision.APPROVE
 
 def configuration(root, scenario='A', **changes):
     base = dict(workspace=root, api_key=None, provider='offline', model='synthetic',
-                skills_enabled=False, mcp_enabled=False, session_persist=False, context_enabled=False,
+                skills_enabled=False, mcp_enabled=False,  context_enabled=False, context_token_budget={'input_limit':64000},
                 max_react_steps=10, coding_enabled=scenario != 'C',
                 coding_patch_mode='write' if scenario != 'C' else 'off',
                 coding_preview_receipt=scenario != 'C',
@@ -98,7 +98,6 @@ def agent(root, scenario='A', *, callback=None, client=None, config=None):
     config=config or configuration(root,scenario)
     tools=build_default_tool_registry(root,coding_enabled=config.coding_enabled,
         patch_mode=config.coding_patch_mode,preview_receipt=config.coding_preview_receipt,
-        command=config.coding_command,command_approval_provider=approve,
-        file_access=config.coding_file_access)
+        command=config.coding_command,command_approval_provider=approve)
     client=client or SyntheticClient(scenario)
     return AgentLoop(client,config,tools,ContextBuilder(root),event_callback=callback),client

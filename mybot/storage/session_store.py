@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import json
-import os
-import tempfile
-from pathlib import Path
 from typing import Any
 
 
@@ -57,55 +53,3 @@ def validate_turns(turns: Any) -> None:
                 raise ValueError("Session accepts only user/assistant/tool messages")
         _require(not pending and turn[-1].get("role") == "assistant"
                  and not turn[-1].get("tool_calls"), "Turn must end with a final assistant reply")
-
-
-class SessionStore:
-    """Versioned JSON and atomic replacement; no concurrent writers supported."""
-
-    def __init__(self, path: Path, workspace: Path):
-        self.path = Path(path).resolve()
-        self.workspace = Path(workspace).resolve()
-        self._check_path()
-
-    def _check_path(self) -> None:
-        if self.path.resolve().is_relative_to(self.workspace.resolve()):
-            raise ValueError("Session storage must be outside the agent workspace")
-
-    def load(self) -> list[list[dict[str, Any]]]:
-        self._check_path()
-        try:
-            with self.path.open(encoding="utf-8") as stream:
-                data = json.load(stream)
-            _require(isinstance(data, dict) and set(data) == {"version", "turns"}, "Invalid Session document")
-            _require(type(data["version"]) is int and data["version"] == 1, "Unsupported Session version")
-            validate_turns(data["turns"])
-            return data["turns"]
-        except FileNotFoundError:
-            return []
-        except (OSError, ValueError, UnicodeError) as exc:
-            detail = str(exc) if isinstance(exc, ValueError) and not isinstance(exc, UnicodeError) else type(exc).__name__
-            raise RuntimeError(f"Session load failed: {self.path}; original file preserved ({detail})") from None
-
-    def save(self, turns: list[list[dict[str, Any]]]) -> None:
-        self._check_path()
-        validate_turns(turns)
-        temporary = None
-        try:
-            self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent,
-                                             prefix=".session-", suffix=".tmp", delete=False) as stream:
-                temporary = Path(stream.name)
-                json.dump({"version": 1, "turns": turns}, stream, ensure_ascii=False, indent=2)
-                stream.write("\n")
-                stream.flush()
-                os.fsync(stream.fileno())
-            os.replace(temporary, self.path)
-            temporary = None
-        except OSError as exc:
-            raise RuntimeError(f"Session save failed: {self.path} ({type(exc).__name__}); memory not updated") from None
-        finally:
-            if temporary is not None:
-                temporary.unlink(missing_ok=True)
-
-    def clear(self) -> None:
-        self.save([])

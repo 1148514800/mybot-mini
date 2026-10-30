@@ -33,12 +33,14 @@ def client(effects):return N(chat=N(completions=N(create=AsyncMock(side_effect=e
 class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
-        self.config=GatewayConfig(provider='coco',model='deepseek-v4.1-flash',api_key='PRIVATE_PRIMARY_KEY',
+        self.config=GatewayConfig(context_token_budget={'input_limit':160000}, provider='coco',model='deepseek-v4.1-flash',api_key='PRIVATE_PRIMARY_KEY',
             base_url='https://offline.invalid/v1',
-            workspace=self.root,skills_enabled=False,mcp_enabled=False,context_enabled=False,session_persist=False,
+            workspace=self.root,skills_enabled=False,mcp_enabled=False,context_enabled=False,
             request_timeout_seconds=2)
         self.secondary=replace(self.config,provider='coco2',model='glm-5.3-flash',api_key='PRIVATE_BACKUP_KEY')
         self.limits=Limits(max_cases=1,max_requests=12,max_model_requests_per_case=12)
+        configured = patch('mybot.evaluation.coding_failover_campaign.base_config', return_value=self.config)
+        configured.start(); self.addCleanup(configured.stop)
 
     def adapter(self,primary=None,backup=None,*,global_max=12,controller_max=12):
         self.primary=primary or client([connection()]);self.backup=backup or client([response('ok')])
@@ -59,7 +61,7 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_single_does_not_build_backup_or_change_report_schema(self):
         with patch('mybot.evaluation.coding_failover.settings',side_effect=AssertionError('single parsed backup')),patch('mybot.evaluation.coding_failover.build_client',side_effect=AssertionError('network')):
-            r=await evaluate(limits=self.limits,case_ids=['cache-ttl-001'])
+            r=await evaluate(base_config=self.config, limits=self.limits,case_ids=['cache-ttl-001'])
         self.assertEqual(r['report_type'],'coding_benchmark');self.assertNotIn('provider_mode',r)
         self.assertNotIn('provider_execution',r['results'][0]);self.assertEqual(r['model_name'],'offline-script')
 
@@ -159,7 +161,7 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
         started=asyncio.Event();hold=asyncio.Event()
         async def pending(**kwargs):started.set();await hold.wait()
         raw=client([]);raw.chat.completions.create.side_effect=pending;self.adapter(raw)
-        task=asyncio.create_task(self.request());await started.wait();self.attempt.revoke('task_cancelled');task.cancel()
+        task=asyncio.create_task(self.request());await asyncio.wait_for(started.wait(), 10);self.attempt.revoke('task_cancelled');task.cancel()
         with self.assertRaises(asyncio.CancelledError):await task
         self.assertEqual(self.factory.call_count,1)
 
@@ -230,16 +232,16 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.a.summary()['http_model_requests'],2)
 
     async def test_mixed_unscoped_prices_rejected(self):
-        with self.assertRaises(ValueError):await evaluate(provider_mode='failover',prices={'currency':'USD'})
+        with self.assertRaises(ValueError):await evaluate(base_config=self.config, provider_mode='failover',prices={'currency':'USD'})
 
     async def test_live_overrides_block_before_client_creation(self):
         with patch('mybot.evaluation.coding_failover.build_client') as build:
-            with self.assertRaises(ValueError):await evaluate(provider_mode='failover',live=True,confirm_api_cost=True,offline_provider_factory=lambda *x:None)
+            with self.assertRaises(ValueError):await evaluate(base_config=self.config, provider_mode='failover',live=True,confirm_api_cost=True,offline_provider_factory=lambda *x:None)
             build.assert_not_called()
 
     async def test_single_live_requires_cost_and_tty(self):
         with patch('mybot.evaluation.coding_live.build_client') as build:
-            with self.assertRaises(ValueError):await evaluate(provider_mode='single',live=True)
+            with self.assertRaises(ValueError):await evaluate(base_config=self.config, provider_mode='single',live=True)
             build.assert_not_called()
 
     async def full_task(self,primary_reads=False,global_max=12,controller_max=12,close_error=False):
@@ -254,7 +256,7 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
         def factory(runtime,p):
             raw=Script(p);created.append((p,raw));return raw
         with patch('mybot.evaluation.coding_failover.build_client',side_effect=AssertionError('No paid API')):
-            r=await evaluate(provider_mode='failover',limits=replace(self.limits,max_requests=global_max,max_model_requests_per_case=controller_max),
+            r=await evaluate(base_config=self.config, provider_mode='failover',limits=replace(self.limits,max_requests=global_max,max_model_requests_per_case=controller_max),
                 case_ids=['cache-ttl-001'],offline_provider_factory=factory)
         return r,created
 
@@ -298,7 +300,7 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
                 previous=next((m for m in reversed(kwargs['messages']) if m['role']=='tool'),None)
                 if previous and decode_result(previous['content'])[1].get('applied'):return response('done')
                 return await super().create(**kwargs)
-        r=await evaluate(provider_mode='failover',limits=self.limits,case_ids=['cache-ttl-001'],
+        r=await evaluate(base_config=self.config, provider_mode='failover',limits=self.limits,case_ids=['cache-ttl-001'],
             offline_provider_factory=lambda runtime,p:client([connection()]) if p=='coco' else Untested())
         v=r['results'][0];self.assertEqual(v['controller']['current_revision'],1)
         self.assertEqual(v['metrics']['real_test_runs'],0);self.assertNotEqual(v['agent_state'],'verified')
@@ -310,7 +312,7 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
             raw=client([]);raw.chat.completions.create.side_effect=wait;created.append((p,raw));return raw
         root=self.root/'cancelled'
         task=asyncio.create_task(run(root,provider_mode='failover',limits=self.limits,offline_provider_factory=factory))
-        await started.wait();task.cancel()
+        await asyncio.wait_for(started.wait(), 10);task.cancel()
         with self.assertRaises(asyncio.CancelledError):await task
         self.assertEqual([p for p,_ in created],['coco'])
         self.assertEqual(created[0][1].close.await_count,1)
@@ -360,7 +362,7 @@ class CodingFailoverChecks(unittest.IsolatedAsyncioTestCase):
     async def test_multiple_case_attempts_reset_sticky(self):
         created=[]
         def factory(runtime,p):created.append(p);return client([connection()]) if p=='coco' else client([response('no patch')])
-        r=await evaluate(provider_mode='failover',limits=replace(self.limits,max_cases=2),case_ids=['cache-ttl-001','pagination-001'],offline_provider_factory=factory)
+        r=await evaluate(base_config=self.config, provider_mode='failover',limits=replace(self.limits,max_cases=2),case_ids=['cache-ttl-001','pagination-001'],offline_provider_factory=factory)
         self.assertEqual(created,['coco','coco2','coco','coco2'])
         self.assertNotEqual(*[x['lifecycle']['attempt_id'] for x in r['results']])
 

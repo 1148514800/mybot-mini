@@ -80,7 +80,7 @@ def config_for(case,root,provider):
     coding=case in ('U04','U05');reading=case=='U03'
     return GatewayConfig(workspace=root,provider='coco',model=provider['model'],api_key=provider['api_key'],base_url=provider['base_url'],
         request_timeout_seconds=60,max_completion_tokens=512 if case=='U06' else 2000 if case in ('U01','U02') else 4000,
-        max_react_steps=16,session_max_turns=12,session_persist=False,skills_enabled=False,mcp_enabled=False,debug=False,
+        max_react_steps=16,session_max_turns=12,skills_enabled=False,mcp_enabled=False,debug=False,
         context_enabled=True,context_max_chars=40000,context_recent_turns=2,context_summary_max_chars=3000,context_tool_result_max_chars=4000,
         context_token_budget={'mode':'estimate','input_limit':18000 if case=='U06' else 48000,'model_windows':{}},
         context_compaction={'mode':'semantic','allow_extra_requests':True,'max_calls':1,'input_tokens':18000,'output_tokens':1200,'timeout_seconds':30,'on_failure':'deterministic'} if case=='U06' else {},

@@ -51,7 +51,7 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
             new=build_default_tool_registry(self.root,coding_enabled=flag,patch_mode=mode,command={'mode':'off'})
             self.assertEqual(old.get_definitions(),new.get_definitions())
             self.assertFalse((await old.execute('run_command',{'argv':['python']})).success)
-        self.assertEqual(len(build_default_tool_registry(self.root, file_access='legacy_confirm').iter_tools()),3)
+        self.assertEqual(len(build_default_tool_registry(self.root).iter_tools()),2)
 
     async def test_strict_config(self):
         for value in [None,[],False,{'extra':1},{'mode':True},{'mode':'automatic'}, {'timeout_seconds':0},
@@ -63,8 +63,7 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):GatewayConfig(coding_enabled=True,coding_patch_mode='preview',coding_command={'mode':'host_confirm'})
         for mode in ('preview','write'):
             self.assertEqual(GatewayConfig(coding_enabled=True,coding_patch_mode=mode,coding_command={'mode':'macos_readonly'}).coding_command['mode'],'macos_readonly')
-        with patch('mybot.config._CONFIG',{'coding':{'enabled':True,'patch_mode':'write','command':{'extra':1}}}):
-            with self.assertRaises(ValueError):GatewayConfig()
+        with self.assertRaises(ValueError): GatewayConfig(coding_enabled=True, coding_patch_mode='write', coding_command={'extra':1})
 
     async def test_registry_registration_and_patch_only(self):
         tools=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='preview',command={'mode':'macos_readonly'})
@@ -496,7 +495,7 @@ class CommandChecks(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('profile',self.tool.parameters['properties'])
 
     def agent(self, tools=None, client=None, **kw):
-        cfg=GatewayConfig(workspace=self.root,coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'host_confirm'},skills_enabled=False,session_persist=False,debug=True,**kw)
+        cfg=GatewayConfig(workspace=self.root,coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'host_confirm'},skills_enabled=False,debug=True,**kw)
         tools=tools or build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',command=cfg.coding_command,command_approval_provider=approve)
         return AgentLoop(client or N(),cfg,tools,ContextBuilder(self.root))
 

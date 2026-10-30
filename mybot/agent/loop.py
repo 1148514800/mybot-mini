@@ -9,15 +9,10 @@ from ..provider_failover import FallbackBudgetExceeded, ProviderChainExhausted
 from ..runtime_accounting import response_status
 from ..config import GatewayConfig
 from ..tools import ToolRegistry
-from ..storage.session_store import SessionStore
 from .context import ContextBuilder
 from .session import Session
 from .planning import Plan, PlanningTool
 from .context_manager import ContextManager
-from ..skills.registry import SkillRegistry
-from ..tools.skill import SkillTool
-from ..mcp_client.discovery import MCPToolCatalog, DiscoveryTool
-from ..mcp_client.router import AdaptiveToolRouter
 
 from . import context_preparation, tool_dispatch, turn_lifecycle
 from .tool_dispatch import safe_read_metadata  # Compatibility for existing diagnostics.
@@ -39,6 +34,9 @@ class AgentLoop:
         self.config = config
         self.tools = tools
         self.context = context
+        if config.skills_enabled:
+            from ..skills.registry import SkillRegistry
+            from ..tools.skill import SkillTool
         self.skills = SkillRegistry(config.skills_path) if config.skills_enabled else None
         self.context.skill_index = self.skills.index() if self.skills is not None else []
         if self.skills is not None:
@@ -46,9 +44,6 @@ class AgentLoop:
                 self.tools.register(SkillTool(self.skills, name))
         self.context_manager = ContextManager(config)
         self.session = session if session is not None else Session(config.session_max_turns)
-        self.store = SessionStore(config.session_path, config.workspace) if config.session_persist else None
-        if self.store is not None:
-            self.session.restore(self.store.load())
         from ..storage.history import open_store, SessionHistory, recover
         self._owns_history = history is None
         if history is None:
@@ -78,6 +73,9 @@ class AgentLoop:
         self.plan.silent = event_callback is not None
         for name in ("create_plan", "update_plan"):
             self.tools.register(PlanningTool(self.plan, name))
+        if config.mcp_discovery["enabled"]:
+            from ..mcp_client.discovery import MCPToolCatalog, DiscoveryTool
+            from ..mcp_client.router import AdaptiveToolRouter
         self.discovery = MCPToolCatalog(tools, config.mcp_discovery) if config.mcp_discovery['enabled'] else None
         self.router = (AdaptiveToolRouter(self.discovery) if self.discovery is not None
                        and config.mcp_discovery.get('routing_mode','manual') == 'adaptive' else None)
@@ -193,8 +191,6 @@ class AgentLoop:
 
     async def _handle_message(self, user_input: str) -> str:
         if user_input.strip() == "/clear":
-            if self.store is not None:
-                self.store.clear()
             self.session.clear()
             self.plan.reset()
             return "当前会话已清空。"

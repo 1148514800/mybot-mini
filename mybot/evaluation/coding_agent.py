@@ -171,8 +171,8 @@ async def run_case(spec, *, mode='macos_readonly'):
         if policy in ('continuous_failure', 'repeat_command'): budgets['max_command_attempts'] = 3
         cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write',
             coding_command={'mode': mode}, coding_autonomy={'enabled': True, **budgets},
-            max_react_steps=20, context_enabled=True, context_max_chars=160000,
-            context_tool_result_max_chars=24000, skills_enabled=False, session_persist=False, mcp_enabled=False, debug=False)
+            max_react_steps=20, context_enabled=True, context_token_budget={'input_limit':160000},
+            context_tool_result_max_chars=24000, skills_enabled=False,  mcp_enabled=False, debug=False)
         tools = build_default_tool_registry(root, coding_enabled=True, patch_mode='write',
             command=cfg.coding_command, command_approval_provider=approve)
         client = ReactiveCodingClient(policy)

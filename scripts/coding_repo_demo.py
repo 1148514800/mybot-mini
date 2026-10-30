@@ -74,8 +74,8 @@ class InvestigationClient:
 async def investigate(root):
     before=fingerprint(root);index=(root/'.git/index').read_bytes()
     client=InvestigationClient()
-    cfg=GatewayConfig(workspace=root,coding_enabled=True,skills_enabled=False,session_persist=False,
-                      context_enabled=True,context_max_chars=40000,mcp_enabled=False,debug=False)
+    cfg=GatewayConfig(workspace=root,coding_enabled=True,skills_enabled=False,
+                      context_enabled=True,context_token_budget={'input_limit':40000},mcp_enabled=False,debug=False)
     tools=build_default_tool_registry(root,coding_enabled=cfg.coding_enabled)
     agent=AgentLoop(client,cfg,tools,ContextBuilder(root))
     with contextlib.redirect_stdout(io.StringIO()):reply=await agent.handle_message('定位 calculator.py 中导致结果错误的函数，并检查相关文件是否已被修改。')
@@ -120,8 +120,8 @@ async def edit_demo(root):
     original = (root / 'src/calculator.py').read_bytes()
     client = EditingClient()
     cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write',
-        skills_enabled=False, session_persist=False, mcp_enabled=False, context_enabled=True,
-        context_max_chars=80000, context_tool_result_max_chars=16000, debug=False)
+        skills_enabled=False,  mcp_enabled=False, context_enabled=True,
+        context_token_budget={'input_limit':80000}, context_tool_result_max_chars=16000, debug=False)
     agent = AgentLoop(client, cfg, build_default_tool_registry(root, coding_enabled=True, patch_mode='write'), ContextBuilder(root))
     with contextlib.redirect_stdout(io.StringIO()):
         reply = await agent.handle_message('Read, preview and precisely repair add; preserve all other changes. No commands or tests.')
@@ -204,8 +204,8 @@ async def command_demo(root, *, mode='macos_readonly'):
     before = fingerprint(root); index = (root / '.git/index').read_bytes()
     original = (root / 'src/calculator.py').read_bytes()
     cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write', coding_command={'mode': mode},
-        skills_enabled=False, session_persist=False, mcp_enabled=False, context_enabled=True,
-        context_max_chars=120000, context_tool_result_max_chars=20000, max_react_steps=16, debug=False)
+        skills_enabled=False,  mcp_enabled=False, context_enabled=True,
+        context_token_budget={'input_limit':120000}, context_tool_result_max_chars=20000, max_react_steps=16, debug=False)
     tools = build_default_tool_registry(root, coding_enabled=True, patch_mode='write',
         command=cfg.coding_command, command_approval_provider=approve)
     client = CommandClient();agent = AgentLoop(client, cfg, tools, ContextBuilder(root))

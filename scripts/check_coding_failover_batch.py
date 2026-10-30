@@ -125,7 +125,7 @@ class BatchChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(folder.exists())
     async def test_ledger_failure_prevents_sdk_and_counter(self):
         raw=N(chat=N(completions=N(create=AsyncMock())),close=AsyncMock())
-        c=GatewayConfig(provider='coco',model='deepseek-v4.1-flash',workspace=self.project,skills_enabled=False,session_persist=False)
+        c=GatewayConfig(context_token_budget={'input_limit':160000}, provider='coco',model='deepseek-v4.1-flash',workspace=self.project,skills_enabled=False)
         budget=RequestBudget(Limits(max_requests=2));audit=N(before=lambda r:(_ for _ in ()).throw(OSError('synthetic ledger IO')),after=lambda r:None)
         adapter=FailoverCodingClient((c,replace(c,provider='coco2',model='glm-5.3-flash')),CodingTrace(),budget,Attempt(),'synthetic',lambda c:raw,request_audit=audit)
         try:
@@ -148,7 +148,7 @@ class BatchChecks(unittest.IsolatedAsyncioTestCase):
                 seen.append((cfg.provider,str(request.headers.get('authorization')),json.loads(request.content)['model']))
                 return httpx.Response(200,json={'id':'offline','object':'chat.completion','created':0,'model':cfg.model,'choices':[{'index':0,'message':{'role':'assistant','content':'done'},'finish_reason':'stop'}],'usage':{'prompt_tokens':2,'completion_tokens':1,'total_tokens':3}})
             raw=AsyncOpenAI(api_key=cfg.api_key,base_url=cfg.base_url,max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)));clients.append(raw);return raw
-        c=GatewayConfig(provider='coco',model='deepseek-v4.1-flash',api_key='synthetic-primary',base_url='https://offline.invalid/v1',workspace=self.project,skills_enabled=False,session_persist=False)
+        c=GatewayConfig(context_token_budget={'input_limit':160000}, provider='coco',model='deepseek-v4.1-flash',api_key='synthetic-primary',base_url='https://offline.invalid/v1',workspace=self.project,skills_enabled=False)
         backup=replace(c,provider='coco2',model='glm-5.3-flash',api_key='synthetic-backup');b=RequestBudget(Limits(max_requests=3));attempt=Attempt();controller=CodingTaskController(AutonomySettings(max_model_requests=3),build_default_tool_registry(self.project))
         a=FailoverCodingClient((c,backup),CodingTrace(),b,attempt,'case',factory,fault_mode='primary_connection_once');a.controller=lambda:controller
         try:
@@ -173,7 +173,7 @@ class BatchChecks(unittest.IsolatedAsyncioTestCase):
             return AsyncOpenAI(api_key='synthetic',base_url='https://offline.invalid/v1',http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),max_retries=0)
         with patch('mybot.evaluation.coding_failover.build_client',build),contextlib.redirect_stdout(io.StringIO()):
             # live=False forbids real model usage, while supplied SDK factory remains MockTransport.
-            r=await evaluate(provider_mode='failover',fault_mode='primary_connection_once',limits=Limits(max_cases=1,max_requests=8,max_model_requests_per_case=8),case_ids=['cache-ttl-001'],offline_provider_factory=lambda runtime,p:build(N(provider=p)))
+            r=await evaluate(base_config=GatewayConfig(provider='coco', model='deepseek-v4.1-flash', context_token_budget={'input_limit':160000}), provider_mode='failover',fault_mode='primary_connection_once',limits=Limits(max_cases=1,max_requests=8,max_model_requests_per_case=8),case_ids=['cache-ttl-001'],offline_provider_factory=lambda runtime,p:build(N(provider=p)))
         x=r['results'][0];self.assertEqual(x['agent_state'],'verified',json.dumps(x));self.assertEqual(x['judge']['judge_state'],'hidden_pass')
         self.assertEqual(x['metrics']['committed_patches'],1);self.assertEqual(x['metrics']['real_test_runs'],1);self.assertTrue(x['metrics']['tool_call_ids_paired']);self.assertTrue(all(p=='coco2' for p in sent))
         self.assertEqual(r['physical_model_requests'],r['http_model_requests']+1);self.assertFalse(r['ability_score'])

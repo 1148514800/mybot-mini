@@ -53,7 +53,7 @@ class ChainChecks(unittest.IsolatedAsyncioTestCase):
         built=[]
         def factory(cfg):
             built.append(cfg);return client([failed()] if cfg.provider!='alpha' else [response('wrapped')])
-        with patch('mybot.config._PROVIDERS',providers),patch('mybot.config.build_client',side_effect=factory):
+        with patch.object(self.cfg, 'providers', providers),patch('mybot.config.build_client',side_effect=factory):
             g=build_gateway_client(replace(self.cfg,provider='beta'))
             await self.invoke(g)
         self.assertEqual([c.provider for c in built],['beta','gamma','alpha'])

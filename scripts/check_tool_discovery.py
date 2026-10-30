@@ -13,6 +13,7 @@ from unittest.mock import patch
 from mcp import Client
 from mcp import types
 from mybot.agent import AgentLoop, ContextBuilder
+from mybot.agent.token_counter import TokenCounter
 from mybot.agent.context_manager import ContextManager, ContextBudgetError
 from mybot.config import GatewayConfig, PROJECT_DIR
 from mybot.mcp_client.adapter import MCPToolAdapter
@@ -61,17 +62,19 @@ class DiscoveryChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
                        mcp_discovery={'enabled':progressive,**discovery},max_react_steps=16)
 
     async def test_01_discovery_default_and_config_file(self):
-        with patch('mybot.config._CONFIG',{}):cfg=GatewayConfig(session_persist=False)
+        cfg=GatewayConfig()
         self.assertEqual(cfg.mcp_discovery,{'enabled':False,'max_active_tools':4,'max_active_schema_chars':12000,'search_limit':5})
-        with patch('mybot.config._CONFIG',{'mcp':{'discovery':{'enabled':True,'search_limit':2}}}):
-            self.assertTrue(GatewayConfig(session_persist=False).mcp_discovery['enabled'])
+        self.assertTrue(GatewayConfig(mcp_discovery={'enabled':True,'search_limit':2}).mcp_discovery['enabled'])
 
     async def test_02_strict_config_types_ranges_unknowns(self):
         for value in (None,[],True,{'enabled':1},{'unknown':1},{'max_active_tools':0},{'max_active_tools':65},
                       {'max_active_tools':True},{'max_active_schema_chars':255},{'max_active_schema_chars':200001},
                       {'max_active_schema_chars':12000.0},{'search_limit':0},{'search_limit':21},{'search_limit':True}):
             with self.subTest(value=value),self.assertRaises(ValueError):replace(self.config,mcp_discovery=value)
-        with patch('mybot.config._CONFIG',{'mcp':{'unknown':1}}),self.assertRaises(ValueError):GatewayConfig()
+        from scripts.check_lean_core_v2 import document
+        from mybot.config import config_from_document
+        doc = document(); doc['mcp'] = {'unknown':1}
+        with self.assertRaises(ValueError): config_from_document(doc)
 
     async def test_03_eager_unchanged_and_real_35_tools(self):
         cfg=self.cfg(progressive=False)
@@ -79,7 +82,7 @@ class DiscoveryChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(manager._adapters),35)
             agent=self.agent(cfg,[response(calls=[call('a',PROJECT,'{"project":"mini"}')]),response('done')])
             self.assertEqual(await self.handle(agent),'done')
-            self.assertEqual(len(self.visible(0)),40);self.assertIsNone(agent.discovery)
+            self.assertEqual(len(self.visible(0)),39);self.assertIsNone(agent.discovery)
             self.assertNotIn('search_mcp_tools',self.visible(0));self.assertEqual(len(manager.audit),1)
 
     async def test_04_catalog_allowlist_and_deny_filter(self):
@@ -292,10 +295,10 @@ class DiscoveryChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
         cfg=replace(self.cfg(),skills_enabled=True,skills_path=PROJECT_DIR/'skills')
         async with MCPClientManager(cfg,self.tools) as manager:
             agent=self.agent(cfg,[response(calls=[call('s','load_skill','{"name":"file-summary"}'),
-                call('f','write_file','{"path":"local.txt","content":"synthetic"}')]),response('done')])
+                call('f','list_files','{"path":"."}')]),response('done')])
             await self.handle(agent)
-            self.assertTrue({'read_file','write_file','create_plan','update_plan','load_skill','read_skill_reference','search_mcp_tools','activate_mcp_tools'}<=self.visible(0))
-            self.assertEqual((self.workspace/'local.txt').read_text(),'synthetic');self.assertEqual(manager.audit,[])
+            self.assertTrue({'read_file','list_files','create_plan','update_plan','load_skill','read_skill_reference','search_mcp_tools','activate_mcp_tools'}<=self.visible(0))
+            self.assertFalse((self.workspace/'local.txt').exists());self.assertEqual(manager.audit,[])
 
     async def test_25_disabled_mcp_empty_catalog_native_tasks_work(self):
         cfg=replace(self.config,mcp_discovery={'enabled':True})
@@ -319,8 +322,8 @@ class DiscoveryChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
         cfg=replace(self.cfg(),context_enabled=True,context_max_chars=100000)
         async with MCPClientManager(cfg,self.tools) as manager:
             agent=self.agent(cfg,[response(calls=[activate(PROJECT)])])
-            base=ContextManager.count(agent.context.build_messages('task'),self.tools.get_definitions(agent.discovery.visible_names()))
-            agent.config.context_max_chars=base+1200
+            base=TokenCounter.measure(TokenCounter.request(agent.config,agent.context.build_messages('task'),self.tools.get_definitions(agent.discovery.visible_names())))['estimated_input_tokens']
+            agent.config.context_token_budget['input_limit']=base+1200
             with self.assertRaises(ContextBudgetError):await self.handle(agent,'task')
             self.assertEqual(len(self.requests),1);self.assertFalse(agent.discovery.active);self.assertEqual(manager.audit,[])
             self.assertEqual(self.tools.get_tool(PROJECT).parameters['required'],['project'])
@@ -356,7 +359,7 @@ class DiscoveryChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
         for eager,progressive in zip(rows[::2],rows[1::2]):
             self.assertTrue(eager['task_success'] and progressive['task_success'])
             self.assertEqual(eager['actual_tool_calls'],progressive['actual_tool_calls'])
-            self.assertEqual(eager['total_catalog_tools'],35);self.assertEqual(progressive['initial_visible_tools'],7)
+            self.assertEqual(eager['total_catalog_tools'],35);self.assertEqual(progressive['initial_visible_tools'],6)
             self.assertLess(progressive['initial_schema_chars'],eager['initial_schema_chars'])
             self.assertLess(progressive['cumulative_schema_chars'],eager['cumulative_schema_chars'])
             self.assertGreater(progressive['llm_requests'],eager['llm_requests'])

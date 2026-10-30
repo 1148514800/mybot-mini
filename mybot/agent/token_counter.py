@@ -13,12 +13,12 @@ class TokenBudgetError(ContextBudgetError):
 
 
 def validate_token_budget(value):
-    defaults = {'mode': 'legacy_chars', 'input_limit': 16000, 'model_windows': {}}
+    defaults = {'mode': 'estimate', 'input_limit': 16000, 'model_windows': {}}
     if not isinstance(value, dict) or set(value) - defaults.keys():
         raise ValueError('context.token_budget has unknown fields')
     result = {**defaults, **value}
-    if result['mode'] not in ('legacy_chars', 'estimate', 'strict'):
-        raise ValueError('context.token_budget.mode must be legacy_chars, estimate or strict')
+    if result['mode'] not in ('estimate', 'strict'):
+        raise ValueError('context.token_budget.mode must be estimate or strict; migrate legacy_chars explicitly')
     if type(result['input_limit']) is not int or not 256 <= result['input_limit'] <= 2_000_000:
         raise ValueError('context.token_budget.input_limit must be 256..2000000')
     windows = result['model_windows']
@@ -53,17 +53,19 @@ class TokenCounter:
 
     @staticmethod
     def policy(config, request):
-        settings = getattr(config, 'context_token_budget', {'mode':'legacy_chars'})
+        try:
+            settings = validate_token_budget(getattr(config, 'context_token_budget', {}))
+        except ValueError:
+            raise TokenBudgetError('invalid_token_budget_configuration') from None
         mode = settings['mode']
         window = settings.get('model_windows', {}).get(f'{getattr(config,"provider","")}/{request.get("model","")}')
         reserve = request.get('max_tokens', getattr(config, 'max_completion_tokens', 0))
         if type(reserve) is not int or reserve < 1:
-            if mode != 'legacy_chars': raise TokenBudgetError('invalid_output_reserve')
-            reserve = None
-        limit = settings.get('input_limit') if mode != 'legacy_chars' else None
+            raise TokenBudgetError('invalid_output_reserve')
+        limit = settings['input_limit']
         if window is not None and reserve is not None:
             limit = min(limit, window - reserve) if limit is not None else None
-        return dict(context_budget_unit='chars' if mode == 'legacy_chars' else 'estimated_tokens',
+        return dict(context_budget_unit='estimated_tokens',
                     context_budget_mode=mode, model_window_tokens=window, model_window_status='configured' if window else 'unknown',
                     output_reserved_tokens=reserve, input_token_limit=limit,
                     exact_remaining_tokens=None, tokenizer_status='unverified_for_deployment')

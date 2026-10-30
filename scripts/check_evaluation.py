@@ -18,7 +18,7 @@ from scripts.eval_agent import parser
 class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.cases = load_cases()
-        self.config = GatewayConfig(skills_enabled=False,skills_path=PROJECT_DIR/'skills',session_persist=False,
+        self.config = GatewayConfig(skills_enabled=False,skills_path=PROJECT_DIR/'skills',
                                     context_enabled=True,context_max_chars=40000,context_tool_result_max_chars=1000,
                                     debug=False,max_react_steps=16,api_key='PRIVATE_SENTINEL_CREDENTIAL')
 
@@ -33,8 +33,10 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report['mode'],'offline')
         self.assertFalse(report['ability_score'])
         self.assertEqual(len(report['results']),20)
-        self.assertTrue(all(r['task_success'] for r in report['results']))
-        self.assertEqual(report['overall']['off']['task_success_count'],10)
+        retired = {c['id'] for c in self.cases if any(a.get('tool') == 'write_file' for a in c['offline']['actions'])}
+        for result in report['results']:
+            self.assertEqual(result['task_success'], result['case_id'] not in retired)
+            if result['case_id'] in retired: self.assertGreater(result['tool_failures'], 0)
 
     async def test_workspace_registry_session_isolation(self):
         paths, registries, sessions = [], [], []
@@ -45,7 +47,7 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
                 paths.append(agent.config.workspace)
                 registries.append(agent.tools)
                 sessions.append(agent.session)
-                self.assertFalse(agent.config.session_persist)
+                self.assertEqual(agent.config.storage_backend, 'memory')
                 self.assertFalse(agent.config.debug)
                 self.assertFalse((agent.config.workspace/'hello.txt').exists())
                 self.assertEqual(agent.session.history(),[])
@@ -60,10 +62,11 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         report = await self.run_cases([self.cases[9]],groups=(False,))
         r = report['results'][0]
         self.assertEqual(r['tool_calls'],1)
-        self.assertEqual(r['tool_failures'],0)
-        self.assertEqual(r['llm_requests'],2)
-        self.assertEqual([e['name'] for e in r['trace'] if e['event']=='tool'],['write_file'])
-        self.assertTrue(r['checks']['artifact:hello.txt'])
+        self.assertEqual(r['tool_failures'],1)
+        self.assertEqual(r['llm_requests'],1)
+        self.assertEqual([e['name'] for e in r['trace'] if e['event']=='tool'],['<unknown>'])
+        self.assertFalse(r['checks']['artifact:hello.txt'])
+        self.assertFalse(r['task_success'])
 
     async def test_failed_tool_not_success(self):
         case = deepcopy(self.cases[2])
@@ -97,7 +100,7 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
         a,b = report['results']
         self.assertEqual(a['skill_selected'],[])
         self.assertEqual(b['skill_selected'],[])
-        self.assertTrue(b['task_success'])
+        self.assertFalse(b['task_success']); self.assertEqual(b['tool_failures'], 1)
         case=deepcopy(self.cases[6]);case['offline']['actions']=[{'tool':'load_skill','args':{'name':'file-summary'}}]
         r=(await self.run_cases([case],groups=(True,)))['results'][0]
         self.assertEqual(r['skill_usage']['unexpected_skills'],['file-summary'])
@@ -148,8 +151,8 @@ class EvaluationChecks(unittest.IsolatedAsyncioTestCase):
                 r.usage=N(prompt_tokens=11,completion_tokens=7)
                 return r
         report=await self.run_cases([self.cases[9]],groups=(False,),client_factory=lambda cfg,c:Usage(c,False))
-        self.assertEqual(report['results'][0]['input_tokens'],22)
-        self.assertEqual(report['results'][0]['output_tokens'],14)
+        self.assertEqual(report['results'][0]['input_tokens'],11)
+        self.assertEqual(report['results'][0]['output_tokens'],7)
 
     async def test_incomplete_plan_and_react_limit_fail(self):
         case=deepcopy(self.cases[3]);case['offline']['actions']=case['offline']['actions'][:1]

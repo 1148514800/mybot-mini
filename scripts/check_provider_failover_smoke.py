@@ -21,12 +21,12 @@ def fake_client(effects):
 class SmokeChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.cfg = GatewayConfig(provider='coco', model='deepseek-v4.1-flash', request_timeout_seconds=2,
-            api_key='synthetic-only', base_url='https://offline.invalid/v1', session_persist=False, skills_enabled=False)
+            api_key='synthetic-only', base_url='https://offline.invalid/v1',  skills_enabled=False)
         self.primary = fake_client([model_reply()])
         self.backup = fake_client([model_reply(), model_reply()])
         self.gateway = ProviderFailoverClient(self.primary, self.cfg, N(provider='coco2', model='glm-5.3-flash'), Mock(return_value=self.backup))
-        self.settings = [patch('mybot.config.GatewayConfig', return_value=self.cfg),
-                         patch('mybot.config._PROVIDERS', {'coco2': {'model': 'glm-5.3-flash'}}),
+        self.settings = [patch('mybot.config.load_config', return_value=self.cfg),
+                         patch.object(self.cfg, 'providers', {'coco2': {'model': 'glm-5.3-flash'}}),
                          patch('mybot.provider_failover.build_gateway_client', return_value=self.gateway)]
 
     async def probe(self, mode):
@@ -152,8 +152,8 @@ class SmokeChecks(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(primary.is_closed() and backup.is_closed())
 
     async def test_wrong_model_blocks_before_client(self):
-        with patch('mybot.config.GatewayConfig', return_value=self.cfg), \
-             patch('mybot.config._PROVIDERS', {'coco2': {'model': 'wrong'}}), \
+        with patch('mybot.config.load_config', return_value=self.cfg), \
+             patch.object(self.cfg, 'providers', {'coco2': {'model': 'wrong'}}), \
              patch('mybot.provider_failover.build_gateway_client') as build:
             with self.assertRaises(ValueError):
                 await run_live('forced', timeout=1)

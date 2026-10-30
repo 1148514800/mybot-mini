@@ -20,8 +20,8 @@ class ContractChecks(Base):
         contract,path,source,concept=CASES[name];(self.root/'src').mkdir(exist_ok=True)
         (self.root/'README.md').write_text(contract);(self.root/path).write_text(source)
         if name=='dispatch':(self.root/'src/routing.py').write_text('def choose(x): return x\n')
-        cfg=GatewayConfig(workspace=self.root,coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'macos_readonly'},
-            coding_autonomy={'enabled':True},session_persist=False,skills_enabled=False,mcp_enabled=False,max_react_steps=6)
+        cfg=GatewayConfig(context_token_budget={'input_limit':64000},workspace=self.root,coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'macos_readonly'},
+            coding_autonomy={'enabled':True},skills_enabled=False,mcp_enabled=False,max_react_steps=6)
         actions=[response(calls=[call('read-contract','read_file','{"path":"README.md"}')]),
                  response(calls=[call('read-entry','read_file',json.dumps({'path':path}))])]
         if name=='dispatch':actions.append(response(calls=[call('read-helper','read_file','{"path":"src/routing.py"}')]))

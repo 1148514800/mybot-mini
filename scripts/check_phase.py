@@ -14,13 +14,14 @@ async def check(debug):
     with tempfile.TemporaryDirectory() as folder:
         workspace = Path(folder)
         tools = legacy_registry(workspace)
-        calls = [N(id="1", function=N(name="write_file", arguments='{"path":"note.txt","content":"PRIVATE_BODY"}'))]
+        (workspace / "note.txt").write_text("PRIVATE_BODY")
+        calls = [N(id="1", function=N(name="read_file", arguments='{"path":"note.txt"}'))]
         responses = iter([N(choices=[N(message=N(content=None, tool_calls=calls), finish_reason='tool_calls' if calls else 'stop')], usage=N(total_tokens=42)), N(choices=[N(message=N(content="done", tool_calls=None), finish_reason='stop')], usage=None)])
         async def create(**kwargs):
             if len(kwargs["messages"]) > 2:
                 assert kwargs["messages"][-1]["role"] == "tool"
             return next(responses)
-        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=debug, workspace=workspace), tools, ContextBuilder(workspace))
+        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False,  debug=debug, workspace=workspace), tools, ContextBuilder(workspace))
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             assert await agent.handle_message("write a note") == "done"
@@ -28,7 +29,7 @@ async def check(debug):
         assert workspace.joinpath("note.txt").read_text() == "PRIVATE_BODY"
         if debug:
             assert "[LLM 1]" in log and "[LLM 2]" in log and "tokens=42" in log and "tokens=?" in log
-            assert "<12 chars>" in log and "PRIVATE_BODY" not in log and "success=True" in log
+            assert "PRIVATE_BODY" not in log and "success=True" in log
         else:
             assert not log
         assert not (await agent._execute("write_file", "{")).success
@@ -219,3 +220,9 @@ check_streaming_steer_web()
 
 from scripts.check_core_refactor import check_core_refactor
 check_core_refactor()
+
+# Product retirement and migration contracts supplement the complete historical suites.
+import unittest
+from scripts.check_lean_core_v2 import CoreV2Checks
+_v2_result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CoreV2Checks))
+if not _v2_result.wasSuccessful(): raise AssertionError("Lean Core v2 checks failed")

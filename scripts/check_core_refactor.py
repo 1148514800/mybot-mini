@@ -22,7 +22,7 @@ class CoreRefactorChecks(unittest.IsolatedAsyncioTestCase):
     async def exercise(self, channel, gate_result):
         with tempfile.TemporaryDirectory() as folder:
             cfg = configuration(Path(folder), session_backend='memory', context_enabled=False, coding_enabled=True,
-                coding_patch_mode='write', coding_command={'mode':'macos_readonly'},
+                mcp_enabled=True, coding_patch_mode='write', coding_command={'mode':'macos_readonly'},
                 coding_autonomy={'enabled':True, 'max_model_requests':2})
             backups = [replace(cfg, provider=n) for n in ('second', 'third')]
             clients = [client([failed()]), client([failed()]), client([response('must not send')])]
@@ -50,7 +50,7 @@ class CoreRefactorChecks(unittest.IsolatedAsyncioTestCase):
             original_handle = AgentLoop.handle_message
             with contextlib.redirect_stdout(io.StringIO()), patch.object(AgentLoop, 'handle_message', invoke):
                 if channel == 'direct':
-                    tools = build_configured_tool_registry(cfg, file_approval_provider=None, command_approval_provider=None)
+                    tools = build_configured_tool_registry(cfg, command_approval_provider=None)
                     agent = AgentLoop(gateway, cfg, tools, ContextBuilder(cfg.workspace))
                     try:
                         if isinstance(gate_result, Exception):
@@ -62,12 +62,12 @@ class CoreRefactorChecks(unittest.IsolatedAsyncioTestCase):
                         if isinstance(gate_result, Exception):
                             with self.assertRaises(PermissionError): await agent.handle_message('offline')
                         else: await agent.handle_message('offline')
-                    with patch('mybot.app.build_client', return_value=gateway), patch('mybot.app.MCPClientManager', Manager), patch.object(AgentLoop, 'run', run):
+                    with patch('mybot.app.build_client', return_value=gateway), patch('mybot.mcp_client.manager.MCPClientManager', Manager), patch.object(AgentLoop, 'run', run):
                         await run_gateway(cfg)
                 else:
                     runtime = ChatRuntime(cfg, client_factory=lambda _: gateway)
                     try:
-                        with patch('mybot.web.runtime.MCPClientManager', Manager):
+                        with patch('mybot.mcp_client.manager.MCPClientManager', Manager):
                             conv = runtime.new()
                             self.assertTrue(await runtime.start(conv, 'offline'))
                             await conv.task
@@ -119,15 +119,15 @@ class CoreRefactorChecks(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn(key, event['metadata'])
 
     def test_shared_config_getters_preserve_validation(self):
-        import mybot.config as config
-        for name in ('session','context','skills'):
-            getter = getattr(config, '_'+name+'_value')
-            with patch.object(config, '_CONFIG', {name:{'key':7}}):
-                self.assertEqual(getter('key', 0), 7)
-                self.assertEqual(getter('missing', 2), 2)
-            with patch.object(config, '_CONFIG', {name:None}):
-                with self.assertRaisesRegex(ValueError, '^'+name+' must be a JSON object$'):
-                    getter('key', 0)
+        from mybot.config import config_from_document, ConfigError
+        from scripts.check_lean_core_v2 import document
+        for name in ('session', 'context', 'skills'):
+            doc = document(); doc[name] = None
+            with self.assertRaisesRegex(ConfigError, 'CONFIG_SECTION_INVALID'):
+                config_from_document(doc)
+            doc[name] = {'unknown': 7}
+            with self.assertRaisesRegex(ConfigError, 'CONFIG_VALIDATION_FAILED'):
+                config_from_document(doc)
 
 
 def check_core_refactor():

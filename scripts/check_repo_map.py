@@ -131,7 +131,7 @@ class RepoMapChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(before,self.image())
 
     async def test_agent_can_call_without_auto_map_or_extra_model_requests(self):
-        cfg=GatewayConfig(workspace=self.root,coding_enabled=True,skills_enabled=False,context_enabled=False,session_persist=False)
+        cfg=GatewayConfig(workspace=self.root,coding_enabled=True,skills_enabled=False,context_enabled=False)
         seen=[]
         class Client:
             def __init__(self,use_map):self.use_map=use_map;self.chat=type('Chat',(),{'completions':self})();self.count=0
@@ -150,7 +150,7 @@ class WebMapChecks(unittest.IsolatedAsyncioTestCase):
     async def test_on_demand_auth_csrf_and_no_provider(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary).resolve();git(root,'init','-q');(root/'sample.py').write_text('class Example: pass\n');git(root,'add','.')
-            cfg=GatewayConfig(workspace=root,skills_enabled=False,context_enabled=False,session_persist=False)
+            cfg=GatewayConfig(workspace=root,skills_enabled=False,context_enabled=False)
             def forbidden(_):raise AssertionError('repo map must not create a model client')
             app=create_app(cfg,client_factory=forbidden);http=httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://127.0.0.1:8765')
             try:

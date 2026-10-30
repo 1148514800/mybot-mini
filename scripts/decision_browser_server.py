@@ -11,7 +11,7 @@ def make_app(root,port):
     root=Path(root).resolve()
     if not root.is_dir() or root.is_symlink() or root.stat().st_mode&0o077:raise ValueError('private temporary root required')
     cfg=configuration(root,context_max_chars=60000,context_recent_turns=6,
-        context_token_budget={'mode':'estimate','input_limit':30000},coding_file_access='read_only',coding_command={'mode':'off'})
+        context_token_budget={'mode':'estimate','input_limit':30000},coding_command={'mode':'off'})
     class DecisionSynthetic(SyntheticClient):
         async def create(self,**request):
             # Only public synthetic data; this file stays outside Git.

@@ -16,6 +16,7 @@ import unittest
 from types import SimpleNamespace as N
 from unittest.mock import AsyncMock, patch
 
+from mybot.config import GatewayConfig
 from scripts.check_coding_campaign import CampaignChecks
 from scripts.coding_benchmark_demo import DemoClient
 from mybot.evaluation import coding_campaign as c
@@ -36,7 +37,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
     report = CampaignChecks.report
 
     async def eval(self, **kw):
-        opts=dict(case_ids=['cache-ttl-001'],limits=Limits(max_cases=1,max_requests=12),
+        opts=dict(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), case_ids=['cache-ttl-001'],limits=Limits(max_cases=1,max_requests=12),
             offline_client_factory=lambda public:DemoClient())
         opts.update(kw)
         return await evaluate(**opts)
@@ -93,7 +94,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
             entered.set();await asyncio.Event().wait()
         with patch.object(c,'evaluate',worker):
             task=asyncio.create_task(c.run_next(self.root,live=True,confirm_api_cost=True))
-            await entered.wait();task.cancel()
+            await asyncio.wait_for(entered.wait(), 10);task.cancel()
             with self.assertRaises(asyncio.CancelledError):await task
         with patch.object(c,'evaluate',AsyncMock()) as e:
             with self.assertRaises(ValueError):await c.run_next(self.root,live=True,confirm_api_cost=True)
@@ -114,7 +115,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
             entered.set()
             try:await asyncio.Event().wait()
             finally:cleaning.set();await release.wait()
-        parent=asyncio.create_task(a.run(work(),60));await entered.wait();parent.cancel();await cleaning.wait()
+        parent=asyncio.create_task(a.run(work(),60));await asyncio.wait_for(entered.wait(), 10);parent.cancel();await cleaning.wait()
         parent.cancel();await asyncio.sleep(0);self.assertFalse(parent.done())
         release.set()
         with self.assertRaises(asyncio.CancelledError):await parent
@@ -126,14 +127,14 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
             entered.set()
             try:await asyncio.Event().wait()
             except asyncio.CancelledError:return 'pretend success'
-        task=asyncio.create_task(a.run(work(),60));await entered.wait();task.cancel()
+        task=asyncio.create_task(a.run(work(),60));await asyncio.wait_for(entered.wait(), 10);task.cancel()
         with self.assertRaises(asyncio.CancelledError):await task
         self.assertNotEqual(a.reason,'completed')
 
     async def test_unsettled_task_retains_workspace(self):
         a=Attempt();entered=asyncio.Event();release=asyncio.Event()
         async def work():entered.set();await release.wait()
-        task=asyncio.create_task(work());await entered.wait()
+        task=asyncio.create_task(work());await asyncio.wait_for(entered.wait(), 10)
         await a.settle(task,timeout=0)
         self.assertFalse(a.cleanup_confirmed)
         with WorkspaceDirectory() as directory:
@@ -154,7 +155,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
         class Late(OfflineClient):
             async def create(self,**kw):entered.set();await release.wait();return await super().create(**kw)
         budget=RequestBudget(Limits());client=CodingClient(Late(),trace,budget)
-        task=asyncio.create_task(client.create(messages=[]));await entered.wait();a.revoke('expired');release.set()
+        task=asyncio.create_task(client.create(messages=[]));await asyncio.wait_for(entered.wait(), 10);a.revoke('expired');release.set()
         with self.assertRaises(asyncio.CancelledError):await task
         self.assertEqual(budget.successes,0)
 
@@ -222,7 +223,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
         async def create(client,**kw):entered.set();return await original(client,**kw)
         Deadline.create=create
         async def expire(attempt,coroutine,timeout):
-            task=asyncio.create_task(coroutine);await entered.wait();attempt.revoke('task_timeout');task.cancel();await attempt.settle(task);raise TimeoutError
+            task=asyncio.create_task(coroutine);await asyncio.wait_for(entered.wait(), 10);attempt.revoke('task_timeout');task.cancel();await attempt.settle(task);raise TimeoutError
         with patch.object(Attempt,'run',expire):
             r=await self.eval(limits=Limits(max_cases=1,repeats=2),offline_client_factory=lambda public:Deadline())
         self.assertEqual(len(r['results']),1);self.assertEqual(len(calls),1)
@@ -285,7 +286,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
         entered=asyncio.Event()
         async def pending(request):entered.set();await asyncio.Event().wait()
         async def expire(attempt,coroutine,timeout):
-            task=asyncio.create_task(coroutine);await entered.wait();attempt.revoke('task_timeout')
+            task=asyncio.create_task(coroutine);await asyncio.wait_for(entered.wait(), 10);attempt.revoke('task_timeout')
             task.cancel();await attempt.settle(task);raise TimeoutError
         with patch.object(Attempt,'run',expire):r=(await self.eval(command_provider=pending))['results'][0]
         self.assertEqual(r['runtime_error'],'task_timeout');self.assertEqual(r['agent_state'],'cancelled')
@@ -334,7 +335,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
             return await original(tool,**kw)
         async def expire(attempt,coroutine,timeout):
             task=asyncio.create_task(coroutine);children.append(task)
-            await entered.wait();attempt.revoke('task_timeout');task.cancel()
+            await asyncio.wait_for(entered.wait(), 10);attempt.revoke('task_timeout');task.cancel()
             await attempt.settle(task,timeout=0);raise TimeoutError
         with patch.object(ApplyPatchTool,'execute',delayed),patch.object(Attempt,'run',expire):
             report=await self.eval(limits=Limits(max_cases=1,repeats=2))
@@ -352,7 +353,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
         raw.close=close
         with patch('mybot.evaluation.coding_benchmark.live_client',AsyncMock(return_value=raw)):
             task=asyncio.create_task(self.eval(live=True,confirm_api_cost=True,offline_client_factory=None))
-            await entered.wait();task.cancel();await asyncio.sleep(0);self.assertFalse(task.done())
+            await asyncio.wait_for(entered.wait(), 10);task.cancel();await asyncio.sleep(0);self.assertFalse(task.done())
             release.set()
             with self.assertRaises(asyncio.CancelledError):await task
 
@@ -415,7 +416,7 @@ class ReliabilityChecks(unittest.IsolatedAsyncioTestCase):
         async def interrupted(agent,prompt):raise asyncio.CancelledError
         master,slave=pty.openpty()
         try:
-            with os.fdopen(os.dup(slave),'r') as stdin,os.fdopen(os.dup(slave),'w') as output,patch('sys.stdin',stdin),contextlib.redirect_stdout(output),patch.object(external,'create_repository',record),patch.object(external,'live_client',AsyncMock(return_value=raw)),patch.object(external,'verify',AsyncMock(return_value={'success':True})) as verify,patch.object(BenchmarkAgent,'handle_message',interrupted):
+            with os.fdopen(os.dup(slave),'r') as stdin,os.fdopen(os.dup(slave),'w') as output,patch('sys.stdin',stdin),contextlib.redirect_stdout(output),patch.object(external,'create_repository',record),patch.object(external,'load_config',return_value=GatewayConfig(context_token_budget={'input_limit':160000})),patch.object(external,'live_client',AsyncMock(return_value=raw)),patch.object(external,'verify',AsyncMock(return_value={'success':True})) as verify,patch.object(BenchmarkAgent,'handle_message',interrupted):
                 with self.assertRaises(ValueError):await external.execute(source,dest)
             self.assertEqual(verify.await_count,2);raw.close.assert_awaited_once()
             self.assertTrue((dest/'terminal.json').exists());self.assertFalse((dest/'finished.json').exists())

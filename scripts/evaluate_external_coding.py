@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 
-from mybot.config import GatewayConfig
+from mybot.config import load_config
 from mybot.agent import ContextBuilder
 from mybot.agent.git_workflow import GitBaseline
 from mybot.evaluation.coding_benchmark import configuration
@@ -83,7 +83,7 @@ async def execute(source, dest):
     trace.attempt=attempt
     with WorkspaceDirectory() as workspace:
         parent=workspace.path;root=create_repository(parent/'agent',images)
-        config=configuration(GatewayConfig(),root,LIMITS)
+        config=configuration(load_config(),root,LIMITS)
         provider=AttemptApproval(attempt,output=sys.stdout)
         tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command,command_approval_provider=provider)
         baseline_result=await verify(tools)

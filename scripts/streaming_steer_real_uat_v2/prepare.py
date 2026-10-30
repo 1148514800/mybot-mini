@@ -33,16 +33,16 @@ def prepare(batch,provider_config,browser_evidence):
     for name,text in FIXTURES.items():
         path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text)
     cfg=config_for(batch,dict(model='deepseek-v4.1-flash',base_url='https://offline.invalid/v1',api_key=None))
-    names=[d['function']['name'] for d in ReadRegistry(build_default_tool_registry(root,coding_enabled=False,file_access='read_only'),[]).get_definitions()]
+    names=[d['function']['name'] for d in ReadRegistry(build_default_tool_registry(root,coding_enabled=False),[]).get_definitions()]
     if names or not cfg.web_steer or not cfg.web_streaming or cfg.context_compaction['mode']!='deterministic' or cfg.mcp_enabled or cfg.skills_enabled or cfg.coding_enabled or cfg.coding_command['mode']!='off':raise BudgetStop('unsafe_config')
-    tool_sets={c:[d['function']['name'] for d in ReadRegistry(build_default_tool_registry(root,coding_enabled=False,file_access='read_only'),['read_file','list_files'] if c=='T01' else []).get_definitions()] for c in LIMITS}
+    tool_sets={c:[d['function']['name'] for d in ReadRegistry(build_default_tool_registry(root,coding_enabled=False),['read_file','list_files'] if c=='T01' else []).get_definitions()] for c in LIMITS}
     if set(tool_sets['T01'])!={'read_file','list_files'} or tool_sets['T02'] or tool_sets['T03']:raise BudgetStop('unsafe_registry')
     lease=WorkspaceLease(root).acquire();lease.release()
     engine=open_store(cfg,'web');event_identity=[engine.path.stat().st_dev,engine.path.stat().st_ino];engine.close()
     ledger=Ledger(batch/'private/requests.sqlite',plan_hash())
     private_json(batch/'browser-isolation.json',probe)
     data=dict(version=1,authorization='NOT_GRANTED',contract=contract(),plan_sha256=plan_hash(),provider=provider,provider_config_path=str(Path(provider_config).resolve()),workspace_hashes=fingerprint(root),workspace_identity=[root.stat().st_dev,root.stat().st_ino],event_identity=event_identity,ledger_identity=list(ledger.identity),event_path=str(cfg.session_event_path),ledger_path=str(ledger.path),browser_evidence_sha256=file_hash(batch/'browser-isolation.json'),
-        configuration={k:getattr(cfg,k) for k in ('session_max_turns','coding_enabled','coding_file_access','coding_patch_mode','mcp_enabled','skills_enabled','max_react_steps','max_completion_tokens','request_timeout_seconds','context_token_budget','context_compaction','web_streaming','web_steer')},environment=dict(local_only=True,real_requests=0,credential_remote_validity='UNVERIFIED',tool_names=tool_sets,workspace_lease='acquired_and_released'))
+        configuration={k:getattr(cfg,k) for k in ('session_max_turns','coding_enabled','coding_patch_mode','mcp_enabled','skills_enabled','max_react_steps','max_completion_tokens','request_timeout_seconds','context_token_budget','context_compaction','web_streaming','web_steer')},environment=dict(local_only=True,real_requests=0,credential_remote_validity='UNVERIFIED',tool_names=tool_sets,workspace_lease='acquired_and_released'))
     private_json(batch/'prepared.json',data);return data
 
 def freeze(batch,provider_config):

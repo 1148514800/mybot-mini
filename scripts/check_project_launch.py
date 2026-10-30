@@ -28,7 +28,7 @@ class LaunchChecks(unittest.TestCase):
         git(self.repo,'init','-q','--initial-branch=example');git(self.repo,'config','user.name','Offline');git(self.repo,'config','user.email','offline@invalid.local')
         (self.repo/'example.py').write_text('VALUE = 42\n');git(self.repo,'add','example.py');git(self.repo,'commit','-qm','fixture')
         self.config=self.root/'config.json';self.document=dict(llm=dict(provider='second',providers={n:dict(api_key=n+'-private-key',base_url='https://'+n+'.invalid/v1',model=n+'-model') for n in ('first','second','third')}),workspace=dict(path=str(self.repo)))
-        self.config.write_text(json.dumps(self.document));self.cfg=GatewayConfig(workspace=self.repo,provider='second',api_key='second-private-key',model='second-model',base_url='https://second.invalid/v1',skills_enabled=False,context_enabled=False,session_persist=False)
+        self.config.write_text(json.dumps(self.document));self.cfg=GatewayConfig(workspace=self.repo,provider='second',api_key='second-private-key',model='second-model',base_url='https://second.invalid/v1',skills_enabled=False,context_enabled=False)
 
     def prepare(self,workspace=None,cfg=None):
         return prepare_launch(workspace,config_path=self.config,config_factory=lambda:cfg or self.cfg)
@@ -132,7 +132,7 @@ class LaunchChecks(unittest.TestCase):
         self.assertEqual(json.loads(out.getvalue())['error_type'],'CONFIG_JSON_INVALID')
 
     def test_package_and_web_entry_do_not_eagerly_import_config(self):
-        code="import sys; import mybot.web.__main__; assert 'mybot.config' not in sys.modules; assert 'uvicorn' not in sys.modules; assert 'mybot.web.server' not in sys.modules"
+        code="import sys; import mybot.web.__main__; assert not hasattr(sys.modules.get('mybot.config'), '_CONFIG'); assert 'uvicorn' not in sys.modules; assert 'mybot.web.server' not in sys.modules"
         subprocess.run([sys.executable,'-c',code],check=True,capture_output=True)
 
     def test_storage_inside_project_rejected_before_runtime(self):
@@ -146,7 +146,7 @@ class ProjectWebChecks(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary).resolve();repo=root/'project';repo.mkdir();(repo/'source.py').write_text('VALUE = 42\n')
             git(repo,'init','-q','--initial-branch=project');git(repo,'add','.');git(repo,'-c','user.name=Offline','-c','user.email=offline@invalid.local','commit','-qm','fixture')
-            project=await inspect_project(repo);cfg=GatewayConfig(workspace=repo,skills_enabled=False,context_enabled=False,session_persist=False,coding_enabled=True,coding_patch_mode='off',provider='mock',model='mock',api_key='synthetic-key')
+            project=await inspect_project(repo);cfg=GatewayConfig(workspace=repo,skills_enabled=False,context_enabled=False,coding_enabled=True,coding_patch_mode='off',provider='mock',model='mock',api_key='synthetic-key')
             seen=[]
             class Client:
                 def __init__(self):self.chat=type('Chat',(),{'completions':self})();self.step=0
@@ -171,7 +171,7 @@ class ProjectWebChecks(unittest.IsolatedAsyncioTestCase):
     async def test_non_coding_project_chat_does_not_seed_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary).resolve();(root/'source.py').write_text('VALUE=1\n')
-            cfg=GatewayConfig(workspace=root,skills_enabled=False,context_enabled=False,session_persist=False)
+            cfg=GatewayConfig(workspace=root,skills_enabled=False,context_enabled=False)
             class Client:
                 def __init__(self):self.chat=type('Chat',(),{'completions':self})()
                 async def create(self,**args):return response('hello')
@@ -185,7 +185,7 @@ class ProjectWebChecks(unittest.IsolatedAsyncioTestCase):
     async def test_project_mode_readonly_chat_skips_initialization_and_lease_still_applies(self):
         from mybot.workspace_lease import WorkspaceLease
         with tempfile.TemporaryDirectory() as temporary:
-            root=Path(temporary).resolve();cfg=GatewayConfig(workspace=root,skills_enabled=False,context_enabled=False,session_persist=False)
+            root=Path(temporary).resolve();cfg=GatewayConfig(workspace=root,skills_enabled=False,context_enabled=False)
             class Client:
                 async def close(self):pass
             factory=Mock(return_value=Client())

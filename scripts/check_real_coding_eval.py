@@ -60,7 +60,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         return await judge(self.case,candidate,self.validation,**options)
 
     async def evaluation(self,**kw):
-        options=dict(limits=Limits(max_cases=1,max_requests=12),case_ids=['cache-ttl-001'])
+        options=dict(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), limits=Limits(max_cases=1,max_requests=12),case_ids=['cache-ttl-001'])
         options.update(kw);return await evaluate(**options)
 
     async def demo_run(self,policy='correct',**kw):
@@ -189,13 +189,13 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(r['agent_state']=='completed_without_changes' for r in report['results']))
 
     def test_configuration_closes_mcp_skills_session_undo(self):
-        cfg=configuration(GatewayConfig(),self.root,Limits())
-        self.assertFalse(cfg.mcp_enabled or cfg.skills_enabled or cfg.session_persist or cfg.debug or cfg.coding_git_workflow['undo_enabled'])
+        cfg=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, ),self.root,Limits())
+        self.assertFalse(cfg.mcp_enabled or cfg.skills_enabled or cfg.storage_backend != 'memory' or cfg.debug or cfg.coding_git_workflow['undo_enabled'])
         self.assertTrue(cfg.coding_git_workflow['enabled'] and cfg.coding_autonomy['enabled'])
         self.assertEqual(cfg.coding_command['mode'],'macos_readonly')
 
     def test_native_registry_and_schemas_unchanged(self):
-        cfg=configuration(GatewayConfig(),self.root,Limits())
+        cfg=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, ),self.root,Limits())
         tools=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',command=cfg.coding_command)
         self.assertIs(type(tools.get_tool('apply_patch')),ApplyPatchTool);self.assertIs(type(tools.get_tool('run_command')),RunCommandTool)
         self.assertFalse(tools.has_tool('write_file') or tools.has_tool('undo'))
@@ -216,32 +216,32 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_live_double_gate(self):
         for live,confirm in [(True,False),(False,True),(1,True)]:
-            with self.assertRaises(ValueError):await evaluate(live=live,confirm_api_cost=confirm)
+            with self.assertRaises(ValueError):await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), live=live,confirm_api_cost=confirm)
 
     async def test_live_synthetic_override_refused(self):
-        with self.assertRaises(ValueError):await evaluate(live=True,confirm_api_cost=True,offline_client_factory=lambda c:OfflineClient())
-        with self.assertRaises(ValueError):await evaluate(live=True,confirm_api_cost=True,command_provider=lambda r:True)
+        with self.assertRaises(ValueError):await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), live=True,confirm_api_cost=True,offline_client_factory=lambda c:OfflineClient())
+        with self.assertRaises(ValueError):await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), live=True,confirm_api_cost=True,command_provider=lambda r:True)
 
     async def test_missing_credentials_before_sdk(self):
-        cfg=configuration(GatewayConfig(api_key=None),self.root,Limits())
+        cfg=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, api_key=None),self.root,Limits())
         with patch('mybot.evaluation.coding_live.build_client') as build,self.assertRaises(ValueError):
             await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
         build.assert_not_called()
 
     async def test_live_non_tty_refused(self):
-        cfg=configuration(GatewayConfig(api_key='fixture-only'),self.root,Limits())
+        cfg=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, api_key='fixture-only'),self.root,Limits())
         with patch('sys.stdin.isatty',return_value=False),patch('mybot.evaluation.coding_live.build_client') as build,self.assertRaises(ValueError):
             await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
         build.assert_not_called()
 
     async def test_live_requires_verified_sandbox(self):
-        cfg=configuration(GatewayConfig(api_key='fixture-only'),self.root,Limits())
+        cfg=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, api_key='fixture-only'),self.root,Limits())
         with patch('sys.stdin.isatty',return_value=True),patch('sys.stdout.isatty',return_value=True),patch('mybot.tools.macos_sandbox.verify_sandbox',return_value=False),patch('mybot.evaluation.coding_live.build_client') as build,self.assertRaises(ValueError):
             await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
         build.assert_not_called()
 
     async def test_live_pins_retries_no_real_api(self):
-        cfg=configuration(GatewayConfig(api_key='fixture-only'),self.root,Limits())
+        cfg=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, api_key='fixture-only'),self.root,Limits())
         sdk=N(with_options=lambda **kw:kw)
         with contextlib.redirect_stdout(io.StringIO()),patch('sys.stdin.isatty',return_value=True),patch('sys.stdout.isatty',return_value=True),patch('mybot.tools.macos_sandbox.verify_sandbox',return_value=True),patch('mybot.evaluation.coding_live.build_client',return_value=sdk):
             result=await live_client(cfg,Limits(),live=True,confirm_api_cost=True,cases=1,prices=None)
@@ -613,7 +613,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(r['failure'],'approval_denied');self.assertEqual(r['metrics']['real_test_runs'],0)
 
     async def test_global_budget_across_tasks(self):
-        report=await evaluate(limits=Limits(max_cases=2,max_requests=1))
+        report=await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), limits=Limits(max_cases=2,max_requests=1))
         self.assertEqual(report['llm_requests'],1);self.assertEqual(report['attempted_cases'],1)
         self.assertEqual(report['unscored_cases'],1);self.assertEqual(report['total_cases'],2)
 
@@ -741,7 +741,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_synthetic_live_sdk_cleanup_without_network(self):
         client=OfflineClient();client.close=AsyncMock()
-        cfg=GatewayConfig(api_key='fixture-only',provider='fixture',model='mock')
+        cfg=GatewayConfig(context_token_budget={'input_limit':160000}, api_key='fixture-only',provider='fixture',model='mock')
         with patch('mybot.evaluation.coding_benchmark.live_client',AsyncMock(return_value=client)):
             r=await self.evaluation(live=True,confirm_api_cost=True,base_config=cfg)
         client.close.assert_awaited_once();self.assertEqual(r['llm_requests'],1)
@@ -805,7 +805,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
 
     def test_sensitive_provider_labels_hidden(self):
         from mybot.evaluation.coding_live import labels
-        cfg=GatewayConfig(model='fixture-private-key',api_key='fixture-private-key',provider='/Users/private/provider')
+        cfg=GatewayConfig(context_token_budget={'input_limit':160000}, model='fixture-private-key',api_key='fixture-private-key',provider='/Users/private/provider')
         self.assertEqual(labels(cfg),{'model':'<unavailable>','provider':'<unavailable>'})
 
     async def test_legacy_function_call_not_silent_completion(self):
@@ -911,7 +911,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
                         patch('mybot.evaluation.coding_live.build_client') as build:
                     result=await run_task(self.case,self.validation,self.benchmark,trusted_seal(),self.root,
                         repeat=1,limits=limits,budget=RequestBudget(limits),
-                        base=GatewayConfig(api_key='SYNTHETIC_CREDENTIAL'),raw=NoisyDemo(),live=True)
+                        base=GatewayConfig(context_token_budget={'input_limit':160000}, api_key='SYNTHETIC_CREDENTIAL'),raw=NoisyDemo(),live=True)
                 build.assert_not_called()
             chunks=[]
             while select.select([master],[],[],0)[0]:chunks.append(os.read(master,65536))
@@ -1034,7 +1034,7 @@ class CodingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(metrics['protocol_false_verified_count'],0)
 
     def test_timeout_schema_and_hint_match_each_command_configuration(self):
-        base=GatewayConfig()
+        base=GatewayConfig(context_token_budget={'input_limit':160000}, )
         evaluation=configuration(base,self.root,Limits(task_timeout=600,request_timeout=120))
         self.assertEqual(evaluation.coding_command['timeout_seconds'],30)
         for seconds in (1,7,30,60):

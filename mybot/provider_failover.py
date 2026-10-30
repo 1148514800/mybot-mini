@@ -141,32 +141,18 @@ class ProviderFailoverClient:
             if isinstance(result, BaseException): raise result
 
 
-def provider_order(default, providers):
-    """JSON declaration order, rotated to the default; no client construction."""
-    if not isinstance(providers, dict) or any(not isinstance(n,str) or not n for n in providers):
-        raise ValueError('invalid_provider_configuration')
-    names = list(providers)
-    if default in names:
-        start = names.index(default)
-        names = names[start:] + names[:start]
-    return names
-
-
-def validate_provider(raw):
-    if (not isinstance(raw, dict) or
-        any(not isinstance(raw.get(k), str) or not raw[k].strip() for k in ('api_key','base_url','model')) or
-        raw['api_key'].startswith('YOUR_')):
-        raise ValueError('invalid_provider_configuration')
+from .config import validate_provider, provider_order
 
 
 def build_gateway_client(config):
-    from .config import _PROVIDERS, build_client
+    from .config import build_client
+    providers = config.providers
     configs = []
-    names = provider_order(config.provider, _PROVIDERS)
+    names = provider_order(config.provider, providers)
     if config.provider not in names:
         configs.append(config)  # Legacy top-level credentials/config remain supported.
     for name in names:
-        raw = _PROVIDERS[name]
+        raw = providers[name]
         validate_provider(raw)
         configs.append(replace(config, provider=name, **{k:raw[k] for k in ('api_key','base_url','model')}))
 

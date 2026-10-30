@@ -3,15 +3,8 @@ CAPABILITIES = frozenset({'read_only', 'workspace_mutation', 'command_execution'
                           'external_side_effect', 'metadata_only'})
 
 
-def validate_file_access(value, patch_mode):
-    if type(value) is not str or value not in ('read_only', 'legacy_confirm'):
-        raise ValueError('coding.file_access must be read_only or legacy_confirm')
-    if value == 'legacy_confirm' and patch_mode != 'off':
-        raise ValueError('legacy write and native Patch are mutually exclusive')
-
-
 def native_capability(tool):
-    from .file import ReadFileTool, WriteFileTool
+    from .file import ReadFileTool
     from .list_files import ListFilesTool
     from .repo_map import RepoMapTool
     from .search_code import SearchCodeTool
@@ -28,7 +21,7 @@ def native_capability(tool):
         'read_only': (RepoMapTool, ReadFileTool, ListFilesTool, SearchCodeTool, ReadFileRangeTool,
                       GitStatusTool, GitDiffTool, SkillTool),
         'metadata_only': (PlanningTool, DiscoveryTool, ContractTool),
-        'workspace_mutation': (WriteFileTool, ApplyPatchTool),
+        'workspace_mutation': (ApplyPatchTool,),
         'command_execution': (RunCommandTool,),
         'external_side_effect': (MCPToolAdapter,),
     }

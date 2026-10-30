@@ -55,8 +55,7 @@ def make_app(case,batch,config_path,port=8878,preview=False):
         private_json(private/f'{case}-response-{reservation:02}.json',body)
     def factory(settings):
         if preview:raise BudgetStop('preview_cannot_send_models')
-        import mybot.config as module
-        module._PROVIDERS=providers  # memory-only load, same official gateway builder
+        settings.providers=providers  # memory-only load, same official gateway builder
         gateway=build_gateway_client(settings)
         gateway._primary=BudgetClient(gateway._primary,settings,ledger,case,observe)
         original=gateway._factory

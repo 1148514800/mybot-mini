@@ -108,7 +108,7 @@ class AccountingChecks(Base):
         from scripts.legacy_write_fixture import legacy_registry
         tools=legacy_registry(self.root);(self.root/'large').write_text('a'*60000)
         read=await tools.execute('read_file',{'path':'large'});self.assertTrue(read.metadata['truncated']);self.assertIn('不能据此声称完整读取',read.output)
-        write=await tools.execute('write_file',{'path':'utf8','content':'中文'});self.assertIn('6 bytes',write.output)
+        write=await tools.execute('write_file',{'path':'utf8','content':'中文'});self.assertEqual(write.error, 'TOOL_RETIRED_WRITE_FILE');self.assertFalse((self.root/'utf8').exists())
     async def test_usage_invalid_values_unknown(self):
         self.assertEqual(usage_values(N(prompt_tokens=True,completion_tokens=-1,total_tokens='3')),dict(prompt_tokens=None,completion_tokens=None,total_tokens=None))
     async def test_workspace_lease_process_collision_and_crash_release(self):

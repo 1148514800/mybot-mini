@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import uuid
 
-from ..config import GatewayConfig, PROJECT_DIR
+from ..config import load_config, GatewayConfig, PROJECT_DIR
 from . import coding_campaign as legacy
 from .coding_failover import evaluate, settings, POLICY
 from .coding_live import Limits, labels
@@ -13,7 +13,7 @@ from .coding_fixtures import load_benchmark
 
 
 def base_config(live):
-    return GatewayConfig(**({} if live else dict(provider='coco',model='deepseek-v4.1-flash',api_key=None,base_url=None)))
+    return (load_config() if live else GatewayConfig(provider='coco',model='deepseek-v4.1-flash'))
 
 
 def freeze(mode, live, limits, case_id, fault_mode='none'):

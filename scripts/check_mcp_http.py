@@ -228,7 +228,7 @@ class HTTPChecks(unittest.IsolatedAsyncioTestCase):
         cfg.mcp_servers['web']['url']=self.url+'/missing'
         with self.assertRaises(MCPStartupError):
             async with MCPClientManager(cfg,self.tools):pass
-        self.assertEqual(len(self.tools.get_definitions()),3)
+        self.assertEqual(len(self.tools.get_definitions()),2)
 
     async def test_allowlist_and_deny_direct_adapter_manager(self):
         await self.start()
@@ -357,7 +357,7 @@ class HTTPChecks(unittest.IsolatedAsyncioTestCase):
             await self.start(mode)
             with self.assertRaises(MCPStartupError):
                 async with self.manager():pass
-            self.assertEqual(len(self.tools.get_definitions()),3)
+            self.assertEqual(len(self.tools.get_definitions()),2)
         await self.start();self.url+='/missing'
         with self.assertRaises(MCPStartupError) as caught:
             async with self.manager():pass

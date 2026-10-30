@@ -14,7 +14,7 @@ class CampaignChecks(unittest.IsolatedAsyncioTestCase):
         self.root=Path(self.tmp.name)/'campaign'
         self.g=patch.object(c,'git',side_effect=lambda *a:'' if a[0]=='status' else 'a'*40);self.g.start();self.addCleanup(self.g.stop)
         from mybot.config import GatewayConfig
-        self.freeze=c.freeze(GatewayConfig(provider='coco2',model='gpt-6-astra',api_key=None,base_url=None,coding_task_contract=False))
+        self.freeze=c.freeze(GatewayConfig(context_token_budget={'input_limit':160000}, provider='coco2',model='gpt-6-astra',api_key=None,base_url=None,coding_task_contract=False))
         self.p=patch.object(c,'freeze',return_value=self.freeze);self.p.start();self.addCleanup(self.p.stop)
 
     def init(self,live=True):return c.create(self.root,rounds=3,live=live)
@@ -156,7 +156,7 @@ class CampaignChecks(unittest.IsolatedAsyncioTestCase):
         from mybot.evaluation.coding_live import CodingClient, RequestBudget
         from mybot.agent import ContextBuilder
         root=create_repository(Path(self.tmp.name).resolve()/'external',{'sample.py':Image(b'x = 1\n',0o644)})
-        config=configuration(GatewayConfig(),root,c.LIMITS)
+        config=configuration(GatewayConfig(context_token_budget={'input_limit':160000}, ),root,c.LIMITS)
         tools=build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=config.coding_command)
         trace=CodingTrace()
         agent=BenchmarkAgent(CodingClient(OfflineClient(),trace,RequestBudget(c.LIMITS)),config,tools,ContextBuilder(root),trace=trace)

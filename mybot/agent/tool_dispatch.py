@@ -9,6 +9,7 @@ from ..tools import ToolResult
 
 
 async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
+    if name == 'write_file': return self.tools.retired()
     if self.tools.is_metadata(name):
         return await self._execute_tool(name, raw_arguments)
     error = self.plan.execution_error()
@@ -26,6 +27,7 @@ async def _execute(self, name: str, raw_arguments: Any) -> ToolResult:
 
 
 async def _execute_tool(self, name: str, raw_arguments: Any) -> ToolResult:
+    if name == 'write_file': return self.tools.retired()
     from .task_contract import ContractTool, MAX_BYTES
     if name == 'record_task_contract' and type(self.tools.get_tool(name)) is ContractTool:
         from ..tools.arguments import parse_object
@@ -63,7 +65,6 @@ async def _execute_tool(self, name: str, raw_arguments: Any) -> ToolResult:
         return ToolResult(success=False, error=f"invalid JSON arguments: {exc}")
     if not isinstance(arguments, dict):
         return ToolResult(success=False, error="arguments must be a JSON object")
-    if name == 'write_file' and not self.tools.has_tool(name): return self.tools.denied()
     if not self.tools.has_tool(name):
         return ToolResult(success=False, error=f"unknown tool '{name}'")
     schema = self.tools.get_parameters(name)

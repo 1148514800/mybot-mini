@@ -16,18 +16,12 @@ from types import SimpleNamespace as N
 
 from ..agent.planning import Plan
 from ..agent.context import ContextBuilder
-from ..config import GatewayConfig, PROJECT_DIR, build_client
+from ..config import load_config, GatewayConfig, PROJECT_DIR, build_client
 from ..tools import build_default_tool_registry
-from ..tools.file_approval import cli_file_approval
-from ..mcp_client.approval import ApprovalDecision
 
 from .grader import grade, summarize
 from .artifacts import retain_outputs
 from .trace import Trace, TracedAgent, TracedClient
-
-
-async def offline_file_approval(request):
-    return ApprovalDecision.APPROVE
 
 
 def safe_path(path):
@@ -129,10 +123,10 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
         raise ValueError('Invalid/duplicate comparison groups')
     retention_cases = {hashlib.sha256(json.dumps(c,sort_keys=True,ensure_ascii=False).encode()).hexdigest() for c in load_cases()} if retain_artifacts is not None else set()
     cases = select_cases(load_cases() if cases is None else cases,case_ids,max_cases)
-    base = base_config or GatewayConfig(session_persist=False, skills_enabled=False, context_enabled=True,
+    base = base_config or (load_config() if live else GatewayConfig( skills_enabled=False, context_enabled=True,
                                        context_max_chars=40000, context_tool_result_max_chars=1000,
-                                       debug=False, max_react_steps=16)
-    common = replace(base, session_persist=False, debug=False, mcp_enabled=False, mcp_servers={},
+                                       debug=False, max_react_steps=16))
+    common = replace(base,  debug=False, mcp_enabled=False, mcp_servers={},
                      mcp_discovery={"enabled":False})
     budget = {'used': 0, 'maximum': max_requests}
     results = []
@@ -160,8 +154,7 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
                             target = workspace / safe_path(path)
                             target.parent.mkdir(parents=True, exist_ok=True)
                             target.write_text(fixture_text(value), encoding='utf-8')
-                        config = replace(common, workspace=workspace, skills_enabled=enabled,
-                                         session_path=Path(folder) / 'state/session.json')
+                        config = replace(common, workspace=workspace, skills_enabled=enabled)
                         agent, reply = None, ''
                         if budget['used'] >= max_requests:
                             trace.error = 'model_request_limit'
@@ -169,7 +162,7 @@ async def evaluate(cases=None, *, live=False, repeats=1, max_cases=10, max_reque
                             try:
                                 raw_client = client if live else (client_factory(config, case) if client_factory else OfflineClient(case, group))
                                 agent = TracedAgent(TracedClient(raw_client, trace, budget), config,
-                                                    build_default_tool_registry(workspace, file_access='legacy_confirm', file_approval_provider=cli_file_approval if live else offline_file_approval), ContextBuilder(workspace), trace=trace)
+                                                    build_default_tool_registry(workspace), ContextBuilder(workspace), trace=trace)
                                 # Plan output may contain task-derived text: never write it to terminal/report.
                                 with contextlib.redirect_stdout(io.StringIO()):
                                     reply = await asyncio.wait_for(agent.handle_message(prompt), timeout)

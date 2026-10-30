@@ -12,6 +12,7 @@ SUITES = (
     'scripts.check_model_streaming',
     'scripts.check_core_refactor',
     'scripts.check_lean_refactor',
+    'scripts.check_lean_core_v2',
 )
 
 

@@ -11,6 +11,7 @@ from types import SimpleNamespace as N
 from dataclasses import replace
 from unittest.mock import patch
 from mybot.agent.coding_controller import CodingTaskController,AutonomySettings
+from mybot.config import GatewayConfig
 from mybot.tools import build_default_tool_registry
 from mybot.evaluation.coding_benchmark import evaluate
 from mybot.evaluation.coding_live import Limits
@@ -83,7 +84,7 @@ class EfficiencyChecks(unittest.IsolatedAsyncioTestCase):
         # Trusted frozen source, offline only; original instruction method for comparison.
         exec(compile(baseline,'<frozen-controller>','exec'),namespace)
         original=namespace['CodingTaskController'].instruction
-        options=dict(limits=Limits(max_cases=1,max_requests=5,max_model_requests_per_case=5),case_ids=['cache-ttl-001'],offline_client_factory=lambda public:Policy())
+        options=dict(base_config=GatewayConfig(context_token_budget={'input_limit':160000}),limits=Limits(max_cases=1,max_requests=5,max_model_requests_per_case=5),case_ids=['cache-ttl-001'],offline_client_factory=lambda public:Policy())
         with patch.object(CodingTaskController,'instruction',original):old=await evaluate(**options)
         new=await evaluate(**options)
         self.assertEqual(old['results'][0]['agent_state'],'budget_exhausted',json.dumps(old['results'][0]))

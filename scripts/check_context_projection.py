@@ -30,7 +30,7 @@ class ProjectionChecks(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(p['content'],view[0]['content']);self.assertIn(p['pin_id'],stats['pins_included'])
     async def test_pin_budget_can_omit_without_silent_inclusion(self):
         self.add('z'*512);messages=[{'role':'system','content':'rule'},{'role':'user','content':'current'}]
-        manager=self.manager(replace(self.config,context_max_chars=500))
+        manager=self.manager(replace(self.config,context_token_budget={'input_limit':600}))
         view,stats=manager.prepare(messages,[],[],Plan())
         self.assertEqual(stats['pins_included'],[]);self.assertEqual(len(stats['pins_omitted']),1)
         self.assertTrue(stats['pinned_context_incomplete']);self.assertNotIn('z'*512,str(view))
@@ -50,7 +50,7 @@ class ProjectionChecks(unittest.IsolatedAsyncioTestCase):
         messages=[{'role':'system','content':'x'*1000},{'role':'user','content':'new'}]
         with self.assertRaises(ContextBudgetError):self.manager(cfg).prepare(messages,[],[],Plan())
     async def test_pin_priority_over_old_history(self):
-        p=self.add();cfg=replace(self.config,context_max_chars=2000,context_recent_turns=0)
+        p=self.add();cfg=replace(self.config,context_token_budget={'input_limit':2000},context_recent_turns=0)
         turns=[[{'role':'user','content':'old'*2000},{'role':'assistant','content':'reply'*1000}]]
         messages=[{'role':'system','content':'rules'},*turns[0],{'role':'user','content':'current'}]
         view,stats=self.manager(cfg).prepare(messages,[],turns,Plan())
@@ -62,7 +62,7 @@ class ProjectionChecks(unittest.IsolatedAsyncioTestCase):
         from scripts.check_session import assert_pairs
         assert_pairs(self,view)
     async def test_semantic_failure_does_not_delete_or_create_pins(self):
-        self.add();before=self.h.pins.list();cfg=replace(self.config,context_max_chars=6000,context_compaction={'mode':'semantic','allow_extra_requests':True,'input_tokens':30000})
+        self.add();before=self.h.pins.list();cfg=replace(self.config,context_token_budget={'input_limit':6000},context_compaction={'mode':'semantic','allow_extra_requests':True,'input_tokens':30000})
         from scripts.modernization_fixtures import Client
         from scripts.check_session import response
         c=Client(summary=lambda request:None)

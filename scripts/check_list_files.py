@@ -24,7 +24,7 @@ async def check_list_files():
         (workspace / "internal").symlink_to(workspace / "Beta", target_is_directory=True)
         tools = legacy_registry(workspace)
         definitions = {item["function"]["name"]: item["function"] for item in tools.get_definitions()}
-        assert set(definitions) == {"read_file", "write_file", "list_files"}
+        assert set(definitions) == {"read_file", "list_files"}
         schema = definitions["list_files"]["parameters"]
         assert schema["required"] == ["path"] and schema["properties"]["path"]["type"] == "string"
         result = await tools.execute("list_files", {"path": "."})
@@ -52,7 +52,7 @@ async def check_list_files():
                 assert kwargs["messages"][-1]["tool_call_id"] == "list-1"
                 assert "(empty directory)" in kwargs["messages"][-1]["content"]
             return next(responses)
-        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=True, workspace=workspace), tools, ContextBuilder(workspace))
+        agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False,  debug=True, workspace=workspace), tools, ContextBuilder(workspace))
         for arguments in ('{}', '{"path":12}', '{', '[]'):
             assert not (await agent._execute("list_files", arguments)).success
         output = io.StringIO()

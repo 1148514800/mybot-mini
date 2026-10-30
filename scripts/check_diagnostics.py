@@ -8,14 +8,14 @@ from types import SimpleNamespace as N
 
 from mybot.config import GatewayConfig, PROJECT_DIR
 from mybot.evaluation.runner import evaluate, load_cases, OfflineClient
-from mybot.evaluation.diagnostics import json_diagnostic, review_diagnostic
+from mybot.evaluation.diagnostics import json_diagnostic, review_diagnostic, document_diagnostic
 from mybot.evaluation.artifacts import retain_outputs
 
 
 class DiagnosticChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.cases={c['id']:c for c in load_cases()}
-        self.config=GatewayConfig(session_persist=False,skills_enabled=False,skills_path=PROJECT_DIR/'skills',
+        self.config=GatewayConfig(skills_enabled=False,skills_path=PROJECT_DIR/'skills',
                                   context_enabled=True,debug=False,max_react_steps=16,
                                   api_key='PRIVATE_KEY_SENTINEL')
 
@@ -63,10 +63,10 @@ class DiagnosticChecks(unittest.IsolatedAsyncioTestCase):
         case['offline']['actions'][-1]['args']['content']=json.dumps(v)
         r=(await self.run_case(case))['results'][0]
         self.assertFalse(r['task_success'])
-        self.assertEqual(r['diagnostics']['document']['fields']['constraints']['status'],'normalization_only_difference')
+        self.assertEqual(document_diagnostic(v, {'status':'valid_json'}, case['expect']['document']['values'])['fields']['constraints']['status'],'normalization_only_difference')
         v['constraints']=['PRIVATE_BODY'];case['offline']['actions'][-1]['args']['content']=json.dumps(v)
         r=(await self.run_case(case))['results'][0]
-        diag=r['diagnostics']['document']['fields']['constraints']
+        diag=document_diagnostic(v, {'status':'valid_json'}, case['expect']['document']['values'])['fields']['constraints']
         self.assertEqual(diag['unmatched_actual_item_count'],1)
         self.assertEqual(len(diag['missing_expected_items']),2)
         self.assertNotIn('PRIVATE_BODY',json.dumps(r))

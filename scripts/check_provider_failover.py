@@ -31,8 +31,8 @@ def client(effect):
 class FailoverChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.config = GatewayConfig(provider='coco', model='deepseek-v4.1-flash', api_key='synthetic-primary',
-            workspace=Path(self.tmp.name), skills_enabled=False, context_enabled=False, session_persist=False)
+        self.config = GatewayConfig(context_token_budget={'input_limit':64000}, provider='coco', model='deepseek-v4.1-flash', api_key='synthetic-primary',
+            workspace=Path(self.tmp.name), skills_enabled=False, context_enabled=False)
         self.backup = N(provider='coco2', model='glm-5.3-flash')
 
     def wrapper(self, effect, backup_effect=None):
@@ -138,7 +138,7 @@ class FailoverChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_config_factory_routes_own_credentials_and_no_sdk_retry(self):
         providers={'coco2':dict(api_key='synthetic-backup',base_url='https://backup.invalid/v1',model='glm-5.3-flash')}
-        with patch('mybot.config._PROVIDERS',providers),patch('mybot.config.build_client',side_effect=[client([failed()]),client([response('ok')])]) as factory:
+        with patch.object(self.config, 'providers', providers),patch('mybot.config.build_client',side_effect=[client([failed()]),client([response('ok')])]) as factory:
             w=build_gateway_client(self.config);await self.invoke(w)
         backup=factory.call_args_list[1].args[0]
         self.assertEqual((backup.provider,backup.model,backup.api_key,backup.base_url),('coco2','glm-5.3-flash','synthetic-backup','https://backup.invalid/v1'))
@@ -147,21 +147,21 @@ class FailoverChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_single_provider_uses_zero_retry_client(self):
         sdk=client([response('ok')])
-        with patch('mybot.config._PROVIDERS',{}),patch('mybot.config.build_client',return_value=sdk):
+        with patch.object(self.config, 'providers', {}),patch('mybot.config.build_client',return_value=sdk):
             gateway=build_gateway_client(self.config);await self.invoke(gateway)
         self.assertEqual(gateway.active_provider,self.config.provider);sdk.with_options.assert_called_once_with(max_retries=0)
 
     async def test_incomplete_backup_rejected_without_request(self):
         for bad in ({'model':'glm'}, {'model':'glm','api_key':'YOUR_KEY','base_url':'https://example.invalid'}):
-            with patch('mybot.config._PROVIDERS',{'coco2':bad}),patch('mybot.config.build_client') as factory:
+            with patch.object(self.config, 'providers', {'coco2':bad}),patch('mybot.config.build_client') as factory:
                 with self.assertRaises(ValueError):build_gateway_client(self.config)
                 factory.assert_not_called()
 
     async def test_original_loop_budget_count_and_no_false_verification(self):
         for limit in (1,2):
-            cfg=GatewayConfig(provider='coco',model=self.config.model,api_key='synthetic',workspace=Path(self.tmp.name),
+            cfg=GatewayConfig(context_token_budget={'input_limit':64000}, provider='coco',model=self.config.model,api_key='synthetic',workspace=Path(self.tmp.name),
                 coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'macos_readonly'},
-                coding_autonomy={'enabled':True,'max_model_requests':limit},skills_enabled=False,context_enabled=False,session_persist=False)
+                coding_autonomy={'enabled':True,'max_model_requests':limit},skills_enabled=False,context_enabled=False)
             w=self.wrapper([failed()]);tools=build_default_tool_registry(cfg.workspace,coding_enabled=True,patch_mode='write',command=cfg.coding_command)
             a=AgentLoop(w,cfg,tools,ContextBuilder(cfg.workspace))
             w.before_fallback=lambda definitions:a.coding_controller.before_request(definitions)

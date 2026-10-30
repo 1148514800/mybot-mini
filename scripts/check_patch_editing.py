@@ -57,9 +57,9 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_default_config_and_registry(self):
         self.assertEqual(GatewayConfig().coding_patch_mode, 'off')
-        self.assertEqual([t.name for t in build_default_tool_registry(self.root, file_access='legacy_confirm').iter_tools()], ['read_file','write_file','list_files'])
-        off = build_default_tool_registry(self.root, coding_enabled=True, file_access='legacy_confirm')
-        self.assertEqual(len(off.iter_tools()), 8)
+        self.assertEqual([t.name for t in build_default_tool_registry(self.root).iter_tools()], ['read_file','list_files'])
+        off = build_default_tool_registry(self.root, coding_enabled=True)
+        self.assertEqual(len(off.iter_tools()), 7)
         self.assertFalse(off.has_tool('apply_patch'))
         self.assertEqual(off.get_parameters('read_file_range'), self.tools.get_parameters('read_file_range'))
 
@@ -70,7 +70,7 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(tools.has_tool('write_file'))
             self.assertFalse((await tools.execute('write_file', {'path':'notes.txt','content':'BAD'})).success)
             self.assertTrue(tools.has_tool('apply_patch'))
-        self.assertFalse((await build_default_tool_registry(self.root, file_access='legacy_confirm').execute('apply_patch', {})).success)
+        self.assertFalse((await build_default_tool_registry(self.root).execute('apply_patch', {})).success)
 
     async def test_invalid_config_and_registry(self):
         for value in (True, 1, None, [], {}, 'invalid'):
@@ -80,10 +80,11 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError): GatewayConfig(coding_patch_mode=mode)
             with self.assertRaises(ValueError): build_default_tool_registry(self.root,patch_mode=mode)
         for coding in ({'patch_mode':'write'}, {'enabled':True,'unknown':1}, {'enabled':1}, None):
-            with patch('mybot.config._CONFIG', {'coding':coding}):
-                with self.assertRaises(ValueError): GatewayConfig()
-        with patch('mybot.config._CONFIG', {'coding':{'enabled':True,'patch_mode':'preview'}}):
-            self.assertEqual(GatewayConfig().coding_patch_mode, 'preview')
+            from scripts.check_lean_core_v2 import document
+            from mybot.config import config_from_document
+            doc = document(); doc['coding'] = coding
+            with self.assertRaises(ValueError): config_from_document(doc)
+        self.assertEqual(GatewayConfig(coding_enabled=True, coding_patch_mode='preview').coding_patch_mode, 'preview')
 
     async def test_gateway_explicit_mode(self):
         from mybot.app import run_gateway
@@ -573,7 +574,7 @@ class PatchChecks(unittest.IsolatedAsyncioTestCase):
 
     def agent(self, client=None, **kwargs):
         cfg=GatewayConfig(workspace=self.root,coding_enabled=True,coding_patch_mode='write',skills_enabled=False,
-            session_persist=False,context_enabled=True,debug=True,**kwargs)
+            context_enabled=True,debug=True,**kwargs)
         return AgentLoop(client or N(),cfg,self.tools,ContextBuilder(self.root))
 
     async def test_raw_json_bounded_before_decode(self):

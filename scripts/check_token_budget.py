@@ -46,10 +46,9 @@ class TokenChecks(Base):
         self.assertEqual(self.client.requests,[])
     async def test_legacy_character_semantics(self):
         self.config.context_token_budget['mode']='legacy_chars'
-        manager=ContextManager(self.config);messages=self.agent.context.build_messages('中文')
-        view,stats=manager.prepare(messages,None,[],Plan())
-        self.assertEqual(stats['after'],len(json.dumps({'messages':view,'tools':None},ensure_ascii=False)))
-        self.assertEqual(stats['context_budget_unit'],'chars');self.assertEqual(view,messages)
+        with self.assertRaises(TokenBudgetError):
+            TokenCounter.enforce(self.config, self.request('中文'))
+        self.assertEqual(self.client.requests, [])
     async def test_original_history_not_modified(self):
         turns=self.history();original=deepcopy(turns);messages=self.agent.context.build_messages('CURRENT',[m for t in turns for m in t]);copy=deepcopy(messages)
         view,stats=self.agent.context_manager.prepare(messages,None,turns,Plan())
@@ -64,7 +63,8 @@ class TokenChecks(Base):
         for value in ({'mode':'gpt_exact'},{'input_limit':True},{'input_limit':255},{'model_windows':{'x':5000}},{'model_windows':{'p/m':True}},{'extra':1}):
             with self.subTest(value=value),self.assertRaises(ValueError):replace(self.config,context_token_budget=value)
     async def test_token_mode_cannot_silently_disable_context(self):
-        with self.assertRaises(ValueError):replace(self.config,context_enabled=False)
+        cfg = replace(self.config, context_enabled=False)
+        with self.assertRaises(TokenBudgetError): TokenCounter.enforce(cfg, self.request('x'*10000))
     async def test_fallback_smaller_window_refuses_before_backup(self):
         primary=Client([failed()]);backup=Client()
         cfg=replace(self.config,provider='coco',model='primary')
@@ -83,17 +83,18 @@ class TokenChecks(Base):
         await agent.handle_message('second')
         self.assertEqual(agent.resources.context['input_token_limit'],8000);self.assertEqual(primary.requests[-1]['model'],'primary');self.assertEqual(len(backup.requests),2)
     async def test_single_provider_sdk_retries_disabled(self):
-        with patch('mybot.config.AsyncOpenAI') as sdk:build_client(self.config)
+        with patch('openai.AsyncOpenAI') as sdk:build_client(self.config)
         self.assertEqual(sdk.return_value.max_retries,0)
         client=build_client(self.config)
         try:self.assertEqual(client.max_retries,0)
         finally:await client.close()
     async def test_provider_level_option_fallback(self):
-        import mybot.config as config
-        with patch.object(config,'_LLM',{'provider':'coco'}),patch.object(config,'_PROVIDER_CONFIG',{'max_react_steps':7}):
-            self.assertEqual(config._llm_value('max_react_steps',10),7)
-        with patch.object(config,'_LLM',{'max_react_steps':9}),patch.object(config,'_PROVIDER_CONFIG',{'max_react_steps':7}):
-            self.assertEqual(config._llm_value('max_react_steps',10),9)
+        from mybot.config import config_from_document
+        from scripts.check_lean_core_v2 import document
+        doc = document(); doc['llm']['providers']['offline']['max_react_steps'] = 7
+        self.assertEqual(config_from_document(doc).max_react_steps, 7)
+        doc['llm']['max_react_steps'] = 9
+        self.assertEqual(config_from_document(doc).max_react_steps, 9)
 
 
 def check_token_budget():run(TokenChecks)

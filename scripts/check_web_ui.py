@@ -88,7 +88,7 @@ class SyntheticClient:
 
 def config(root, coding=False):
     return GatewayConfig(workspace=root.resolve(), provider='offline-synthetic', model='synthetic-browser-client',
-        api_key='synthetic-secret-key', base_url='https://offline.invalid', session_persist=False, skills_enabled=False,
+        context_token_budget={'input_limit':64000}, api_key='synthetic-secret-key', base_url='https://offline.invalid',  skills_enabled=False,
         context_enabled=False, mcp_enabled=False, coding_enabled=coding,
         coding_patch_mode='write' if coding else 'off', coding_preview_receipt=coding,
         coding_command={'mode': 'macos_readonly'} if coding else {},
@@ -255,8 +255,8 @@ class WebChecks(unittest.IsolatedAsyncioTestCase):
         self.app.runtime.config=cfg
         def factory(_):return ProviderFailoverClient(client([connection()]),cfg,backup,lambda _:client([response('备用模型真实适配器的合成回复')]))
         self.app.runtime.client_factory=factory;state=await self.run_chat();e=next(e for e in state['events'] if e['type']=='model_request_finished');self.assertEqual(e['provider'],'coco2');self.assertEqual(e['model'],'backup')
-    async def test_no_session_disk_even_cli_persist(self):
-        path=self.root.parent/(self.root.name+'-web-state.json');self.app.runtime.config=replace(config(self.root),session_persist=True,session_path=path)
+    async def test_memory_session_creates_no_legacy_disk(self):
+        path=self.root.parent/(self.root.name+'-web-state.json');self.app.runtime.config=replace(config(self.root),session_backend='memory')
         await self.run_chat();self.assertFalse(path.exists())
     async def test_event_observer_failure_does_not_change_agent(self):
         from mybot.agent import AgentLoop, ContextBuilder

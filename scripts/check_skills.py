@@ -21,7 +21,7 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
-        self.root = Path(self.folder.name).resolve()
+        self.root = Path(self.folder.name).resolve().resolve()
         self.skills = self.root / "skills"
         self.skills.mkdir()
         self.workspace = self.root / "workspace"
@@ -30,8 +30,8 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
         for name in ("file-summary", "code-review"):
             self.write_skill(name)
         self.requests, self.effects = [], []
-        self.config = GatewayConfig(skills_enabled=True, skills_path=self.skills, session_persist=False,
-                                    session_path=self.root / "state/session.json", context_enabled=False,
+        self.config = GatewayConfig(skills_enabled=True, skills_path=self.skills,
+                                    context_enabled=False,
                                     workspace=self.workspace, debug=False)
         self.redirect = contextlib.redirect_stdout(io.StringIO())
         self.redirect.__enter__()
@@ -51,7 +51,7 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
         async def create(**kwargs):
             self.requests.append(kwargs)
             if self.config.context_enabled:
-                self.assertLessEqual(ContextManager.count(kwargs["messages"],kwargs["tools"]),self.config.context_max_chars)
+                self.assertLessEqual(ContextManager.count(kwargs["messages"],kwargs["tools"]),self.config.context_token_budget['input_limit'])
             return self.effects.pop(0)
         return AgentLoop(N(chat=N(completions=N(create=create))),self.config,
                          build_default_tool_registry(self.workspace),ContextBuilder(self.workspace))
@@ -158,7 +158,7 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
         self.write_skill("file-summary",body="IMPORTANT_FULL_INSTRUCTIONS" + "x"*9000)
         self.skills.joinpath("file-summary/references/check.txt").write_text("FULL_REFERENCE"+"y"*5000)
         self.config.context_enabled = True
-        self.config.context_max_chars = 30000
+        self.config.context_token_budget['input_limit'] = 30000
         self.config.context_tool_result_max_chars = 128
         self.effects = [response(calls=[call("s","load_skill",'{"name":"file-summary"}'),call("ref","read_skill_reference",'{"name":"file-summary","path":"references/check.txt"}')]),response("done")]
         await self.agent.handle_message("use skill")
@@ -170,7 +170,7 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
     async def test_skill_budget_failure_before_second_request(self):
         self.write_skill("file-summary",body="x"*20000)
         self.config.context_enabled = True
-        self.config.context_max_chars = 6000
+        self.config.context_token_budget['input_limit'] = 6000
         self.effects = [response(calls=[call("s","load_skill",'{"name":"file-summary"}')])]
         with self.assertRaises(ContextBudgetError): await self.agent.handle_message("load skill")
         self.assertEqual(len(self.requests),1)
@@ -180,20 +180,23 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
     async def test_index_and_schemas_budgeted(self):
         self.config.context_enabled = True
         base = self.agent.context.build_messages("hello")
-        self.config.context_max_chars = ContextManager.count(base,None)
+        self.config.context_token_budget['input_limit'] = ContextManager.count(base,None)
         with self.assertRaises(ContextBudgetError): await self.agent.handle_message("hello")
         self.assertEqual(self.requests,[])
         self.assertIn("file-summary",base[0]["content"])
 
     async def test_persistent_restore_no_execution_and_clear(self):
-        self.config.session_persist = True
+        self.config.session_backend = 'event_sqlite'
+        self.config.session_event_path = self.root / 'private/events.sqlite3'
         self.agent = self.build_agent()
         self.effects = [response(calls=[call("s","load_skill",'{"name":"file-summary"}')]),response("loaded")]
         await self.agent.handle_message("skill task")
         history = self.agent.session.history()
         restored = self.build_agent()
         self.assertEqual(len(self.requests),2)
-        self.assertEqual(restored.session.history(),history)
+        self.assertEqual([m['role'] for m in restored.session.history()], ['user', 'assistant'])
+        self.assertNotIn('BODY_ONLY_ON_LOAD', str(restored.session.history()))
+        self.assertIn('不恢复授权', restored.session.history()[-1]['content'])
         self.assertEqual(restored.plan.steps,[])
         await restored.handle_message("/clear")
         self.effects = [response("hello")]
@@ -212,14 +215,15 @@ class SkillsChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_config_types_path_and_root_link(self):
         for section in ([],{"enabled":1},{"enabled":"true"},{"path":False},{"path":""},{"path":[]}):
-            with patch.object(config_module,"_CONFIG",{"skills":section}),self.assertRaisesRegex(ValueError,"skills"):
-                GatewayConfig(session_persist=False)
-        with patch.object(config_module,"PROJECT_DIR",self.root),patch.object(config_module,"_CONFIG",{"skills":{"path":"./skills"}}):
-            self.assertEqual(GatewayConfig(session_persist=False).skills_path,self.skills)
+            from scripts.check_lean_core_v2 import document
+            doc = document(); doc['skills'] = section
+            with self.assertRaises(config_module.ConfigError): config_module.config_from_document(doc)
+        with patch.object(config_module,"PROJECT_DIR",self.root):
+            self.assertEqual(GatewayConfig().skills_path,self.skills)
         alias = self.root / "alias"
         alias.symlink_to(self.skills,target_is_directory=True)
         with self.assertRaisesRegex(ValueError,"symlink"): SkillRegistry(alias)
-        with self.assertRaisesRegex(ValueError,"symlink"): GatewayConfig(skills_enabled=True,skills_path=alias,session_persist=False)
+        with self.assertRaisesRegex(ValueError,"symlink"): GatewayConfig(skills_enabled=True,skills_path=alias)
 
 
 def check_skills():

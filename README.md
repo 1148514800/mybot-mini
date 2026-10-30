@@ -47,7 +47,7 @@ uv run python -m mybot.web --workspace /absolute/path/to/project --port 8765
 不会创建目录、git init、写回配置或自动开启Coding写权限。界面展示项目、Git分支和Coding状态；工作区运行期间固定。
 `--check`只做本地只读预检，JSON错误给出固定类型和行列，不启动服务或请求模型，不显示Key。
 需要写入时由用户显式开启 `coding.enabled=true`、`patch_mode="write"`、`preview_receipt=true`，
-保留 `file_access="read_only"`，测试命令配置为 `macos_readonly`；每次实际命令仍须真人WebApproval。
+普通文件访问固定为只读，测试命令配置为 `macos_readonly`；每次实际命令仍须真人WebApproval。
 完整配置、错误码与边界见[项目启动说明](docs/coding-project-launch.md)。
 
 ### 按目录查看项目结构（Repo Map v2）
@@ -62,7 +62,7 @@ Coding 模式新增只读 `repo_map` 工具。跨文件任务可先查看地图�
 uv run python -m mybot.main
 ```
 
-输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内默认保留最近 6 个完整用户轮次（含工具请求和结果），默认退出后不保存历史；开启 session.persist 后可跨重启恢复。新安装普通聊天默认仅提供 `read_file` / `list_files`；原生文件写入须显式启用 Coding Patch 或逐次审批的兼容模式。原生文件操作限制在 `workspace.path` 内；命令和 MCP 有独立权限域。
+输入问题并按 Enter 开始对话，输入 `exit` 或 `quit` 退出，输入 `/clear` 清空当前会话。进程内默认保留最近 6 个完整用户轮次（含工具请求和结果），默认退出后不保存历史；显式选择 `session.backend=event_sqlite` 后可跨重启恢复。新安装普通聊天默认仅提供 `read_file` / `list_files`；原生文件写入须显式启用 Coding Patch。原生文件操作限制在 `workspace.path` 内；命令和 MCP 有独立权限域。
 
 ## Web Chat（本地可视化界面）
 
@@ -77,7 +77,7 @@ uv run python -m mybot.web --port 8765
 ```json
 {
   "debug": false,
-  "session": {"max_turns": 6, "persist": false, "path": "./.mybot_state/session.json"},
+  "session": {"backend": "memory", "max_turns": 6},
   "llm": {
     "provider": "siliconflow",
     "max_completion_tokens": 2000,
@@ -100,17 +100,17 @@ uv run python -m mybot.web --port 8765
 
 ## 会话事件与用户固定事项
 
-默认 `memory`；旧 `session.persist=true` 继续使用原 CLI JSON，不自动迁移。显式选择 SQLite：
+默认 `memory`；旧 JSON 后端已退役，旧配置必须显式迁移，不自动启用持久化。显式选择 SQLite：
 
 ```json
-{"session":{"backend":"event_sqlite","persist":false,"max_turns":6,"event_path":"~/.mybot-mini/events.sqlite3"}}
+{"session":{"backend":"event_sqlite","max_turns":6,"event_path":"~/.mybot-mini/events.sqlite3"}}
 ```
 
 SQLite保存本地明文聊天/Pin，目录0700、文件0600，必须在workspace外，建议macOS用户目录/APFS。默认全库50,000事件、64MiB、单事件payload64KiB；到限停止，不自动丢历史。最近6轮只限制模型近期上下文，持久早期消息可翻页查看。
 
 Web用户消息可手动固定精确片段、确认替换/撤销；CLI用 `/history`、`/pins`、`/pin confirm ...`。Pin有来源且进入真实预算，最多12条active/4096 UTF8字节，预算不足会明确省略。不是系统规则、授权或旧verified。
 
-重启仅恢复安全聊天和真实任务状态，不重放模型/命令/Patch，不恢复Receipt或审批。副作用不明会阻止新任务，需人工检查后显式复核。SQLite的 `/clear` / Web清上下文保留聊天和Pin；确认删除会话才真实级联删除DB记录，不能保证备份/SSD物理擦除。旧JSON的 `/clear` 行为保持原样。
+重启仅恢复安全聊天和真实任务状态，不重放模型/命令/Patch，不恢复Receipt或审批。副作用不明会阻止新任务，需人工检查后显式复核。SQLite的 `/clear` / Web清上下文保留聊天和Pin；确认删除会话才真实级联删除DB记录，不能保证备份/SSD物理擦除。旧 JSON 文件仅供独立迁移工具读取。
 
 配置、CLI命令、安全与限制见[后端兼容](docs/reports/session-eventstore-pinned-context/legacy-session-compatibility.md)、[Pin说明](docs/reports/session-eventstore-pinned-context/pinned-context.md)、[完整验收](docs/reports/session-eventstore-pinned-context/acceptance-report.md)。
 
@@ -131,9 +131,9 @@ bash scripts/restore_phase.sh 1
 
 复杂多步任务可由模型调用 `create_plan` 建立 2–6 步计划，并通过 `update_plan` 显示执行进度；简单任务直接执行，不增加独立分类请求。步骤完成需要实际工具成功结果；失败或未验证会明确报告。每条用户任务重新开始计划，`/clear` 同时清空历史和计划。详见 [Phase 04](docs/phases/phase-04.md)。
 
-Session 持久化默认关闭。配置 `session.persist=true` 并重启后，完整历史轮次保存到 `session.path`（默认项目根 `.mybot_state/session.json`，必须在 workspace 外）。`/clear` 同时清空磁盘历史；JSON 损坏会报错并保留原文件。恢复不会重放旧工具或恢复 Plan 状态。详见 [Phase 05](docs/phases/phase-05.md)。自定义状态目录也应加入 `.gitignore`；ExFAT 无法保证 POSIX 私有权限，聊天历史以明文保存。
+Session 持久化默认关闭，仅支持 `memory` / `event_sqlite`。旧 `persist`、`path`、`legacy_json` 会触发明确迁移错误。迁移先预览，再显式 `--apply`；原 JSON 永不删除或覆盖。工具历史默认拒绝，选择有损迁移必须额外确认并备份。参见 [Lean Core v2 迁移说明](docs/lean-core-v2.md)。
 
-Context Management 默认关闭。配置 `context.enabled=true` 并重启后，默认兼容模式每次请求检查消息及工具 Schema 的字符预算；可按 [Context 配置](docs/context.md) 显式选择估算 Token 预算。默认 max_chars=40000、recent_turns=2、summary_max_chars=1500、tool_result_max_chars=4000。只压缩请求副本，Session/磁盘仍保存原文；无法满足预算时停止并报错。字符数不是精确 Token 数，需为 max_completion_tokens 预留模型窗口。详见 [Phase 06](docs/phases/phase-06.md)。
+上下文裁剪与压缩默认关闭，但请求大小计量始终启用。`context.token_budget.mode` 默认 `estimate`，输入上限默认 16000 个保守估算 Token；`strict` 因没有经验证的部署 Tokenizer 映射而拒绝发送。`context.enabled` 仅控制裁剪/压缩；`max_chars` 不再是请求预算。字符数、UTF-8 字节、保守估算和 Provider Usage 分别报告。超过预算在发送前停止，不自动扩大额度。迁移 `legacy_chars` 必须显式确认语义变化。
 
 Skills 默认关闭。设置 `skills.enabled=true`（path 默认 ./skills）并重启后，模型获得 name/description 索引，可通过 load_skill/read_skill_reference 按需读取说明和参考资料，再使用原有文件工具。示例为 file-summary 与 code-review。没有脚本执行或额外模型分类调用；Context 开启时技能正文不裁剪、超预算明确失败。详见 [Phase 07](docs/phases/phase-07.md)。
 
@@ -212,7 +212,7 @@ uv run python -m scripts.check_routing_confidence
 
 ## Repository Exploration（Phase 19）
 
-显式设置 `coding.enabled=true` 并将 `workspace.path` 指向已经存在的目标仓库，额外启用 `search_code`、`read_file_range`、`git_status`、`git_diff`。默认false，旧Registry和MCP实验Schema不变。Coding模式不自动写入Workspace引导文件；四个新增工具只读；当前版本的 write_file 需按文末说明显式启用兼容模式。
+显式设置 `coding.enabled=true` 并将 `workspace.path` 指向已经存在的目标仓库，额外启用 `search_code`、`read_file_range`、`git_status`、`git_diff`。默认false，旧Registry和MCP实验Schema不变。Coding模式不自动写入Workspace引导文件；四个新增工具只读；当前版本已退役 write_file，不能通过配置恢复。
 
 ```bash
 brew install ripgrep
@@ -228,7 +228,7 @@ Phase 19最终交付使用安全修订 `phase-19-r1`；初版 `phase-19`/ZIP保�
 
 ## Patch-Based Editing（Phase 20）
 
-`coding.patch_mode` 缺省 `off`，当前版本默认关闭普通文件写入。显式 `coding.enabled=true` 配合 `preview` 或 `write` 时，Registry真正移除原 `write_file` 并注册结构化 `apply_patch`。`read_file_range`提供完整原始字节SHA-256；update要求版本匹配和唯一非重叠锚点，add要求目标不存在、父目录已存在。
+`coding.patch_mode` 缺省 `off`，当前版本默认关闭普通文件写入。显式 `coding.enabled=true` 配合 `preview` 或 `write` 时，Registry注册结构化 `apply_patch`；`write_file` 在所有模式中均不可执行。`read_file_range`提供完整原始字节SHA-256；update要求版本匹配和唯一非重叠锚点，add要求目标不存在、父目录已存在。
 
 默认 `dry_run=true` 只验证与生成有界Diff；`preview`明确拒绝写入。用户显式开启 `write` 后，模型可传 `dry_run=false`在Workspace内受约束修改。全量预检查、同目录暂存、单文件原子发布和可捕获失败的条件恢复保护已有修改；不提供跨文件崩溃原子性或OS沙盒，也不自动受MCP Approval保护。不新增Shell/测试运行能力，不改变独立MCP工具权限。
 
@@ -292,16 +292,17 @@ Phase25之后的独立可靠性改进（非Phase26）：新入口 `uv run python
 
 ## Context 与资源预算现代化
 
-[配置与计量说明](docs/context.md) 提供估算 Token 预算、可选语义摘要和旧字符模式的配置。旧配置默认行为保留；精确本地 Tokenizer 尚未验证，严格模式会拒绝请求。CLI/Web 统一显示已报告 Usage、估算输入、逻辑/物理调用、摘要和裁剪状态。语义模式默认关闭，生产启用会增加模型调用与潜在费用；本轮真实模型请求为0。
+当前配置合同以 [Lean Core v2](docs/lean-core-v2.md) 为准；[早期配置与计量说明](docs/context.md) 保留历史设计背景。旧字符模式已退役；精确本地 Tokenizer 尚未验证，严格模式会拒绝请求。CLI/Web 统一显示已报告 Usage、估算输入、逻辑/物理调用、摘要和裁剪状态。语义模式默认关闭，生产启用会增加模型调用与潜在费用；本轮真实模型请求为0。
 
 CLI/Web 现在按规范化工作区路径共享进程锁；CLI 等待输入时也持锁，结束一个入口后再用另一个操作同一目录。清理不确定时锁保持到进程退出，禁止通过删锁文件绕过。完整证据见 [项目审计验收](docs/reports/project-debt-modernization/acceptance-report.md)。
 
 ## Tool Authority 与 Task Contract
 
-`coding.file_access` 默认 `read_only`，旧 `write_file` 不再隐式启用。日常代码修改建议
-`coding.enabled=true`、`coding.patch_mode=write`、`coding.preview_receipt=true`，使用原生 Preview → Receipt Commit。
-旧接口只有显式 `file_access=legacy_confirm`、`patch_mode=off` 及逐次完整内容确认才可写；无审批或无法安全展示则拒绝，
-不再自动建父目录。见 [迁移说明](docs/reports/tool-authority-task-contract/legacy-write-migration.md)。
+`coding.file_access` 已退役，普通文件访问固定只读。代码修改须显式配置
+`coding.enabled=true`、`coding.patch_mode=write`、`coding.preview_receipt=true`，使用原生 Preview → Receipt → Commit。
+旧 `write_file` 调用固定返回 `TOOL_RETIRED_WRITE_FILE`，不会转换成 Patch 或触发审批。
+`legacy_confirm` 配置迁移只移除旧授权、恢复只读，不自动开启 Coding/Patch/命令权限。
+当前迁移步骤见 [Lean Core v2](docs/lean-core-v2.md)。
 命令/MCP 是独立权限域，host_confirm 没有 OS 隔离；默认文件只读不代表整个进程只读。
 
 自主编码任务默认启用 `coding.task_contract=true`（严格布尔，可关闭保持旧任务工具集合）。

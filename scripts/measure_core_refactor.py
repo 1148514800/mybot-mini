@@ -30,7 +30,7 @@ async def requests():
     with tempfile.TemporaryDirectory() as folder:
         workspace = Path(folder)
         config = GatewayConfig(workspace=workspace, skills_enabled=False, mcp_enabled=False,
-            session_persist=False, session_backend='memory', context_enabled=False, debug=False,
+             session_backend='memory', context_enabled=False, debug=False,
             api_key=None, provider='offline', model='synthetic')
         agent = AgentLoop(N(chat=N(completions=N(create=create))), config,
             build_default_tool_registry(workspace), ContextBuilder(workspace))

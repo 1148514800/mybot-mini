@@ -11,7 +11,7 @@ import httpx
 
 from openai import AsyncOpenAI, APIConnectionError, APITimeoutError, APIStatusError, APIResponseValidationError
 from ..provider_failover import ProviderFailoverClient, FallbackBudgetExceeded
-from ..config import GatewayConfig, build_client
+from ..config import load_config, GatewayConfig, build_client
 from .coding_live import CodingClient, CodingEvaluationStop, labels
 from .tool_agent import usage_values, token_totals
 
@@ -38,16 +38,16 @@ def recoverable(exc):
 
 
 def settings(base, *, live, backup=None):
-    from ..config import _PROVIDERS
+    providers = base.providers
     from .artifacts import redact
-    raw = backup if backup is not None else (_PROVIDERS.get('coco2', {}) if isinstance(_PROVIDERS,dict) else {})
+    raw = backup if backup is not None else (providers.get('coco2', {}) if isinstance(providers,dict) else {})
     if base.provider != 'coco': raise ValueError('failover_requires_coco')
     if not isinstance(raw,dict): raise ValueError('invalid_backup_configuration')
     model = raw.get('model') or ('glm-5.3-flash' if not live else None)
     secondary = replace(base,provider='coco2',model=model,api_key=raw.get('api_key') if live else None,
         base_url=raw.get('base_url') if live else None)
     known_keys=(base.api_key,secondary.api_key,raw.get('api_key'),*(
-        value.get('api_key') for value in (_PROVIDERS.values() if isinstance(_PROVIDERS,dict) else ()) if isinstance(value,dict)))
+        value.get('api_key') for value in (providers.values() if isinstance(providers,dict) else ()) if isinstance(value,dict)))
     known_keys=tuple(value for value in known_keys if isinstance(value,str))
     for cfg in (base,secondary):
         if not isinstance(cfg.model,str) or not cfg.model or redact(cfg.model,known_keys)!=cfg.model or labels(cfg)['model']=='<unavailable>':
@@ -213,7 +213,7 @@ async def evaluate(*, provider_mode='single', offline_provider_factory=None, bac
         return await original(**kwargs)
     if kwargs.get('prices') is not None or kwargs.get('max_estimated_cost') is not None:
         raise ValueError('mixed_model_prices_require_per_model_accounting')
-    base=kwargs.pop('base_config',None) or GatewayConfig(**({} if live else dict(provider='coco',model='deepseek-v4.1-flash',api_key=None,base_url=None)))
+    base=kwargs.pop('base_config',None) or (load_config() if live else GatewayConfig(provider='coco',model='deepseek-v4.1-flash'))
     _,backup=settings(base,live=live,backup=backup_config)
     def adapter(runtime,config,trace,budget,attempt):
         secondary=replace(config,provider='coco2',model=backup.model,api_key=backup.api_key,base_url=backup.base_url)

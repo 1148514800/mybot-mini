@@ -1,140 +1,144 @@
-"""Local configuration loaded from config/config.json."""
+"""Explicit configuration parsing shared by CLI, Web and read-only checks."""
 from __future__ import annotations
 
 import json
+import re
+from copy import deepcopy
 from dataclasses import dataclass, field
-from functools import partial
 from pathlib import Path
-
-from openai import AsyncOpenAI
-
-
+from urllib.parse import urlsplit
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent
-CONFIG_FILE = PROJECT_DIR / "config" / "config.json"
+CONFIG_FILE = PROJECT_DIR / "config/config.json"
 
 
-def _load_json_config() -> dict:
-    if not CONFIG_FILE.exists():
-        return {}
+class ConfigError(ValueError):
+    def __init__(self, code, *, line=None, column=None):
+        self.result = dict(ok=False, error_type=code)
+        if code.startswith('MIGRATION_REQUIRED_'):
+            self.result['hint'] = 'Run python -m scripts.migrate_config_v2 --config PATH --dry-run; session data migration is separate.'
+        if line is not None:
+            self.result.update(line=line, column=column)
+        super().__init__(code)
+
+
+def read_config(path):
+    def constant(_):
+        tokens = re.finditer(r'"(?:[^"\\]|\\.)*"|(?P<bad>-?Infinity|NaN)', text)
+        position = next(m.start() for m in tokens if m.group('bad'))
+        raise json.JSONDecodeError('invalid_json_constant', text, position)
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError('duplicate key')
+            result[key] = value
+        return result
     try:
-        return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        text = Path(path).read_text(encoding='utf-8')
+        document = json.loads(text,
+                              parse_constant=constant, object_pairs_hook=pairs)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Invalid JSON in {CONFIG_FILE}: {exc}") from exc
+        raise ConfigError('CONFIG_JSON_INVALID', line=exc.lineno, column=exc.colno) from None
+    except FileNotFoundError:
+        raise ConfigError('CONFIG_NOT_FOUND') from None
+    except (OSError, UnicodeError):
+        raise ConfigError('CONFIG_UNREADABLE') from None
+    except ValueError:
+        raise ConfigError('CONFIG_JSON_INVALID') from None
+    if type(document) is not dict:
+        raise ConfigError('CONFIG_ROOT_INVALID')
+    return document
 
 
-def _section(name: str) -> dict:
-    value = _CONFIG.get(name, {})
-    return value if isinstance(value, dict) else {}
+def provider_order(default, providers):
+    """JSON declaration order, rotated to the default; no client construction."""
+    if not isinstance(providers, dict) or any(not isinstance(n,str) or not n for n in providers):
+        raise ValueError('invalid_provider_configuration')
+    names = list(providers)
+    if default in names:
+        start = names.index(default)
+        names = names[start:] + names[:start]
+    return names
 
 
-_CONFIG = _load_json_config()
-_LLM = _section("llm")
-
-_PROVIDER = str(_LLM.get("provider", "")).strip()
-_PROVIDERS = _LLM.get("providers", {})
-_PROVIDER_CONFIG = _PROVIDERS.get(_PROVIDER, {}) if isinstance(_PROVIDERS, dict) else {}
-if not isinstance(_PROVIDER_CONFIG, dict):
-    _PROVIDER_CONFIG = {}
-
-
-def _llm_value(key: str, default):
-    """Read a key from the llm section, falling back to the active provider."""
-    return _LLM.get(key, _PROVIDER_CONFIG.get(key, default))
-
-
-def _section_value(section_name: str, key: str, default):
-    section = _CONFIG.get(section_name, {})
-    if not isinstance(section, dict):
-        raise ValueError(f"{section_name} must be a JSON object")
-    return section.get(key, default)
+def check_providers(document):
+    llm = document.get('llm', {})
+    if type(llm) is not dict:
+        raise ConfigError('LLM_CONFIG_INVALID')
+    providers, default = llm.get('providers'), llm.get('provider')
+    if type(default) is not str or type(providers) is not dict or default not in providers:
+        raise ConfigError('DEFAULT_PROVIDER_MISSING')
+    try:
+        names = provider_order(default, providers)
+        for name in names:
+            validate_provider(providers[name])
+    except (ValueError, TypeError):
+        raise ConfigError('PROVIDER_FIELDS_INVALID') from None
+    return names
 
 
-_session_value = partial(_section_value, 'session')
-_context_value = partial(_section_value, 'context')
-_skills_value = partial(_section_value, 'skills')
+def validate_provider(raw):
+    if (type(raw) is not dict or any(type(raw.get(k)) is not str or not raw[k].strip()
+            for k in ('api_key', 'base_url', 'model')) or raw['api_key'].startswith('YOUR_')):
+        raise ValueError('invalid_provider_configuration')
+    url = urlsplit(raw['base_url'])
+    if (url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password
+            or url.fragment or url.port is not None and not 1 <= url.port <= 65535
+            or any(ord(c) < 33 for c in raw['base_url']) or raw['api_key'] != raw['api_key'].strip()):
+        raise ValueError('invalid_provider_configuration')
 
 
-def _coding_value(key='enabled', default=False):
-    value = _CONFIG.get('coding', {})
-    if not isinstance(value,dict) or set(value)-{'enabled','patch_mode','command','autonomy','git_workflow','preview_receipt','file_access','task_contract'}:
-        raise ValueError('coding contains unknown fields (allowed: enabled, patch_mode, preview_receipt, command, autonomy, git_workflow, file_access, task_contract)')
-    return value.get(key,default)
-
-
-def _mcp_value(key: str, default):
-    section = _CONFIG.get("mcp", {})
-    if not isinstance(section, dict):
-        raise ValueError("mcp must be a JSON object")
-    if set(section) - {"enabled", "servers", "discovery"}:
-        raise ValueError("Unknown mcp configuration fields")
-    return section.get(key, default)
-
-
-def _resolve_path(raw_value) -> Path:
-    path = Path(raw_value).expanduser()
+def _resolve_path(value):
+    path = Path(value).expanduser()
     return path if path.is_absolute() else (PROJECT_DIR / path).resolve()
-
-
-def _web_flag(name):
-    web=_CONFIG.get('web',{})
-    if type(web) is not dict or set(web)-{'streaming','steer'}:raise ValueError('invalid web config')
-    value=web.get(name,{})
-    if type(value) is not dict or set(value)-{'enabled'} or type(value.get('enabled',False)) is not bool:raise ValueError('invalid web.'+name)
-    return value.get('enabled',False)
 
 
 @dataclass
 class GatewayConfig:
-    web_streaming: bool = field(default_factory=lambda: _web_flag('streaming'), kw_only=True)
-    web_steer: bool = field(default_factory=lambda: _web_flag('steer'), kw_only=True)
-    coding_file_access: str = field(default_factory=lambda: _coding_value('file_access', 'read_only'), kw_only=True)
-    coding_task_contract: bool = field(default_factory=lambda: _coding_value('task_contract', True), kw_only=True)
-    coding_enabled: bool = field(default_factory=_coding_value)
-    coding_patch_mode: str = field(default_factory=lambda: _coding_value('patch_mode', 'off'))
-    coding_preview_receipt: bool = field(default_factory=lambda: _coding_value('preview_receipt', False), kw_only=True)
-    coding_command: dict = field(default_factory=lambda: _coding_value('command', {}))
-    coding_autonomy: dict = field(default_factory=lambda: _coding_value('autonomy', {}))
-    coding_git_workflow: dict = field(default_factory=lambda: _coding_value('git_workflow', {}))
-    mcp_enabled: bool = field(default_factory=lambda: _mcp_value("enabled", False))
-    mcp_servers: dict = field(default_factory=lambda: _mcp_value("servers", {}))
-    mcp_discovery: dict = field(default_factory=lambda: _mcp_value("discovery", {}))
-    skills_enabled: bool = field(default_factory=lambda: _skills_value("enabled", False))
-    skills_path: Path | str = field(default_factory=lambda: _skills_value("path", "./skills"))
-    context_enabled: bool = field(default_factory=lambda: _context_value("enabled", False))
-    context_max_chars: int = field(default_factory=lambda: _context_value("max_chars", 40000))
-    context_recent_turns: int = field(default_factory=lambda: _context_value("recent_turns", 2))
-    context_summary_max_chars: int = field(default_factory=lambda: _context_value("summary_max_chars", 1500))
-    context_tool_result_max_chars: int = field(default_factory=lambda: _context_value("tool_result_max_chars", 4000))
-    context_token_budget: dict = field(default_factory=lambda: _context_value('token_budget', {}), kw_only=True)
-    context_compaction: dict = field(default_factory=lambda: _context_value('compaction', {}), kw_only=True)
-    debug: bool = field(default_factory=lambda: _CONFIG.get("debug", False) is True)
-    session_backend: str | None = field(default_factory=lambda: _session_value('backend', None), kw_only=True)
-    session_event_path: Path | str = field(default_factory=lambda: _session_value('event_path', '~/.mybot-mini/events.sqlite3'), kw_only=True)
-    session_event_limits: dict = field(default_factory=lambda: _session_value('event_limits', {}), kw_only=True)
-    session_max_turns: int = field(default_factory=lambda: _session_value("max_turns", 6))
-    session_persist: bool = field(default_factory=lambda: _session_value("persist", False))
-    session_path: Path | str = field(default_factory=lambda: _session_value("path", "./.mybot_state/session.json"))
-    provider: str = _PROVIDER
-    model: str = field(default_factory=lambda: _PROVIDER_CONFIG.get("model", "gpt-4.1-mini"))
-    api_key: str | None = _PROVIDER_CONFIG.get("api_key")
-    base_url: str | None = _PROVIDER_CONFIG.get("base_url")
-    max_react_steps: int = field(default_factory=lambda: int(_llm_value("max_react_steps", 10)))
-    max_completion_tokens: int = field(default_factory=lambda: int(_llm_value("max_completion_tokens", 2000)))
-    request_timeout_seconds: float = field(default_factory=lambda: float(_llm_value("request_timeout_seconds", 60)))
-    workspace: Path = field(
-        default_factory=lambda: _resolve_path(_section("workspace").get("path", PROJECT_DIR / "workspace"))
-    )
+    web_streaming: bool = field(default=False, kw_only=True)
+    web_steer: bool = field(default=False, kw_only=True)
+    coding_task_contract: bool = field(default=True, kw_only=True)
+    coding_enabled: bool = False
+    coding_patch_mode: str = 'off'
+    coding_preview_receipt: bool = field(default=False, kw_only=True)
+    coding_command: dict = field(default_factory=dict)
+    coding_autonomy: dict = field(default_factory=dict)
+    coding_git_workflow: dict = field(default_factory=dict)
+    mcp_enabled: bool = False
+    mcp_servers: dict = field(default_factory=dict)
+    mcp_discovery: dict = field(default_factory=dict)
+    skills_enabled: bool = False
+    skills_path: Path | str = './skills'
+    context_enabled: bool = False
+    context_max_chars: int = 40000
+    context_recent_turns: int = 2
+    context_summary_max_chars: int = 1500
+    context_tool_result_max_chars: int = 4000
+    context_token_budget: dict = field(default_factory=dict, kw_only=True)
+    context_compaction: dict = field(default_factory=dict, kw_only=True)
+    debug: bool = False
+    session_backend: str = field(default='memory', kw_only=True)
+    session_event_path: Path | str = field(default='~/.mybot-mini/events.sqlite3', kw_only=True)
+    session_event_limits: dict = field(default_factory=dict, kw_only=True)
+    session_max_turns: int = 6
+    provider: str = ''
+    providers: dict = field(default_factory=dict, repr=False, kw_only=True)
+    model: str = 'gpt-4.1-mini'
+    api_key: str | None = field(default=None, repr=False)
+    base_url: str | None = field(default=None, repr=False)
+    max_react_steps: int = 10
+    max_completion_tokens: int = 2000
+    request_timeout_seconds: float = 60
+    workspace: Path = field(default_factory=lambda: PROJECT_DIR / 'workspace')
 
     @property
     def storage_backend(self):
-        return self.session_backend if self.session_backend is not None else 'legacy_json' if self.session_persist else 'memory'
+        return self.session_backend
 
     def __post_init__(self) -> None:
         if type(self.web_streaming) is not bool or type(self.web_steer) is not bool:raise ValueError('web streaming/steer enabled must be boolean')
-        from .tools.authority import validate_file_access
-        validate_file_access(self.coding_file_access, self.coding_patch_mode)
         if type(self.coding_task_contract) is not bool: raise ValueError('coding.task_contract must be boolean')
         if type(self.coding_enabled) is not bool:raise ValueError('coding.enabled must be a boolean')
         if type(self.coding_patch_mode) is not str or self.coding_patch_mode not in ('off', 'preview', 'write'):
@@ -170,8 +174,6 @@ class GatewayConfig:
         from .agent.context_compactor import validate_compaction
         self.context_token_budget = validate_token_budget(self.context_token_budget)
         self.context_compaction = validate_compaction(self.context_compaction)
-        if self.context_token_budget['mode'] != 'legacy_chars' and not self.context_enabled:
-            raise ValueError('context.token_budget requires context.enabled=true')
         if self.context_compaction['mode'] == 'semantic' and not self.context_enabled:
             raise ValueError('context.compaction requires context.enabled=true')
         if type(self.context_enabled) is not bool:
@@ -182,29 +184,71 @@ class GatewayConfig:
                 raise ValueError(f"context.{name} must be an integer >= {minimum}")
         if type(self.session_max_turns) is not int or self.session_max_turns < 1:
             raise ValueError("session.max_turns must be a positive integer")
-        if type(self.session_persist) is not bool:
-            raise ValueError("session.persist must be a boolean")
-        if not isinstance(self.session_path, (str, Path)) or not str(self.session_path).strip():
-            raise ValueError("session.path must be a non-empty path string")
-        resolved_backend=self.storage_backend
-        if resolved_backend not in ('memory','legacy_json','event_sqlite') or type(resolved_backend) is not str:
-            raise ValueError('session.backend must be memory, legacy_json or event_sqlite')
-        if self.session_persist and resolved_backend != 'legacy_json':
-            raise ValueError('session.persist conflicts with session.backend')
-        self.session_persist = resolved_backend == 'legacy_json'
+        if self.session_backend not in ('memory', 'event_sqlite'):
+            raise ValueError('session.backend must be memory or event_sqlite')
         if not isinstance(self.session_event_path,(str,Path)) or not str(self.session_event_path).strip():raise ValueError('session.event_path')
         self.session_event_path = Path(self.session_event_path).expanduser()
         if not self.session_event_path.is_absolute():self.session_event_path = PROJECT_DIR / self.session_event_path
         from .storage.event_store import limits
         self.session_event_limits = limits(self.session_event_limits)
-        self.session_path = _resolve_path(self.session_path)
         self.request_timeout_seconds = float(self.request_timeout_seconds)
         self.workspace = _resolve_path(self.workspace)
-        if self.session_persist and self.session_path.is_relative_to(self.workspace):
-            raise ValueError("session.path must be outside workspace.path")
+
+def config_from_document(document, *, workspace=None):
+    """Validate once, without constructing clients or executing project code."""
+    if type(document) is not dict:
+        raise ConfigError('CONFIG_ROOT_INVALID')
+    sections = ('coding', 'context', 'session', 'skills', 'mcp', 'web', 'workspace', 'llm')
+    if set(document) - {*sections, 'debug'}:
+        raise ConfigError('CONFIG_UNKNOWN_FIELDS')
+    if any(type(document.get(name, {})) is not dict for name in sections):
+        raise ConfigError('CONFIG_SECTION_INVALID')
+    coding, session, context = (document.get(name, {}) for name in ('coding', 'session', 'context'))
+    if 'file_access' in coding:
+        raise ConfigError('MIGRATION_REQUIRED_CODING_FILE_ACCESS')
+    if 'persist' in session or 'path' in session or session.get('backend') == 'legacy_json':
+        raise ConfigError('MIGRATION_REQUIRED_SESSION_JSON')
+    if isinstance(context.get('token_budget'), dict) and context['token_budget'].get('mode') == 'legacy_chars':
+        raise ConfigError('MIGRATION_REQUIRED_TOKEN_BUDGET')
+    check_providers(document)
+    values = {}
+    try:
+        for section in ('coding', 'context', 'session', 'skills', 'mcp'):
+            for key, value in document.get(section, {}).items():
+                target = section + '_' + key
+                if target not in GatewayConfig.__dataclass_fields__:
+                    raise ValueError('unknown field')
+                values[target] = deepcopy(value)
+        web = document.get('web', {})
+        if set(web) - {'streaming', 'steer'}:
+            raise ValueError('unknown web field')
+        for name, value in web.items():
+            if type(value) is not dict or set(value) - {'enabled'}:
+                raise ValueError('invalid web field')
+            values['web_' + name] = value.get('enabled', False)
+        llm = document['llm']
+        values.update(provider=llm['provider'], providers=deepcopy(llm['providers']))
+        selected = llm['providers'][llm['provider']]
+        for name in ('api_key', 'base_url', 'model'):
+            values[name] = selected[name]
+        for name in ('max_react_steps', 'max_completion_tokens', 'request_timeout_seconds'):
+            if name in llm or name in selected:
+                values[name] = (float if name == 'request_timeout_seconds' else int)(llm.get(name, selected.get(name)))
+        values['workspace'] = workspace if workspace is not None else document.get('workspace', {}).get('path', PROJECT_DIR / 'workspace')
+        values['debug'] = document.get('debug', False)
+        if type(values['debug']) is not bool or set(document.get('workspace', {})) - {'path'}:
+            raise ValueError('invalid configuration')
+        return GatewayConfig(**values)
+    except (ValueError, TypeError, OSError):
+        raise ConfigError('CONFIG_VALIDATION_FAILED') from None
 
 
-def build_client(config: GatewayConfig) -> AsyncOpenAI:
+def load_config(path=None, *, workspace=None):
+    return config_from_document(read_config(CONFIG_FILE if path is None else path), workspace=workspace)
+
+
+def build_client(config: GatewayConfig):
+    from openai import AsyncOpenAI
     if not config.api_key:
         raise RuntimeError(
             f"Missing api_key for llm.provider='{config.provider}'. "

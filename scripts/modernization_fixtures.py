@@ -55,7 +55,7 @@ class Base(unittest.IsolatedAsyncioTestCase):
         self.root=Path(self.tmp.name).resolve()
         self.config=GatewayConfig(workspace=self.root,provider='offline',model='synthetic',api_key='synthetic-private-key',
             context_enabled=True,context_max_chars=6000,context_tool_result_max_chars=256,context_summary_max_chars=3000,
-            context_recent_turns=0,session_max_turns=12,session_persist=False,skills_enabled=False,mcp_enabled=False,
+            context_recent_turns=0,session_max_turns=12,skills_enabled=False,mcp_enabled=False,
             context_token_budget={'mode':'estimate','input_limit':8000})
         self.client=Client();self.agent=self.build()
     def build(self, client=None, config=None, **kwargs):

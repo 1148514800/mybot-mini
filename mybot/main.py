@@ -3,7 +3,7 @@ User → CLI → AgentLoop → LLM
                     ↓
                ToolRegistry
                     ↓
-             read_file / write_file
+             read_file / apply_patch
 """
 
 
@@ -35,4 +35,23 @@ from mybot import run_gateway
 
 
 if __name__ == "__main__":
-    asyncio.run(run_gateway())
+    import argparse
+    import json
+    from mybot.config import load_config, ConfigError
+    parser = argparse.ArgumentParser(description='mybot-mini CLI')
+    parser.add_argument('--workspace')
+    parser.add_argument('--check', action='store_true')
+    args = parser.parse_args()
+    try:
+        if args.check or args.workspace is not None:
+            from mybot.web.launch import prepare_launch
+            config, _, report = prepare_launch(args.workspace)
+        else:
+            config = load_config()
+        if args.check:
+            print(json.dumps(report, ensure_ascii=False))
+        else:
+            asyncio.run(run_gateway(config))
+    except ConfigError as exc:
+        print(json.dumps(exc.result, ensure_ascii=False))
+        raise SystemExit(2) from None

@@ -37,10 +37,11 @@ class DemoClient:
 
 
 async def demonstrate():
+    from mybot.config import GatewayConfig
     records=[]
     for path,policy in [('correct','correct'),('public_only','partial'),('fake_success','fake'),('grader_unavailable','correct')]:
         async def broken(*args,**kwargs):raise OSError('synthetic private failure')
-        options=dict(limits=Limits(max_cases=1,max_requests=12),case_ids=['cache-ttl-001'],
+        options=dict(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), limits=Limits(max_cases=1,max_requests=12),case_ids=['cache-ttl-001'],
                      offline_client_factory=lambda public:DemoClient(policy))
         if path=='grader_unavailable':
             with patch('mybot.evaluation.coding_benchmark.judge',broken):report=await evaluate(**options)

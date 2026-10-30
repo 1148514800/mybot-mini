@@ -23,7 +23,7 @@ from scripts.eval_agent import parser
 class EvaluationV2Checks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.cases={c['id']:c for c in load_cases()}
-        self.config=GatewayConfig(skills_enabled=False,session_persist=False,context_enabled=True,
+        self.config=GatewayConfig(skills_enabled=False,context_enabled=True,
                                  skills_path=PROJECT_DIR/'skills',context_max_chars=40000,
                                  context_tool_result_max_chars=1000,debug=False,max_react_steps=16,
                                  api_key='PRIVATE_TEST_SENTINEL')
@@ -35,7 +35,9 @@ class EvaluationV2Checks(unittest.IsolatedAsyncioTestCase):
     async def test_auto_simple_and_complex_do_not_need_skill(self):
         for id in ('file-summary','code-review','complex-code-review','complex-document-summary'):
             r=await self.run_case(id)
-            self.assertTrue(r['task_success']);self.assertTrue(r['strict_pass'])
+            retired = any(a.get('tool') == 'write_file' for a in self.cases[id]['offline']['actions'])
+            self.assertEqual(r['task_success'], not retired); self.assertEqual(r['strict_pass'], not retired)
+            if retired: self.assertGreater(r['tool_failures'], 0)
             self.assertEqual(r['skill_selected'],[])
             self.assertEqual(r['skill_usage']['load_calls'],0)
 
@@ -44,21 +46,21 @@ class EvaluationV2Checks(unittest.IsolatedAsyncioTestCase):
         # Attempt completion before activation, then execute the valid script.
         case['offline']['actions'].insert(1,{'tool':'update_plan','args':{'step':1,'status':'completed'}})
         r=await self.run_case(case=case)
-        self.assertTrue(r['task_success']);self.assertTrue(r['instruction_followed'])
+        self.assertFalse(r['task_success']);self.assertFalse(r['instruction_followed'])
         self.assertFalse(r['process_clean']);self.assertFalse(r['strict_pass'])
         self.assertEqual(r['planning_failure_categories'],{'plan_not_in_progress':1})
-        self.assertTrue(r['planning_completed'])
+        self.assertFalse(r['planning_completed'])
 
     async def test_wrong_artifact_does_not_pass(self):
         case=deepcopy(self.cases['file-summary']);case['offline']['actions'][1]['args']['content']='wrong'
         r=await self.run_case(case=case)
         self.assertFalse(r['task_success']);self.assertFalse(r['strict_pass'])
-        self.assertTrue(r['process_clean'])
+        self.assertFalse(r['process_clean'])
 
     async def test_guided_instruction_independent_and_wrong_skill(self):
         case=deepcopy(self.cases['file-summary']);case['offline']['guided_actions']=case['offline']['actions']
         r=await self.run_case(case=case,group='guided')
-        self.assertTrue(r['task_success']);self.assertFalse(r['instruction_followed'])
+        self.assertFalse(r['task_success']);self.assertFalse(r['instruction_followed'])
         self.assertFalse(r['strict_pass'])
         case['offline']['guided_actions']=[{'tool':'load_skill','args':{'name':'code-review'}}]+case['offline']['actions']
         r=await self.run_case(case=case,group='guided')
@@ -75,12 +77,12 @@ class EvaluationV2Checks(unittest.IsolatedAsyncioTestCase):
         case=deepcopy(self.cases['file-summary'])
         case['offline']['guided_actions']=case['offline']['actions']+[{'tool':'load_skill','args':{'name':'file-summary'}}]
         r=await self.run_case(case=case,group='guided')
-        self.assertTrue(r['task_success']);self.assertFalse(r['instruction_followed'])
-        self.assertTrue(r['instruction_checks']['requested_skill'])
+        self.assertFalse(r['task_success']);self.assertFalse(r['instruction_followed'])
+        self.assertFalse(r['instruction_checks']['requested_skill'])
         self.assertFalse(r['instruction_checks']['requested_skill_first'])
         case=deepcopy(self.cases['multi-step']);case['offline']['actions'].pop()
         r=await self.run_case(case=case)
-        self.assertTrue(r['task_success']);self.assertFalse(r['process_clean'])
+        self.assertFalse(r['task_success']);self.assertFalse(r['process_clean'])
         self.assertFalse(r['instruction_followed']);self.assertFalse(r['strict_pass'])
 
     async def test_explicit_skill_requirement_in_auto(self):
@@ -114,7 +116,10 @@ class EvaluationV2Checks(unittest.IsolatedAsyncioTestCase):
         artifact=json.loads(base['offline']['actions'][-1]['args']['content'])
         artifact['superseded'].reverse()
         base['offline']['actions'][-1]['args']['content']=json.dumps(artifact)
-        self.assertTrue((await self.run_case(case=base))['task_success'])
+        self.assertFalse((await self.run_case(case=base))['task_success'])
+        from mybot.evaluation.diagnostics import document_diagnostic, json_diagnostic
+        parsed, detail = json_diagnostic(json.dumps(artifact))
+        self.assertTrue(all(field['status'] == 'matched' for field in document_diagnostic(parsed, detail, base['expect']['document']['values'])['fields'].values()))
         base['offline']['actions']=base['offline']['actions'][1:]
         self.assertFalse((await self.run_case(case=base))['task_success'])
 

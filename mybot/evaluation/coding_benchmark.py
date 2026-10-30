@@ -17,7 +17,7 @@ from types import SimpleNamespace as N
 
 from ..agent import ContextBuilder
 from ..agent.git_workflow import GitBaseline
-from ..config import GatewayConfig, PROJECT_DIR
+from ..config import load_config, GatewayConfig, PROJECT_DIR
 from ..tools import build_default_tool_registry
 from ..tools.git_tools import GitStatusTool
 from ..tools.command_approval import cli_command_approval
@@ -45,7 +45,7 @@ async def synthetic_approval(request):
 
 
 def configuration(base, workspace, limits):
-    return replace(base,workspace=workspace,session_persist=False,session_path=workspace.parent/'unused-session.json',
+    return replace(base,workspace=workspace,
         skills_enabled=False,mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},debug=False,
         coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'macos_readonly','timeout_seconds':30,'max_output_bytes':32768},
         coding_autonomy={'enabled':True,'max_model_requests':limits.max_model_requests_per_case,'max_task_seconds':math.ceil(limits.task_timeout)},
@@ -216,8 +216,8 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,case_ids=None
     limits=limits or Limits();budget=RequestBudget(limits,prices,max_estimated_cost)
     benchmark=benchmark or load_benchmark();cases=selected_cases(benchmark,case_ids,limits.max_cases,limits.seed)
     seal=trusted_seal();started=time.monotonic();raw=None;results=[]
-    neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},skills_enabled=False,session_persist=False,debug=False)
-    base=base_config or GatewayConfig(**neutral,**({} if live else dict(provider='offline',model='offline-script',api_key=None,base_url=None)))
+    neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},skills_enabled=False,debug=False)
+    base=base_config or (load_config() if live else GatewayConfig(**neutral,provider='offline',model='offline-script'))
     with WorkspaceDirectory() as workspace:
         parent=workspace.path
         try:

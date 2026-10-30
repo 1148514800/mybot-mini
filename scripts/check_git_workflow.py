@@ -68,9 +68,9 @@ class GitWorkflowChecks(unittest.IsolatedAsyncioTestCase):
     async def undo(self,provider=approve):return await UndoService(self.journal,provider).undo()
 
     def cfg(self, **kwargs):
-        values=dict(workspace=self.root,coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'macos_readonly'},
+        values=dict(context_token_budget={'input_limit':160000}, workspace=self.root,coding_enabled=True,coding_patch_mode='write',coding_command={'mode':'macos_readonly'},
             coding_autonomy={'enabled':True},coding_git_workflow={'enabled':True,'undo_enabled':True},
-            skills_enabled=False,session_persist=False,mcp_enabled=False,debug=False,max_react_steps=20)
+            skills_enabled=False,mcp_enabled=False,debug=False,max_react_steps=20)
         values.update(kwargs);return GatewayConfig(**values)
 
     async def agent(self,client=None,provider=approve, **kwargs):
@@ -181,8 +181,7 @@ class GitWorkflowChecks(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.cfg(coding_command={'mode':'host_confirm'},coding_git_workflow={'enabled':True}).coding_git_workflow['enabled'])
 
     def test_config_loading_unknown(self):
-        with patch('mybot.config._CONFIG',{'coding':{'git_workflow':{'bad':1}}}):
-            with self.assertRaises(ValueError):GatewayConfig()
+        with self.assertRaises(ValueError):GatewayConfig(coding_git_workflow={'bad':1})
 
     async def test_no_schema_change(self):
         tools=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',command={'mode':'macos_readonly'})

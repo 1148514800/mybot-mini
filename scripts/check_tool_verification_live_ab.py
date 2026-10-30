@@ -14,6 +14,7 @@ from mybot.evaluation.coding_fixtures import load_benchmark
 from mybot.evaluation.coding_judge import validate_benchmark
 from mybot.evaluation.coding_failover import evaluate
 from mybot.evaluation.coding_live import Limits
+from mybot.config import GatewayConfig
 from scripts.check_session import response
 
 
@@ -165,7 +166,7 @@ class ABChecks(unittest.IsolatedAsyncioTestCase):
                 if self.step in (2,3):return call('apply_patch',dict(dry_run=self.step==2,changes=[dict(op='update',path='app/buckets.py',expected_sha256=self.hash,edits=[dict(old_text='return sum(value > limit for limit in thresholds)',new_text='return sum(limit <= value for limit in thresholds)')])]))
                 if self.step==4:return call('run_command',dict(argv=['python','-m','unittest','discover','-s','tests','-v']))
                 return response('done')
-        report=await evaluate(benchmark=load_benchmark(ab.BENCHMARK),case_ids=[ab.CASES[0]],provider_mode='failover',
+        report=await evaluate(base_config=GatewayConfig(provider='coco', model='deepseek-v4.1-flash', context_token_budget={'input_limit':160000}), benchmark=load_benchmark(ab.BENCHMARK),case_ids=[ab.CASES[0]],provider_mode='failover',
             limits=Limits(max_cases=1,repeats=1,max_requests=6,max_model_requests_per_case=6),offline_provider_factory=lambda runtime,provider:Client())
         from mybot.evaluation.coding_campaign import strict_success
         r=report['results'][0];self.assertEqual(r['agent_state'],'verified');self.assertEqual(r['judge']['judge_state'],'hidden_fail')

@@ -102,8 +102,8 @@ async def run_case(spec):
         cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write',
             coding_command={'mode':'macos_readonly'}, coding_autonomy={'enabled':True},
             coding_git_workflow={'enabled':True,'undo_enabled':behavior!='spoof', **({'max_journal_bytes':1} if behavior=='budget' else {})},
-            max_react_steps=20, context_enabled=True, context_max_chars=160000, context_tool_result_max_chars=24000,
-            mcp_enabled=False, skills_enabled=False, session_persist=False, debug=False)
+            max_react_steps=20, context_enabled=True, context_token_budget={'input_limit':160000}, context_tool_result_max_chars=24000,
+            mcp_enabled=False, skills_enabled=False,  debug=False)
         tools = build_default_tool_registry(root,coding_enabled=True,patch_mode='write',command=cfg.coding_command,command_approval_provider=approve)
         client = SpoofClient() if behavior=='spoof' else GitWorkflowClient(multiple_updates=behavior=='multiple_updates')
         if behavior=='spoof':tools.register(SpoofPatchTool())

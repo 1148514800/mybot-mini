@@ -55,9 +55,9 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
         self.controller = CodingTaskController(AutonomySettings(enabled=True), self.tools)
 
     def cfg(self, **kwargs):
-        values = dict(workspace=self.root, coding_enabled=True, coding_patch_mode='write',
+        values = dict(context_token_budget={'input_limit':160000}, workspace=self.root, coding_enabled=True, coding_patch_mode='write',
             coding_command={'mode': 'host_confirm'}, coding_autonomy={'enabled': True}, max_react_steps=20,
-            skills_enabled=False, session_persist=False, mcp_enabled=False, debug=False)
+            skills_enabled=False,  mcp_enabled=False, debug=False)
         values.update(kwargs)
         return GatewayConfig(**values)
 
@@ -125,12 +125,14 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
     def test_no_auto_permissions(self):
         c = self.cfg(max_react_steps=2)
         self.assertEqual(c.max_react_steps, 2)
-        self.assertFalse(c.mcp_enabled or c.skills_enabled or c.session_persist)
+        self.assertFalse(c.mcp_enabled or c.skills_enabled or c.storage_backend != 'memory')
 
     def test_config_file_loading(self):
-        with patch('mybot.config._CONFIG', {'coding': {'enabled': True, 'patch_mode': 'write',
-                'command': {'mode':'macos_readonly'}, 'autonomy': {'enabled': True}}}):
-            self.assertTrue(GatewayConfig().coding_autonomy['enabled'])
+        from scripts.check_lean_core_v2 import document
+        from mybot.config import config_from_document
+        doc = document(); doc['coding'] = {'enabled':True, 'patch_mode':'write',
+            'command':{'mode':'macos_readonly'}, 'autonomy':{'enabled':True}}
+        self.assertTrue(config_from_document(doc).coding_autonomy['enabled'])
 
     def test_no_new_tool_schema(self):
         before = self.tools.get_definitions()
@@ -841,9 +843,9 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(a.coding_controller)
 
     async def test_persisted_messages_do_not_restore_task(self):
-        destination=Path(self.tmp.name)/'history.json'
-        a,_,_=await self.run_loop([response('done')],session_persist=True,session_path=destination)
-        b=AgentLoop(N(),self.cfg(session_persist=True,session_path=destination),self.tools,ContextBuilder(self.root))
+        destination=Path(self.tmp.name).resolve()/'private/events.sqlite3'
+        a,_,_=await self.run_loop([response('done')],session_backend='event_sqlite',session_event_path=destination)
+        b=AgentLoop(N(),self.cfg(session_backend='event_sqlite',session_event_path=destination),self.tools,ContextBuilder(self.root))
         self.assertTrue(b.session.history())
         self.assertIsNone(b.coding_controller);self.assertIsNone(b.last_coding_report)
         async def create(**kw):return response('No new work')
@@ -867,9 +869,9 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(r.success);self.assertEqual(self.controller.state,'blocked')
 
     async def test_session_save_failure_not_verified(self):
-        with patch('mybot.storage.session_store.SessionStore.save',side_effect=OSError('synthetic failure')):
+        with patch('mybot.storage.history.SessionHistory.finish',side_effect=OSError('synthetic failure')):
             with self.assertRaises(OSError):
-                await self.run_loop([response('done')], session_persist=True, session_path=Path(self.tmp.name)/'session.json')
+                await self.run_loop([response('done')], session_backend='event_sqlite', session_event_path=Path(self.tmp.name).resolve()/'private/events.sqlite3')
         self.assertIsNone(self.tools.get_tool('run_command').execution_guard)
 
     async def test_terminal_exception_revokes_verified_state(self):
@@ -887,7 +889,7 @@ class AutonomyChecks(unittest.IsolatedAsyncioTestCase):
 
     def test_gateway_disables_sdk_retries_only_when_autonomous(self):
         from mybot.config import build_client
-        with patch('mybot.config.AsyncOpenAI') as sdk:
+        with patch('openai.AsyncOpenAI') as sdk:
             build_client(self.cfg(api_key='synthetic-placeholder'))
             self.assertEqual(sdk.call_args.kwargs['max_retries'],0)
             sdk.reset_mock()

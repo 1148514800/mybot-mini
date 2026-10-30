@@ -39,8 +39,7 @@ def make_app(case,batch,provider_config,*,authorization=LIVE_AUTHORIZATION,port=
         private_json(private/f'{case}-response-{reservation:02}.json',value)
     def factory(settings):
         require_authorization(authorization)
-        import mybot.config as module
-        module._PROVIDERS=providers
+        settings.providers=providers
         gateway=build_gateway_client(settings)
         gateway._primary=BudgetClient(gateway._primary,settings,ledger,case,observe)
         original=gateway._factory

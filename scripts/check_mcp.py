@@ -64,8 +64,8 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         self.root=Path(self.folder.name).resolve();self.workspace=self.root/'workspace';self.workspace.mkdir()
         self.fixture=self.root/'fixture.py';self.fixture.write_text(FIXTURE)
         self.pid=self.root/'pid'
-        self.config=GatewayConfig(mcp_enabled=False,mcp_servers={},skills_enabled=False,context_enabled=False,
-                                  session_persist=False,debug=False,workspace=self.workspace)
+        self.config=GatewayConfig(context_token_budget={'input_limit':160000}, mcp_enabled=False,mcp_servers={},skills_enabled=False,context_enabled=False,
+                                  debug=False,workspace=self.workspace)
         self.tools=legacy_registry(self.workspace)
 
     def demo(self,allowed=('add','echo'),**overrides):
@@ -80,13 +80,12 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         except ProcessLookupError:return False
 
     async def test_disabled_does_not_start(self):
-        with patch('mybot.config._CONFIG',{}):
-            cfg=GatewayConfig(session_persist=False)
+        cfg=GatewayConfig()
         self.assertFalse(cfg.mcp_enabled);self.assertEqual(cfg.mcp_servers,{})
         with patch('mybot.mcp_client.transport.stdio_client',side_effect=AssertionError('must not spawn')):
             async with MCPClientManager(self.config,self.tools) as manager:
                 self.assertEqual(manager.clients,{})
-        self.assertEqual(len(self.tools.get_definitions()),3)
+        self.assertEqual(len(self.tools.get_definitions()),2)
 
     async def test_invalid_config(self):
         invalid=[{'mcp_enabled':1},{'mcp_servers':[]},{'mcp_servers':{'bad__name':self.demo()}},
@@ -120,7 +119,9 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         cfg=replace(self.config,mcp_enabled=True,mcp_servers={'first':self.demo(('add',)),'second':self.demo(('add',))})
         async with MCPClientManager(cfg,self.tools):
             self.assertTrue(self.tools.has_tool('mcp__first__add'));self.assertTrue(self.tools.has_tool('mcp__second__add'))
-            self.assertTrue((await self.tools.execute('write_file',{'path':'a','content':'local'})).success)
+            self.assertEqual((await self.tools.execute('write_file',{'path':'a','content':'local'})).error, 'TOOL_RETIRED_WRITE_FILE')
+            self.assertFalse((self.workspace/'a').exists())
+        (self.workspace/'a').write_text('local')
         cfg=self.fixture_config(['read_file'])
         async with MCPClientManager(cfg,self.tools):
             self.assertTrue(self.tools.has_tool('read_file'));self.assertTrue(self.tools.has_tool('mcp__test__read_file'))
@@ -145,11 +146,11 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         cfg=self.fixture_config(['bad'],mode='bad-schema')
         with self.assertRaises(MCPStartupError):
             async with MCPClientManager(cfg,self.tools):pass
-        self.assertFalse(self.alive());self.assertEqual(len(self.tools.get_definitions()),3)
+        self.assertFalse(self.alive());self.assertEqual(len(self.tools.get_definitions()),2)
         cfg=replace(self.config,mcp_enabled=True,mcp_servers={'demo':dict(self.demo(),command='/nonexistent-mybot-mcp-program')})
         with self.assertRaises(MCPStartupError):
             async with MCPClientManager(cfg,self.tools):pass
-        self.assertTrue((await self.tools.execute('write_file',{'path':'after','content':'ok'})).success)
+        self.assertEqual((await self.tools.execute('write_file',{'path':'after','content':'ok'})).error, 'TOOL_RETIRED_WRITE_FILE')
 
     async def test_tool_timeout_disconnect_release_process(self):
         for name in ('delay','crash'):
@@ -191,7 +192,7 @@ class MCPChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.alive())
         with self.assertRaises(MCPStartupError):
             async with MCPClientManager(self.fixture_config(['missing']),self.tools):pass
-        self.assertFalse(self.alive());self.assertEqual(len(self.tools.get_definitions()),3)
+        self.assertFalse(self.alive());self.assertEqual(len(self.tools.get_definitions()),2)
 
     async def test_gateway_owns_connections_and_closes_llm(self):
         import mybot.app as app

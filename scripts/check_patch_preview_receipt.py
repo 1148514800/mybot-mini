@@ -98,7 +98,7 @@ async def synthetic_case(mode, scenario):
         config = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write',
             coding_preview_receipt=candidate, coding_command={'mode': 'macos_readonly'},
             coding_autonomy={'enabled': True, **BUDGET}, coding_git_workflow={'enabled': True},
-            context_enabled=False, skills_enabled=False, session_persist=False, mcp_enabled=False, max_react_steps=8)
+            context_enabled=False, context_token_budget={'input_limit':64000}, skills_enabled=False, mcp_enabled=False, max_react_steps=8)
         agent = BenchmarkAgent(N(chat=N(completions=N(create=create))), config, tools, ContextBuilder(root), trace=trace)
         with contextlib.redirect_stdout(io.StringIO()):
             try: await agent.handle_message('Repair double using public unittest contract.')
@@ -370,11 +370,11 @@ class ReceiptChecks(unittest.IsolatedAsyncioTestCase):
             captured.append(json.loads(kwargs['messages'][-1]['content'].split('metadata=', 1)[1])['preview_receipt']); return response('done')
         tools = build_default_tool_registry(self.root, coding_enabled=True, patch_mode='write', preview_receipt=True)
         cfg = GatewayConfig(workspace=self.root, coding_enabled=True, coding_patch_mode='write', coding_preview_receipt=True,
-            session_persist=True, session_path=self.root.parent / (self.root.name + '-session.json'), skills_enabled=False, context_enabled=False)
-        self.addCleanup(lambda: cfg.session_path.unlink(missing_ok=True))
+            session_backend='event_sqlite', session_event_path=self.root.parent / (self.root.name + '-history') / 'events.sqlite3', skills_enabled=False, context_enabled=False, context_token_budget={'input_limit':64000})
+        self.addCleanup(lambda: __import__("shutil").rmtree(cfg.session_event_path.parent))
         agent = AgentLoop(N(chat=N(completions=N(create=create))), cfg, tools, ContextBuilder(self.root))
         await agent.handle_message('preview'); token = captured[-1]
-        self.assertNotIn(token, cfg.session_path.read_text()); self.assertNotIn(token, json.dumps(agent.session.history()))
+        self.assertNotIn(token.encode(), cfg.session_event_path.read_bytes()); self.assertNotIn(token, json.dumps(agent.session.history()))
         self.assertIsNone(tools.get_tool('apply_patch')._receipt)
         await agent.handle_message('/clear'); self.assertIsNone(tools.get_tool('apply_patch')._receipt_scope)
     async def test_expired_during_preflight(self):
@@ -421,7 +421,7 @@ class ReceiptChecks(unittest.IsolatedAsyncioTestCase):
         tools = build_default_tool_registry(self.root, coding_enabled=True, patch_mode='write', preview_receipt=True)
         tool = tools.get_tool('apply_patch')
         agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(workspace=self.root, skills_enabled=False,
-            session_persist=False, context_enabled=False), tools, ContextBuilder(self.root))
+             context_enabled=False), tools, ContextBuilder(self.root))
         reply = await agent.handle_message('preview then timeout')
         self.assertIsInstance(reply, str); self.assertEqual(len(seen), 1)
         self.assertIsNone(tool._receipt); self.assertIsNone(tool._receipt_scope)

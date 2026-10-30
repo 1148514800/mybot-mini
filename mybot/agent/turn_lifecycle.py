@@ -62,7 +62,6 @@ def _history_control(self,text):
         if command=='/history':return json.dumps(self.history.messages(before=int(parts[1]) if len(parts)>1 else None),ensure_ascii=False)
         if command=='/sessions':return json.dumps([{k:s[k] for k in ('id','title')} for s in self.history.store.sessions()],ensure_ascii=False)
         if command=='/session':
-            if self.store is not None:raise StoreError('legacy_json_session_switch_unsupported')
             sid=None if parts[1]=='new' else parts[1]
             h=SessionHistory(self.history.store,sid)
             if sid:h.status()
@@ -283,8 +282,5 @@ def _finish_turn(self, messages: list[dict[str, Any]], turn_start: int, reply: s
     saved_turn = messages[turn_start:]
     if type(patch_tool) is ApplyPatchTool and patch_tool.preview_receipt:
         saved_turn = patch_tool.redact_receipt_history(saved_turn)
-    if self.store is not None:
-        turns = self.session.export_turns() + [saved_turn]
-        self.store.save(turns[-self.session.max_turns:])
     self.session.add_turn(self.history.identify_turn(saved_turn))
     return reply

@@ -177,13 +177,13 @@ class AuthChecks(unittest.IsolatedAsyncioTestCase):
                 effects=[response(calls=[call('a','mcp__web__add','{"a":1,"b":2}')]),response('done')]
                 async def create(**kwargs):
                     self.assertNotIn(TOKEN,json.dumps(kwargs));return effects.pop(0)
-                session_path=self.root/'state/session.json'
-                cfg=replace(self.cfg(),session_persist=True,session_path=session_path,debug=True)
+                session_path=self.root.resolve()/'state/events.sqlite3'
+                cfg=replace(self.cfg(),session_backend='event_sqlite',session_event_path=session_path,debug=True)
                 agent=AgentLoop(N(chat=N(completions=N(create=create))),cfg,self.tools,ContextBuilder(self.workspace))
                 with contextlib.redirect_stdout(output):self.assertEqual(await agent.handle_message('add'),'done')
                 assert_pairs(self,agent.session.history())
                 self.assertNotIn(TOKEN,json.dumps(agent.session.history()))
-                self.assertNotIn(TOKEN,session_path.read_text())
+                self.assertNotIn(TOKEN,session_path.read_bytes().decode('latin1'))
                 self.assertNotIn(TOKEN,json.dumps(self.tools.get_definitions()))
         self.assertNotIn(TOKEN,output.getvalue());self.assertNotIn(TOKEN,json.dumps(m.audit))
         self.assertTrue(all(e['auth_ok'] for e in self.events()))

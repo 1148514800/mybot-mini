@@ -27,8 +27,7 @@
   "debug": false,
   "session": {
     "max_turns": 6,
-    "persist": false,
-    "path": "./.mybot_state/session.json"
+    "backend": "memory"
   },
   "llm": {
     "provider": "siliconflow",
@@ -58,7 +57,7 @@
     "summary_max_chars": 1500,
     "tool_result_max_chars": 4000,
     "token_budget": {
-      "mode": "legacy_chars",
+      "mode": "estimate",
       "input_limit": 16000,
       "model_windows": {}
     },

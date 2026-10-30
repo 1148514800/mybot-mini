@@ -9,8 +9,7 @@ import unittest
 from unittest.mock import patch
 
 from mybot.tools import Tool, ToolRegistry, ToolResult, build_default_tool_registry
-from mybot.tools.file import WriteFileTool
-from mybot.tools.file_approval import inspectable_write
+import mybot.tools.file as file_tools
 from mybot.mcp_client.approval import ApprovalDecision
 from scripts.authority_contract_fixtures import agent, prepare, PROMPTS, configuration, approve
 
@@ -22,7 +21,7 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
 
     def names(self, tools):return {d['function']['name'] for d in tools.get_definitions()}
     def legacy(self, provider=approve):
-        return build_default_tool_registry(self.root,file_access='legacy_confirm',file_approval_provider=provider)
+        return build_default_tool_registry(self.root)
 
     async def test_default_schema_readonly(self):
         t=build_default_tool_registry(self.root)
@@ -34,17 +33,25 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(r.success);self.assertTrue(r.metadata['authority_denied']);self.assertFalse((self.root/'x').exists())
 
     async def test_direct_constructor_denies(self):
-        self.assertFalse((await WriteFileTool(self.root).execute(path='x',content='bad')).success)
+        self.assertFalse(hasattr(file_tools, 'WriteFileTool'))
         self.assertFalse((self.root/'x').exists())
 
     async def test_registered_write_still_needs_policy(self):
-        t=ToolRegistry();t.register(WriteFileTool(self.root,enabled=True,approval_provider=approve))
-        self.assertNotIn('write_file',self.names(t));self.assertFalse((await t.execute('write_file',{'path':'x','content':'bad'})).success)
+        class Forged(Tool):
+            name = 'write_file'; description = ''; parameters = {}
+            async def execute(self, **kwargs): raise AssertionError('must never execute')
+        t = ToolRegistry(mutation_enabled=True)
+        t.register(Forged(), capability='workspace_mutation')
+        self.assertNotIn('write_file', self.names(t))
+        self.assertEqual((await t.execute('write_file', {})).error, 'TOOL_RETIRED_WRITE_FILE')
 
     async def test_legacy_create_and_confirmed_overwrite(self):
-        t=self.legacy();self.assertTrue((await t.execute('write_file',{'path':'x','content':'one'})).success)
-        self.assertTrue((await t.execute('write_file',{'path':'x','content':'two'})).success)
-        self.assertEqual((self.root/'x').read_text(),'two')
+        t = self.legacy()
+        self.assertEqual((await t.execute('write_file', {'path':'x','content':'one'})).error, 'TOOL_RETIRED_WRITE_FILE')
+        self.assertFalse((self.root/'x').exists())
+        (self.root/'x').write_text('user content')
+        self.assertEqual((await t.execute('write_file', {'path':'x','content':'two'})).error, 'TOOL_RETIRED_WRITE_FILE')
+        self.assertEqual((self.root/'x').read_text(), 'user content')
 
     async def test_missing_provider_denies(self):
         r=await self.legacy(None).execute('write_file',{'path':'x','content':'bad'})
@@ -54,12 +61,11 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
         async def deny(r):return ApprovalDecision.DENY
         self.assertFalse((await self.legacy(deny).execute('write_file',{'path':'x','content':'bad'})).success)
         async def cancel(r):raise asyncio.CancelledError
-        with self.assertRaises(asyncio.CancelledError):await self.legacy(cancel).execute('write_file',{'path':'x','content':'bad'})
+        self.assertEqual((await self.legacy(cancel).execute('write_file',{'path':'x','content':'bad'})).error, 'TOOL_RETIRED_WRITE_FILE')
         self.assertEqual(list(self.root.iterdir()),[])
 
     async def test_uninspectable_and_sensitive_denied(self):
         for text in ('x'*20000,'password=private','sk-'+'a'*24):
-            self.assertIsNone(inspectable_write('x',text,None))
             self.assertFalse((await self.legacy().execute('write_file',{'path':'x','content':text})).success)
         self.assertFalse((self.root/'x').exists())
 
@@ -67,7 +73,7 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
         for mode in ('preview','write'):
             t=build_default_tool_registry(self.root,coding_enabled=True,patch_mode=mode,preview_receipt=True)
             self.assertIn('apply_patch',self.names(t));self.assertNotIn('write_file',self.names(t))
-            with self.assertRaises(ValueError):build_default_tool_registry(self.root,coding_enabled=True,patch_mode=mode,file_access='legacy_confirm')
+            with self.assertRaises(TypeError):build_default_tool_registry(self.root,coding_enabled=True,patch_mode=mode,file_access='legacy_confirm')
 
     async def test_preview_receipt_still_single_use(self):
         t=build_default_tool_registry(self.root,coding_enabled=True,patch_mode='write',preview_receipt=True)
@@ -95,7 +101,7 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
         p=self.root/'x';p.write_text('safe')
         async def change(r):p.write_text('user edit');return ApprovalDecision.APPROVE
         self.assertFalse((await self.legacy(change).execute('write_file',{'path':'x','content':'bad'})).success)
-        self.assertEqual(p.read_text(),'user edit')
+        self.assertEqual(p.read_text(),'safe')
 
     async def test_parent_changes_during_approval(self):
         (self.root/'dir').mkdir()
@@ -103,7 +109,7 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
             (self.root/'dir').rename(self.root/'old');(self.root/'dir').symlink_to(self.root/'old')
             return ApprovalDecision.APPROVE
         self.assertFalse((await self.legacy(change).execute('write_file',{'path':'dir/x','content':'bad'})).success)
-        self.assertFalse((self.root/'old/x').exists())
+        self.assertFalse((self.root/'old').exists()); self.assertTrue((self.root/'dir').is_dir())
 
     async def test_unknown_tool_cannot_self_classify(self):
         class Fake(Tool):
@@ -114,7 +120,7 @@ class AuthorityChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_strict_config(self):
         for val in (True,False,None,{},'write','legacy'):
-            with self.assertRaises(ValueError):configuration(self.root,'C',coding_file_access=val)
+            with self.assertRaises(TypeError):configuration(self.root,'C',coding_file_access=val)
         for val in (None,1,'true'):
             with self.assertRaises(ValueError):configuration(self.root,'C',coding_task_contract=val)
 

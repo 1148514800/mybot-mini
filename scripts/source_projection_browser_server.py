@@ -16,7 +16,7 @@ def make_app(root,port):
     root=Path(root).resolve()
     if not root.is_dir() or root.is_symlink() or root.stat().st_mode&0o077:raise ValueError('private temporary root required')
     config=configuration(root,context_max_chars=60000,context_recent_turns=6,context_summary_max_chars=1000,
-        context_token_budget={'mode':'estimate','input_limit':30000},coding_file_access='read_only',coding_command={'mode':'off'})
+        context_token_budget={'mode':'estimate','input_limit':30000},coding_command={'mode':'off'})
     target=root/'synthetic-requests.jsonl'
     class BrowserSynthetic(SyntheticClient):
         async def create(self,**request):

@@ -44,7 +44,7 @@ class PlanningChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace), legacy_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False,  debug=False, workspace=self.workspace), legacy_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_greeting_direct_without_extra_request(self):
         self.effects.append(response("你好"))
@@ -52,7 +52,7 @@ class PlanningChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.agent.plan.mode, "DIRECT")
         self.assertEqual(len(self.requests), 1)
         self.assertNotIn("[PLAN]", self.log.getvalue())
-        self.assertEqual({t["function"]["name"] for t in self.requests[0]["tools"]}, {"read_file", "write_file", "list_files", "create_plan", "update_plan"})
+        self.assertEqual({t["function"]["name"] for t in self.requests[0]["tools"]}, {"read_file", "list_files", "create_plan", "update_plan"})
 
     async def test_single_tool_direct(self):
         self.effects.extend([response(calls=[call("l")]), response("目录为空")])
@@ -63,10 +63,11 @@ class PlanningChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.log.getvalue(), "")
 
     async def test_complete_plan_and_ids(self):
+        (self.workspace / "summary.txt").write_text("PRIVATE_PARAMETERS")
         self.effects.extend([
             response(calls=[plan_call()]),
             response(calls=[update("s1", 1, "in_progress"), call("l")]),
-            response(calls=[update("c1", 1, "completed"), update("s2", 2, "in_progress"), call("w", "write_file", '{"path":"summary.txt","content":"PRIVATE_PARAMETERS"}')]),
+            response(calls=[update("c1", 1, "completed"), update("s2", 2, "in_progress"), call("w", "read_file", '{"path":"summary.txt"}')]),
             response(calls=[update("c2", 2, "completed")]), response("总结已保存")])
         self.assertEqual(await self.agent.handle_message("列出文件，然后写入总结"), "总结已保存")
         self.assertEqual(self.agent.plan.task, "列出文件，然后写入总结")
@@ -110,7 +111,7 @@ class PlanningChecks(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError): plan.update(1, "completed")
 
     async def test_failed_tool_blocks_completion_and_next_operations(self):
-        self.effects.extend([response(calls=[plan_call(), update("s", 1, "in_progress"), call("bad", "read_file", '{"path":"missing"}'), update("fake", 1, "completed"), update("skip", 2, "in_progress"), call("w", "write_file", '{"path":"bad.txt","content":"not allowed"}')]), response("全部成功")])
+        self.effects.extend([response(calls=[plan_call(), update("s", 1, "in_progress"), call("bad", "read_file", '{"path":"missing"}'), update("fake", 1, "completed"), update("skip", 2, "in_progress"), call("w", "read_file", '{"path":"bad.txt"}')]), response("全部成功")])
         reply = await self.agent.handle_message("读取然后写入")
         self.assertIn("计划未完成", reply)
         self.assertIn("not found", reply)
@@ -133,7 +134,7 @@ class PlanningChecks(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.agent.plan.closed)
 
     async def test_no_execution_without_active_step(self):
-        self.effects.extend([response(calls=[plan_call(), call("w", "write_file", '{"path":"bad.txt","content":"not allowed"}')]), response("完成")])
+        self.effects.extend([response(calls=[plan_call(), call("w", "read_file", '{"path":"bad.txt"}')]), response("完成")])
         self.assertIn("计划未完成", await self.agent.handle_message("复杂任务"))
         self.assertFalse(self.workspace.joinpath("bad.txt").exists())
 

@@ -20,7 +20,7 @@ from types import SimpleNamespace as N
 from openai import APITimeoutError
 from ..agent import AgentLoop, ContextBuilder
 from ..agent.context_manager import ContextBudgetError
-from ..config import GatewayConfig, PROJECT_DIR, build_client
+from ..config import load_config, GatewayConfig, PROJECT_DIR, build_client
 from ..mcp_client.manager import MCPClientManager
 from ..mcp_client.adapter import MCPToolAdapter
 from ..tools import build_default_tool_registry
@@ -49,7 +49,7 @@ class Limits:
     max_requests: int = 240
     max_output_tokens: int = 512
     max_react_steps: int = 16
-    context_max_chars: int = 160000
+    input_limit: int = 160000
     task_timeout: float = 15.0
     total_timeout: float = 240.0
     request_timeout: float = 10.0
@@ -57,7 +57,7 @@ class Limits:
 
     def __post_init__(self):
         for key,low,high in (('max_cases',1,15),('repeats',1,5),('max_requests',1,2000),
-                             ('max_output_tokens',1,4096),('max_react_steps',1,30),('context_max_chars',1,500000),('seed',0,2**32-1)):
+                             ('max_output_tokens',1,4096),('max_react_steps',1,30),('input_limit',256,500000),('seed',0,2**32-1)):
             value=getattr(self,key)
             if type(value) is not int or not low<=value<=high: raise ValueError('Invalid evaluation limit: '+key)
         for key,high in (('task_timeout',120),('total_timeout',1800),('request_timeout',60)):
@@ -355,16 +355,16 @@ def safe_label(value):
     return value if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_./-]{1,128}',value) else '<unavailable>'
 
 
-async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,prices=None,base_config=None,client_factory=None,case_set='core',file_approval_provider=None):
+async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,prices=None,base_config=None,client_factory=None,case_set='core'):
     if type(live) is not bool or type(confirm_api_cost) is not bool or live!=confirm_api_cost:
         raise ValueError('Live requires both --live and --confirm-api-cost')
     limits=limits or Limits(); prices=validate_prices(prices)
     modes=tuple(modes)
     if not modes or len(set(modes))!=len(modes) or any(m not in (*MODES,'progressive_bm25',*ADAPTIVE_MODES) for m in modes):raise ValueError('Invalid agent modes')
     cases=(load_cases() if case_set=='core' else load_cases(case_set))[:limits.max_cases]
-    neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},session_persist=False,skills_enabled=False,debug=False)
-    base=base_config or GatewayConfig(**neutral,**({} if live else dict(provider='offline',model='fixed-script',api_key=None,base_url=None)))
-    common=replace(base,**neutral,context_enabled=True,context_max_chars=limits.context_max_chars,
+    neutral=dict(mcp_enabled=False,mcp_servers={},mcp_discovery={'enabled':False},skills_enabled=False,debug=False)
+    base=base_config or (load_config() if live else GatewayConfig(**neutral,provider='offline',model='fixed-script'))
+    common=replace(base,**neutral,context_enabled=True,context_token_budget={**base.context_token_budget, 'input_limit':min(base.context_token_budget['input_limit'], limits.input_limit)},
                    context_tool_result_max_chars=4000,max_react_steps=limits.max_react_steps,
                    max_completion_tokens=limits.max_output_tokens,request_timeout_seconds=limits.request_timeout)
     started=time.monotonic(); budget={'used':0,'maximum':limits.max_requests,'deadline':started+limits.total_timeout}
@@ -387,13 +387,12 @@ async def evaluate(*,live=False,confirm_api_cost=False,limits=None,modes=MODES,p
                         with tempfile.TemporaryDirectory(prefix='mybot-tool-eval-') as folder:
                             workspace=Path(folder)/'workspace';workspace.mkdir()
                             progressive=mode!='eager'
-                            config=replace(common,workspace=workspace,session_path=Path(folder)/'state.json',
+                            config=replace(common,workspace=workspace,
                                 mcp_enabled=True,mcp_servers={'catalog':demo_server()},
                                 mcp_discovery={'enabled':progressive,'retrieval_mode':MODE_RETRIEVAL[mode],
                                                **(ADAPTIVE_ROUTING if mode in ADAPTIVE_MODES else {}),
                                                **({'selection_policy':'selective'} if mode=='adaptive_selective_hybrid' else {})})
-                            tools=build_default_tool_registry(workspace, file_access=config.coding_file_access,
-                                file_approval_provider=file_approval_provider)
+                            tools=build_default_tool_registry(workspace)
                             # timeout surrounds the whole connection lifecycle in THIS owner task.
                             remaining=budget['deadline']-time.monotonic()
                             try:

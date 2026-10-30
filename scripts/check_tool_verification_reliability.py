@@ -3,6 +3,7 @@
 Run with --comparison PATH to export the deterministic two-arm experiment.
 """
 import asyncio
+import ast
 import contextlib
 import copy
 import hashlib
@@ -69,9 +70,9 @@ class VerificationChecks(unittest.IsolatedAsyncioTestCase):
         self.agent = AgentLoop(N(), self.cfg(), self.tools, ContextBuilder(self.root))
 
     def cfg(self, **extra):
-        opts = dict(workspace=self.root, coding_enabled=True, coding_patch_mode='write',
+        opts = dict(context_token_budget={"input_limit":160000}, workspace=self.root, coding_enabled=True, coding_patch_mode='write',
             coding_command={'mode': 'host_confirm'}, coding_autonomy={'enabled': True},
-            skills_enabled=False, session_persist=False, mcp_enabled=False, max_react_steps=20)
+            skills_enabled=False,  mcp_enabled=False, max_react_steps=20)
         opts.update(extra)
         return GatewayConfig(**opts)
 
@@ -399,7 +400,19 @@ class SyntheticPolicy:
 
 def frozen(module, path):
     source = subprocess.check_output(['git', 'show', BASELINE + ':' + path], stderr=subprocess.DEVNULL, text=True)
-    namespace = dict(vars(module)); exec(compile(source, '<trusted-frozen-baseline>', 'exec'), namespace)
+    namespace = dict(vars(module))
+    if path == 'mybot/agent/loop.py':
+        # Compare the exact historical dispatch method, not retired JSON runtime imports.
+        # No baseline constructor or persistence backend is instantiated by this experiment.
+        from mybot.agent import tool_dispatch
+        namespace.update(vars(tool_dispatch))
+        tree = ast.parse(source)
+        loop = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'AgentLoop')
+        loop.body = [n for n in loop.body if isinstance(n, ast.AsyncFunctionDef) and n.name == '_execute_tool']
+        assert len(loop.body) == 1
+        source = ast.Module(body=[ast.parse('from __future__ import annotations').body[0], loop], type_ignores=[])
+        ast.fix_missing_locations(source)
+    exec(compile(source, '<trusted-frozen-baseline>', 'exec'), namespace)
     return namespace
 
 
@@ -422,9 +435,9 @@ def baseline_behavior():
 async def synthetic_arm(case, baseline):
     with tempfile.TemporaryDirectory() as folder:
         root = Path(folder); fixture(root); tools = registry(root, 'macos_readonly')
-        cfg = GatewayConfig(workspace=root, coding_enabled=True, coding_patch_mode='write',
+        cfg = GatewayConfig(context_token_budget={"input_limit":160000}, workspace=root, coding_enabled=True, coding_patch_mode='write',
             coding_command={'mode': 'macos_readonly'}, coding_autonomy={'enabled': True, 'max_model_requests': 10},
-            skills_enabled=False, session_persist=False, mcp_enabled=False, max_react_steps=12)
+            skills_enabled=False,  mcp_enabled=False, max_react_steps=12)
         policy = SyntheticPolicy(case); events = []
         class ObservedAgent(AgentLoop):
             async def _execute(self, name, raw):

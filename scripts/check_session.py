@@ -52,11 +52,10 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
             if isinstance(item, Exception):
                 raise item
             return item
-        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace, session_max_turns=6), legacy_registry(self.workspace), ContextBuilder(self.workspace))
+        self.agent = AgentLoop(N(chat=N(completions=N(create=create))), GatewayConfig(skills_enabled=False, context_enabled=False,  debug=False, workspace=self.workspace, session_max_turns=6), legacy_registry(self.workspace), ContextBuilder(self.workspace))
 
     async def test_configured_history_window(self):
-        with patch.object(config_module, "_CONFIG", {"session": {"max_turns": 2}}):
-            config = GatewayConfig(skills_enabled=False, context_enabled=False, session_persist=False, debug=False, workspace=self.workspace)
+        config = GatewayConfig(session_max_turns=2, skills_enabled=False, context_enabled=False, debug=False, workspace=self.workspace)
         self.assertEqual(config.session_max_turns, 2)
         self.agent = AgentLoop(self.agent.client, config, self.agent.tools, self.agent.context)
         for number in range(3):
@@ -68,12 +67,11 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
         assert_pairs(self, history)
 
     async def test_config_default_and_invalid_values(self):
-        with patch.object(config_module, "_CONFIG", {}):
-            self.assertEqual(GatewayConfig(skills_enabled=False, context_enabled=False, ).session_max_turns, 6)
+        self.assertEqual(GatewayConfig(skills_enabled=False, context_enabled=False, ).session_max_turns, 6)
         for value in (0, -1, True, "6", 2.5, None):
-            with self.subTest(value=value), patch.object(config_module, "_CONFIG", {"session": {"max_turns": value}}):
+            with self.subTest(value=value):
                 with self.assertRaisesRegex(ValueError, "session.max_turns"):
-                    GatewayConfig(skills_enabled=False, context_enabled=False, )
+                    GatewayConfig(session_max_turns=value, skills_enabled=False, context_enabled=False)
 
     async def test_first_and_second_turn(self):
         self.effects.extend([response("记住了"), response("Python")])
@@ -85,7 +83,8 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.agent.session.history()[-1]["content"], "Python")
 
     async def test_tools_and_multiple_ids(self):
-        self.effects.extend([response(calls=[call("w", "write_file", '{"path":"note.txt","content":"Python"}'), call("r", "read_file", '{"path":"note.txt"}')]), response("已写入并读取"), response("Python")])
+        (self.workspace / "note.txt").write_text("Python")
+        self.effects.extend([response(calls=[call("w", "read_file", '{"path":"note.txt"}'), call("r", "read_file", '{"path":"note.txt"}')]), response("已写入并读取"), response("Python")])
         await self.agent.handle_message("写入并读取")
         history = self.agent.session.history()
         self.assertEqual([m["role"] for m in history], ["user", "assistant", "tool", "tool", "assistant"])
@@ -136,10 +135,10 @@ class SessionChecks(unittest.IsolatedAsyncioTestCase):
         self.effects.append(response("旧回答"))
         await self.agent.handle_message("旧问题")
         history = self.agent.session.history()
-        self.effects.extend([response(calls=[call("timeout-1", "write_file", '{"path":"side.txt","content":"written"}')]), APITimeoutError(request=httpx.Request("POST", "https://example.invalid"))])
+        self.effects.extend([response(calls=[call("timeout-1", "list_files", '{"path":"."}')]), APITimeoutError(request=httpx.Request("POST", "https://example.invalid"))])
         self.assertIn("超时", await self.agent.handle_message("超时轮"))
         self.assertEqual(self.agent.session.history(), history)
-        self.assertEqual(self.workspace.joinpath("side.txt").read_text(), "written")
+        self.assertFalse(self.workspace.joinpath("side.txt").exists())
         self.effects.append(response("恢复"))
         await self.agent.handle_message("新问题")
         self.assertEqual(self.requests[-1][1:-1], history)

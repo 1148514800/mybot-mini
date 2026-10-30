@@ -23,9 +23,8 @@ def safe_text(value,secrets=(),*,max_bytes=24000):
 
 
 def configured_secrets(config):
-    from ..config import _section
     values=[config.api_key]
-    providers=_section('llm').get('providers',{})
+    providers=config.providers
     for provider in (providers.values() if isinstance(providers,dict) else ()):
         if isinstance(provider,dict):values.append(provider.get('api_key'))
     for server in config.mcp_servers.values():

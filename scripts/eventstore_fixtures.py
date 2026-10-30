@@ -10,7 +10,7 @@ from scripts.check_session import response
 
 def configuration(root,**changes):
     values=dict(workspace=root/'workspace',session_backend='event_sqlite',session_event_path=root/'private/events.sqlite3',
-        session_persist=False,api_key=None,provider='offline',model='synthetic',skills_enabled=False,mcp_enabled=False,
+        api_key=None,provider='offline',model='synthetic',skills_enabled=False,mcp_enabled=False,
         context_enabled=True,context_max_chars=7000,context_recent_turns=1,context_summary_max_chars=300,
         max_react_steps=10)
     (root/'workspace').mkdir(exist_ok=True)

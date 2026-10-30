@@ -8,6 +8,8 @@ from dataclasses import replace
 from unittest.mock import patch
 from types import SimpleNamespace as N
 from mcp import types
+from mybot.config import GatewayConfig
+from mybot.agent.token_counter import TokenCounter
 from mybot.agent import AgentLoop, ContextBuilder
 from mybot.agent.context_manager import ContextManager, ContextBudgetError
 from mybot.mcp_client.adapter import MCPToolAdapter
@@ -137,10 +139,10 @@ class ConfidenceChecks(AgentFixture,unittest.IsolatedAsyncioTestCase):
     async def test_context_limits_actual_schemas(self):
         a=self.fake(['list_project_tasks','search_documents']);q='list project tasks and search architecture documents'
         messages=a.context.build_messages(q,[]);base=a.discovery.visible_names()
-        a.config.context_max_chars=max(ContextManager.count(messages,a.tools.get_definitions(base|{n})) for n in (PROJECT,DOCUMENT))
+        a.config.context_token_budget['input_limit']=max(TokenCounter.measure(TokenCounter.request(a.config,messages,a.tools.get_definitions(base|{n})))['estimated_input_tokens'] for n in (PROJECT,DOCUMENT))
         d=self.route(a,q);self.assertEqual(len(d.selected_tool_names),1)
         self.assertEqual(d.fallback_reason,'context_budget_limited')
-        a.config.context_max_chars=1
+        a.config.context_token_budget['input_limit']=256
         with self.assertRaises(ContextBudgetError):self.route(a,q)
         self.assertFalse(a.discovery.active)
 
@@ -231,7 +233,7 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         from mybot.evaluation.tool_retrieval import synthetic_catalog
         from mybot.config import GatewayConfig
         catalog=synthetic_catalog('hybrid');catalog.config.update(routing_mode='adaptive',selection_policy='selective')
-        context=ContextManager(GatewayConfig())
+        context=ContextManager(GatewayConfig(context_token_budget={'input_limit':160000}, ))
         c=deepcopy(load_cases()[0]);a=route_query(c['query'],catalog,context)
         c['required_tools']=['CANARY'];c['acceptable_tools']=['CANARY']
         b=route_query(c['query'],catalog,context)
@@ -240,7 +242,7 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_four_modes_shared_core_and_no_live(self):
         with patch('mybot.evaluation.tool_agent.build_client',side_effect=AssertionError('no real API')):
-            r=await evaluate(modes=MODES,limits=Limits(max_cases=2))
+            r=await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), modes=MODES,limits=Limits(max_cases=2))
         self.assertEqual(r['complete_paired_cases'],2)
         for m in MODES:self.assertEqual(r['overall'][m]['task_success_count'],2)
         self.assertIsNone(r['actual_tokens']);self.assertIsNone(r['actual_cost'])
@@ -251,7 +253,7 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(row['routing_diagnostics']['selection_policy'],'legacy')
 
     async def test_core_negative_metrics(self):
-        r=await evaluate(modes=('adaptive_selective_hybrid',))
+        r=await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), modes=('adaptive_selective_hybrid',))
         rows=r['results'];self.assertEqual(len(rows),12)
         negative=[r for r in rows if r['category'] in ('no_tool','no_match')]
         self.assertEqual(len(negative),2)
@@ -267,7 +269,7 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         cfg=MCPChecks.fixture_config(self,['delay'])
         case=deepcopy(core_cases()[0]);case['prompt']='delay'
         with patch('mybot.evaluation.tool_agent.demo_server',return_value=cfg.mcp_servers['test']), patch('mybot.evaluation.tool_agent.load_cases',return_value=[case]):
-            r=await evaluate(modes=('adaptive_selective_hybrid',),limits=Limits(max_cases=1,task_timeout=1),
+            r=await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), modes=('adaptive_selective_hybrid',),limits=Limits(max_cases=1,task_timeout=1),
                 client_factory=lambda *args:SequenceClient([response(calls=[call('delay','mcp__catalog__delay','{}')])]))
         self.assertEqual(r['results'][0]['failure_category'],'model_timeout')
         self.assertEqual(r['results'][0]['actual_mcp_calls'],1)
@@ -276,8 +278,8 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
     async def test_incomplete_and_live_gate(self):
         for options in ({'live':True},{'confirm_api_cost':True}):
             with patch('mybot.evaluation.tool_agent.build_client',side_effect=AssertionError('no API')):
-                with self.assertRaises(ValueError):await evaluate(modes=('adaptive_selective_hybrid',),**options)
-        r=await evaluate(modes=('adaptive_selective_hybrid',),limits=Limits(max_cases=1,max_requests=1))
+                with self.assertRaises(ValueError):await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), modes=('adaptive_selective_hybrid',),**options)
+        r=await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), modes=('adaptive_selective_hybrid',),limits=Limits(max_cases=1,max_requests=1))
         self.assertEqual(r['incomplete_count'],1);self.assertIsNone(r['results'][0]['task_success'])
         self.assertEqual(r['overall']['adaptive_selective_hybrid']['selection_quality']['cases'],0)
 
@@ -286,22 +288,23 @@ class RoutingEvaluationChecks(unittest.IsolatedAsyncioTestCase):
         def miss(router,*args,**kwargs):
             with patch.object(router.catalog,'ranked_names',return_value=[]):return original(router,*args,**kwargs)
         with patch.object(AdaptiveToolRouter,'route',miss):
-            r=await evaluate(modes=('adaptive_selective_hybrid',),limits=Limits(max_cases=1))
+            r=await evaluate(base_config=GatewayConfig(context_token_budget={'input_limit':160000}), modes=('adaptive_selective_hybrid',),limits=Limits(max_cases=1))
         row=r['results'][0];self.assertTrue(row['task_success']);self.assertTrue(row['recovered_by_manual_discovery'])
         self.assertEqual(row['actual_mcp_calls'],1);self.assertEqual(row['llm_requests'],4)
 
     async def test_challenge_builtin_real_effect_and_cleanup(self):
         from mybot.evaluation.tool_agent import load_cases as agent_cases
         from scripts.check_tool_agent_eval import SequenceClient
-        # Run the standalone challenge via the same owner lifecycle, including builtin success.
+        # The historical writer challenge must stop at its absent schema.
         with patch('mybot.evaluation.tool_agent.load_cases',return_value=[agent_cases('routing')[-1]]):
             from mybot.config import GatewayConfig
-            from scripts.legacy_write_fixture import approve_legacy
             r=await evaluate(modes=('eager','adaptive_selective_hybrid'),limits=Limits(max_cases=1),
-                base_config=GatewayConfig(coding_file_access='legacy_confirm'),file_approval_provider=approve_legacy)
+                base_config=GatewayConfig(context_token_budget={'input_limit':160000}, ))
         for row in r['results']:
-            self.assertTrue(row['task_success']);self.assertEqual(row['actual_mcp_calls'],0)
-            self.assertEqual(row['tool_calls'],1)
+            self.assertFalse(row['task_success']);self.assertEqual(row['actual_mcp_calls'],0)
+            self.assertEqual(row['tool_failures'],0)
+            self.assertEqual(row['tool_calls'],0)  # FixedClient refuses the absent schema before dispatch.
+            self.assertEqual(row['llm_requests'],1)
 
 
 def check_routing_confidence():

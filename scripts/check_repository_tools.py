@@ -27,7 +27,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name);self.repo=make_demo(self.root/'repo')
-        self.tools=build_default_tool_registry(self.repo,coding_enabled=True, file_access='legacy_confirm')
+        self.tools=build_default_tool_registry(self.repo,coding_enabled=True)
         self.git_exe,_=executable('git',self.repo)
 
     def git(self,*args):
@@ -43,18 +43,21 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
         return p
 
     async def test_default_registry_and_config(self):
-        self.assertEqual([t.name for t in build_default_tool_registry(self.repo, file_access='legacy_confirm').iter_tools()],['read_file','write_file','list_files'])
-        self.assertEqual(len(self.tools.iter_tools()),8)
+        self.assertEqual([t.name for t in build_default_tool_registry(self.repo).iter_tools()],['read_file','list_files'])
+        self.assertEqual(len(self.tools.iter_tools()),7)
         self.assertTrue(self.tools.permitted('repo_map'))
         self.assertFalse(GatewayConfig().coding_enabled)
         for bad in (1,0,None,[],{},'true'):
             with self.assertRaises(ValueError):GatewayConfig(coding_enabled=bad)
             with self.assertRaises(ValueError):build_default_tool_registry(self.repo,coding_enabled=bad)
         for value in ([],None,{'extra':True}):
-            with patch('mybot.config._CONFIG',{'coding':value}):
-                with self.assertRaises(ValueError):GatewayConfig()
+            from scripts.check_lean_core_v2 import document
+            from mybot.config import config_from_document
+            doc = document(); doc['coding'] = value
+            with self.assertRaises(ValueError): config_from_document(doc)
         for value in ({},{'enabled':False},{'enabled':True}):
-            with patch('mybot.config._CONFIG',{'coding':value}):self.assertEqual(GatewayConfig().coding_enabled,value.get('enabled',False))
+            doc = document(); doc['coding'] = value
+            self.assertEqual(config_from_document(doc).coding_enabled, value.get('enabled', False))
 
     async def test_strict_schemas(self):
         for name,args in [('search_code',{'query':'x','max_results':True}),('search_code',{'query':'x','case_sensitive':1}),
@@ -270,7 +273,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
 
     async def test_gateway_explicit_coding_flag(self):
         from mybot.app import run_gateway
-        cfg=GatewayConfig(workspace=self.repo,coding_enabled=True,mcp_enabled=False,skills_enabled=False,session_persist=False)
+        cfg=GatewayConfig(workspace=self.repo,coding_enabled=True,mcp_enabled=False,skills_enabled=False)
         seen=[]
         def agent_factory(**kw):seen.append(kw['tools']);return N(run=AsyncMock())
         with patch('mybot.app.init_workspace'),patch('mybot.app.build_client',return_value=N(close=AsyncMock())),patch('mybot.app.AgentLoop',side_effect=agent_factory):
@@ -282,7 +285,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
         requests=[]
         effects=[response(calls=[call('r','read_file_range','{"path":"large.py","start_line":1,"end_line":1}')]),response('investigated')]
         async def create(**kwargs):requests.append(kwargs);return effects.pop(0)
-        cfg=GatewayConfig(workspace=self.repo,coding_enabled=True,skills_enabled=False,session_persist=False,
+        cfg=GatewayConfig(workspace=self.repo,coding_enabled=True,skills_enabled=False,
                           context_enabled=True,context_tool_result_max_chars=256,context_max_chars=40000,debug=True)
         agent=AgentLoop(N(chat=N(completions=N(create=create))),cfg,self.tools,ContextBuilder(self.repo))
         with contextlib.redirect_stdout(io.StringIO()) as out:reply=await agent.handle_message('inspect')
@@ -292,7 +295,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(len(original),256);assert_pairs(self,agent.session.history())
         self.assertEqual(self.tools.get_parameters('read_file_range')['required'],['path','start_line','end_line'])
         await agent.handle_message('/clear');self.assertEqual(agent.session.history(),[])
-        agent.config.context_max_chars=1
+        agent.config.context_token_budget['input_limit']=256
         with self.assertRaises(ContextBudgetError):await agent.handle_message('x')
 
     async def test_planning_and_mcp_discovery_native_visibility(self):
@@ -301,7 +304,7 @@ class RepositoryChecks(unittest.IsolatedAsyncioTestCase):
                  response(calls=[call('s2','update_plan','{"step":2,"status":"in_progress"}'),call('d','git_diff','{}'),call('c2','update_plan','{"step":2,"status":"completed"}')]),response('investigated; not repaired')]
         requests=[]
         async def create(**kwargs):requests.append(kwargs);return effects.pop(0)
-        cfg=GatewayConfig(workspace=self.repo,coding_enabled=True,skills_enabled=True,session_persist=False,
+        cfg=GatewayConfig(workspace=self.repo,coding_enabled=True,skills_enabled=True,
                           mcp_discovery={'enabled':True,'routing_mode':'adaptive','selection_policy':'selective'})
         agent=AgentLoop(N(chat=N(completions=N(create=create))),cfg,self.tools,ContextBuilder(self.repo))
         with contextlib.redirect_stdout(io.StringIO()):await agent.handle_message('investigate repository')

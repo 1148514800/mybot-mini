@@ -34,7 +34,7 @@ class DemoClient:
 
 def make_demo(root,port=8879):
     cfg=GatewayConfig(workspace=root,provider='offline-synthetic',model='quality-hardening-demo',api_key='synthetic-only-key',
-        mcp_enabled=False,skills_enabled=False,session_persist=False,context_enabled=True,context_recent_turns=0,
+        mcp_enabled=False,skills_enabled=False,context_enabled=True,context_recent_turns=0,
         context_summary_max_chars=6000,context_token_budget={'mode':'estimate','input_limit':8000},
         context_compaction={'mode':'semantic','allow_extra_requests':True,'input_tokens':19000})
     app=create_app(cfg,port=port,client_factory=lambda c:DemoClient())

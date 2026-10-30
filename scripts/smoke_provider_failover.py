@@ -93,11 +93,11 @@ class RequestMeter:
 
 
 async def run_live(mode: str, *, timeout: float = 30.0) -> dict:
-    from mybot.config import GatewayConfig, _PROVIDERS
+    from mybot.config import load_config
     from mybot.provider_failover import ProviderFailoverClient, build_gateway_client
 
-    config = copy.copy(GatewayConfig())
-    backup = _PROVIDERS.get('coco2', {}) if isinstance(_PROVIDERS, dict) else {}
+    config = copy.copy(load_config())
+    backup = config.providers.get('coco2', {})
     if mode not in ('forced', 'natural'):
         raise ValueError('Invalid smoke mode')
     if config.provider != 'coco' or config.model != EXPECTED_PRIMARY:

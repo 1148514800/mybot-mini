@@ -364,11 +364,11 @@ class OAuthChecks(unittest.IsolatedAsyncioTestCase):
         async def create(**kwargs):requests.append(kwargs);return effects.pop(0)
         with patch.object(MemoryTokenStorage,'set_tokens',observe):
             async with self.manager() as m:
-                cfg=replace(self.cfg(),session_persist=True,session_path=self.root/'state/session.json',debug=True)
+                cfg=replace(self.cfg(),session_backend='event_sqlite',session_event_path=self.root.resolve()/'state/events.sqlite3',debug=True)
                 agent=AgentLoop(N(chat=N(completions=N(create=create))),cfg,self.tools,ContextBuilder(self.workspace))
                 with contextlib.redirect_stdout(output):await agent.handle_message('add')
                 for secret in secrets+self.browser_secrets:
-                    for content in (output.getvalue(),json.dumps(requests),json.dumps(agent.session.history()),cfg.session_path.read_text(),json.dumps(m.audit),json.dumps(self.tools.get_definitions())):self.assertNotIn(secret,content)
+                    for content in (output.getvalue(),json.dumps(requests),json.dumps(agent.session.history()),cfg.session_event_path.read_bytes().decode('latin1'),json.dumps(m.audit),json.dumps(self.tools.get_definitions())):self.assertNotIn(secret,content)
 
     async def test_30_two_servers_have_independent_authorization(self):
         await self.start();first=self.cfg(['add']).mcp_servers['web'];first_trace=self.trace

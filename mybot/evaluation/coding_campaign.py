@@ -16,7 +16,7 @@ import platform
 import subprocess
 import uuid
 
-from ..config import GatewayConfig, PROJECT_DIR
+from ..config import GatewayConfig, load_config, PROJECT_DIR
 from ..tools import build_default_tool_registry
 from .coding_benchmark import configuration, evaluate
 from .coding_fixtures import load_benchmark
@@ -51,7 +51,7 @@ def read(path):
 
 def freeze(base=None):
     """Explicit allowlist: no key, URL, host workspace or raw config enters artifacts."""
-    base = base or GatewayConfig()
+    base = base or load_config()
     config = configuration(base, Path('/isolated-workspace'), LIMITS)
     from .coding_live import labels
     frozen_labels = labels(base)
@@ -60,7 +60,7 @@ def freeze(base=None):
     fields = ('coding_enabled','coding_patch_mode','coding_command','coding_autonomy',
         'coding_git_workflow','context_enabled','context_max_chars','context_recent_turns',
         'context_summary_max_chars','context_tool_result_max_chars','session_max_turns',
-        'session_persist','skills_enabled','mcp_enabled','debug','max_react_steps',
+        'session_backend','skills_enabled','mcp_enabled','debug','max_react_steps',
         'max_completion_tokens','request_timeout_seconds')
     tools = build_default_tool_registry(config.workspace, coding_enabled=True,
         patch_mode='write', command=config.coding_command)
